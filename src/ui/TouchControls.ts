@@ -9,7 +9,8 @@ const CFG = {
   thumbRadius: 9,
   deadZone: 4,
   buttonSize: 40, // no más grande que la base del joystick (40 = 2×baseRadius)
-  grabRadius: 34, // zona de agarre más generosa que el círculo visual del joystick
+  grabRadius: 30, // zona de agarre más generosa que el círculo visual del joystick,
+  // pero no tanto como para pisar el botón de arriba (ver distancia botón↔joystick abajo)
   anchorX: VIEW.tray.w - 34,
 };
 
@@ -31,11 +32,14 @@ export class TouchControls {
   constructor(scene: Phaser.Scene) {
     const tray = VIEW.tray;
     const jx = CFG.anchorX;
-    const jy = tray.y + 72;
+    const jy = tray.y + 76;
     this.origin = new Phaser.Math.Vector2(jx, jy);
 
     const bx = CFG.anchorX;
-    const by = tray.y + 25;
+    const by = tray.y + 20;
+    // la zona de agarre del joystick (grabRadius) y el hitArea del botón (buttonSize/2)
+    // no se pueden pisar: la distancia entre centros tiene que ser mayor a la suma de
+    // los dos radios, si no, a veces el toque en el botón termina moviendo al joystick.
 
     const circle = scene.add.circle(0, 0, CFG.buttonSize / 2, PAL.slate, 0.85).setStrokeStyle(1, PAL.seaPale, 0.8);
     this.buttonLabel = crisp(
@@ -44,7 +48,7 @@ export class TouchControls {
         .setOrigin(0.5)
         .setResolution(4),
     );
-    this.button = scene.add.container(bx, by, [circle, this.buttonLabel]).setDepth(50).setAlpha(0.5);
+    this.button = scene.add.container(bx, by, [circle, this.buttonLabel]).setDepth(52).setAlpha(0.5);
 
     circle.setInteractive(new Phaser.Geom.Circle(0, 0, CFG.buttonSize / 2), Phaser.Geom.Circle.Contains);
     circle.on('pointerdown', () => {

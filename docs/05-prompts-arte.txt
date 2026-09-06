@@ -34,14 +34,30 @@ Formato: **48×48 px**, cuadrado, fondo sólido liso (no transparente, para que
 combine con el marco del juego), encuadre busto/hombros, de frente. Cada
 personaje necesita **3 variantes de expresión**: `neutral`, `tenso`, `calido`.
 
+**Nota de exportación:** la mayoría de los generadores de imagen entregan
+retratos grandes con un estilo "pixel art" pintado/suave, no pixel art real de
+48×48 con bordes duros. Antes de meterlos al juego hay que bajarlos de tamaño
+a 48×48 con un método que preserve bordes duros (nearest-neighbor / "pixelate",
+no bicúbico ni suavizado) — si no, van a quedar borrosos al lado del resto del
+arte del juego, que es todo de bordes duros. Herramientas como Aseprite tienen
+un modo de "downscale + reducir paleta" pensado justo para esto.
+
 Agregar al final de cada prompt: `48x48 pixel art portrait, square format,
 solid plain dark background, bust framing, [EXPRESIÓN], three expression set
 needed: neutral / tense / warm.`
 
-### pc_m / pc_f (jugador — Idris / Elin Vaughan, ficticio)
+### pc_m (jugador, varón — Idris Vaughan, ficticio)
 ```
-Young Welsh colonist, early-to-mid 20s, travel-worn clothing, dark wool beret,
-tired but hopeful expression, weathered face from the sea crossing.
+Young Welsh colonist man, early-to-mid 20s, travel-worn clothing, dark wool
+beret, tired but hopeful expression, weathered face from the sea crossing.
+```
+
+### pc_f (jugador, mujer — Elin Vaughan, ficticio)
+```
+Young Welsh colonist woman, early-to-mid 20s, dark wool headscarf tied
+simply at the back (not a hat), plain travel dress with a wool shawl over
+the shoulders, hair pulled back practically, tired but hopeful expression,
+weathered face from the sea crossing.
 ```
 
 ### lewis (Lewis Jones, real — el que prometió)
