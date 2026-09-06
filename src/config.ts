@@ -60,6 +60,8 @@ export const GAME_CONFIG: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
+  // habilita this.add.dom(...) — el único uso es el campo de texto del nombre en BootScene
+  dom: { createContainer: true },
   input: { activePointers: 3 },
   physics: {
     default: 'arcade',

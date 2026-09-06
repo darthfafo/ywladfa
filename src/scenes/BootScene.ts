@@ -3,18 +3,28 @@ import { PAL, VIEW } from '@/config';
 import { game } from '@/core/Game';
 import { createInitialState } from '@/core/GameState';
 import { saveSystem } from '@/systems/SaveSystem';
+import { DialogueBox } from '@/ui/DialogueBox';
 import { SelectList } from '@/util/selectList';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
 
+type Gender = 'f' | 'm';
+const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
+
 /**
- * Portada. En 9:16 no hay hero gigante: el título arriba, el mundo insinuado abajo.
- * Sin partida guardada, un solo toque en cualquier parte arranca. Con partida
- * guardada, hay que elegir: seguirla o empezar de nuevo (con confirmación, porque
- * es un solo slot y "empezar de nuevo" la borra).
+ * Portada + arranque de partida. Antes, cualquier toque tiraba directo al juego;
+ * ahora hay una secuencia corta: título → nombre (con "continuar" al lado si hay
+ * partida guardada) → género → enlistamiento con Pepperell → recién ahí el Nivel 1.
+ * Así conocés al capitán ANTES de que te grite en la playa (docs/01 T1).
  */
 export class BootScene extends Phaser.Scene {
-  private optionTexts: Phaser.GameObjects.Text[] = [];
+  /** Todo lo que dibuja el paso actual (menos el título fijo), para poder borrarlo al cambiar de paso. */
+  private stepObjects: Phaser.GameObjects.GameObject[] = [];
   private optionNav: SelectList | null = null;
+  private nameInput: Phaser.GameObjects.DOMElement | null = null;
+  private dialogue: DialogueBox | null = null;
+
+  private playerName = '';
+  private playerGender: Gender = 'f';
 
   constructor() {
     super('Boot');
@@ -24,124 +34,189 @@ export class BootScene extends Phaser.Scene {
     const cx = VIEW.width / 2;
 
     this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void).setOrigin(0, 0);
-    // mar y cielo, muy esquemáticos
     this.add.rectangle(0, 300, VIEW.width, 60, PAL.sea, 0.5).setOrigin(0, 0);
     this.add.rectangle(0, 360, VIEW.width, 120, PAL.soil, 0.6).setOrigin(0, 0);
 
     crisp(
       this.add
-        .text(cx, 92, 'Y WLADFA', {
-          fontFamily: FONT_FAMILY,
-          fontSize: FONT.hero,
-          color: '#EAE8E0',
-          align: 'center',
-        })
+        .text(cx, 60, 'Y WLADFA', { fontFamily: FONT_FAMILY, fontSize: FONT.hero, color: '#EAE8E0', align: 'center' })
         .setOrigin(0.5)
         .setResolution(4),
     );
-
     crisp(
       this.add
-        .text(cx, 122, 'La Huella de los Rifleros', {
-          fontFamily: FONT_FAMILY,
-          fontSize: FONT.title,
-          color: '#D9A845',
-        })
+        .text(cx, 90, 'La Huella de los Rifleros', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
         .setOrigin(0.5)
         .setResolution(4),
     );
-
     crisp(
       this.add
-        .text(cx, 172, 'Punta Cuevas, Golfo Nuevo\n28 de julio de 1865', {
-          fontFamily: FONT_FAMILY,
-          fontSize: FONT.body,
-          color: '#9BAEB4',
-          align: 'center',
-          lineSpacing: 5,
-        })
+        .text(cx, 458, 'prototipo v0.1 · arte placeholder', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
         .setOrigin(0.5)
         .setResolution(4),
     );
 
-    crisp(
-      this.add
-        .text(cx, 236, '«Nos dijeron que era verde.»', {
-          fontFamily: FONT_FAMILY,
-          fontSize: FONT.body,
-          color: '#7FB0B8',
-        })
-        .setOrigin(0.5)
-        .setResolution(4),
-    );
-
-    crisp(
-      this.add
-        .text(cx, 458, 'prototipo v0.1 · arte placeholder', {
-          fontFamily: FONT_FAMILY,
-          fontSize: FONT.tiny,
-          color: '#6B6A5E',
-        })
-        .setOrigin(0.5)
-        .setResolution(4),
-    );
-
-    if (saveSystem.hasSave()) this.renderMenu();
-    else this.renderStartAnywhere();
+    this.renderTitle();
   }
 
-  /** Sin partida guardada: lo de siempre, tocar en cualquier lado arranca. */
-  private renderStartAnywhere(): void {
+  /* ---------------- paso 1: título ---------------- */
+
+  private renderTitle(): void {
+    this.clearStep();
     const cx = VIEW.width / 2;
+    this.track(
+      crisp(
+        this.add
+          .text(cx, 172, 'Punta Cuevas, Golfo Nuevo\n28 de julio de 1865', {
+            fontFamily: FONT_FAMILY,
+            fontSize: FONT.body,
+            color: '#9BAEB4',
+            align: 'center',
+            lineSpacing: 5,
+          })
+          .setOrigin(0.5)
+          .setResolution(4),
+      ),
+    );
+    this.track(
+      crisp(
+        this.add
+          .text(cx, 236, '«Nos dijeron que era verde.»', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#7FB0B8' })
+          .setOrigin(0.5)
+          .setResolution(4),
+      ),
+    );
     const start = crisp(
       this.add
         .text(cx, 420, 'TOCAR PARA EMPEZAR', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#EAE8E0' })
         .setOrigin(0.5)
         .setResolution(4),
     );
+    this.track(start);
     this.tweens.add({ targets: start, alpha: 0.3, duration: 900, yoyo: true, repeat: -1 });
 
-    this.input.once('pointerdown', () => this.beginNewGame());
-    this.input.keyboard?.once('keydown', () => this.beginNewGame());
+    this.input.once('pointerdown', () => this.renderName());
+    this.input.keyboard?.once('keydown', () => this.renderName());
   }
 
-  /** Con partida guardada: elegir entre continuar o empezar de nuevo. */
-  private renderMenu(): void {
-    const day = saveSystem.peek()?.day ?? 1;
+  /* ---------------- paso 2: nombre (+ continuar si hay guardado) ---------------- */
+
+  private renderName(): void {
+    this.clearStep();
+    const cx = VIEW.width / 2;
+
+    this.track(
+      crisp(
+        this.add
+          .text(cx, 300, '¿Cómo te llamás?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+          .setOrigin(0.5)
+          .setResolution(4),
+      ),
+    );
+
+    const defaultName = DEFAULT_NAME[this.playerGender];
+    this.nameInput = this.add.dom(
+      cx,
+      330,
+      'input',
+      'width:140px; padding:5px; text-align:center; font-family: ui-monospace, "SF Mono", Menlo, monospace; ' +
+        'font-size:13px; background:#18262A; color:#EAE8E0; border:1px solid #2E464F; outline:none;',
+    );
+    const inputEl = this.nameInput.node as HTMLInputElement;
+    inputEl.value = this.playerName || defaultName; // el 5to arg de add.dom() no sirve para el value de un <input>
+    inputEl.maxLength = 18;
+    inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') this.confirmName();
+    });
+    inputEl.focus();
+
+    const options = [{ label: 'Siguiente', onPick: () => this.confirmName() }];
+    const save = saveSystem.peek();
+    if (save) options.push({ label: `Continuar — Jornada ${save.day}`, onPick: () => this.continueGame() });
+    this.renderOptions(options, 370);
+  }
+
+  private confirmName(): void {
+    const raw = (this.nameInput?.node as HTMLInputElement | undefined)?.value.trim() ?? '';
+    this.playerName = raw || DEFAULT_NAME[this.playerGender];
+    this.renderGender();
+  }
+
+  /* ---------------- paso 3: género ---------------- */
+
+  private renderGender(): void {
+    this.clearStep();
+    const cx = VIEW.width / 2;
+    this.track(
+      crisp(
+        this.add
+          .text(cx, 320, '¿Sos varón o mujer?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+          .setOrigin(0.5)
+          .setResolution(4),
+      ),
+    );
     this.renderOptions(
       [
-        { label: `Continuar — Jornada ${day}`, onPick: () => this.continueGame() },
-        { label: 'Empezar de nuevo', onPick: () => this.renderConfirmNewGame() },
+        { label: 'Varón', onPick: () => this.pickGender('m') },
+        { label: 'Mujer', onPick: () => this.pickGender('f') },
       ],
-      408,
+      370,
     );
   }
 
-  /** "Empezar de nuevo" borra el único slot: confirmar antes de hacerlo. */
-  private renderConfirmNewGame(): void {
-    crisp(
-      this.add
-        .text(VIEW.width / 2, 388, 'Se pierde la partida guardada.', {
-          fontFamily: FONT_FAMILY,
-          fontSize: FONT.tiny,
-          color: '#DE7050',
-        })
-        .setOrigin(0.5)
-        .setResolution(4),
+  private pickGender(g: Gender): void {
+    this.playerGender = g;
+    if (saveSystem.hasSave()) this.renderConfirmOverwrite();
+    else this.renderEnlist();
+  }
+
+  /* ---------------- empezar de nuevo con una partida ya guardada ---------------- */
+
+  private renderConfirmOverwrite(): void {
+    this.clearStep();
+    this.track(
+      crisp(
+        this.add
+          .text(VIEW.width / 2, 320, 'Se pierde la partida guardada.', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#DE7050' })
+          .setOrigin(0.5)
+          .setResolution(4),
+      ),
     );
     this.renderOptions(
       [
-        { label: 'Sí, empezar de nuevo', onPick: () => this.beginNewGame() },
-        { label: 'Volver', onPick: () => this.scene.restart() },
+        { label: 'Sí, empezar de nuevo', onPick: () => this.renderEnlist() },
+        { label: 'Volver', onPick: () => this.renderName() },
       ],
-      416,
+      360,
     );
   }
+
+  /* ---------------- paso 4: enlistamiento con el capitán ---------------- */
+
+  private renderEnlist(): void {
+    this.clearStep();
+    this.dialogue = new DialogueBox(this);
+    this.dialogue.start('d_n1_enlistamiento', () => this.beginNewGame());
+  }
+
+  /* ---------------- arranque ---------------- */
+
+  private continueGame(): void {
+    const saved = saveSystem.load();
+    if (saved) game.replaceState(saved);
+    this.scene.start('World');
+  }
+
+  private beginNewGame(): void {
+    saveSystem.clear();
+    game.replaceState(createInitialState('nivel-01', this.playerName, this.playerGender));
+    this.scene.start('World');
+  }
+
+  /* ---------------- helpers de UI ---------------- */
 
   private renderOptions(options: Array<{ label: string; onPick: () => void }>, startY: number): void {
-    this.clearOptions();
-    // origen (0,0) a propósito: es el mismo patrón probado de DialogueBox/UiScene.
-    // Con setOrigin(0.5) el hitArea rectangular queda mal calculado y no responde al click.
     const x = 40;
     const navItems = options.map((o, i) => {
       const t = crisp(
@@ -153,28 +228,23 @@ export class BootScene extends Phaser.Scene {
       t.on('pointerover', () => t.setColor('#D9A845'));
       t.on('pointerout', () => t.setColor('#BFD3D8'));
       t.on('pointerdown', () => o.onPick());
-      this.optionTexts.push(t);
+      this.track(t);
       return { text: t, onPick: o.onPick };
     });
     this.optionNav = new SelectList(this, navItems, { normal: '#BFD3D8', selected: '#D9A845' });
   }
 
-  private clearOptions(): void {
+  private track(obj: Phaser.GameObjects.GameObject): void {
+    this.stepObjects.push(obj);
+  }
+
+  /** Limpia todo lo que dibujó el paso anterior, para dejar lugar al siguiente. */
+  private clearStep(): void {
     this.optionNav?.destroy();
     this.optionNav = null;
-    for (const t of this.optionTexts) t.destroy();
-    this.optionTexts = [];
-  }
-
-  private continueGame(): void {
-    const saved = saveSystem.load();
-    if (saved) game.replaceState(saved);
-    this.scene.start('World');
-  }
-
-  private beginNewGame(): void {
-    saveSystem.clear();
-    game.replaceState(createInitialState());
-    this.scene.start('World');
+    for (const o of this.stepObjects) o.destroy();
+    this.stepObjects = [];
+    this.nameInput?.destroy();
+    this.nameInput = null;
   }
 }

@@ -10,6 +10,43 @@
   },
   "dialogues": [
     {
+      "id": "d_n1_enlistamiento",
+      "npc": "npc_pepperell",
+      "lang": "cym",
+      "start": "e1",
+      "note": "Escena de arranque, antes del Nivel 1 propiamente dicho. Liverpool, el embarque.",
+      "nodes": {
+        "e1": {
+          "speaker": "npc_pepperell",
+          "portrait": "neutral",
+          "broken": true,
+          "text": "Nombre para la lista.",
+          "next": "e2"
+        },
+        "e2": {
+          "speaker": "pc",
+          "portrait": "neutral",
+          "text": "Acá tiene.",
+          "next": "e3"
+        },
+        "e3": {
+          "speaker": "npc_pepperell",
+          "portrait": "neutral",
+          "broken": true,
+          "text": "Bien. Mañana subís. Golfo Nuevo, dicen. Verde, dicen.",
+          "next": "e4"
+        },
+        "e4": {
+          "speaker": "npc_pepperell",
+          "portrait": "tenso",
+          "broken": true,
+          "text": "Yo solo los llevo. Lo demás, ustedes.",
+          "effects": [{ "setFlag": { "n1_enlistado": true } }],
+          "end": true
+        }
+      }
+    },
+    {
       "id": "d_n1_pepperell_intro",
       "npc": "npc_pepperell",
       "lang": "cym",
