@@ -42,6 +42,8 @@ export interface GameState {
   map: { discovered: string[]; registered: string[] };
   journal: JournalEntry[];
   codex: string[];
+  /** Ids de trigger `once` ya disparados — sin esto, cargar una partida repite cutscenes. */
+  triggersFired: string[];
 }
 
 /* ---------- datos de diseño (data/*.json) ---------- */

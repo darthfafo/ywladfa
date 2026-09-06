@@ -8,6 +8,7 @@ import { InventorySystem } from '@/systems/InventorySystem';
 import { LanguageSystem } from '@/systems/LanguageSystem';
 import { PartySystem } from '@/systems/PartySystem';
 import { ResourceSystem } from '@/systems/ResourceSystem';
+import { saveSystem } from '@/systems/SaveSystem';
 import { TimeSystem } from '@/systems/TimeSystem';
 
 /**
@@ -80,9 +81,11 @@ export class Game {
     const groupSize = registry.levelBalance(this.state.progress.level).groupSize as number;
     const fire = this.res.applyNight(groupSize);
     this.party.applyNight(fire);
-    bus.emit('ui:toast', {
-      text: fire === 'bigFire' ? 'El fuego es grande.' : fire === 'smallFire' ? 'El fuego es chico.' : 'No hubo fuego.',
-    });
+    const fireText = fire === 'bigFire' ? 'El fuego es grande.' : fire === 'smallFire' ? 'El fuego es chico.' : 'No hubo fuego.';
+    // autoguardado al cerrar jornada, un solo slot (docs/01-nivel-01.md checklist)
+    saveSystem.save(this.state);
+    bus.emit('ui:toast', { text: `${fireText} · Partida guardada.` });
+    bus.emit('save:written', { slot: 0 });
   }
 }
 

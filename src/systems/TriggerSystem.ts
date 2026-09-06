@@ -11,22 +11,26 @@ export interface TriggerContext {
 /**
  * Decide qué dispara y en qué orden. No ejecuta la acción: la devuelve para que
  * la escena la interprete (regla R1: los sistemas no conocen Phaser).
+ *
+ * Los ids disparados viven en `game.state.triggersFired`, no en un Set privado acá:
+ * así quedan incluidos en cualquier guardado sin que el SaveSystem tenga que saber
+ * nada de triggers, y cargar una partida no repite cutscenes de una sola vez.
  */
 export class TriggerSystem {
-  private fired = new Set<string>();
-
-  constructor(private game: Game, private triggers: TriggerDef[]) {}
+  constructor(private game: Game, private triggers: TriggerDef[]) {
+    if (!this.game.state.triggersFired) this.game.state.triggersFired = [];
+  }
 
   get firedIds(): string[] {
-    return [...this.fired];
+    return this.game.state.triggersFired;
   }
 
   hasFired(id: string): boolean {
-    return this.fired.has(id);
+    return this.game.state.triggersFired.includes(id);
   }
 
   markFired(id: string): void {
-    this.fired.add(id);
+    if (!this.hasFired(id)) this.game.state.triggersFired.push(id);
   }
 
   /** Triggers espaciales y de estado, evaluados al moverse o al cambiar el turno. */
@@ -34,7 +38,7 @@ export class TriggerSystem {
     const out: TriggerDef[] = [];
     for (const t of this.triggers) {
       if (t.event) continue; // los de evento se manejan en byEvent()
-      if (t.once && this.fired.has(t.id)) continue;
+      if (t.once && this.hasFired(t.id)) continue;
       if (!this.matchesSpace(t, ctx)) continue;
       if (!this.game.flags.eval(t.requires)) continue;
       out.push(t);
@@ -47,7 +51,7 @@ export class TriggerSystem {
     const out: TriggerDef[] = [];
     for (const t of this.triggers) {
       if (t.event !== eventName) continue;
-      if (t.once && this.fired.has(t.id)) continue;
+      if (t.once && this.hasFired(t.id)) continue;
       if (t.match && !Object.entries(t.match).every(([k, v]) => payload[k] === v)) continue;
       if (!this.game.flags.eval(t.requires)) continue;
       out.push(t);
@@ -66,7 +70,7 @@ export class TriggerSystem {
 
   /** Ejecuta la parte "de datos" de la acción y devuelve lo que la escena tiene que hacer. */
   consume(t: TriggerDef): { dialogue?: string; choice?: string; scene?: string; tutorial?: string; toast?: string } {
-    this.fired.add(t.id);
+    this.markFired(t.id);
     bus.emit('trigger:fired', { triggerId: t.id });
 
     const a = t.action ?? {};

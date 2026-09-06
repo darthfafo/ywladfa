@@ -37,6 +37,7 @@ export function createInitialState(levelId = 'nivel-01', name = 'Elin', gender: 
     map: { discovered: [], registered: [] },
     journal: [],
     codex: ['cod_wladfa'],
+    triggersFired: [],
   };
 }
 

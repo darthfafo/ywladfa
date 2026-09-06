@@ -64,8 +64,8 @@ export class WorldScene extends Phaser.Scene {
     this.layer = map.createLayer(0, tileset, 0, 0)!;
     this.layer.setCollision(COLLIDES);
 
-    // ---- jugador
-    const sp = level.spawns.player;
+    // ---- jugador: la playa solo en la primera jornada — después el campamento es la base
+    const sp = game.state.progress.day > 1 ? level.spawns.fogon : level.spawns.player;
     this.player = this.physics.add.sprite(tileCenter(sp.x), tileCenter(sp.y), 'pc', FACING_FRAME.north);
     this.player.setDepth(20);
     this.player.body!.setSize(10, 8);
