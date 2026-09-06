@@ -1,0 +1,94 @@
+{
+  "$schema": "../schemas/quest.schema.json",
+  "level": "nivel-01",
+  "quests": [
+    {
+      "id": "q_n1_desembarco",
+      "title": "Bajar los cajones",
+      "day": 1,
+      "optional": false,
+      "journalLine": "Bajamos los cajones antes de la marea. Ocho. Pesaban más de lo que parecía.",
+      "steps": [
+        { "id": "s1", "label": "Bajar 8 cajones a la playa", "counter": { "flag": "n1_cajones_bajados", "target": 8 } },
+        { "id": "s2", "label": "Hablar con Edwyn Roberts", "requires": "flags.n1_cajones_bajados >= 6", "trigger": "trig_edwyn_deposito" }
+      ],
+      "rewards": [{ "resource": { "id": "comida", "delta": 5 } }],
+      "onComplete": { "setFlag": { "q_n1_desembarco": "done" } }
+    },
+    {
+      "id": "q_n1_refugio",
+      "title": "Un lugar donde dormir",
+      "day": 1,
+      "optional": false,
+      "journalLine": "Elegimos cueva. La {cueva}. Apuntalamos la entrada con lo que sobró de los cajones.",
+      "steps": [
+        { "id": "s1", "label": "Subir a la barranca", "trigger": "trig_subida_barranca" },
+        { "id": "s2", "label": "Elegir una cueva", "trigger": "trig_eleccion_cueva" },
+        { "id": "s3", "label": "Apuntalar la entrada", "trigger": "trig_apuntalar" }
+      ],
+      "onComplete": { "setFlag": { "q_n1_refugio": "done" } }
+    },
+    {
+      "id": "q_n1_agua",
+      "title": "Agua",
+      "day": 2,
+      "optional": false,
+      "journalLine": "Buscamos agua todo el día.",
+      "journalLineIfSuccess": "Encontramos agua en el cañadón. Treinta litros, y sigue saliendo.",
+      "journalLineIfFail": "No encontramos nada. Berwyn dio con un hilo de agua ya de noche. Doce litros.",
+      "steps": [
+        { "id": "s1", "label": "Buscar rastros de agua", "hints": ["hint_agua_1", "hint_agua_2", "hint_agua_3"] },
+        { "id": "s2", "label": "Llegar al fondo del cañadón", "trigger": "trig_manantial" }
+      ],
+      "failSoft": {
+        "condition": "progress.day == 2 && progress.turn == 'noche' && flags.n1_encontro_manantial != true",
+        "effects": [
+          { "resource": { "id": "agua", "delta": 12, "reason": "hallazgo de Berwyn" } },
+          { "setFlag": { "n1_agua_tardia": true } },
+          { "morale": -4 }
+        ]
+      },
+      "rewards": [{ "codex": "cod_agua_patagonia" }],
+      "onComplete": { "setFlag": { "q_n1_agua": "done" } }
+    },
+    {
+      "id": "q_n1_dafydd",
+      "title": "El chico",
+      "day": 2,
+      "optional": false,
+      "journalLine": "Se perdió Dafydd. Lo encontramos en el cañadón, sentado en el agua, sin entender por qué estábamos todos gritando.",
+      "steps": [
+        { "id": "s1", "label": "Seguir las huellas", "trigger": "trig_huellas_dafydd" },
+        { "id": "s2", "label": "Encontrar a Dafydd", "trigger": "trig_manantial" }
+      ],
+      "note": "Esta quest y q_n1_agua se resuelven con el mismo trigger. Es deliberado: el jugador cree que busca a un chico y encuentra agua.",
+      "onComplete": { "setFlag": { "q_n1_dafydd": "done" } }
+    },
+    {
+      "id": "q_n1_lena",
+      "title": "Leña para la noche",
+      "day": 2,
+      "optional": true,
+      "journalLine": "Cortamos jarilla en el monte. {n} haces.",
+      "steps": [
+        { "id": "s1", "label": "Juntar leña en el monte", "counter": { "resource": "lena", "target": 4 } }
+      ],
+      "rewards": [{ "note": "El fuego de la noche 2 es grande: Mari se recupera." }],
+      "onComplete": { "setFlag": { "q_n1_lena": "done" } }
+    },
+    {
+      "id": "q_n1_carga",
+      "title": "Cinco de ocho",
+      "day": 3,
+      "optional": false,
+      "journalLine": "Cinco bultos entran en los carros. Había ocho. Dejamos {dejados} en la playa.",
+      "steps": [
+        { "id": "s1", "label": "Escuchar el anuncio de la marcha", "trigger": "trig_anuncio_marcha" },
+        { "id": "s2", "label": "Elegir cinco bultos", "trigger": "trig_pantalla_carga" },
+        { "id": "s3", "label": "Subir a la punta antes de salir", "trigger": "trig_punta_final" }
+      ],
+      "irreversible": true,
+      "onComplete": { "setFlag": { "q_n1_carga": "done" }, "goto": "nivel-02" }
+    }
+  ]
+}

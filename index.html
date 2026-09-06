@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+  <meta name="theme-color" content="#0E1416">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Y Wladfa — La Huella de los Rifleros</title>
+  <style>
+    :root { color-scheme: dark; }
+    html, body {
+      margin: 0; padding: 0;
+      height: 100%;
+      height: 100dvh; /* la altura real visible: 100% en mobile cuenta la barra del navegador aunque esté tapando */
+      background: #0E1416; color: #EAE8E0;
+      overflow: hidden; overscroll-behavior: none;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    }
+    body { display: grid; place-items: center; }
+    #game { width: 100%; height: 100%; }
+    #game canvas {
+      touch-action: none;
+      -webkit-user-select: none; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      display: block;
+    }
+
+    /* El juego es 9:16 fijo (GDD §2): en horizontal se tapa todo con este aviso. */
+    #rotate-guard {
+      display: none;
+      position: fixed; inset: 0; z-index: 1000;
+      background: #0E1416; color: #EAE8E0;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; text-align: center; padding: 24px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    }
+    #rotate-guard .icono { font-size: 32px; }
+    #rotate-guard .titulo { font-size: 14px; color: #D9A845; }
+    #rotate-guard .cuerpo { font-size: 11px; color: #9BAEB4; max-width: 220px; }
+    /* Solo en dispositivos táctiles sin mouse: en desktop una ventana ancha
+       también matchea "landscape" y no queremos tapar el juego ahí. */
+    @media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+      #rotate-guard { display: flex; }
+    }
+  </style>
+</head>
+<body>
+  <div id="game"></div>
+  <div id="rotate-guard">
+    <div class="icono">↻</div>
+    <div class="titulo">Girá el teléfono</div>
+    <div class="cuerpo">Y Wladfa se juega en vertical.</div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

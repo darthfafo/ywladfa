@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Códice histórico",
+  "type": "object",
+  "required": [
+    "entries"
+  ],
+  "properties": {
+    "note": {
+      "type": "string"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "documented",
+          "dramatized"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^cod_[a-z0-9_]+$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unlockedBy": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "documented": {
+            "type": "string",
+            "minLength": 40,
+            "description": "Lo que está respaldado por fuentes."
+          },
+          "dramatized": {
+            "type": "string",
+            "minLength": 4,
+            "description": "Lo que el juego inventó. Obligatorio: si no hay nada, escribir 'Nada.'"
+          },
+          "caveat": {
+            "type": "string"
+          },
+          "seeAlso": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

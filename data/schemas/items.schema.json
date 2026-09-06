@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ítems y bultos",
+  "type": "object",
+  "required": [
+    "items"
+  ],
+  "definitions": {
+    "item": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "category",
+        "weightKg"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "label": {
+          "type": "string"
+        },
+        "desc": {
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "carga",
+            "consumible",
+            "equipo",
+            "herramienta",
+            "cultural",
+            "trueque",
+            "clave"
+          ]
+        },
+        "weightKg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stackable": {
+          "type": "boolean"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "effect": {
+          "type": "object"
+        },
+        "capacity": {
+          "type": "object"
+        },
+        "unlocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tradeValue": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "questItem": {
+          "type": "boolean"
+        },
+        "level": {
+          "type": "string"
+        },
+        "unlockedIn": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/item"
+      }
+    },
+    "bultos_nivel01": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "kg",
+          "slots"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kg": {
+            "type": "number"
+          },
+          "slots": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "icon": {
+            "type": "string"
+          },
+          "ifTaken": {
+            "type": "string"
+          },
+          "grants": {
+            "type": "object"
+          },
+          "ifLeft": {
+            "type": "string"
+          }
+        }
+      },
+      "minItems": 8,
+      "maxItems": 8
+    }
+  }
+}

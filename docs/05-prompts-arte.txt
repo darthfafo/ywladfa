@@ -1,0 +1,231 @@
+# Prompts de generación de imágenes — Y Wladfa, Nivel 1
+
+Todo esto es insumo para un generador de imágenes externo. El arte de código en
+`src/util/textures.ts` sigue siendo el placeholder hasta que estos PNGs existan;
+se reemplaza sin tocar el resto del código (docs/03-assets.md).
+
+---
+
+## 0. Prefijo de estilo compartido
+
+Pegar **al principio de cada prompt**, sin importar si es retrato, escena o
+elemento de mapa. Es lo que mantiene todo con la misma identidad visual.
+
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. Overcast coastal Patagonian
+light, windswept and sparse, austere mood.
+```
+
+**Regla dura:** nada de verdes saturados (quedan reservados para más adelante
+en la campaña). Nada de estereotipos ni caricaturas de ningún grupo — colonos
+galeses incluidos.
+
+---
+
+## 1. Retratos de personajes (diálogo)
+
+Formato: **48×48 px**, cuadrado, fondo sólido liso (no transparente, para que
+combine con el marco del juego), encuadre busto/hombros, de frente. Cada
+personaje necesita **3 variantes de expresión**: `neutral`, `tenso`, `calido`.
+
+Agregar al final de cada prompt: `48x48 pixel art portrait, square format,
+solid plain dark background, bust framing, [EXPRESIÓN], three expression set
+needed: neutral / tense / warm.`
+
+### pc_m / pc_f (jugador — Idris / Elin Vaughan, ficticio)
+```
+Young Welsh colonist, early-to-mid 20s, travel-worn clothing, dark wool beret,
+tired but hopeful expression, weathered face from the sea crossing.
+```
+
+### lewis (Lewis Jones, real — el que prometió)
+```
+Man in his 40s, neat beard, black top hat, the group's organizer — carries
+himself like a leader trying to hold defensive optimism together even when
+it's cracking.
+```
+
+### edwyn (Edwyn C. Roberts, real — el que falló con el depósito)
+```
+Man in his 30s-40s, dark wool beret, angular tired face, guilty evasive eyes
+that avoid direct contact — a competent man carrying visible shame.
+```
+
+### matthews (Rev. Abraham Matthews, real — la voz que sostiene)
+```
+Man in his 40s-50s, simple clerical collar, black top hat or plain wide-brim
+pastor's hat, calm steady gaze — the group's moral anchor, unshaken.
+```
+
+### berwyn (Richard Jones Berwyn, real — maestro y escribiente)
+```
+Younger man, mid-20s, black top hat, thin wire spectacles, attentive
+observant expression — a teacher and record-keeper, always watching, always
+writing.
+```
+
+### pepperell (Cap. George Pepperell, real — capitán del Mimosa)
+```
+Man in his 40s-50s, dark navy maritime captain's cap (not a top hat), wool
+sea coat, impatient authoritative expression — he is leaving, they are not,
+and it shows.
+```
+
+### mari (Mari Vaughan, ficticia — madre del PC)
+```
+Woman in her late 40s-50s, dark wool headscarf (not a hat), tired maternal
+warmth in her eyes. For the "tense" variant: visible paleness and a cough,
+foreshadowing illness.
+```
+
+### dafydd (Dafydd, ficticio — 9 años)
+```
+9-year-old boy, oversized dark wool beret, round curious face, restless
+inquisitive expression — the character who teaches the player how to
+explore.
+```
+
+---
+
+## 2. Escenas cinemáticas (fondos narrativos)
+
+Formato: **3:4 vertical**, composición "safe": nada importante pegado a los
+bordes (se recorta distinto según el celular), el foco de la escena centrado.
+Sin texto ni UI dibujada encima — eso lo pone el juego.
+
+Agregar al final de cada prompt: `3:4 vertical aspect ratio, cinematic game
+cutscene illustration, important content centered with generous margin on
+all sides for safe cropping on different phone screens, no text, no UI
+elements.`
+
+### cutscene_cold_open — El bote llegando a la costa
+```
+Wide shot from behind a small rowboat approaching a grey rocky coastline at
+dawn, Patagonian gulf waters, the silhouette of the sailing ship Mimosa
+anchored offshore in the misty background, overcast sky, sense of arrival
+into an unknown empty land.
+```
+
+### cutscene_fogon_grande — Fogón nocturno, fuego grande
+```
+Night scene, a large campfire glowing warm amber against a dark barranca
+cliff backdrop, several small huddled colonist silhouettes seated around it,
+sparks rising, cold blue night sky above, sense of warmth and fragile
+community.
+```
+
+### cutscene_fogon_chico — Fogón nocturno, fuego chico
+```
+Same night campfire scene but the fire is small and dim, barely lighting the
+huddled colonist silhouettes around it, more shadow than light, colder and
+more anxious mood than the big-fire version.
+```
+
+### cutscene_manantial — El hallazgo del manantial
+```
+A small boy sitting alone at the bottom of a dry rocky ravine (cañadón), feet
+resting in a thin trickle of water no wider than two fingers, silent and
+still, warm late-afternoon light breaking through the ravine walls, no
+dialogue, the quiet relief of finding water.
+```
+
+### cutscene_decision_carga — La decisión de los bultos
+```
+A small group of colonists standing beside a wooden ox-cart half-loaded with
+crates and bundles on a windswept beach, some crates still on the sand
+unloaded, tense body language, the sea and the departing ship faint in the
+background, the weight of an impossible choice.
+```
+
+### cutscene_punta_final — La despedida desde la punta
+```
+Lone figure standing on a high coastal bluff (Punta Cuevas) looking down at
+empty cave dwellings on the beach below, the sea beyond completely empty —
+the ship Mimosa gone — overcast fading light, quiet finality and loss.
+```
+
+### cutscene_subida_barranca — La subida a la barranca
+```
+Small group of colonists climbing a steep dirt-and-clay cliff path single
+file, carrying bundles on their backs, the beach and sea visible below and
+behind them, the caves of the barranca visible above, a physical sense of
+ascent and effort.
+```
+
+---
+
+## 3. Elementos para sumar al mapa (props e identidad)
+
+Formato variable según el uso — se aclara en cada uno.
+
+### El Mimosa (rediseño — reemplaza el actual, muy simple)
+```
+[usar prefijo de estilo] A two-masted wooden sailing ship anchored offshore,
+seen in profile from the shore, full sails furled, a small Welsh flag (green,
+white, and a touch of red for the dragon) at the main mast, weathered wood
+hull, based on a 19th century emigrant sailing ship. Side-view sprite, transparent
+background, roughly 64x40px pixel art proportions.
+```
+
+### Botes menores cerca de la orilla
+```
+[usar prefijo de estilo] A small wooden rowboat pulled up half onto wet sand
+at the tideline, oars resting inside, weathered and simple. Side-view sprite,
+transparent background, small prop scale (roughly 24x12px proportions).
+```
+
+### Perfil de Punta Cuevas (fondo/parallax)
+```
+[usar prefijo de estilo] Distant silhouette of a low rocky coastal cliff
+line (Punta Cuevas headland) against an overcast sky, muted flat colors,
+meant as a horizontal background parallax strip, wide aspect ratio, no fine
+detail — just a readable silhouette.
+```
+
+### Restos de costa (troncos, algas, conchillas)
+```
+[usar prefijo de estilo] A small scattered cluster of bleached driftwood,
+dried kelp, and seashell fragments on wet sand, top-down game sprite, small
+scale, transparent background.
+```
+
+### Gaviotas
+```
+[usar prefijo de estilo] A small seagull in flight, simple 2-3 frame pixel
+art animation silhouette, side view, transparent background, tiny scale
+(roughly 12x8px), muted grey-white.
+```
+
+### Matas de coirón (pasto patagónico)
+```
+[usar prefijo de estilo] A clump of dry tussock grass (coirón), standing
+upright, top-down/three-quarter game sprite for scrubland terrain, muted
+tan-brown tones (no saturated green), transparent background, small prop
+scale.
+```
+
+### Guanaco a la distancia
+```
+[usar prefijo de estilo] A single guanaco standing in profile, alert stance,
+distant-silhouette style with minimal detail, muted brown-grey tones,
+transparent background, small sprite scale for background wildlife.
+```
+
+### El manantial (charco con reflejo)
+```
+[usar prefijo de estilo] A tiny natural spring pool at the bottom of a dry
+ravine, a thin trickle of water reflecting pale light, a few reeds growing at
+the edge, top-down game tile, small scale, muted blue-grey water tone.
+```
+
+---
+
+*Generado como referencia para herramientas de imagen externas. Ninguna de
+estas imágenes existe todavía en el repo — cuando se generen, van a
+`public/assets/` según la convención de docs/03-assets.md.*

@@ -1,0 +1,155 @@
+{
+  "$schema": "./schemas/items.schema.json",
+  "items": [
+    {
+      "id": "cajon_provisiones",
+      "label": "Cajón de provisiones",
+      "desc": "Madera de pino, flejes de hierro. Pesa más de lo que parece.",
+      "category": "carga",
+      "weightKg": 6,
+      "stackable": false,
+      "icon": "item_cajon",
+      "level": "nivel-01"
+    },
+    {
+      "id": "galleta_marinera",
+      "label": "Galleta marinera",
+      "desc": "Dura como una piedra y por eso dura. Se moja en agua o en caldo.",
+      "category": "consumible",
+      "weightKg": 0.4,
+      "stackable": true,
+      "effect": { "resource": "comida", "amount": 1 },
+      "icon": "item_galleta"
+    },
+    {
+      "id": "cantimplora",
+      "label": "Cantimplora",
+      "desc": "Cuero cosido y brea. Cuatro litros si no pierde.",
+      "category": "equipo",
+      "weightKg": 0.8,
+      "stackable": false,
+      "capacity": { "resource": "agua", "amount": 4 },
+      "icon": "item_cantimplora"
+    },
+    {
+      "id": "pala",
+      "label": "Pala",
+      "desc": "Para cavar la cueva, y más adelante para cavar la zanja que salva la colonia.",
+      "category": "herramienta",
+      "weightKg": 3.2,
+      "stackable": false,
+      "unlocks": ["accion_cavar"],
+      "icon": "item_pala"
+    },
+    {
+      "id": "hacha_mano",
+      "label": "Hacha de mano",
+      "desc": "Corta jarilla. Contra un tronco de verdad, no sirve para nada.",
+      "category": "herramienta",
+      "weightKg": 1.6,
+      "stackable": false,
+      "unlocks": ["accion_juntar_lena"],
+      "icon": "item_hacha"
+    },
+    {
+      "id": "manta_lana",
+      "label": "Manta de lana",
+      "desc": "Tejida en Gales. Todavía huele a allá.",
+      "category": "equipo",
+      "weightKg": 2.1,
+      "stackable": true,
+      "effect": { "stat": "coldResist", "amount": 12 },
+      "icon": "item_manta"
+    },
+    {
+      "id": "quillango",
+      "label": "Quillango",
+      "desc": "Pieles de guanaco cosidas con tendón. Abriga el triple que la manta y pesa la mitad.",
+      "category": "equipo",
+      "weightKg": 1.4,
+      "stackable": false,
+      "effect": { "stat": "coldResist", "amount": 34 },
+      "tradeValue": { "tehuelche": 3, "colonia": 8 },
+      "icon": "item_quillango",
+      "unlockedIn": "nivel-02"
+    },
+    {
+      "id": "libro_himnos",
+      "label": "Libro de himnos",
+      "desc": "Ciento veinte himnos en galés. Pesa poco y sostiene mucho.",
+      "category": "cultural",
+      "weightKg": 0.5,
+      "stackable": false,
+      "effect": { "stat": "morale", "amount": 5 },
+      "icon": "item_libro"
+    },
+    {
+      "id": "libreta_berwyn",
+      "label": "Libreta de Berwyn",
+      "desc": "Hojas cosidas a mano. Adentro está todo lo que va a pasar, todavía en blanco.",
+      "category": "clave",
+      "weightKg": 0.2,
+      "stackable": false,
+      "unlocks": ["sistema_diario", "sistema_codice"],
+      "icon": "item_libreta",
+      "questItem": true
+    },
+    {
+      "id": "farol",
+      "label": "Farol de aceite",
+      "desc": "Alcanza para ver dos metros. Con este viento, uno.",
+      "category": "equipo",
+      "weightKg": 1.1,
+      "stackable": false,
+      "unlocks": ["accion_explorar_noche"],
+      "icon": "item_farol"
+    },
+    {
+      "id": "soga",
+      "label": "Soga de cáñamo",
+      "desc": "Doce brazas. Sirve para bajar por la barranca sin romperse la cabeza.",
+      "category": "herramienta",
+      "weightKg": 2.4,
+      "stackable": false,
+      "unlocks": ["accion_bajar_canadon"],
+      "icon": "item_soga"
+    },
+    {
+      "id": "yerba",
+      "label": "Paquete de yerba",
+      "desc": "Se la dio un marinero del Juno. Nadie sabe todavía qué hacer con esto.",
+      "category": "trueque",
+      "weightKg": 0.6,
+      "stackable": true,
+      "tradeValue": { "tehuelche": 6, "criollos": 5, "colonia": 1 },
+      "icon": "item_yerba"
+    }
+  ],
+
+  "bultos_nivel01": [
+    { "id": "harina",       "label": "Harina y galleta",        "kg": 200, "slots": 1, "icon": "bulto_harina",
+      "ifTaken": "n1_bulto_harina",       "grants": { "comida": 12 },
+      "ifLeft":  "Hambre en el Nivel 2. Primera muerte posible en el Nivel 3." },
+    { "id": "labranza",     "label": "Herramientas de labranza","kg": 140, "slots": 1, "icon": "bulto_labranza",
+      "ifTaken": "n1_bulto_labranza",     "grants": { "materiales": 8 },
+      "ifLeft":  "El riego del Nivel 3 cuesta 4 jornadas extra." },
+    { "id": "imprenta",     "label": "La imprenta",             "kg": 90,  "slots": 1, "icon": "bulto_imprenta",
+      "ifTaken": "n1_bulto_imprenta",     "grants": {},
+      "ifLeft":  "Sin periódico ni eisteddfod. Berwyn no te lo perdona." },
+    { "id": "semilla",      "label": "Semilla de trigo",        "kg": 60,  "slots": 1, "icon": "bulto_semilla",
+      "ifTaken": "n1_bulto_semilla",      "grants": {},
+      "ifLeft":  "Hay que comprar semilla en el Nivel 3, al precio de otros dos bultos." },
+    { "id": "organo",       "label": "El órgano de la capilla", "kg": 110, "slots": 1, "icon": "bulto_organo",
+      "ifTaken": "n1_bulto_organo",       "grants": {},
+      "ifLeft":  "Matthews pierde vínculo. El coro del epílogo suena a una sola voz." },
+    { "id": "abrigo",       "label": "Ropa de abrigo",          "kg": 70,  "slots": 1, "icon": "bulto_abrigo",
+      "ifTaken": "n1_bulto_abrigo",       "grants": {},
+      "ifLeft":  "Enfermedad recurrente desde el Nivel 2." },
+    { "id": "hierro",       "label": "Clavos, hierro y sierra", "kg": 95,  "slots": 1, "icon": "bulto_hierro",
+      "ifTaken": "n1_bulto_hierro",       "grants": { "materiales": 12 },
+      "ifLeft":  "Toda construcción va a la mitad de velocidad." },
+    { "id": "libros",       "label": "Libros y biblias",        "kg": 55,  "slots": 1, "icon": "bulto_libros",
+      "ifTaken": "n1_bulto_libros",       "grants": {},
+      "ifLeft":  "−moral la primera noche del Nivel 2." }
+  ]
+}

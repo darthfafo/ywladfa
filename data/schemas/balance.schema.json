@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Números de balance",
+  "type": "object",
+  "required": [
+    "global",
+    "nightConsumption"
+  ],
+  "properties": {
+    "comment": {
+      "type": "string"
+    },
+    "global": {
+      "type": "object",
+      "properties": {
+        "playerBaseSpeedPxPerSec": {
+          "type": "number",
+          "minimum": 1
+        },
+        "overloadSpeedMultiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "overloadRangeMultiplier": {
+          "type": "number",
+          "minimum": 0.1
+        },
+        "windSpeedMultiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "trailStepsToForm": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "bondMaxLevel": {
+          "type": "integer"
+        },
+        "healthMax": {
+          "type": "number"
+        },
+        "moraleMax": {
+          "type": "number"
+        }
+      }
+    },
+    "terrainSpeed": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0.1,
+        "maximum": 2
+      }
+    },
+    "nightConsumption": {
+      "type": "object"
+    },
+    "nightRecovery": {
+      "type": "object"
+    },
+    "nivel01": {
+      "type": "object"
+    }
+  }
+}

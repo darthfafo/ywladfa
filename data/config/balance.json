@@ -1,0 +1,100 @@
+{
+  "$schema": "../schemas/balance.schema.json",
+  "comment": "Todos los números tuneables del juego. Ningún valor numérico de balance debe estar hardcodeado en src/.",
+
+  "global": {
+    "playerBaseSpeedPxPerSec": 62,
+    "overloadSpeedMultiplier": 0.4,
+    "overloadRangeMultiplier": 1.5,
+    "windSpeedMultiplier": 0.7,
+    "trailStepsToForm": 3,
+    "bondMaxLevel": 5,
+    "healthMax": 100,
+    "moraleMax": 100
+  },
+
+  "terrainSpeed": {
+    "beach_dry": 0.85,
+    "beach_wet": 1.0,
+    "pebble": 0.75,
+    "clay": 0.9,
+    "path": 1.15,
+    "scrub": 0.8,
+    "rock": 0.95
+  },
+
+  "nightConsumption": {
+    "comidaPerPerson": 1,
+    "aguaPerGroup": 2,
+    "lenaPerFire": 1,
+    "lenaExtraIfCold": 1
+  },
+
+  "nightRecovery": {
+    "bigFire":   { "health": 8,  "morale": 6,  "requiresLena": 2 },
+    "smallFire": { "health": 2,  "morale": 1,  "requiresLena": 1 },
+    "noFire":    { "health": -6, "morale": -8, "requiresLena": 0 }
+  },
+
+  "nivel01": {
+    "days": 3,
+    "turnsPerDay": 4,
+    "groupSize": 9,
+
+    "startState": {
+      "resources": { "agua": 18, "comida": 14, "forraje": 0, "lena": 2, "municion": 6, "materiales": 0 },
+      "playerCapacityKg": 20,
+      "playerCarriedKg": 6,
+      "languages": { "cym": 3, "spa": 0, "aon": 0 },
+      "morale": 55
+    },
+
+    "gains": {
+      "manantial":        { "resource": "agua",   "amount": 30, "renewablePerDay": 8 },
+      "manantial_tardio": { "resource": "agua",   "amount": 12, "renewablePerDay": 4, "comment": "si Berwyn lo encuentra en vez del jugador" },
+      "jarilla":          { "resource": "lena",   "amount": 1,  "nodes": 6 },
+      "molle":            { "resource": "comida", "amount": 2,  "nodes": 1 },
+      "mejillones":       { "resource": "comida", "amount": 3,  "nodes": 1, "window": { "day": 2, "turn": "manana" } },
+      "deposito_roberts": { "resource": "comida", "amount": 5,  "scripted": true }
+    },
+
+    "cajones": {
+      "total": 8,
+      "weightKg": 6,
+      "turnCostPerTrip": 0,
+      "tripsIfOverloaded": 2
+    },
+
+    "cuevas": {
+      "opciones": [
+        { "id": "cueva_alta",   "label": "La más alta",     "pros": "seca",            "cons": "lejos del fuego", "healthMod": 4,  "moraleMod": -2 },
+        { "id": "cueva_honda",  "label": "La más honda",    "pros": "abrigada",        "cons": "húmeda",          "healthMod": -3, "moraleMod": 5 },
+        { "id": "cueva_fogon",  "label": "La del fogón",    "pros": "cerca del grupo", "cons": "ruidosa",         "healthMod": 2,  "moraleMod": 3 }
+      ]
+    },
+
+    "mari": {
+      "healthStart": 78,
+      "healthDropDay2": -18,
+      "healthRecoveryBigFire": 14,
+      "healthRecoverySmallFire": 2,
+      "healthRecoveryNoFire": -12,
+      "criticalThreshold": 40
+    },
+
+    "cargoDecision": {
+      "capacity": 5,
+      "options": 8,
+      "allowUndo": false,
+      "confirmTwice": false
+    },
+
+    "exitThresholds": {
+      "agua":   { "good": 24, "ok": 12 },
+      "comida": { "good": 12, "ok": 6 },
+      "mariHealth": { "good": 70, "ok": 40 },
+      "morale": { "good": 60, "ok": 35 },
+      "bonds":  { "good": 2,  "ok": 1 }
+    }
+  }
+}

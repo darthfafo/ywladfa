@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Configuración global",
+  "type": "object",
+  "required": [
+    "version",
+    "render",
+    "turns",
+    "resources",
+    "languages"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "render": {
+      "type": "object",
+      "required": [
+        "width",
+        "height",
+        "tileSize"
+      ],
+      "properties": {
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "tileSize": {
+          "type": "integer"
+        },
+        "pixelArt": {
+          "type": "boolean"
+        },
+        "integerScaleOnly": {
+          "type": "boolean"
+        }
+      }
+    },
+    "turns": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "amanecer",
+          "manana",
+          "tarde",
+          "noche"
+        ]
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "unit"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "criticalBelow": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "cym",
+              "spa",
+              "aon"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "native": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "languageMask": {
+      "type": "object"
+    },
+    "factions": {
+      "type": "array"
+    },
+    "identity": {
+      "type": "object"
+    },
+    "save": {
+      "type": "object"
+    },
+    "input": {
+      "type": "object"
+    }
+  }
+}

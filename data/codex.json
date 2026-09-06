@@ -1,0 +1,126 @@
+{
+  "$schema": "./schemas/codex.schema.json",
+  "note": "Cada ficha del Códice distingue explícitamente lo DOCUMENTADO de lo DRAMATIZADO. Es una regla del proyecto, no un adorno: es lo que permite usar el juego en contexto educativo.",
+
+  "entries": [
+    {
+      "id": "cod_mimosa",
+      "title": "El Mimosa",
+      "unlockedBy": "trig_berwyn_libreta",
+      "level": "nivel-01",
+      "documented": "Velero de carga reacondicionado para pasajeros. Zarpó de Liverpool el 28 de mayo de 1865 con alrededor de 150 colonos galeses (las fuentes dan entre 153 y 162) y llegó al Golfo Nuevo el 28 de julio. Hubo muertes durante la travesía, sobre todo de niños.",
+      "dramatized": "El capitán George Pepperell existió y comandó el viaje, pero sus diálogos y su carácter en el juego son invención.",
+      "seeAlso": ["cod_wladfa", "cod_punta_cuevas"]
+    },
+    {
+      "id": "cod_wladfa",
+      "title": "Y Wladfa — la Colonia",
+      "unlockedBy": "start",
+      "level": "nivel-01",
+      "documented": "El proyecto de una colonia galesa fuera de Gran Bretaña fue impulsado desde la década de 1840 por el predicador Michael D. Jones, que observó cómo los emigrantes galeses en Estados Unidos perdían su idioma en una generación. La idea era un territorio aislado donde el galés fuera la lengua del gobierno, la escuela y la capilla.",
+      "dramatized": "Nada. Michael D. Jones nunca viajó a la Patagonia y no aparece como personaje jugable.",
+      "seeAlso": ["cod_mimosa"]
+    },
+    {
+      "id": "cod_punta_cuevas",
+      "title": "Punta Cuevas",
+      "unlockedBy": "trig_subida_barranca",
+      "level": "nivel-01",
+      "documented": "Los colonos se refugiaron en cuevas cavadas en la barranca sobre el Golfo Nuevo, en el sitio donde hoy está Puerto Madryn. El nombre del lugar viene de la estancia galesa de Love Jones-Parry, que había explorado la zona en 1863 junto a Lewis Jones. No había agua dulce disponible; caminaron unos 65 km al sur hasta el valle del río Chubut.",
+      "dramatized": "La ubicación exacta del manantial del cañadón y el episodio del niño perdido son invención del juego.",
+      "seeAlso": ["cod_mimosa", "cod_agua_patagonia"]
+    },
+    {
+      "id": "cod_agua_patagonia",
+      "title": "El agua en la meseta",
+      "unlockedBy": "trig_manantial",
+      "level": "nivel-01",
+      "documented": "La meseta patagónica recibe menos de 200 mm de lluvia al año. El agua aparece en vertientes de cañadón, mallines y aguadas estacionales, y su ubicación era conocimiento indígena transmitido por generaciones. Buena parte de la supervivencia de cualquier expedición dependía de saber dónde estaba la próxima aguada.",
+      "dramatized": "Las pistas ambientales del juego (matas en fila, vuelo de palomas, huellas de guanaco) son reales como método de rastreo, pero la escena concreta es ficción.",
+      "seeAlso": ["cod_tehuelches"]
+    },
+    {
+      "id": "cod_tehuelches",
+      "title": "Los tehuelches",
+      "unlockedBy": "nivel-02",
+      "level": "nivel-02",
+      "documented": "Los grupos aonikenk y gününa küne habitaban el valle y la meseta del Chubut. La relación con los colonos galeses fue de intercambio pacífico sostenido: enseñaron a cazar guanaco y ñandú a caballo y a leer el terreno, y comerciaban carne, cuero y plumas por pan, harina, yerba y tejidos. Es un caso poco frecuente de convivencia sin conflicto armado en la colonización del continente.",
+      "dramatized": "Los personajes tehuelches individuales del juego son ficticios. Los referentes históricos citados, como el cacique Francisco (Galtsh), sí existieron.",
+      "caveat": "Esa relación pacífica convivió con un hecho que el juego no oculta: los galeses se instalaron en territorio indígena y se beneficiaron de la campaña militar que lo despejó.",
+      "seeAlso": ["cod_conquista"]
+    },
+    {
+      "id": "cod_conquista",
+      "title": "La Conquista del Desierto",
+      "unlockedBy": "nivel-05",
+      "level": "nivel-05",
+      "documented": "Entre 1879 y 1885 el Ejército argentino ocupó militarmente la Patagonia norte y central, desarmando, deportando y dispersando a las comunidades tehuelches y mapuches. Caciques como Sayhueque, Inacayal y Foyel fueron sometidos en esos años. Es el contexto directo de la emboscada de 1884 en el actual Valle de los Mártires.",
+      "dramatized": "Nada en esta ficha. El juego no dramatiza este proceso: lo enmarca.",
+      "caveat": "Los grupos que el jugador encuentra como hostiles en la meseta son sobrevivientes de esa campaña. El juego no presenta ninguna facción indígena como hostil por naturaleza.",
+      "seeAlso": ["cod_martires"]
+    },
+    {
+      "id": "cod_martires",
+      "title": "El Valle de los Mártires",
+      "unlockedBy": "nivel-05",
+      "level": "nivel-05",
+      "documented": "El 4 de marzo de 1884, una partida de cuatro galeses que buscaba oro hacia la cordillera fue emboscada por guerreros mapuches del cacique Foyel, que sospechaban que eran espías del Ejército. Murieron John Hughes, John Parry y Richard Davies. John Daniel Evans escapó a caballo. El sitio, cerca de Las Plumas, lleva ese nombre desde entonces.",
+      "dramatized": "El detalle escena por escena de la huida.",
+      "seeAlso": ["cod_malacara", "cod_conquista"]
+    },
+    {
+      "id": "cod_malacara",
+      "title": "Malacara",
+      "unlockedBy": "nivel-05",
+      "level": "nivel-05",
+      "documented": "Caballo criollo de John Daniel Evans, llamado así por las manchas blancas de su cara. Durante la huida de 1884 saltó un cañadón que sus perseguidores no se animaron a cruzar. Murió en 1909, a los 31 años. Evans lo enterró en Trevelin con una lápida; la tumba se puede visitar.",
+      "dramatized": "La profundidad exacta del cañadón y los detalles del salto varían según la fuente; algunas versiones lo discuten como leyenda.",
+      "seeAlso": ["cod_martires", "cod_evans"]
+    },
+    {
+      "id": "cod_evans",
+      "title": "John Daniel Evans",
+      "unlockedBy": "nivel-04",
+      "level": "nivel-04",
+      "documented": "Galés criado en el valle del Chubut, baqueano y guía de la expedición de los Rifleros en 1885. Sobrevivió a la emboscada de 1884. Décadas más tarde levantó el molino harinero alrededor del cual se consolidó Trevelin, cuyo nombre significa 'pueblo del molino'.",
+      "dramatized": "Sus diálogos.",
+      "seeAlso": ["cod_rifleros", "cod_malacara"]
+    },
+    {
+      "id": "cod_rifleros",
+      "title": "Los Rifleros del Chubut",
+      "unlockedBy": "nivel-04",
+      "level": "nivel-04",
+      "documented": "Expedición partida de Rawson en octubre de 1885 al mando del gobernador Luis Jorge Fontana, con John Daniel Evans como baqueano. Unos 28 a 30 hombres — 19 galeses, siete argentinos, dos alemanes y un estadounidense — con 260 caballos, 20 cargueros y 30 fusiles Remington. El 25 de noviembre de 1885 avistaron desde la Sierra Colorada el valle que llamaron Cwm Hyfryd, rebautizado 16 de Octubre. Volvieron a Rawson en febrero de 1886 tras un circuito de unos 1.200 km, y Fontana entregó el primer mapa oficial del territorio.",
+      "dramatized": "El detalle de la vida interna de la columna.",
+      "seeAlso": ["cod_evans", "cod_cwm_hyfryd"]
+    },
+    {
+      "id": "cod_riego",
+      "title": "Los canales de riego",
+      "unlockedBy": "nivel-03",
+      "level": "nivel-03",
+      "documented": "Hacia 1867, en plena sequía, los colonos abrieron zanjas desde el río Chubut hasta las chacras. Se atribuye el hallazgo al matrimonio de Aaron y Rachel Jenkins. El sistema de canales del valle inferior fue el primero de su tipo en la Patagonia y transformó una franja de desierto en tierra productiva: hacia 1885 la colonia producía miles de toneladas de trigo.",
+      "dramatized": "El diálogo del descubrimiento.",
+      "seeAlso": ["cod_wladfa"]
+    },
+    {
+      "id": "cod_cwm_hyfryd",
+      "title": "Cwm Hyfryd",
+      "unlockedBy": "nivel-09",
+      "level": "nivel-09",
+      "documented": "'Valle hermoso' en galés. Avistado el 25 de noviembre de 1885 por la expedición de Fontana. Rebautizado Valle 16 de Octubre por la Ley de Territorios Nacionales. Colonizado desde 1888 por familias galesas. Hoy son Trevelin y Esquel.",
+      "dramatized": "Nada.",
+      "seeAlso": ["cod_rifleros", "cod_plebiscito"]
+    },
+    {
+      "id": "cod_plebiscito",
+      "title": "El plebiscito de 1902",
+      "unlockedBy": "nivel-10",
+      "level": "nivel-10",
+      "documented": "El 30 de abril de 1902, durante el arbitraje del límite con Chile, los colonos del Valle 16 de Octubre votaron en la Escuela N.º 18 de Río Corintos, ante el árbitro británico Thomas Holdich, por permanecer bajo soberanía argentina. La votación fue casi unánime pese a los incentivos de tierra ofrecidos por Chile.",
+      "dramatized": "El voto individual del personaje jugable.",
+      "seeAlso": ["cod_cwm_hyfryd"]
+    }
+  ]
+}

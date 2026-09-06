@@ -1,0 +1,72 @@
+{
+  "$schema": "../schemas/game.schema.json",
+  "version": "0.1.0",
+  "title": "Y Wladfa — La Huella de los Rifleros",
+  "render": {
+    "width": 270,
+    "height": 480,
+    "aspect": "9:16",
+    "orientation": "portrait",
+    "tileSize": 16,
+    "pixelArt": true,
+    "integerScaleOnly": true,
+    "layout": {
+      "hud":   { "x": 0, "y": 0,   "w": 270, "h": 32 },
+      "world": { "x": 0, "y": 32,  "w": 270, "h": 352 },
+      "tray":  { "x": 0, "y": 384, "w": 270, "h": 96 }
+    },
+    "letterboxColor": "#0E1416"
+  },
+  "touch": {
+    "joystick": { "baseRadius": 20, "thumbRadius": 9, "deadZone": 4, "area": "tray-left", "floating": true },
+    "actionButton": { "size": 48, "area": "tray-right" },
+    "tapToMove": true,
+    "minTargetPx": 44
+  },
+  "turns": ["amanecer", "manana", "tarde", "noche"],
+  "resources": [
+    { "id": "agua",       "label": "Agua",       "unit": "L",        "icon": "res_agua",       "min": 0, "max": 999, "criticalBelow": 6 },
+    { "id": "comida",     "label": "Comida",     "unit": "raciones", "icon": "res_comida",     "min": 0, "max": 999, "criticalBelow": 4 },
+    { "id": "forraje",    "label": "Forraje",    "unit": "fardos",   "icon": "res_forraje",    "min": 0, "max": 999, "criticalBelow": 2 },
+    { "id": "lena",       "label": "Leña",       "unit": "haces",    "icon": "res_lena",       "min": 0, "max": 99,  "criticalBelow": 1 },
+    { "id": "municion",   "label": "Munición",   "unit": "tiros",    "icon": "res_municion",   "min": 0, "max": 200, "criticalBelow": 2 },
+    { "id": "materiales", "label": "Materiales", "unit": "u",        "icon": "res_materiales", "min": 0, "max": 999, "criticalBelow": 0 }
+  ],
+  "languages": [
+    { "id": "cym", "label": "Galés",      "native": "Cymraeg" },
+    { "id": "spa", "label": "Castellano", "native": "Castellano" },
+    { "id": "aon", "label": "Aonikenk",   "native": "Aonikenk" }
+  ],
+  "languageMask": {
+    "0": "full",
+    "1": "keywords",
+    "2": "partial",
+    "3": "none",
+    "blockChar": "▓"
+  },
+  "factions": [
+    { "id": "colonia",   "label": "La colonia galesa", "startTrust": 60 },
+    { "id": "tehuelche", "label": "Tehuelches",        "startTrust": 30 },
+    { "id": "estado",    "label": "Estado argentino",  "startTrust": 40 },
+    { "id": "criollos",  "label": "Criollos y baqueanos", "startTrust": 35 }
+  ],
+  "identity": {
+    "axis": ["galesa", "mestiza", "argentina"],
+    "start": { "galesa": 80, "mestiza": 10, "argentina": 10 }
+  },
+  "save": {
+    "slots": 1,
+    "autosaveOn": ["time:day-ended", "trigger:fired:decision"],
+    "storage": "localStorage",
+    "key": "wladfa.save.v1"
+  },
+  "input": {
+    "move": ["ArrowKeys", "WASD"],
+    "interact": ["Space", "E"],
+    "journal": ["D"],
+    "codex": ["C"],
+    "map": ["M"],
+    "status": ["J"],
+    "cancel": ["Escape"]
+  }
+}

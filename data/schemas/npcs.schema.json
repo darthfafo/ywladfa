@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NPCs",
+  "type": "object",
+  "required": [
+    "npcs"
+  ],
+  "properties": {
+    "npcs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "historical",
+          "sprite",
+          "languages"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^npc_[a-z0-9_]+$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "historical": {
+            "type": "boolean",
+            "description": "true = persona real. Obliga a que 'note' declare qué está dramatizado."
+          },
+          "years": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "role": {
+            "type": "string"
+          },
+          "sprite": {
+            "type": "string"
+          },
+          "portrait": {
+            "type": "string"
+          },
+          "languages": {
+            "type": "object",
+            "required": [
+              "cym",
+              "spa",
+              "aon"
+            ],
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            }
+          },
+          "trade": {
+            "enum": [
+              "organizador",
+              "baqueano",
+              "predicador",
+              "agrimensor",
+              "marino",
+              "hilandera",
+              "herrero",
+              "agricultor",
+              "tirador",
+              "medico",
+              "interprete",
+              "ninguno"
+            ]
+          },
+          "bond": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "stats": {
+            "type": "object",
+            "properties": {
+              "health": {
+                "type": "number"
+              },
+              "morale": {
+                "type": "number"
+              },
+              "stamina": {
+                "type": "number"
+              }
+            }
+          },
+          "note": {
+            "type": "string"
+          },
+          "voiceNote": {
+            "type": "string"
+          },
+          "unlocks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "level": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

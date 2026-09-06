@@ -1,0 +1,205 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Definición de nivel",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "map",
+    "schedule",
+    "zones",
+    "spawns",
+    "triggers"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^nivel-[0-9]{2}$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string"
+    },
+    "next": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "map": {
+      "type": "object",
+      "required": [
+        "file",
+        "widthTiles",
+        "heightTiles",
+        "tileSize"
+      ],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "widthTiles": {
+          "type": "integer"
+        },
+        "heightTiles": {
+          "type": "integer"
+        },
+        "tileSize": {
+          "type": "integer"
+        },
+        "tilesets": {
+          "type": "array"
+        },
+        "layers": {
+          "type": "array"
+        }
+      }
+    },
+    "schedule": {
+      "type": "object",
+      "required": [
+        "days",
+        "turnsPerDay"
+      ],
+      "properties": {
+        "days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "turnsPerDay": {
+          "type": "integer",
+          "enum": [
+            4
+          ]
+        }
+      }
+    },
+    "zones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "rect"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "rect": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "music": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ambient": {
+            "type": "array"
+          },
+          "hub": {
+            "type": "boolean"
+          },
+          "saveHere": {
+            "type": "boolean"
+          },
+          "speedModifier": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "spawns": {
+      "type": "object"
+    },
+    "objectives": {
+      "type": "array"
+    },
+    "triggers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^trig_[a-z0-9_]+$"
+          },
+          "type": {
+            "enum": [
+              "cutscene",
+              "dialogue",
+              "tutorial",
+              "zone",
+              "choice",
+              "minigame",
+              "scene",
+              "modifier",
+              "ambient",
+              "trail",
+              "key",
+              "gather",
+              "unlock",
+              "decision"
+            ]
+          },
+          "zone": {
+            "type": "string"
+          },
+          "rect": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "event": {
+            "type": "string"
+          },
+          "match": {
+            "type": "object"
+          },
+          "requires": {
+            "type": "string"
+          },
+          "once": {
+            "type": "boolean"
+          },
+          "turnCost": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4
+          },
+          "action": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "hints": {
+      "type": "array"
+    },
+    "exit": {
+      "type": "object"
+    }
+  }
+}

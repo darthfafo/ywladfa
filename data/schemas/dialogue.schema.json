@@ -1,0 +1,237 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Diálogos de un nivel",
+  "type": "object",
+  "required": [
+    "level",
+    "dialogues"
+  ],
+  "definitions": {
+    "effect": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "setFlag": {
+          "type": "object"
+        },
+        "bond": {
+          "type": "object",
+          "required": [
+            "npc",
+            "delta"
+          ],
+          "properties": {
+            "npc": {
+              "type": "string"
+            },
+            "delta": {
+              "type": "integer"
+            }
+          }
+        },
+        "resource": {
+          "type": "object",
+          "required": [
+            "id",
+            "delta"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "delta": {
+              "type": "number"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        },
+        "partyStat": {
+          "type": "object"
+        },
+        "morale": {
+          "type": "number"
+        },
+        "giveItem": {
+          "type": "string"
+        },
+        "unlock": {
+          "type": "array"
+        },
+        "codex": {
+          "type": "string"
+        },
+        "objective": {
+          "type": "string"
+        },
+        "unlockHint": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "speaker"
+      ],
+      "properties": {
+        "speaker": {
+          "type": "string",
+          "description": "id de npc, 'pc' o 'narrator'"
+        },
+        "portrait": {
+          "enum": [
+            "neutral",
+            "tenso",
+            "calido"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "broken": {
+          "type": "boolean",
+          "description": "renderiza gramática rota (hablante no nativo)"
+        },
+        "condition": {
+          "type": "string"
+        },
+        "next": {
+          "type": "string"
+        },
+        "end": {
+          "type": "boolean"
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/effect"
+          }
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "text"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "next": {
+                "type": "string"
+              },
+              "condition": {
+                "type": "string"
+              },
+              "effects": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/effect"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "properties": {
+    "level": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "dialogues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "start",
+          "nodes"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^d_[a-z0-9_]+$"
+          },
+          "npc": {
+            "type": "string"
+          },
+          "context": {
+            "type": "string"
+          },
+          "lang": {
+            "enum": [
+              "cym",
+              "spa",
+              "aon",
+              "none"
+            ]
+          },
+          "start": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "nodes": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/definitions/node"
+            }
+          }
+        }
+      }
+    },
+    "choices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "prompt",
+          "options"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^ch_[a-z0-9_]+$"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "turnCost": {
+            "type": "integer"
+          },
+          "options": {
+            "type": "array",
+            "minItems": 2
+          }
+        }
+      }
+    },
+    "tutorials": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "text"
+        ]
+      }
+    }
+  }
+}

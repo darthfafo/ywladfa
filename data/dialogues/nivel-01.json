@@ -1,0 +1,861 @@
+{
+  "$schema": "../schemas/dialogue.schema.json",
+  "level": "nivel-01",
+  "note": "Todo el Nivel 1 está en galés (cym), idioma que el jugador domina en nivel 3. No hay enmascarado ▓ en este nivel a propósito: el sistema de idiomas se muestra recién en el Nivel 2, con el juego ya entendido. Pepperell habla galés roto (broken:true), que se renderiza con gramática torcida pero legible.",
+  "semantica_de_nodos": {
+    "condition": "Si un nodo tiene 'condition' y evalúa false, el DialogueSystem lo SALTEA y sigue con el siguiente nodo declarado en el objeto 'nodes' (orden de declaración). Por eso hay nodos que no son destino de ningún 'next': son variantes condicionales, no nodos huérfanos. Casos: d_n1_fogon_j2 (g1 / g1_frio y g_lewis / g_lewis_alt) y d_n1_reacciones (r1, r2, r3 encadenan por condición).",
+    "end": "Un nodo con 'end': true cierra el diálogo aunque haya nodos posteriores declarados.",
+    "effects": "Se aplican al MOSTRAR el nodo, antes de esperar input. Los effects de una opción se aplican al elegirla.",
+    "portrait": "neutral | tenso | calido. Si falta, usar neutral."
+  },
+  "dialogues": [
+    {
+      "id": "d_n1_pepperell_intro",
+      "npc": "npc_pepperell",
+      "lang": "cym",
+      "start": "p1",
+      "nodes": {
+        "p1": {
+          "speaker": "npc_pepperell",
+          "portrait": "neutral",
+          "broken": true,
+          "text": "Vos. Sí, vos. Marea sube en cuatro horas. Cajones abajo antes, o cajones al agua.",
+          "next": "p2"
+        },
+        "p2": {
+          "speaker": "pc",
+          "portrait": "neutral",
+          "text": "¿Nadie más los baja?",
+          "next": "p3"
+        },
+        "p3": {
+          "speaker": "npc_pepperell",
+          "portrait": "neutral",
+          "broken": true,
+          "text": "Todos bajan. Vos también bajás. Ocho cajones. Yo cuento.",
+          "next": "p4"
+        },
+        "p4": {
+          "speaker": "npc_pepperell",
+          "portrait": "tenso",
+          "broken": true,
+          "text": "Y una cosa. Yo vuelvo a Liverpool. El barco vuelve. Ustedes no.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_pepperell_intro": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_edwyn_deposito",
+      "npc": "npc_edwyn",
+      "lang": "cym",
+      "start": "e1",
+      "nodes": {
+        "e1": {
+          "speaker": "npc_edwyn",
+          "portrait": "tenso",
+          "text": "Hay treinta bolsas.",
+          "next": "e2"
+        },
+        "e2": {
+          "speaker": "pc",
+          "portrait": "tenso",
+          "text": "¿Treinta? Dijiste doscientas.",
+          "next": "e3"
+        },
+        "e3": {
+          "speaker": "npc_edwyn",
+          "portrait": "tenso",
+          "text": "Dije que iba a haber doscientas. Es distinto.",
+          "next": "e4"
+        },
+        "e4": {
+          "speaker": "npc_edwyn",
+          "portrait": "tenso",
+          "text": "No me mires así. Mirá el mar. De ahí venía el resto.",
+          "next": "e5"
+        },
+        "e5": {
+          "speaker": "pc",
+          "portrait": "neutral",
+          "text": "¿Y ahora?",
+          "next": "e6"
+        },
+        "e6": {
+          "speaker": "npc_edwyn",
+          "portrait": "neutral",
+          "text": "Ahora contamos las treinta. Y no las contamos en voz alta delante de nadie.",
+          "choices": [
+            {
+              "id": "c_culpar",
+              "text": "Alguien va a tener que explicar esto.",
+              "next": "e_culpar",
+              "effects": [
+                {
+                  "bond": {
+                    "npc": "npc_edwyn",
+                    "delta": -1
+                  }
+                },
+                {
+                  "setFlag": {
+                    "n1_culpo_edwyn": true
+                  }
+                }
+              ]
+            },
+            {
+              "id": "c_ayudar",
+              "text": "Contemos de nuevo. Los dos.",
+              "next": "e_ayudar",
+              "effects": [
+                {
+                  "bond": {
+                    "npc": "npc_edwyn",
+                    "delta": 1
+                  }
+                },
+                {
+                  "setFlag": {
+                    "n1_bond_edwyn": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "c_callar",
+              "text": "(No decir nada.)",
+              "next": "e_callar",
+              "effects": [
+                {
+                  "morale": -2
+                }
+              ]
+            }
+          ]
+        },
+        "e_culpar": {
+          "speaker": "npc_edwyn",
+          "portrait": "tenso",
+          "text": "Sí. Yo. Ya sé que yo. Hace tres semanas que lo sé.",
+          "effects": [
+            {
+              "resource": {
+                "id": "comida",
+                "delta": 5,
+                "reason": "depósito de Roberts"
+              }
+            }
+          ],
+          "end": true
+        },
+        "e_ayudar": {
+          "speaker": "npc_edwyn",
+          "portrait": "calido",
+          "text": "Treinta y dos. Había dos atrás. (pausa) Gracias. Después te muestro una cosa del cañadón.",
+          "effects": [
+            {
+              "resource": {
+                "id": "comida",
+                "delta": 5,
+                "reason": "depósito de Roberts"
+              }
+            },
+            {
+              "unlockHint": "hint_agua_1"
+            }
+          ],
+          "end": true
+        },
+        "e_callar": {
+          "speaker": "npc_edwyn",
+          "portrait": "neutral",
+          "text": "Bueno. Mejor así.",
+          "effects": [
+            {
+              "resource": {
+                "id": "comida",
+                "delta": 5,
+                "reason": "depósito de Roberts"
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_fogon_j1",
+      "context": "camp",
+      "lang": "cym",
+      "start": "f1",
+      "nodes": {
+        "f1": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "text": "Mañana buscamos agua. Pasado, caminamos al sur. Es todo. No es tan grave.",
+          "next": "f2"
+        },
+        "f2": {
+          "speaker": "npc_matthews",
+          "portrait": "neutral",
+          "text": "Sesenta y cinco kilómetros con chicos y sin agua no es «no tan grave», Lewis.",
+          "next": "f3"
+        },
+        "f3": {
+          "speaker": "npc_lewis",
+          "portrait": "tenso",
+          "text": "Es lo que hay.",
+          "next": "f_ronda"
+        },
+        "f_ronda": {
+          "speaker": "narrator",
+          "text": "El fuego alcanza para tres conversaciones. Hay tiempo para una.",
+          "choices": [
+            {
+              "id": "c_lewis",
+              "text": "Sentarse con Lewis.",
+              "next": "f_lewis",
+              "effects": [
+                {
+                  "bond": {
+                    "npc": "npc_lewis",
+                    "delta": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "c_matthews",
+              "text": "Sentarse con Matthews.",
+              "next": "f_matthews",
+              "effects": [
+                {
+                  "bond": {
+                    "npc": "npc_matthews",
+                    "delta": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "c_mari",
+              "text": "Sentarse con tu madre.",
+              "next": "f_mari",
+              "effects": [
+                {
+                  "bond": {
+                    "npc": "npc_mari",
+                    "delta": 1
+                  }
+                },
+                {
+                  "morale": 3
+                }
+              ]
+            }
+          ]
+        },
+        "f_lewis": {
+          "speaker": "npc_lewis",
+          "portrait": "calido",
+          "text": "¿Sabés qué es lo peor? Que yo lo vi en el sesenta y tres y me pareció hermoso. Y era esto. Era exactamente esto.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_fogon_1": true
+              }
+            }
+          ],
+          "end": true
+        },
+        "f_matthews": {
+          "speaker": "npc_matthews",
+          "portrait": "calido",
+          "text": "No te voy a preguntar si tenés fe. Te voy a preguntar si vas a estar mañana. Con eso me alcanza.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_fogon_1": true
+              }
+            },
+            {
+              "morale": 4
+            }
+          ],
+          "end": true
+        },
+        "f_mari": {
+          "speaker": "npc_mari",
+          "portrait": "calido",
+          "text": "Estoy bien. (tose) Estoy bien. Andá a dormir vos, que mañana caminás.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_fogon_1": true,
+                "n1_hablo_mari": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_amanecer_j2",
+      "lang": "cym",
+      "start": "a1",
+      "nodes": {
+        "a1": {
+          "speaker": "narrator",
+          "text": "Segundo día. El viento arrancó de noche y no paró. Mari tose desde antes del amanecer.",
+          "next": "a2"
+        },
+        "a2": {
+          "speaker": "npc_lewis",
+          "portrait": "tenso",
+          "text": "Agua. Hoy es agua o nada. Quedan cuatro días de lo que trajimos, y eso contando poco.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_amanecer_j2": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_dafydd_perdido",
+      "lang": "cym",
+      "start": "dp1",
+      "nodes": {
+        "dp1": {
+          "speaker": "npc_mari",
+          "portrait": "tenso",
+          "text": "¿Y el chico? El de los Hughes. Dafydd. Estaba acá hace un rato.",
+          "next": "dp2"
+        },
+        "dp2": {
+          "speaker": "npc_lewis",
+          "portrait": "tenso",
+          "text": "Paren todo. Nadie sigue con lo suyo hasta que aparezca.",
+          "next": "dp3"
+        },
+        "dp3": {
+          "speaker": "narrator",
+          "text": "En la arena hay huellas chicas. Van hacia el noroeste, al cañadón.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_dafydd_perdido": true
+              }
+            },
+            {
+              "objective": "obj_dafydd"
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_manantial",
+      "lang": "none",
+      "start": "m1",
+      "note": "Escena sin diálogo hablado. Ver GDD §9.2. Sin música, sin fanfarria.",
+      "nodes": {
+        "m1": {
+          "speaker": "narrator",
+          "text": "Dafydd está sentado en el fondo del cañadón, con los pies en un hilo de agua de dos dedos de ancho.",
+          "next": "m2"
+        },
+        "m2": {
+          "speaker": "narrator",
+          "text": "No dice nada. Señala.",
+          "next": "m3"
+        },
+        "m3": {
+          "speaker": "npc_dafydd",
+          "portrait": "neutral",
+          "text": "Las palomas venían para acá.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_encontro_manantial": true
+              }
+            },
+            {
+              "resource": {
+                "id": "agua",
+                "delta": 30,
+                "reason": "manantial del cañadón"
+              }
+            },
+            {
+              "bond": {
+                "npc": "npc_dafydd",
+                "delta": 2
+              }
+            },
+            {
+              "codex": "cod_agua_patagonia"
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_fogon_j2",
+      "context": "camp",
+      "lang": "cym",
+      "start": "g1",
+      "nodes": {
+        "g1": {
+          "speaker": "narrator",
+          "condition": "resources.lena >= 2",
+          "text": "El fuego es grande. Se puede estar sentado sin darle la espalda al viento.",
+          "next": "g_lewis"
+        },
+        "g1_frio": {
+          "speaker": "narrator",
+          "condition": "resources.lena < 2",
+          "text": "El fuego es chico. Nadie dice nada, pero todos se sientan del mismo lado.",
+          "next": "g_lewis"
+        },
+        "g_lewis": {
+          "speaker": "npc_lewis",
+          "portrait": "calido",
+          "text": "Treinta litros. Treinta. (se ríe) Nos salvó un chico de nueve años.",
+          "condition": "flags.n1_encontro_manantial == true",
+          "next": "g_matthews"
+        },
+        "g_lewis_alt": {
+          "speaker": "npc_lewis",
+          "portrait": "tenso",
+          "text": "Berwyn encontró el hilo de agua a la noche. Doce litros. Alguien tendría que haberlo encontrado a la mañana.",
+          "condition": "flags.n1_encontro_manantial != true",
+          "next": "g_matthews"
+        },
+        "g_matthews": {
+          "speaker": "npc_matthews",
+          "portrait": "neutral",
+          "text": "Mañana nos vamos. Y nos vamos con lo que entre en los carros, no con lo que trajimos.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_fogon_2": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_berwyn_libreta",
+      "npc": "npc_berwyn",
+      "lang": "cym",
+      "start": "b1",
+      "nodes": {
+        "b1": {
+          "speaker": "npc_berwyn",
+          "portrait": "neutral",
+          "text": "Tomá. Es una libreta. Hojas cosidas, nada del otro mundo.",
+          "next": "b2"
+        },
+        "b2": {
+          "speaker": "pc",
+          "portrait": "neutral",
+          "text": "¿Para qué?",
+          "next": "b3"
+        },
+        "b3": {
+          "speaker": "npc_berwyn",
+          "portrait": "calido",
+          "text": "Porque dentro de cuarenta años alguien va a preguntar cómo fue, y no va a quedar nadie que se acuerde.",
+          "next": "b4"
+        },
+        "b4": {
+          "speaker": "npc_berwyn",
+          "portrait": "neutral",
+          "text": "Escribí lo que pasa, no lo que sentís. Lo que sentís ya lo sabés vos.",
+          "effects": [
+            {
+              "giveItem": "libreta_berwyn"
+            },
+            {
+              "unlock": [
+                "sistema_diario",
+                "sistema_codice"
+              ]
+            },
+            {
+              "codex": "cod_mimosa"
+            },
+            {
+              "bond": {
+                "npc": "npc_berwyn",
+                "delta": 1
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_anuncio_marcha",
+      "lang": "cym",
+      "start": "am1",
+      "nodes": {
+        "am1": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "text": "Sesenta y cinco kilómetros hasta el río. Tres días si el viento afloja, cuatro si no.",
+          "next": "am2"
+        },
+        "am2": {
+          "speaker": "npc_pepperell",
+          "portrait": "neutral",
+          "broken": true,
+          "text": "Carros llevan cinco bultos. Cinco. Hay ocho en la playa.",
+          "next": "am3"
+        },
+        "am3": {
+          "speaker": "npc_matthews",
+          "portrait": "tenso",
+          "text": "El órgano pesa lo que pesan cuatro personas.",
+          "next": "am4"
+        },
+        "am4": {
+          "speaker": "npc_berwyn",
+          "portrait": "tenso",
+          "text": "La imprenta también. Y sin ella, en un año nadie se acuerda de por qué vinimos.",
+          "next": "am5"
+        },
+        "am5": {
+          "speaker": "npc_pepperell",
+          "portrait": "neutral",
+          "broken": true,
+          "text": "Lo que dejan, yo se los guardo.",
+          "next": "am6"
+        },
+        "am6": {
+          "speaker": "narrator",
+          "text": "(No se los va a guardar.)",
+          "next": "am7"
+        },
+        "am7": {
+          "speaker": "npc_lewis",
+          "portrait": "tenso",
+          "text": "Elegí vos. Yo ya elegí bastante y miren dónde estamos.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_anuncio_marcha": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_reacciones",
+      "lang": "cym",
+      "start": "r1",
+      "note": "Nodos condicionales según flags.n1_carga. Se muestran solo los que aplican, máximo 3.",
+      "nodes": {
+        "r1": {
+          "speaker": "npc_berwyn",
+          "portrait": "tenso",
+          "condition": "!(flags.n1_carga includes 'imprenta')",
+          "text": "Está bien. Escribo a mano. Toda mi vida escribí a mano.",
+          "effects": [
+            {
+              "bond": {
+                "npc": "npc_berwyn",
+                "delta": -1
+              }
+            }
+          ],
+          "next": "r2"
+        },
+        "r2": {
+          "speaker": "npc_matthews",
+          "portrait": "tenso",
+          "condition": "!(flags.n1_carga includes 'organo')",
+          "text": "Cantamos igual. Se canta sin órgano. Se cantó dos mil años sin órgano.",
+          "effects": [
+            {
+              "bond": {
+                "npc": "npc_matthews",
+                "delta": -1
+              }
+            }
+          ],
+          "next": "r3"
+        },
+        "r3": {
+          "speaker": "npc_mari",
+          "portrait": "neutral",
+          "condition": "!(flags.n1_carga includes 'abrigo')",
+          "text": "No hace tanto frío. (se cierra el chal)",
+          "next": "r4"
+        },
+        "r4": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "text": "Listo. Cargamos y salimos al mediodía.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_reacciones": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_cold_open",
+      "lang": "none",
+      "start": "c1",
+      "note": "Cold open. Sin HUD hasta que termina. Ver docs/01-nivel-01.md §4.",
+      "nodes": {
+        "c1": {
+          "speaker": "narrator",
+          "text": "28 de julio de 1865. El bote toca la playa y nadie baja primero.",
+          "next": "c2"
+        },
+        "c2": {
+          "speaker": "narrator",
+          "text": "Nos dijeron que era verde.",
+          "next": "c3"
+        },
+        "c3": {
+          "speaker": "narrator",
+          "text": "Hay piedra, viento y una barranca de arcilla. Ciento cincuenta personas y ni un árbol.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_desembarco": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_mimosa_zarpa",
+      "lang": "none",
+      "start": "m1",
+      "nodes": {
+        "m1": {
+          "speaker": "narrator",
+          "text": "Desde el vigía se ve el Mimosa levando ancla.",
+          "next": "m2"
+        },
+        "m2": {
+          "speaker": "narrator",
+          "text": "Tarda menos de lo que uno esperaría en volverse un punto.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_vio_zarpar": true
+              }
+            },
+            {
+              "morale": -4
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_final",
+      "lang": "none",
+      "start": "f1",
+      "nodes": {
+        "f1": {
+          "speaker": "narrator",
+          "text": "Desde la punta se ven las cuevas vacías. Los bultos que quedaron siguen ahí, ordenados.",
+          "next": "f2"
+        },
+        "f2": {
+          "speaker": "narrator",
+          "text": "28 de julio – 1 de agosto de 1865.",
+          "next": "f3"
+        },
+        "f3": {
+          "speaker": "narrator",
+          "text": "Ciento cincuenta personas caminaron sesenta y cinco kilómetros hasta el río.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_terminado": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    }
+  ],
+  "choices": [
+    {
+      "id": "ch_n1_cueva",
+      "prompt": "Hay tres cuevas libres. Elegí la de tu familia.",
+      "turnCost": 1,
+      "options": [
+        {
+          "id": "cueva_alta",
+          "text": "La más alta. Seca, pero lejos del fuego.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_cueva_elegida": "cueva_alta"
+              }
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": 4,
+                "morale": -2
+              }
+            }
+          ]
+        },
+        {
+          "id": "cueva_honda",
+          "text": "La más honda. Abrigada, pero húmeda.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_cueva_elegida": "cueva_honda"
+              }
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": -3,
+                "morale": 5
+              }
+            }
+          ]
+        },
+        {
+          "id": "cueva_fogon",
+          "text": "La del fogón. Cerca de todos, y no se duerme.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_cueva_elegida": "cueva_fogon"
+              }
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": 2,
+                "morale": 3
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ch_n1_tareas",
+      "prompt": "Lewis reparte el día. Solo alcanza para una cosa.",
+      "turnCost": 0,
+      "options": [
+        {
+          "id": "t_agua",
+          "text": "Buscar agua. (meseta y cañadón)",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_tarea": "agua"
+              }
+            },
+            {
+              "objective": "obj_agua"
+            }
+          ]
+        },
+        {
+          "id": "t_lena",
+          "text": "Juntar leña. (el monte)",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_tarea": "lena"
+              }
+            },
+            {
+              "resource": {
+                "id": "lena",
+                "delta": 3,
+                "reason": "jornada de monte"
+              }
+            }
+          ]
+        },
+        {
+          "id": "t_cuevas",
+          "text": "Quedarse a arreglar las cuevas.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_tarea": "cuevas"
+              }
+            },
+            {
+              "morale": 5
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": 8
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "tutorials": [
+    {
+      "id": "tut_carga",
+      "title": "Carga",
+      "text": "Todo lo que levantás pesa. La barra de la derecha es tu carga. Cuando pasa el límite no se bloquea nada: simplemente caminás más lento."
+    },
+    {
+      "id": "tut_peso",
+      "title": "Sobrecarga",
+      "text": "Estás sobre tu capacidad. Podés seguir así, o dejar algo y volver a buscarlo. Volver cuesta tiempo, y el tiempo es lo único que no se recupera."
+    },
+    {
+      "id": "tut_turnos",
+      "title": "La jornada",
+      "text": "El día tiene cuatro momentos. El reloj no corre solo: avanza cuando hacés algo que cuesta tiempo. Caminar y mirar es gratis."
+    },
+    {
+      "id": "tut_noche",
+      "title": "La noche",
+      "text": "Cada noche el grupo come y bebe. Si hay leña, el fuego es grande y la gente se recupera. Si no, no."
+    }
+  ]
+}

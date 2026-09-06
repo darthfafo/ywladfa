@@ -1,0 +1,109 @@
+import Phaser from 'phaser';
+import { PAL, VIEW } from '@/config';
+import { bus } from '@/core/EventBus';
+import { input } from '@/util/input';
+import { crisp, FONT, FONT_FAMILY } from '@/util/text';
+
+const CFG = {
+  baseRadius: 20,
+  thumbRadius: 9,
+  deadZone: 4,
+  buttonSize: 40, // no más grande que la base del joystick (40 = 2×baseRadius)
+  grabRadius: 34, // zona de agarre más generosa que el círculo visual del joystick
+  anchorX: VIEW.tray.w - 34,
+};
+
+/**
+ * Joystick fijo + botón de acción, los dos apilados en la misma esquina (abajo a la
+ * derecha, la más cercana al pulgar): así el resto de la bandeja queda libre para el
+ * diálogo y el texto que guía al jugador. Antes el joystick aparecía donde caía el
+ * pulgar; ahora es un control de posición fija, más predecible con el pulgar siempre
+ * en el mismo lugar.
+ */
+export class TouchControls {
+  private base: Phaser.GameObjects.Arc;
+  private thumb: Phaser.GameObjects.Arc;
+  private button: Phaser.GameObjects.Container;
+  private buttonLabel: Phaser.GameObjects.Text;
+  private origin: Phaser.Math.Vector2;
+  private pointerId: number | null = null;
+
+  constructor(scene: Phaser.Scene) {
+    const tray = VIEW.tray;
+    const jx = CFG.anchorX;
+    const jy = tray.y + 72;
+    this.origin = new Phaser.Math.Vector2(jx, jy);
+
+    const bx = CFG.anchorX;
+    const by = tray.y + 25;
+
+    const circle = scene.add.circle(0, 0, CFG.buttonSize / 2, PAL.slate, 0.85).setStrokeStyle(1, PAL.seaPale, 0.8);
+    this.buttonLabel = crisp(
+      scene.add
+        .text(0, 0, '·', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#EAE8E0', align: 'center' })
+        .setOrigin(0.5)
+        .setResolution(4),
+    );
+    this.button = scene.add.container(bx, by, [circle, this.buttonLabel]).setDepth(50).setAlpha(0.5);
+
+    circle.setInteractive(new Phaser.Geom.Circle(0, 0, CFG.buttonSize / 2), Phaser.Geom.Circle.Contains);
+    circle.on('pointerdown', () => {
+      if (input.locked) return;
+      input.pressAction();
+      this.button.setScale(0.92);
+    });
+    circle.on('pointerup', () => this.button.setScale(1));
+    circle.on('pointerout', () => this.button.setScale(1));
+
+    // joystick fijo: base y agarre siempre en el mismo lugar, nunca se mueven
+    this.base = scene.add.circle(jx, jy, CFG.baseRadius, PAL.bone, 0.16).setDepth(50).setStrokeStyle(1, PAL.bone, 0.3);
+    this.thumb = scene.add.circle(jx, jy, CFG.thumbRadius, PAL.bone, 0.45).setDepth(51);
+
+    this.base.setInteractive(new Phaser.Geom.Circle(0, 0, CFG.grabRadius), Phaser.Geom.Circle.Contains);
+    this.base.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      if (input.locked) return;
+      this.pointerId = p.id;
+      this.updateThumb(p.x, p.y);
+    });
+
+    scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (this.pointerId !== p.id || input.locked) return;
+      this.updateThumb(p.x, p.y);
+    });
+
+    const release = (p: Phaser.Input.Pointer) => {
+      if (this.pointerId !== p.id) return;
+      this.pointerId = null;
+      this.thumb.setPosition(this.origin.x, this.origin.y);
+      input.clearVector();
+    };
+    scene.input.on('pointerup', release);
+    scene.input.on('pointerupoutside', release);
+
+    bus.on('ui:action-context', ({ label }) => this.setContext(label));
+    this.setContext(null);
+  }
+
+  private updateThumb(px: number, py: number): void {
+    const dx = px - this.origin.x;
+    const dy = py - this.origin.y;
+    const dist = Math.hypot(dx, dy);
+    const clamped = Math.min(dist, CFG.baseRadius);
+    const ang = Math.atan2(dy, dx);
+    this.thumb.setPosition(this.origin.x + Math.cos(ang) * clamped, this.origin.y + Math.sin(ang) * clamped);
+    if (dist < CFG.deadZone) input.clearVector();
+    else input.setVector(dx / CFG.baseRadius, dy / CFG.baseRadius);
+  }
+
+  /** El botón cambia de icono según lo que haya cerca: hablar / levantar / cavar / entrar. */
+  setContext(label: string | null): void {
+    this.buttonLabel.setText(label ?? '·');
+    this.button.setAlpha(label ? 1 : 0.45);
+  }
+
+  destroy(): void {
+    this.base.destroy();
+    this.thumb.destroy();
+    this.button.destroy();
+  }
+}

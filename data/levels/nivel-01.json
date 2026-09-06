@@ -1,0 +1,792 @@
+{
+  "$schema": "../schemas/level.schema.json",
+  "id": "nivel-01",
+  "title": "Las cuevas",
+  "subtitle": "Punta Cuevas, Golfo Nuevo",
+  "date": "28 de julio – 1 de agosto de 1865",
+  "next": "nivel-02",
+  "map": {
+    "file": "maps/nivel-01.tmj",
+    "widthTiles": 64,
+    "heightTiles": 112,
+    "tileSize": 16,
+    "orientationNote": "Mapa vertical para pantalla 9:16. El nivel se sube: playa abajo (y~100), cañadón arriba (y~10). La cámara ve ~17×22 tiles.",
+    "tilesets": [
+      "punta_cuevas"
+    ],
+    "layers": [
+      {
+        "name": "ground",
+        "type": "tile",
+        "depth": 0
+      },
+      {
+        "name": "ground_detail",
+        "type": "tile",
+        "depth": 1
+      },
+      {
+        "name": "objects_low",
+        "type": "tile",
+        "depth": 2
+      },
+      {
+        "name": "collision",
+        "type": "tile",
+        "depth": 3,
+        "visible": false,
+        "collides": true
+      },
+      {
+        "name": "objects_high",
+        "type": "tile",
+        "depth": 10
+      },
+      {
+        "name": "spawns",
+        "type": "object"
+      },
+      {
+        "name": "triggers",
+        "type": "object"
+      },
+      {
+        "name": "zones",
+        "type": "object"
+      }
+    ]
+  },
+  "schedule": {
+    "days": 3,
+    "turnsPerDay": 4
+  },
+  "zones": [
+    {
+      "id": "z1_playa",
+      "label": "La playa",
+      "rect": [
+        6,
+        92,
+        44,
+        18
+      ],
+      "music": "mus_playa",
+      "ambient": [
+        "amb_mar",
+        "amb_viento_bajo"
+      ]
+    },
+    {
+      "id": "z6_punta",
+      "label": "La punta",
+      "rect": [
+        48,
+        70,
+        15,
+        26
+      ],
+      "music": "mus_playa",
+      "ambient": [
+        "amb_mar",
+        "amb_viento_alto"
+      ]
+    },
+    {
+      "id": "z2_barranca",
+      "label": "Las cuevas",
+      "rect": [
+        24,
+        40,
+        36,
+        30
+      ],
+      "music": "mus_barranca",
+      "ambient": [
+        "amb_viento_bajo"
+      ],
+      "hub": true,
+      "saveHere": true
+    },
+    {
+      "id": "z3_monte",
+      "label": "El monte",
+      "rect": [
+        2,
+        44,
+        21,
+        34
+      ],
+      "music": null,
+      "ambient": [
+        "amb_viento_bajo"
+      ]
+    },
+    {
+      "id": "z4_meseta",
+      "label": "La meseta",
+      "rect": [
+        30,
+        4,
+        32,
+        34
+      ],
+      "music": null,
+      "ambient": [
+        "amb_viento_alto"
+      ],
+      "speedModifier": 0.7
+    },
+    {
+      "id": "z5_canadon",
+      "label": "El cañadón seco",
+      "rect": [
+        2,
+        2,
+        26,
+        40
+      ],
+      "music": "mus_silencio",
+      "ambient": [
+        "amb_agua_hilo"
+      ]
+    }
+  ],
+  "camera": {
+    "viewport": {
+      "x": 0,
+      "y": 32,
+      "w": 270,
+      "h": 352
+    },
+    "follow": {
+      "lerpX": 0.15,
+      "lerpY": 0.08,
+      "deadzoneW": 48,
+      "deadzoneH": 96
+    },
+    "bounds": "map",
+    "note": "lerpY más suelto que lerpX: en vertical la sensación de subir importa más que la precisión lateral."
+  },
+  "spawns": {
+    "player": {
+      "x": 27,
+      "y": 104,
+      "facing": "north"
+    },
+    "npcs": [
+      {
+        "id": "npc_pepperell",
+        "x": 25,
+        "y": 104,
+        "day": 1
+      },
+      {
+        "id": "npc_edwyn",
+        "x": 31,
+        "y": 98,
+        "day": 1,
+        "afterFlag": "n1_cajones_6"
+      },
+      {
+        "id": "npc_lewis",
+        "x": 41,
+        "y": 53,
+        "day": "*"
+      },
+      {
+        "id": "npc_matthews",
+        "x": 44,
+        "y": 54,
+        "day": "*"
+      },
+      {
+        "id": "npc_berwyn",
+        "x": 37,
+        "y": 50,
+        "day": "*"
+      },
+      {
+        "id": "npc_mari",
+        "x": 34,
+        "y": 47,
+        "day": "*"
+      },
+      {
+        "id": "npc_dafydd",
+        "x": 45,
+        "y": 57,
+        "day": [
+          1,
+          2
+        ],
+        "movesTo": {
+          "day": 2,
+          "turn": "tarde",
+          "x": 11,
+          "y": 9
+        }
+      }
+    ],
+    "gatherNodes": [
+      {
+        "id": "jarilla_1",
+        "type": "lena",
+        "x": 10,
+        "y": 50
+      },
+      {
+        "id": "jarilla_2",
+        "type": "lena",
+        "x": 15,
+        "y": 56
+      },
+      {
+        "id": "jarilla_3",
+        "type": "lena",
+        "x": 6,
+        "y": 61
+      },
+      {
+        "id": "jarilla_4",
+        "type": "lena",
+        "x": 18,
+        "y": 64
+      },
+      {
+        "id": "jarilla_5",
+        "type": "lena",
+        "x": 8,
+        "y": 70
+      },
+      {
+        "id": "jarilla_6",
+        "type": "lena",
+        "x": 16,
+        "y": 74
+      },
+      {
+        "id": "molle_1",
+        "type": "comida",
+        "x": 12,
+        "y": 66
+      },
+      {
+        "id": "mejillon_1",
+        "type": "comida",
+        "x": 44,
+        "y": 107,
+        "window": {
+          "day": 2,
+          "turn": "manana"
+        }
+      }
+    ],
+    "cajones": [
+      {
+        "x": 16,
+        "y": 106
+      },
+      {
+        "x": 19,
+        "y": 108
+      },
+      {
+        "x": 22,
+        "y": 105
+      },
+      {
+        "x": 24,
+        "y": 107
+      },
+      {
+        "x": 28,
+        "y": 106
+      },
+      {
+        "x": 31,
+        "y": 108
+      },
+      {
+        "x": 34,
+        "y": 105
+      },
+      {
+        "x": 37,
+        "y": 107
+      }
+    ],
+    "cuevas": [
+      {
+        "id": "cueva_alta",
+        "x": 30,
+        "y": 45
+      },
+      {
+        "id": "cueva_honda",
+        "x": 38,
+        "y": 44
+      },
+      {
+        "id": "cueva_fogon",
+        "x": 46,
+        "y": 45
+      }
+    ],
+    "fogon": {
+      "x": 40,
+      "y": 52
+    },
+    "pasajes": [
+      {
+        "id": "p_playa_barranca",
+        "from": "z1_playa",
+        "to": "z2_barranca",
+        "x": 32,
+        "y": 68,
+        "w": 5,
+        "h": 26,
+        "note": "la subida de la barranca: corredor vertical largo, es la ascension del nivel",
+        "requires": "flags.n1_cajones_bajados >= 6"
+      },
+      {
+        "id": "p_playa_punta",
+        "from": "z1_playa",
+        "to": "z6_punta",
+        "x": 47,
+        "y": 90,
+        "w": 3,
+        "h": 6
+      },
+      {
+        "id": "p_barranca_monte",
+        "from": "z2_barranca",
+        "to": "z3_monte",
+        "x": 21,
+        "y": 56,
+        "w": 4,
+        "h": 5,
+        "requires": "progress.day >= 2"
+      },
+      {
+        "id": "p_barranca_meseta",
+        "from": "z2_barranca",
+        "to": "z4_meseta",
+        "x": 40,
+        "y": 36,
+        "w": 4,
+        "h": 6,
+        "requires": "progress.day >= 2"
+      },
+      {
+        "id": "p_monte_canadon",
+        "from": "z3_monte",
+        "to": "z5_canadon",
+        "x": 12,
+        "y": 40,
+        "w": 4,
+        "h": 6,
+        "requires": "progress.day >= 2"
+      },
+      {
+        "id": "p_meseta_canadon",
+        "from": "z4_meseta",
+        "to": "z5_canadon",
+        "x": 26,
+        "y": 20,
+        "w": 5,
+        "h": 5,
+        "requires": "progress.day >= 2"
+      }
+    ]
+  },
+  "objectives": [
+    {
+      "day": 1,
+      "id": "obj_bajar_cajones",
+      "label": "Bajar los cajones antes de la marea",
+      "quest": "q_n1_desembarco"
+    },
+    {
+      "day": 1,
+      "id": "obj_refugio",
+      "label": "Elegir y apuntalar una cueva",
+      "quest": "q_n1_refugio"
+    },
+    {
+      "day": 2,
+      "id": "obj_agua",
+      "label": "Encontrar agua",
+      "quest": "q_n1_agua"
+    },
+    {
+      "day": 2,
+      "id": "obj_dafydd",
+      "label": "Encontrar a Dafydd",
+      "quest": "q_n1_dafydd"
+    },
+    {
+      "day": 3,
+      "id": "obj_carga",
+      "label": "Decidir qué se lleva y qué se queda",
+      "quest": "q_n1_carga"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "trig_desembarco",
+      "type": "cutscene",
+      "zone": "z1_playa",
+      "rect": [
+        24,
+        101,
+        7,
+        6
+      ],
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_cold_open",
+        "setFlag": {
+          "n1_desembarco": true
+        }
+      }
+    },
+    {
+      "id": "trig_pepperell_cajones",
+      "type": "dialogue",
+      "requires": "flags.n1_desembarco == true",
+      "note": "sin zona: tiene que pasar apenas termina el cold open, antes de que puedas llegar a ningún cajón",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_pepperell_intro"
+      }
+    },
+    {
+      "id": "trig_carga_primera",
+      "type": "tutorial",
+      "event": "inventory:added",
+      "match": {
+        "itemId": "cajon_provisiones"
+      },
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "tutorial": "tut_carga"
+      }
+    },
+    {
+      "id": "trig_sobrecarga",
+      "type": "tutorial",
+      "event": "inventory:overloaded",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "tutorial": "tut_peso"
+      }
+    },
+    {
+      "id": "trig_edwyn_deposito",
+      "type": "dialogue",
+      "requires": "flags.n1_cajones_bajados >= 6",
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "dialogue": "d_n1_edwyn_deposito"
+      }
+    },
+    {
+      "id": "trig_subida_barranca",
+      "type": "zone",
+      "zone": "z2_barranca",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "toast": "Las cuevas.",
+        "setFlag": {
+          "n1_llego_barranca": true
+        }
+      }
+    },
+    {
+      "id": "trig_eleccion_cueva",
+      "type": "choice",
+      "zone": "z2_barranca",
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "choice": "ch_n1_cueva"
+      }
+    },
+    {
+      "id": "trig_apuntalar",
+      "type": "minigame",
+      "requires": "flags.n1_cueva_elegida != null",
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "minigame": "mg_apuntalar"
+      }
+    },
+    {
+      "id": "trig_fogon_j1",
+      "type": "scene",
+      "requires": "progress.day == 1 && progress.turn == 'noche'",
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "payload": {
+          "night": 1
+        },
+        "dialogue": "d_n1_fogon_j1"
+      }
+    },
+    {
+      "id": "trig_amanecer_j2",
+      "type": "scene",
+      "zone": "z2_barranca",
+      "requires": "progress.day == 2 && progress.turn == 'amanecer'",
+      "note": "espera a que vuelvas al campamento — no interrumpe si ya saliste a explorar",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_amanecer_j2"
+      }
+    },
+    {
+      "id": "trig_reparto_tareas",
+      "type": "choice",
+      "requires": "flags.n1_amanecer_j2 == true",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "choice": "ch_n1_tareas"
+      }
+    },
+    {
+      "id": "trig_viento_meseta",
+      "type": "modifier",
+      "zone": "z4_meseta",
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "modifier": {
+          "speed": 0.7,
+          "toast": "El viento no deja caminar derecho."
+        }
+      }
+    },
+    {
+      "id": "trig_vigia_mimosa",
+      "type": "cutscene",
+      "zone": "z4_meseta",
+      "rect": [
+        50,
+        7,
+        6,
+        6
+      ],
+      "requires": "progress.day >= 2",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_mimosa_zarpa"
+      }
+    },
+    {
+      "id": "trig_pista_palomas",
+      "type": "ambient",
+      "zone": "z4_meseta",
+      "requires": "progress.turn == 'amanecer'",
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "hint": "Palomas. Bajan siempre para el mismo lado."
+      }
+    },
+    {
+      "id": "trig_dafydd_perdido",
+      "type": "scene",
+      "requires": "progress.day == 2 && progress.turn == 'tarde'",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_dafydd_perdido"
+      }
+    },
+    {
+      "id": "trig_huellas_dafydd",
+      "type": "trail",
+      "zone": "z3_monte",
+      "requires": "flags.n1_dafydd_perdido == true",
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "hint": "Huellas chicas. Van al noroeste."
+      }
+    },
+    {
+      "id": "trig_manantial",
+      "type": "key",
+      "zone": "z5_canadon",
+      "rect": [
+        8,
+        6,
+        7,
+        7
+      ],
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "grant": {
+          "agua": 30
+        },
+        "setFlag": {
+          "n1_encontro_manantial": true
+        },
+        "dialogue": "d_n1_manantial"
+      }
+    },
+    {
+      "id": "trig_lena_jarilla",
+      "type": "gather",
+      "zone": "z3_monte",
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "gather": "jarilla"
+      }
+    },
+    {
+      "id": "trig_fogon_j2",
+      "type": "scene",
+      "requires": "progress.day == 2 && progress.turn == 'noche'",
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "payload": {
+          "night": 2
+        },
+        "dialogue": "d_n1_fogon_j2"
+      }
+    },
+    {
+      "id": "trig_berwyn_libreta",
+      "type": "unlock",
+      "requires": "flags.n1_fogon_2 == true",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_berwyn_libreta",
+        "giveItem": "libreta_berwyn",
+        "unlock": [
+          "sistema_diario",
+          "sistema_codice"
+        ]
+      }
+    },
+    {
+      "id": "trig_anuncio_marcha",
+      "type": "scene",
+      "requires": "progress.day == 3 && progress.turn == 'amanecer'",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_anuncio_marcha"
+      }
+    },
+    {
+      "id": "trig_pantalla_carga",
+      "type": "decision",
+      "requires": "flags.n1_anuncio_marcha == true",
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "scene": "CargoScene"
+      }
+    },
+    {
+      "id": "trig_reacciones_carga",
+      "type": "dialogue",
+      "requires": "flags.n1_carga != null",
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "dialogue": "d_n1_reacciones"
+      }
+    },
+    {
+      "id": "trig_punta_final",
+      "type": "cutscene",
+      "zone": "z6_punta",
+      "requires": "progress.day == 3 && flags.n1_carga != null",
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "next": "nivel-02",
+        "dialogue": "d_n1_final"
+      }
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint_agua_1",
+      "text": "Las matas verdes en fila no crecen solas. Abajo hay agua.",
+      "source": "npc_edwyn",
+      "requires": "flags.n1_bond_edwyn >= 1"
+    },
+    {
+      "id": "hint_agua_2",
+      "text": "Las palomas bajan al amanecer siempre para el mismo lado.",
+      "source": "ambient",
+      "zone": "z4_meseta"
+    },
+    {
+      "id": "hint_agua_3",
+      "text": "Una huella de guanaco que baja y no vuelve a subir va a beber.",
+      "source": "ambient",
+      "zone": "z3_monte"
+    }
+  ],
+  "exit": {
+    "carryOver": [
+      "resources",
+      "inventory",
+      "party",
+      "flags",
+      "languages",
+      "journal",
+      "codex"
+    ],
+    "flagsRequired": [
+      "n1_carga"
+    ],
+    "computeGrade": {
+      "agua": {
+        "field": "resources.agua",
+        "good": 24,
+        "ok": 12
+      },
+      "comida": {
+        "field": "resources.comida",
+        "good": 12,
+        "ok": 6
+      },
+      "mariHealth": {
+        "field": "party.npc_mari.health",
+        "good": 70,
+        "ok": 40
+      },
+      "morale": {
+        "field": "party.morale",
+        "good": 60,
+        "ok": 35
+      },
+      "bonds": {
+        "field": "party.bondsAtLeast1",
+        "good": 2,
+        "ok": 1
+      }
+    }
+  }
+}
