@@ -120,6 +120,16 @@ cutscene illustration, important content centered with generous margin on
 all sides for safe cropping on different phone screens, no text, no UI
 elements.`
 
+### cutscene_enlistamiento — Enlistándose con el capitán Pepperell
+```
+A dockside scene at Liverpool or a Welsh port, a young emigrant standing
+before a small wooden table where a stern maritime captain in a navy coat
+reviews a passenger ledger, the tall masts and rigging of the sailing ship
+Mimosa looming behind them, other emigrant families waiting in a loose line
+with bundles and trunks, overcast light, the quiet bureaucracy before a
+one-way voyage.
+```
+
 ### cutscene_cold_open — El bote llegando a la costa
 ```
 Wide shot from behind a small rowboat approaching a grey rocky coastline at
