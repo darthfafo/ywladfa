@@ -221,7 +221,7 @@ export class BootScene extends Phaser.Scene {
     const navItems = options.map((o, i) => {
       const t = crisp(
         this.add
-          .text(x, startY + i * 24, `› ${o.label}`, { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#BFD3D8' })
+          .text(x, startY + i * 24, o.label, { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#BFD3D8' })
           .setResolution(4),
       ).setInteractive({ useHandCursor: true });
       t.input!.hitArea = new Phaser.Geom.Rectangle(-10, -8, VIEW.width - 2 * x + 20, 24);

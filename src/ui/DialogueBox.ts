@@ -124,16 +124,19 @@ export class DialogueBox {
     const items = line.choices.map((c, i) => {
       const t = crisp(
         this.scene.add
-          .text(64, startY + i * 26, `› ${c.text}`, {
+          // arranca 6px más a la derecha que antes: deja lugar al cursor "›" que
+          // dibuja SelectList a la izquierda de la opción activa, sin pisar el retrato.
+          .text(70, startY + i * 26, c.text, {
             fontFamily: FONT_FAMILY,
             fontSize: FONT.body,
             color: '#BFD3D8',
-            wordWrap: { width: TRAY.w - 74 },
+            wordWrap: { width: TRAY.w - 80 },
           })
           .setResolution(4),
       ).setInteractive({ useHandCursor: true });
       // objetivo táctil de 20px internos mínimo (docs/03-assets.md), con margen extra
-      t.input!.hitArea = new Phaser.Geom.Rectangle(-8, -8, TRAY.w - 58, 28);
+      // (el -14 en vez de -8 compensa que el texto ahora arranca 6px más a la derecha)
+      t.input!.hitArea = new Phaser.Geom.Rectangle(-14, -8, TRAY.w - 58, 28);
       const onPick = (): void => {
         bus.emit('ui:toast', { text: '' });
         this.show(this.sys.choose(c.id));
@@ -146,7 +149,7 @@ export class DialogueBox {
       return { text: t, onPick };
     });
     // abajo/arriba + botón de acción, además del click/tap (GDD §8)
-    this.choiceNav = new SelectList(this.scene, items, { normal: '#BFD3D8', selected: '#D9A845' });
+    this.choiceNav = new SelectList(this.scene, items, { normal: '#BFD3D8', selected: '#D9A845' }, this.root);
   }
 
   private clearChoices(): void {

@@ -230,7 +230,7 @@ export class UiScene extends Phaser.Scene {
     const navItems = options.map((o) => {
       const t = crisp(
         this.add
-          .text(16, y, `› ${o.label}`, {
+          .text(16, y, o.label, {
             fontFamily: FONT_FAMILY,
             fontSize: FONT.body,
             color: '#BFD3D8',
@@ -249,7 +249,7 @@ export class UiScene extends Phaser.Scene {
 
     this.overlay = this.add.container(0, 0, items).setDepth(120);
     // abajo/arriba + botón de acción, además del click/tap (GDD §8)
-    this.overlayNav = new SelectList(this, navItems, { normal: '#BFD3D8', selected: '#D9A845' });
+    this.overlayNav = new SelectList(this, navItems, { normal: '#BFD3D8', selected: '#D9A845' }, this.overlay);
   }
 
   private closeOverlay(): void {

@@ -1,26 +1,43 @@
 import Phaser from 'phaser';
 
+import { crisp } from './text';
+
 export interface SelectableItem {
   text: Phaser.GameObjects.Text;
   onPick: () => void;
 }
 
+const CURSOR = '›';
+const CURSOR_GAP = 12;
+
 /**
  * Navegación por teclado para listas de opciones (elecciones de diálogo, overlays
- * de decisión/tutorial): abajo/arriba mueve el resaltado, el botón de acción
- * (espacio/E) confirma. El click/tap en cada texto ya funciona por su cuenta;
- * esto es la alternativa de teclado que pide GDD §8 ("las dos entradas activas").
+ * de decisión/tutorial, arranque): abajo/arriba mueve un cursor "›" a la izquierda
+ * de la opción activa (estilo RPG clásico), el botón de acción (espacio/E) confirma.
+ * El click/tap en cada texto ya funciona por su cuenta; esto es la alternativa de
+ * teclado que pide GDD §8 ("las dos entradas activas").
  */
 export class SelectList {
   private index = 0;
   private keys: Phaser.Input.Keyboard.Key[] = [];
+  private cursor: Phaser.GameObjects.Text | null = null;
 
   constructor(
     scene: Phaser.Scene,
     private items: SelectableItem[],
     private colors: { normal: string; selected: string },
+    container?: Phaser.GameObjects.Container,
   ) {
     if (!items.length) return;
+
+    const style = items[0].text.style;
+    this.cursor = crisp(
+      scene.add
+        .text(0, 0, CURSOR, { fontFamily: style.fontFamily, fontSize: style.fontSize, color: this.colors.selected })
+        .setResolution(4),
+    );
+    container?.add(this.cursor);
+
     this.highlight(0, true);
 
     const kb = scene.input.keyboard;
@@ -50,7 +67,10 @@ export class SelectList {
   }
 
   private highlight(i: number, on: boolean): void {
-    this.items[i]?.text.setColor(on ? this.colors.selected : this.colors.normal).setScale(on ? 1.12 : 1);
+    const it = this.items[i];
+    if (!it) return;
+    it.text.setColor(on ? this.colors.selected : this.colors.normal);
+    if (on) this.cursor?.setPosition(it.text.x - CURSOR_GAP, it.text.y);
   }
 
   private confirm(): void {
@@ -60,5 +80,7 @@ export class SelectList {
   destroy(): void {
     for (const k of this.keys) k.removeAllListeners();
     this.keys = [];
+    this.cursor?.destroy();
+    this.cursor = null;
   }
 }
