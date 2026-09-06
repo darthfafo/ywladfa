@@ -244,7 +244,19 @@ export class BootScene extends Phaser.Scene {
     this.optionNav = null;
     for (const o of this.stepObjects) o.destroy();
     this.stepObjects = [];
-    this.nameInput?.destroy();
-    this.nameInput = null;
+    if (this.nameInput) {
+      // Hay que desenfocar ANTES de destruir el <input>: si se lo saca del DOM con el
+      // teclado virtual del celular todavía abierto, el navegador cierra el teclado
+      // tarde (o el visualViewport tarda en asentarse) y el mapeo de toques del canvas
+      // queda desincronizado con lo que se ve en pantalla — se puede ver bien el paso
+      // siguiente pero no responder a ningún toque. Forzamos el reajuste (scale.ts)
+      // con reintentos, igual que ya se hace en orientationchange.
+      (this.nameInput.node as HTMLInputElement).blur();
+      this.nameInput.destroy();
+      this.nameInput = null;
+      window.dispatchEvent(new Event('resize'));
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 400);
+    }
   }
 }
