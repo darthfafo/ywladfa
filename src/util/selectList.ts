@@ -40,13 +40,17 @@ export class SelectList {
 
   private move(dir: number): void {
     if (this.items.length < 2) return;
+    // Sin wraparound: en listas cortas (2-3 opciones) saltar del primero al último
+    // da la sensación confusa de "ir para atrás" a una pantalla anterior. Se clampea.
+    const next = this.index + dir;
+    if (next < 0 || next >= this.items.length) return;
     this.highlight(this.index, false);
-    this.index = (this.index + dir + this.items.length) % this.items.length;
+    this.index = next;
     this.highlight(this.index, true);
   }
 
   private highlight(i: number, on: boolean): void {
-    this.items[i]?.text.setColor(on ? this.colors.selected : this.colors.normal);
+    this.items[i]?.text.setColor(on ? this.colors.selected : this.colors.normal).setScale(on ? 1.12 : 1);
   }
 
   private confirm(): void {
