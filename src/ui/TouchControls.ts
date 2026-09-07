@@ -8,7 +8,7 @@ const CFG = {
   thumbRadius: 9,
   deadZone: 4,
   grabRadius: 30, // zona de agarre más generosa que el círculo visual del joystick
-  anchorX: VIEW.width - 30,
+  rightEdge: VIEW.width - 8, // margen derecho compartido: acá se alinean joystick y botón
   btnAboveTray: 26, // centro del botón, medido hacia arriba desde el borde de la bandeja
   joyAboveBtn: 60, // separación entre el centro del joystick y el del botón
 };
@@ -27,10 +27,9 @@ export class TouchControls {
   private pointerId: number | null = null;
 
   constructor(scene: Phaser.Scene) {
-    const bx = CFG.anchorX;
     const by = VIEW.tray.y - CFG.btnAboveTray;
-    const jx = CFG.anchorX;
     const jy = by - CFG.joyAboveBtn;
+    const jx = CFG.rightEdge - CFG.baseRadius;
     this.origin = new Phaser.Math.Vector2(jx, jy);
 
     // botón HTML real, no un círculo de Phaser con hit-area manual: en el celular
@@ -38,24 +37,31 @@ export class TouchControls {
     // resolvió en BootScene — ver ese commit). Un <button> lo maneja el navegador.
     // Píldora, no círculo fijo: "Levantar"/"Hablar" no entran en un círculo de 40px
     // sin desbordarlo (se veía mal incluso en desktop) — el ancho crece con el texto.
-    this.button = scene.add.dom(
-      bx,
-      by,
-      'button',
-      'height:24px; box-sizing:border-box; margin:0; padding:0 10px; min-width:24px; ' +
-        'display:inline-flex; align-items:center; justify-content:center; white-space:nowrap; ' +
-        'border-radius:12px; background:#2E464F; color:#EAE8E0; border:1px solid #7FB0B8; ' +
-        'font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:10px; text-align:center; ' +
-        'cursor:pointer; -webkit-tap-highlight-color:transparent;',
-    );
+    // Origen (1, 0.5): el punto fijo es el borde DERECHO, no el centro — así una
+    // palabra larga crece hacia la izquierda y nunca se corta contra el borde del
+    // canvas (le pasaba con "Levantar" centrado en un x fijo).
+    this.button = scene.add
+      .dom(
+        CFG.rightEdge,
+        by,
+        'button',
+        'height:24px; box-sizing:border-box; margin:0; padding:0 10px; min-width:24px; ' +
+          'display:inline-flex; align-items:center; justify-content:center; white-space:nowrap; ' +
+          'border-radius:12px; background:#2E464F; color:#EAE8E0; border:1px solid #7FB0B8; ' +
+          'font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:10px; text-align:center; ' +
+          'cursor:pointer; -webkit-tap-highlight-color:transparent;',
+      )
+      .setOrigin(1, 0.5);
     const btnEl = this.button.node as HTMLButtonElement;
     btnEl.type = 'button';
-    btnEl.textContent = '·';
     btnEl.addEventListener('click', () => {
       if (input.locked) return;
       input.pressAction();
     });
-    this.button.setDepth(52).setAlpha(0.5);
+    // setText(), no node.textContent directo: el origen (1, 0.5) necesita que Phaser
+    // sepa el ancho ACTUAL del botón para calcular el offset del borde derecho, y solo
+    // lo recalcula (updateSize()) cuando el texto cambia a través de su propio método.
+    this.button.setText('·').setDepth(52).setAlpha(0.5);
 
     // joystick fijo: base y agarre siempre en el mismo lugar, nunca se mueven
     this.base = scene.add.circle(jx, jy, CFG.baseRadius, PAL.bone, 0.16).setDepth(50).setStrokeStyle(1, PAL.bone, 0.3);
@@ -99,7 +105,7 @@ export class TouchControls {
 
   /** El botón cambia de icono según lo que haya cerca: hablar / levantar / cavar / entrar. */
   setContext(label: string | null): void {
-    (this.button.node as HTMLButtonElement).textContent = label ? label.toUpperCase() : '·';
+    this.button.setText(label ? label.toUpperCase() : '·');
     this.button.setAlpha(label ? 1 : 0.45);
   }
 
