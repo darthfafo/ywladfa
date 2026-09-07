@@ -32,6 +32,7 @@ export class BootScene extends Phaser.Scene {
   /** Todo lo que dibuja el paso actual (menos el título/bandeja fijos), para borrarlo al cambiar de paso. */
   private stepObjects: Phaser.GameObjects.GameObject[] = [];
   private nameInput: Phaser.GameObjects.DOMElement | null = null;
+  private fileInputEl: HTMLInputElement | null = null;
   private dialogue: DialogueBox | null = null;
 
   private playerName = '';
@@ -117,45 +118,46 @@ export class BootScene extends Phaser.Scene {
     );
 
     // el menú (continuar/nueva partida) va bien visible sobre la imagen, no perdido
-    // adentro del párrafo de la bandeja.
+    // adentro del párrafo de la bandeja. Exportar/importar van como parte de la
+    // misma lista, debajo de las dos opciones principales — no como links sueltos
+    // aparte, para que se lean como parte del mismo menú.
     const options: Array<{ label: string; onPick: () => void }> = [];
     const save = saveSystem.peek();
     if (save) options.push({ label: `Continuar — Jornada ${save.day}`, onPick: () => this.continueGame() });
     options.push({ label: 'Nueva partida', onPick: () => this.renderGenderIntro() });
+    options.push({ label: 'Importar partida', onPick: () => this.triggerImportFile() });
+    if (save) options.push({ label: 'Exportar partida', onPick: () => this.exportCurrentSave() });
     this.renderMenu(options, IMG_CY + 60);
 
-    // exportar/importar a archivo: el slot único vive en localStorage del navegador,
-    // sin esto no había forma de sacar una partida de acá (probarla en otro
-    // navegador, mandarla, revisarla) más que abriendo las devtools a mano.
-    this.renderSaveFileLinks();
+    // input de archivo invisible, siempre presente: el botón "Importar partida" de
+    // arriba solo lo dispara (inputEl.click()).
+    this.renderFileInput();
   }
 
-  private renderSaveFileLinks(): void {
+  private exportCurrentSave(): void {
+    const s = saveSystem.load();
+    if (s) saveSystem.exportToFile(s);
+  }
+
+  private triggerImportFile(): void {
+    this.fileInputEl?.click();
+  }
+
+  /** El único slot de guardado vive en localStorage del navegador — sin esto no
+   * había forma de sacar una partida de acá (probarla en otro navegador,
+   * mandarla, revisarla) más que abriendo las devtools a mano. */
+  private renderFileInput(): void {
     const cx = VIEW.width / 2;
-    const y = TRAY_Y + 78;
-    const linkStyle =
-      'background:transparent; border:none; padding:2px 6px; color:#7FB0B8; ' +
-      'font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:9px; text-decoration:underline; ' +
-      'cursor:pointer; -webkit-tap-highlight-color:transparent;';
-
-    if (saveSystem.hasSave()) {
-      const exportBtn = this.add.dom(cx - 30, y, 'button', linkStyle).setOrigin(1, 0.5);
-      (exportBtn.node as HTMLButtonElement).type = 'button';
-      exportBtn.setText('Exportar partida');
-      (exportBtn.node as HTMLButtonElement).addEventListener('click', () => {
-        const s = saveSystem.load();
-        if (s) saveSystem.exportToFile(s);
-      });
-      this.track(exportBtn);
-    }
-
     // alpha 0, no display:none: Phaser reescribe `style.display` en cada frame
     // (para poder mostrar/ocultar el propio GameObject), así que un display:none a
     // mano en el string de estilo se pisaba solo — el input quedaba visible. 1x1px
     // además, para que ese input invisible (pero clickeable por código) no le tape
     // el toque a ningún botón vecino.
-    const fileInput = this.add.dom(cx, y, 'input', 'width:1px; height:1px; overflow:hidden;').setAlpha(0);
+    const fileInput = this.add
+      .dom(cx, TRAY_Y + 78, 'input', 'width:1px; height:1px; overflow:hidden;')
+      .setAlpha(0);
     const inputEl = fileInput.node as HTMLInputElement;
+    this.fileInputEl = inputEl;
     inputEl.type = 'file';
     inputEl.accept = 'application/json';
     inputEl.addEventListener('change', () => {
@@ -171,12 +173,6 @@ export class BootScene extends Phaser.Scene {
       });
     });
     this.track(fileInput);
-
-    const importBtn = this.add.dom(cx + 30, y, 'button', linkStyle).setOrigin(0, 0.5);
-    (importBtn.node as HTMLButtonElement).type = 'button';
-    importBtn.setText('Importar partida');
-    (importBtn.node as HTMLButtonElement).addEventListener('click', () => inputEl.click());
-    this.track(importBtn);
   }
 
   /* ---------------- paso 2: la Mimosa en el puerto, ¿varón o mujer? ---------------- */
