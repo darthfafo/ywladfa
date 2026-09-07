@@ -321,9 +321,19 @@ export class BootScene extends Phaser.Scene {
     const promptH = prompt ? 26 : 0;
     const boxH = promptH + options.length * rowH + 14;
     const boxY = centerY - boxH / 2;
-    this.track(
-      this.add.rectangle(24, boxY, VIEW.width - 48, boxH, PAL.ink, 0.8).setOrigin(0, 0).setStrokeStyle(1, PAL.seaPale, 0.5).setDepth(15),
-    );
+    // sin `prompt` (título: nada más que "Nueva partida"/"Continuar") la caja
+    // translúcida es puro relleno — los botones ya son opacos por su cuenta.
+    // Con `prompt` (género: hay una pregunta arriba de las opciones) sigue haciendo
+    // falta para que ese texto se lea contra la imagen.
+    if (prompt) {
+      this.track(
+        this.add
+          .rectangle(24, boxY, VIEW.width - 48, boxH, PAL.ink, 0.8)
+          .setOrigin(0, 0)
+          .setStrokeStyle(1, PAL.seaPale, 0.5)
+          .setDepth(15),
+      );
+    }
     if (prompt) {
       this.track(
         crisp(

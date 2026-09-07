@@ -204,6 +204,9 @@ export class UiScene extends Phaser.Scene {
 
   private openDialogue(id: string): void {
     const cutsceneId = CUTSCENE_DIALOGUES[id];
+    // el joystick/botón son HTML aparte del canvas: no se tapan solos detrás de una
+    // cutscene ni de ningún diálogo, hay que ocultarlos a mano.
+    this.touch.setVisible(false);
     if (cutsceneId) {
       this.setHudVisible(false);
       // solo contra el área sin bandeja (0-384, el HUD ya está oculto): cubrir la
@@ -213,6 +216,7 @@ export class UiScene extends Phaser.Scene {
     }
     this.dialogue.start(id, () => {
       this.touch.setContext(null);
+      this.touch.setVisible(true);
       if (cutsceneId) {
         this.setHudVisible(true);
         this.cutsceneBg?.destroy();
@@ -246,6 +250,7 @@ export class UiScene extends Phaser.Scene {
   private openOverlay(title: string, body: string, options: Array<{ label: string; onPick: () => void }>): void {
     this.closeOverlay();
     input.locked = true;
+    this.touch.setVisible(false);
 
     const bg = this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void, 0.96).setOrigin(0, 0);
     const titleT = crisp(
@@ -298,5 +303,6 @@ export class UiScene extends Phaser.Scene {
     this.overlay?.destroy(true);
     this.overlay = null;
     input.locked = false;
+    this.touch.setVisible(true);
   }
 }

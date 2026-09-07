@@ -31,7 +31,9 @@ export class DialogueBox {
   constructor(private scene: Phaser.Scene) {
     this.sys = new DialogueSystem(game);
 
-    this.bg = scene.add.rectangle(0, 0, TRAY.w, TRAY.h, PAL.ink, 0.97).setOrigin(0, 0).setStrokeStyle(1, PAL.slate);
+    // opaco del todo, no 0.97: contra una cutscene con foto de fondo (BootScene,
+    // cold_open) ese resto de transparencia bajaba el contraste del texto.
+    this.bg = scene.add.rectangle(0, 0, TRAY.w, TRAY.h, PAL.ink, 1).setOrigin(0, 0).setStrokeStyle(1, PAL.slate);
     this.portrait = scene.add.rectangle(8, 12, 48, 48, PAL.slate).setOrigin(0, 0);
     // placeholder de color mientras no haya PNG real para ese personaje/expresión
     // (src/util/assets.ts decide en show() cuál de los dos se ve).
@@ -116,8 +118,12 @@ export class DialogueBox {
     const portraitId = line.isNarrator ? null : portraitIdForSpeaker(speakerId, game.state.player.gender);
     const key = portraitId ? portraitTextureKey(portraitId, line.portrait) : null;
     const hasArt = !!key && this.scene.textures.exists(key);
-    this.portrait.setVisible(!line.isNarrator && !hasArt);
-    this.portrait.setFillStyle(portraitColor(line.portrait));
+    // el recuadro de fondo se ve SIEMPRE que hay retrato, con o sin arte real: sin
+    // esto, el retrato pintado quedaba flotando suelto sobre el fondo de la bandeja,
+    // sin ningún borde/caja que lo contenga (a diferencia del placeholder de color,
+    // que siempre se sintió "encajado" por ser él mismo un rectángulo sólido).
+    this.portrait.setVisible(!line.isNarrator);
+    this.portrait.setFillStyle(hasArt ? PAL.ink : portraitColor(line.portrait));
     this.portraitImg.setVisible(hasArt);
     if (hasArt) {
       // el archivo puede venir a cualquier resolución (se pide más grande que 48x48

@@ -7,19 +7,17 @@ const CFG = {
   baseRadius: 20,
   thumbRadius: 9,
   deadZone: 4,
-  buttonSize: 40, // no más grande que la base del joystick (40 = 2×baseRadius)
-  grabRadius: 30, // zona de agarre más generosa que el círculo visual del joystick,
-  // pero no tanto como para pisar el botón (ver distancia botón↔joystick abajo)
+  grabRadius: 30, // zona de agarre más generosa que el círculo visual del joystick
   anchorX: VIEW.width - 30,
-  gap: 44, // separación desde el centro vertical del mapa a cada control
+  btnAboveTray: 26, // centro del botón, medido hacia arriba desde el borde de la bandeja
+  joyAboveBtn: 60, // separación entre el centro del joystick y el del botón
 };
 
 /**
- * Joystick fijo + botón de acción, los dos sobre el mapa (no en la bandeja): al borde
- * derecho de la pantalla y centrados verticalmente en el viewport del mundo, para que
- * el pulgar los alcance cómodo sosteniendo el celular con una mano, sin competir por
- * espacio con el texto de la bandeja. Antes vivían apilados dentro de la bandeja de
- * 96px, más incómodos de alcanzar y más pegados entre sí.
+ * Joystick fijo + botón de acción, los dos sobre el mapa (no en la bandeja), pegados
+ * al margen derecho — ahí es donde suele estar el pulgar sosteniendo el celular. El
+ * joystick arriba, el botón abajo (pegado al borde de la bandeja de diálogo): así el
+ * pulgar baja del joystick al botón en línea recta, sin "saltar" a otro lado.
  */
 export class TouchControls {
   private base: Phaser.GameObjects.Arc;
@@ -29,28 +27,25 @@ export class TouchControls {
   private pointerId: number | null = null;
 
   constructor(scene: Phaser.Scene) {
-    const world = VIEW.world;
-    const centerY = world.y + world.h / 2;
-    // el botón va DEBAJO del joystick (no arriba): así el pulgar que ya está apoyado
-    // en la base del joystick lo alcanza derecho hacia abajo, en vez de tener que
-    // saltar a un botón "colgado" arriba, lejos de donde descansa la mano.
-    const jx = CFG.anchorX;
-    const jy = centerY - CFG.gap;
-    this.origin = new Phaser.Math.Vector2(jx, jy);
-
     const bx = CFG.anchorX;
-    const by = centerY + CFG.gap;
+    const by = VIEW.tray.y - CFG.btnAboveTray;
+    const jx = CFG.anchorX;
+    const jy = by - CFG.joyAboveBtn;
+    this.origin = new Phaser.Math.Vector2(jx, jy);
 
     // botón HTML real, no un círculo de Phaser con hit-area manual: en el celular
     // real ese círculo no respondía de forma confiable (mismo problema que ya se
     // resolvió en BootScene — ver ese commit). Un <button> lo maneja el navegador.
+    // Píldora, no círculo fijo: "Levantar"/"Hablar" no entran en un círculo de 40px
+    // sin desbordarlo (se veía mal incluso en desktop) — el ancho crece con el texto.
     this.button = scene.add.dom(
       bx,
       by,
       'button',
-      `width:${CFG.buttonSize}px; height:${CFG.buttonSize}px; box-sizing:border-box; padding:0; margin:0; ` +
-        `border-radius:50%; background:#2E464F; color:#EAE8E0; border:1px solid #7FB0B8; ` +
-        'font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:9px; text-align:center; ' +
+      'height:24px; box-sizing:border-box; margin:0; padding:0 10px; min-width:24px; ' +
+        'display:inline-flex; align-items:center; justify-content:center; white-space:nowrap; ' +
+        'border-radius:12px; background:#2E464F; color:#EAE8E0; border:1px solid #7FB0B8; ' +
+        'font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:10px; text-align:center; ' +
         'cursor:pointer; -webkit-tap-highlight-color:transparent;',
     );
     const btnEl = this.button.node as HTMLButtonElement;
@@ -106,6 +101,20 @@ export class TouchControls {
   setContext(label: string | null): void {
     (this.button.node as HTMLButtonElement).textContent = label ? label.toUpperCase() : '·';
     this.button.setAlpha(label ? 1 : 0.45);
+  }
+
+  /** Diálogos, cutscenes y overlays de pantalla completa se dibujan en el canvas y
+   * pueden quedar "debajo" de cualquier profundidad — pero el botón es un elemento
+   * HTML aparte, SIEMPRE por encima del canvas sin importar el depth de Phaser. Sin
+   * ocultarlo a mano acá, quedaba flotando arriba de cualquier pantalla modal. */
+  setVisible(visible: boolean): void {
+    this.base.setVisible(visible);
+    this.thumb.setVisible(visible);
+    this.button.setVisible(visible);
+    if (!visible) {
+      this.pointerId = null;
+      input.clearVector();
+    }
   }
 
   destroy(): void {
