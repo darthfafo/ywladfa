@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { input } from '@/util/input';
-import { crisp, FONT, FONT_FAMILY } from '@/util/text';
 
 const CFG = {
   baseRadius: 20,
@@ -25,9 +24,7 @@ const CFG = {
 export class TouchControls {
   private base: Phaser.GameObjects.Arc;
   private thumb: Phaser.GameObjects.Arc;
-  private button: Phaser.GameObjects.Container;
-  private buttonHit: Phaser.GameObjects.Arc;
-  private buttonLabel: Phaser.GameObjects.Text;
+  private button: Phaser.GameObjects.DOMElement;
   private origin: Phaser.Math.Vector2;
   private pointerId: number | null = null;
 
@@ -43,34 +40,27 @@ export class TouchControls {
 
     const bx = CFG.anchorX;
     const by = centerY + CFG.gap;
-    // la zona de agarre del joystick (grabRadius) y el hitArea del botón (buttonSize/2)
-    // no se pueden pisar: la distancia entre centros tiene que ser mayor a la suma de
-    // los dos radios, si no, a veces el toque en el botón termina moviendo al joystick.
 
-    const circle = scene.add.circle(0, 0, CFG.buttonSize / 2, PAL.slate, 0.85).setStrokeStyle(1, PAL.seaPale, 0.8);
-    this.buttonLabel = crisp(
-      scene.add
-        .text(0, 0, '·', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#EAE8E0', align: 'center' })
-        .setOrigin(0.5)
-        .setResolution(4),
+    // botón HTML real, no un círculo de Phaser con hit-area manual: en el celular
+    // real ese círculo no respondía de forma confiable (mismo problema que ya se
+    // resolvió en BootScene — ver ese commit). Un <button> lo maneja el navegador.
+    this.button = scene.add.dom(
+      bx,
+      by,
+      'button',
+      `width:${CFG.buttonSize}px; height:${CFG.buttonSize}px; box-sizing:border-box; padding:0; margin:0; ` +
+        `border-radius:50%; background:#2E464F; color:#EAE8E0; border:1px solid #7FB0B8; ` +
+        'font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:9px; text-align:center; ' +
+        'cursor:pointer; -webkit-tap-highlight-color:transparent;',
     );
-    this.button = scene.add.container(bx, by, [circle, this.buttonLabel]).setDepth(52).setAlpha(0.5);
-
-    // el hit-test vive en el CONTAINER, no en el círculo hijo: un toque rápido después
-    // de soltar el joystick a veces no llegaba a la forma interactiva anidada.
-    this.buttonHit = scene.add.circle(bx, by, CFG.buttonSize / 2 + 4, 0, 0).setDepth(53);
-    this.buttonHit.setInteractive({
-      hitArea: new Phaser.Geom.Circle(0, 0, CFG.buttonSize / 2 + 4),
-      hitAreaCallback: Phaser.Geom.Circle.Contains,
-      useHandCursor: true,
-    });
-    this.buttonHit.on('pointerdown', () => {
+    const btnEl = this.button.node as HTMLButtonElement;
+    btnEl.type = 'button';
+    btnEl.textContent = '·';
+    btnEl.addEventListener('click', () => {
       if (input.locked) return;
       input.pressAction();
-      this.button.setScale(0.92);
     });
-    this.buttonHit.on('pointerup', () => this.button.setScale(1));
-    this.buttonHit.on('pointerout', () => this.button.setScale(1));
+    this.button.setDepth(52).setAlpha(0.5);
 
     // joystick fijo: base y agarre siempre en el mismo lugar, nunca se mueven
     this.base = scene.add.circle(jx, jy, CFG.baseRadius, PAL.bone, 0.16).setDepth(50).setStrokeStyle(1, PAL.bone, 0.3);
@@ -114,7 +104,7 @@ export class TouchControls {
 
   /** El botón cambia de icono según lo que haya cerca: hablar / levantar / cavar / entrar. */
   setContext(label: string | null): void {
-    this.buttonLabel.setText(label ? label.toUpperCase() : '·');
+    (this.button.node as HTMLButtonElement).textContent = label ? label.toUpperCase() : '·';
     this.button.setAlpha(label ? 1 : 0.45);
   }
 
@@ -122,6 +112,5 @@ export class TouchControls {
     this.base.destroy();
     this.thumb.destroy();
     this.button.destroy();
-    this.buttonHit.destroy();
   }
 }

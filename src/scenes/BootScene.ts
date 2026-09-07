@@ -196,7 +196,7 @@ export class BootScene extends Phaser.Scene {
     inputEl.focus();
 
     // botón compacto al lado del campo, no una opción de lista aparte más abajo.
-    this.track(this.renderDomButton(cx + 68, rowY, 'Ir ›', () => this.confirmName(), 62));
+    this.track(this.renderDomButton(cx + 68, rowY, 'Ir ›', () => this.confirmName(), 62, 24));
   }
 
   private confirmName(): void {
@@ -304,11 +304,6 @@ export class BootScene extends Phaser.Scene {
     const img = addSceneBackground(this, sceneId, VIEW.width / 2, IMG_CY, VIEW.width, IMG_H);
     if (!img) return null;
     this.track(img.setDepth(-5));
-    // mismo color de borde que el retrato de diálogo (DialogueBox), para que la
-    // ilustración se sienta "encuadrada" en vez de una foto suelta pegada encima.
-    this.track(
-      this.add.rectangle(0, TOP_H, VIEW.width, IMG_H, 0, 0).setOrigin(0, 0).setStrokeStyle(1, PAL.seaPale, 0.5).setDepth(19),
-    );
     return img;
   }
 
@@ -357,21 +352,33 @@ export class BootScene extends Phaser.Scene {
    * mapeo de coordenadas touch→canvas quedaba un pelo desincronizado y hacían falta
    * varios toques para acertar. Un <button> lo maneja el navegador directo, sin pasar
    * por esa traducción — la razón de ser de la misma excepción que ya tiene el campo
-   * de nombre (`this.add.dom`, ver renderName). */
-  private renderDomButton(x: number, y: number, label: string, onPick: () => void, width: number): Phaser.GameObjects.DOMElement {
+   * de nombre (`this.add.dom`, ver renderName).
+   * `box-sizing:border-box` + alto explícito: sin esto, el padding/borde default del
+   * navegador se suma por afuera del tamaño pedido y el botón termina sobresaliendo
+   * de la caja translúcida que lo enmarca (más notorio en Safari/iOS que en desktop). */
+  private renderDomButton(
+    x: number,
+    y: number,
+    label: string,
+    onPick: () => void,
+    width: number,
+    height = 22,
+  ): Phaser.GameObjects.DOMElement {
     const el = this.add.dom(
       x,
       y,
       'button',
-      `width:${width}px; padding:6px 10px; background:#2E464F; color:#BFD3D8; border:1px solid #7FB0B8; ` +
-        'font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12px; text-align:center; ' +
+      `width:${width}px; height:${height}px; box-sizing:border-box; margin:0; padding:0 8px; ` +
+        '-webkit-appearance:none; appearance:none; border-radius:0; ' +
+        'background:#2E464F; color:#BFD3D8; border:1px solid #7FB0B8; ' +
+        'font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12px; line-height:1; text-align:center; ' +
         'cursor:pointer; -webkit-tap-highlight-color:transparent;',
     );
     const btn = el.node as HTMLButtonElement;
     btn.textContent = label;
     btn.type = 'button';
     btn.addEventListener('click', onPick);
-    btn.addEventListener('touchstart', () => btn.style.background = '#3A5560', { passive: true });
+    btn.addEventListener('touchstart', () => (btn.style.background = '#3A5560'), { passive: true });
     btn.addEventListener('touchend', () => (btn.style.background = '#2E464F'));
     return el.setDepth(16);
   }
