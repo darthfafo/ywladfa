@@ -103,13 +103,25 @@ export class BootScene extends Phaser.Scene {
     // en dorado (mismo tono que el resto de los acentos del juego, #D9A845) para
     // que se distinga del resto sin perder contraste contra el fondo oscuro.
     this.track(
-      this.renderDomText(16, TRAY_Y + 14, '', {
-        size: 10,
+      this.renderDomText(16, TRAY_Y + 10, '', {
+        size: 7,
         color: '#9BAEB4',
         width: VIEW.width - 32,
+        retro: true,
         html:
           '<span style="color:#D9A845">Liverpool, 28 de mayo de 1865.</span> El Mimosa lleva colonos galeses ' +
           'rumbo a Sudamérica: van a fundar Y Wladfa, la Colonia.',
+      }),
+    );
+
+    // firma discreta, solo acá (primera pantalla del juego) — un color muy cercano
+    // al fondo (PAL.ink #18262A) para que sea casi un secreto, no un crédito visible.
+    this.track(
+      this.renderDomText(VIEW.width - 8, TRAY_Y + TRAY_H - 12, 'FP', {
+        size: 7,
+        color: '#22343A',
+        align: 'right',
+        retro: true,
       }),
     );
 
@@ -428,13 +440,14 @@ export class BootScene extends Phaser.Scene {
     x: number,
     y: number,
     text: string,
-    opts: { size: number; color: string; align?: 'left' | 'center'; width?: number; weight?: string; retro?: boolean; html?: string },
+    opts: { size: number; color: string; align?: 'left' | 'center' | 'right'; width?: number; weight?: string; retro?: boolean; html?: string },
   ): Phaser.GameObjects.DOMElement {
     const style =
       `color:${opts.color}; font-family: ${opts.retro ? RETRO_FONT : UI_FONT}; font-size:${opts.size}px; ` +
       `font-weight:${opts.weight ?? 'normal'}; text-align:${opts.align ?? 'left'}; line-height:1.5; ` +
       (opts.width ? `width:${opts.width}px;` : 'white-space:nowrap;');
-    const el = this.add.dom(x, y, 'div', style).setOrigin(opts.align === 'center' ? 0.5 : 0, 0);
+    const originX = opts.align === 'center' ? 0.5 : opts.align === 'right' ? 1 : 0;
+    const el = this.add.dom(x, y, 'div', style).setOrigin(originX, 0);
     // setText()/setHTML(), no node.textContent directo: el origen centrado necesita
     // que Phaser sepa el ancho actual del div para calcular el offset, y solo lo
     // recalcula (updateSize()) cuando el texto cambia a través de su propio método
