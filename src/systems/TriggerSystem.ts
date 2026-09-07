@@ -38,6 +38,7 @@ export class TriggerSystem {
     const out: TriggerDef[] = [];
     for (const t of this.triggers) {
       if (t.event) continue; // los de evento se manejan en byEvent()
+      if (t.manual) continue; // solo se llega hablándole al NPC (WorldScene.talkTo)
       if (t.once && this.hasFired(t.id)) continue;
       if (!this.matchesSpace(t, ctx)) continue;
       if (!this.game.flags.eval(t.requires)) continue;

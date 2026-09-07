@@ -92,20 +92,20 @@ export class BootScene extends Phaser.Scene {
     // es un puerto inglés, no galés — los colonos viajaron hasta ahí para embarcarse).
     this.renderImage('mimosa_puerto');
 
-    // contexto + opciones en la bandeja, igual que un diálogo con narrador y elecciones.
+    // contexto narrativo en la bandeja, como cualquier línea de narrador.
     this.track(
       crisp(
         this.add
           .text(
             16,
-            TRAY_Y + 8,
+            TRAY_Y + 14,
             'Liverpool, 28 de mayo de 1865. El Mimosa lleva colonos galeses rumbo a Sudamérica: van a fundar Y Wladfa, la Colonia.',
             {
               fontFamily: FONT_FAMILY,
               fontSize: FONT.tiny,
               color: '#9BAEB4',
               wordWrap: { width: VIEW.width - 32 },
-              lineSpacing: 3,
+              lineSpacing: 4,
             },
           )
           .setDepth(22)
@@ -113,11 +113,13 @@ export class BootScene extends Phaser.Scene {
       ),
     );
 
+    // el menú (continuar/nueva partida) va bien visible sobre la imagen, no perdido
+    // adentro del párrafo de la bandeja.
     const options: Array<{ label: string; onPick: () => void }> = [];
     const save = saveSystem.peek();
     if (save) options.push({ label: `Continuar — Jornada ${save.day}`, onPick: () => this.continueGame() });
     options.push({ label: 'Nueva partida', onPick: () => this.renderGenderIntro() });
-    this.renderOptions(options, TRAY_Y + 46);
+    this.renderMenu(options, IMG_CY + 60);
   }
 
   /* ---------------- paso 2: la Mimosa en el puerto, ¿varón o mujer? ---------------- */
@@ -125,20 +127,13 @@ export class BootScene extends Phaser.Scene {
   private renderGenderIntro(): void {
     this.clearStep();
     this.renderImage('mimosa_puerto');
-    this.track(
-      crisp(
-        this.add
-          .text(16, TRAY_Y + 10, '¿Sos varón o mujer?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
-          .setDepth(22)
-          .setResolution(4),
-      ),
-    );
-    this.renderOptions(
+    this.renderMenu(
       [
         { label: 'Varón', onPick: () => this.pickGender('m') },
         { label: 'Mujer', onPick: () => this.pickGender('f') },
       ],
-      TRAY_Y + 44,
+      IMG_CY + 60,
+      '¿Sos varón o mujer?',
     );
   }
 
@@ -160,11 +155,13 @@ export class BootScene extends Phaser.Scene {
     // abajo": el campo de nombre tiene que quedar arriba, pegado a la franja del
     // título, porque un teclado virtual de celular tapa desde la mitad de la
     // pantalla para abajo — si viviera en la bandeja, quedaría inaccesible al escribir.
-    this.renderTextBacking(TOP_H, TOP_H + 120);
+    // Una sola franja bajita (campo + botón lado a lado), no un cuadro grande.
+    const rowY = TOP_H + 44;
+    this.renderTextBacking(TOP_H, TOP_H + 72);
     this.track(
       crisp(
         this.add
-          .text(cx, TOP_H + 30, '¿Cómo te llamás?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+          .text(cx, TOP_H + 14, '¿Cómo te llamás?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
           .setOrigin(0.5)
           .setResolution(4)
           .setDepth(1),
@@ -172,12 +169,13 @@ export class BootScene extends Phaser.Scene {
     );
 
     const defaultName = DEFAULT_NAME[this.playerGender];
+    const inputX = cx - 40;
     this.nameInput = this.add.dom(
-      cx,
-      TOP_H + 60,
+      inputX,
+      rowY,
       'input',
-      'width:140px; padding:5px; text-align:center; font-family: ui-monospace, "SF Mono", Menlo, monospace; ' +
-        'font-size:13px; background:#18262A; color:#EAE8E0; border:1px solid #2E464F; outline:none;',
+      'width:104px; padding:4px; text-align:center; font-family: ui-monospace, "SF Mono", Menlo, monospace; ' +
+        'font-size:12px; background:#18262A; color:#EAE8E0; border:1px solid #2E464F; outline:none;',
     );
     const inputEl = this.nameInput.node as HTMLInputElement;
     inputEl.value = this.playerName || defaultName; // el 5to arg de add.dom() no sirve para el value de un <input>
@@ -190,7 +188,26 @@ export class BootScene extends Phaser.Scene {
     });
     inputEl.focus();
 
-    this.renderOptions([{ label: 'Siguiente', onPick: () => this.confirmName() }], TOP_H + 100);
+    // botón compacto al lado del campo, no una opción de lista aparte más abajo.
+    const btnX = cx + 68;
+    const chip = this.add
+      .rectangle(btnX, rowY, 62, 24, PAL.slate, 0.9)
+      .setStrokeStyle(1, PAL.seaPale, 0.6)
+      .setDepth(1)
+      .setInteractive({ useHandCursor: true });
+    chip.on('pointerdown', () => this.confirmName());
+    chip.on('pointerover', () => chip.setFillStyle(PAL.slate, 1));
+    chip.on('pointerout', () => chip.setFillStyle(PAL.slate, 0.9));
+    this.track(chip);
+    this.track(
+      crisp(
+        this.add
+          .text(btnX, rowY, 'Ir ›', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#D9A845' })
+          .setOrigin(0.5)
+          .setResolution(4)
+          .setDepth(2),
+      ),
+    );
   }
 
   private confirmName(): void {
@@ -296,13 +313,63 @@ export class BootScene extends Phaser.Scene {
    * recorte contra el original 3:4 es mucho menor (docs/05-prompts-arte.txt §2). */
   private renderImage(sceneId: string): Phaser.GameObjects.Image | null {
     const img = addSceneBackground(this, sceneId, VIEW.width / 2, IMG_CY, VIEW.width, IMG_H);
-    if (img) this.track(img.setDepth(-5));
+    if (!img) return null;
+    this.track(img.setDepth(-5));
+    // mismo color de borde que el retrato de diálogo (DialogueBox), para que la
+    // ilustración se sienta "encuadrada" en vez de una foto suelta pegada encima.
+    this.track(
+      this.add.rectangle(0, TOP_H, VIEW.width, IMG_H, 0, 0).setOrigin(0, 0).setStrokeStyle(1, PAL.seaPale, 0.5).setDepth(19),
+    );
     return img;
   }
 
   /** Franja oscura semitransparente para que el texto se lea encima de un fondo cinemático. */
   private renderTextBacking(fromY: number, toY: number = VIEW.height): void {
     this.track(this.add.rectangle(0, fromY, VIEW.width, toY - fromY, PAL.void, 0.55).setOrigin(0, 0).setDepth(-1));
+  }
+
+  /** Menú centrado sobre la imagen, con su propia caja — para las dos decisiones
+   * "de portada" (continuar/nueva partida, género), no para el resto de los pasos.
+   * `prompt` opcional: una pregunta como primera línea, adentro de la misma caja. */
+  private renderMenu(options: Array<{ label: string; onPick: () => void }>, centerY: number, prompt?: string): void {
+    const cx = VIEW.width / 2;
+    const rowH = 26;
+    const promptH = prompt ? 26 : 0;
+    const boxH = promptH + options.length * rowH + 14;
+    const boxY = centerY - boxH / 2;
+    this.track(
+      this.add.rectangle(24, boxY, VIEW.width - 48, boxH, PAL.ink, 0.8).setOrigin(0, 0).setStrokeStyle(1, PAL.seaPale, 0.5).setDepth(15),
+    );
+    if (prompt) {
+      this.track(
+        crisp(
+          this.add
+            .text(cx, boxY + 8, prompt, { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+            .setOrigin(0.5, 0)
+            .setDepth(16)
+            .setResolution(4),
+        ),
+      );
+    }
+
+    const navItems = options.map((o, i) => {
+      const t = crisp(
+        this.add
+          .text(0, boxY + 8 + promptH + i * rowH, o.label, { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#BFD3D8' })
+          .setDepth(16)
+          .setResolution(4),
+      );
+      t.setX(cx - t.width / 2); // centrado como bloque, pero con origen izquierdo: así el
+      // cursor "›" de SelectList (que se para a la izquierda del texto) queda bien puesto.
+      t.setInteractive({ useHandCursor: true });
+      t.input!.hitArea = new Phaser.Geom.Rectangle(-24, -6, t.width + 48, rowH - 2);
+      t.on('pointerover', () => t.setColor('#D9A845'));
+      t.on('pointerout', () => t.setColor('#BFD3D8'));
+      t.on('pointerdown', () => o.onPick());
+      this.track(t);
+      return { text: t, onPick: o.onPick };
+    });
+    this.optionNav = new SelectList(this, navItems, { normal: '#BFD3D8', selected: '#D9A845' });
   }
 
   private renderOptions(options: Array<{ label: string; onPick: () => void }>, startY: number): void {

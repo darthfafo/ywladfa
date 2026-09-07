@@ -384,7 +384,8 @@
         "y": 40,
         "w": 4,
         "h": 6,
-        "requires": "progress.day >= 2"
+        "note": "no alcanza con el día: no tiene sentido bajar a buscar a Dafydd al cañadón antes de que se pierda",
+        "requires": "progress.day >= 2 && flags.n1_dafydd_perdido == true"
       },
       {
         "id": "p_meseta_canadon",
@@ -394,7 +395,7 @@
         "y": 20,
         "w": 5,
         "h": 5,
-        "requires": "progress.day >= 2"
+        "requires": "progress.day >= 2 && flags.n1_dafydd_perdido == true"
       }
     ]
   },
@@ -488,6 +489,7 @@
       "id": "trig_edwyn_deposito",
       "type": "dialogue",
       "requires": "flags.n1_cajones_bajados >= 6",
+      "manual": true,
       "once": true,
       "turnCost": 1,
       "action": {

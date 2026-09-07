@@ -75,8 +75,21 @@ it's cracking.
 
 ### edwyn (Edwyn C. Roberts, real — el que falló con el depósito)
 ```
-Man in his 30s-40s, dark wool beret, angular tired face, guilty evasive eyes
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. Overcast coastal Patagonian
+light, windswept and sparse, austere mood.
+
+Another Man in his 30s-40s, dark wool beret, angular tired face, guilty evasive eyes
 that avoid direct contact — a competent man carrying visible shame.
+
+48x48 pixel art portrait, square format,
+solid plain dark background, bust framing, [EXPRESIÓN], three expression set
+needed: neutral / tense / warm.
 ```
 
 ### matthews (Rev. Abraham Matthews, real — la voz que sostiene)

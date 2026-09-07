@@ -181,6 +181,10 @@
           "requires": {
             "type": "string"
           },
+          "manual": {
+            "type": "boolean",
+            "description": "No dispara solo con requires: hace falta hablarle al NPC (WorldScene.talkTo)."
+          },
           "once": {
             "type": "boolean"
           },

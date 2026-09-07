@@ -118,6 +118,8 @@ export interface TriggerDef {
   event?: string;
   match?: Record<string, unknown>;
   requires?: string;
+  /** No dispara solo al cumplirse `requires`: solo se llega hablándole al NPC (WorldScene.talkTo). */
+  manual?: boolean;
   once: boolean;
   turnCost: number;
   action: Record<string, any>;
