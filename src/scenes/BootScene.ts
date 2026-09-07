@@ -73,13 +73,14 @@ export class BootScene extends Phaser.Scene {
   private renderTitle(): void {
     this.clearStep();
     const cx = VIEW.width / 2;
-    // acá arranca la historia de verdad: la salida de Gales, no la llegada a Punta
-    // Cuevas (docs/04-guia-historica.md — el Mimosa zarpa el 28-V-1865 de Liverpool).
+    // acá arranca la historia de verdad: la salida, no la llegada a Punta Cuevas
+    // (docs/04-guia-historica.md — el Mimosa zarpa el 28-V-1865 de Liverpool. Liverpool
+    // es un puerto inglés, no galés — los colonos viajaron hasta ahí para embarcarse).
     this.renderBackground('mimosa_puerto');
     this.track(
       crisp(
         this.add
-          .text(cx, 172, 'Liverpool, Gales\n28 de mayo de 1865', {
+          .text(cx, 172, 'Liverpool\n28 de mayo de 1865', {
             fontFamily: FONT_FAMILY,
             fontSize: FONT.body,
             color: '#9BAEB4',

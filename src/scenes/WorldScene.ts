@@ -40,6 +40,7 @@ export class WorldScene extends Phaser.Scene {
   private facing: keyof typeof FACING_FRAME = 'north';
   private nearest: Interactable | null = null;
   private carriedCajones = 0;
+  private carriedLena = 0;
   private gateOpen = new Map<string, boolean>();
   private mimosa: Phaser.GameObjects.Image | null = null;
 
@@ -254,16 +255,27 @@ export class WorldScene extends Phaser.Scene {
         this.checkTriggers();
         break;
       }
-      case 'jarilla':
+      case 'jarilla': {
         it.sprite.destroy();
-        game.res.change('lena', 1, 'jarilla');
-        bus.emit('ui:toast', { text: '+1 haz de leña' });
+        const amount = registry.levelBalance(game.state.progress.level).gains.jarilla.amount as number;
+        this.carriedLena += amount;
+        game.inv.add('haz_lena', amount);
+        bus.emit('ui:toast', { text: `+${amount} haz de leña (a cargar hasta el fogón)` });
         break;
+      }
       case 'npc':
         this.talkTo(it.id);
         break;
       case 'fogon':
-        bus.emit('ui:toast', { text: 'El fogón. Acá se pasa la noche.' });
+        if (this.carriedLena > 0) {
+          const n = this.carriedLena;
+          game.inv.remove('haz_lena', n);
+          this.carriedLena = 0;
+          game.res.change('lena', n, 'jarilla');
+          bus.emit('ui:toast', { text: `Leña cargada al fogón: +${n}` });
+        } else {
+          bus.emit('ui:toast', { text: 'El fogón. Acá se pasa la noche.' });
+        }
         break;
       case 'cueva':
         this.runTriggerById('trig_eleccion_cueva');

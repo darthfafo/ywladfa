@@ -12,6 +12,16 @@
       "level": "nivel-01"
     },
     {
+      "id": "haz_lena",
+      "label": "Haz de leña",
+      "desc": "Ramas de jarilla recién cortadas. Hay que llevarlas hasta el fogón.",
+      "category": "carga",
+      "weightKg": 2,
+      "stackable": false,
+      "icon": "item_lena",
+      "level": "nivel-01"
+    },
+    {
       "id": "galleta_marinera",
       "label": "Galleta marinera",
       "desc": "Dura como una piedra y por eso dura. Se moja en agua o en caldo.",
