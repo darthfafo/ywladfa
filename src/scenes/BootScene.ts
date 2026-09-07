@@ -11,6 +11,12 @@ import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
 type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
 
+// Solo para el arranque (título, menús, botones): "Press Start 2P" (Google Fonts,
+// index.html) es bien ancha por carácter, así que se usa a tamaños chicos y con
+// fallback al monoespaciado de siempre si no llegó a cargar (o no hay internet).
+const RETRO_FONT = '"Press Start 2P", ui-monospace, "SF Mono", Menlo, monospace';
+const UI_FONT = 'ui-monospace, "SF Mono", Menlo, monospace';
+
 // tres franjas fijas durante todo el arranque, igual de espíritu que HUD/mundo/bandeja
 // del juego real (VIEW en config.ts): título arriba, imagen al medio, diálogo abajo.
 // Achica bastante el recorte de las escenas 3:4 contra la pantalla 9:16 completa, y el
@@ -36,6 +42,12 @@ export class BootScene extends Phaser.Scene {
 
   private playerName = '';
   private playerGender: Gender = 'f';
+  // "Press Start 2P" (Google Fonts) carga async: si el texto centrado ya se midió
+  // con la fuente de reemplazo (más angosta) antes de que la real termine de bajar,
+  // Phaser deja el centrado calculado con ese ancho viejo y el texto queda corrido
+  // apenas la tipografía real entra y reflowea más ancha. Se reintenta el centrado
+  // de cada texto retro en cuanto la fuente esté lista, sea cual sea el paso activo.
+  private retroRefreshers: Array<() => void> = [];
 
   constructor() {
     super('Boot');
@@ -62,8 +74,8 @@ export class BootScene extends Phaser.Scene {
     // contraste para el título contra la imagen de fondo.
     this.add.rectangle(0, 0, VIEW.width, TOP_H, PAL.ink, 1).setOrigin(0, 0).setDepth(20);
     this.add.rectangle(0, TOP_H - 1, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21);
-    this.renderDomText(cx, 10, 'Y WLADFA', { size: 24, color: '#EAE8E0', align: 'center', weight: 'bold' });
-    this.renderDomText(cx, 38, 'La Huella de los Rifleros', { size: 13, color: '#D9A845', align: 'center' });
+    this.renderDomText(cx, 14, 'Y WLADFA', { size: 15, color: '#EAE8E0', align: 'center', retro: true });
+    this.renderDomText(cx, 42, 'La Huella de los Rifleros', { size: 9, color: '#D9A845', align: 'center', retro: true });
 
     // bandeja inferior fija: mismo estilo que la bandeja real del juego (UiScene.buildTray),
     // opaca del todo — igual que DialogueBox.bg, para que no haya un salto de contraste
@@ -72,6 +84,10 @@ export class BootScene extends Phaser.Scene {
     this.add.rectangle(0, TRAY_Y, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21);
 
     this.renderTitle();
+
+    document.fonts?.ready.then(() => {
+      for (const refresh of this.retroRefreshers) refresh();
+    });
   }
 
   /* ---------------- paso 1: título (continuar / nueva partida) ---------------- */
@@ -83,14 +99,18 @@ export class BootScene extends Phaser.Scene {
     // es un puerto inglés, no galés — los colonos viajaron hasta ahí para embarcarse).
     this.renderImage('mimosa_puerto');
 
-    // contexto narrativo en la bandeja, como cualquier línea de narrador.
+    // contexto narrativo en la bandeja, como cualquier línea de narrador. La fecha
+    // en dorado (mismo tono que el resto de los acentos del juego, #D9A845) para
+    // que se distinga del resto sin perder contraste contra el fondo oscuro.
     this.track(
-      this.renderDomText(
-        16,
-        TRAY_Y + 14,
-        'Liverpool, 28 de mayo de 1865. El Mimosa lleva colonos galeses rumbo a Sudamérica: van a fundar Y Wladfa, la Colonia.',
-        { size: 10, color: '#9BAEB4', width: VIEW.width - 32 },
-      ),
+      this.renderDomText(16, TRAY_Y + 14, '', {
+        size: 10,
+        color: '#9BAEB4',
+        width: VIEW.width - 32,
+        html:
+          '<span style="color:#D9A845">Liverpool, 28 de mayo de 1865.</span> El Mimosa lleva colonos galeses ' +
+          'rumbo a Sudamérica: van a fundar Y Wladfa, la Colonia.',
+      }),
     );
 
     // el menú (continuar/nueva partida) va bien visible sobre la imagen, no perdido
@@ -103,7 +123,7 @@ export class BootScene extends Phaser.Scene {
     options.push({ label: 'Nueva partida', onPick: () => this.renderGenderIntro() });
     options.push({ label: 'Importar partida', onPick: () => this.triggerImportFile() });
     if (save) options.push({ label: 'Exportar partida', onPick: () => this.exportCurrentSave() });
-    this.renderMenu(options, IMG_CY + 60);
+    this.renderMenu(options, IMG_CY);
 
     // input de archivo invisible, siempre presente: el botón "Importar partida" de
     // arriba solo lo dispara (inputEl.click()).
@@ -340,7 +360,7 @@ export class BootScene extends Phaser.Scene {
       );
     }
     if (prompt) {
-      this.track(this.renderDomText(cx, boxY + 8, prompt, { size: 13, color: '#D9A845', align: 'center' }));
+      this.track(this.renderDomText(cx, boxY + 8, prompt, { size: 9, color: '#D9A845', align: 'center', retro: true }));
     }
 
     options.forEach((o, i) => {
@@ -370,23 +390,26 @@ export class BootScene extends Phaser.Scene {
     onPick: () => void,
     width: number,
     height = 22,
+    retro = true,
   ): Phaser.GameObjects.DOMElement {
+    // fondo semitransparente (0.75), no sólido: para que la imagen de atrás siga
+    // asomando un poco — "que no corte totalmente el fondo".
     const el = this.add.dom(
       x,
       y,
       'button',
-      `width:${width}px; height:${height}px; box-sizing:border-box; margin:0; padding:0 8px; ` +
+      `width:${width}px; height:${height}px; box-sizing:border-box; margin:0; padding:0 6px; ` +
         '-webkit-appearance:none; appearance:none; border-radius:0; ' +
-        'background:#2E464F; color:#BFD3D8; border:1px solid #7FB0B8; ' +
-        'font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12px; line-height:1; text-align:center; ' +
+        'background:rgba(46,70,79,0.75); color:#BFD3D8; border:1px solid #7FB0B8; ' +
+        `font-family: ${retro ? RETRO_FONT : UI_FONT}; font-size:${retro ? 9 : 12}px; line-height:1; text-align:center; ` +
         'cursor:pointer; -webkit-tap-highlight-color:transparent;',
     );
     const btn = el.node as HTMLButtonElement;
     btn.textContent = label;
     btn.type = 'button';
     btn.addEventListener('click', onPick);
-    btn.addEventListener('touchstart', () => (btn.style.background = '#3A5560'), { passive: true });
-    btn.addEventListener('touchend', () => (btn.style.background = '#2E464F'));
+    btn.addEventListener('touchstart', () => (btn.style.background = 'rgba(58,85,96,0.85)'), { passive: true });
+    btn.addEventListener('touchend', () => (btn.style.background = 'rgba(46,70,79,0.75)'));
     return el.setDepth(16);
   }
 
@@ -399,17 +422,30 @@ export class BootScene extends Phaser.Scene {
     x: number,
     y: number,
     text: string,
-    opts: { size: number; color: string; align?: 'left' | 'center'; width?: number; weight?: string },
+    opts: { size: number; color: string; align?: 'left' | 'center'; width?: number; weight?: string; retro?: boolean; html?: string },
   ): Phaser.GameObjects.DOMElement {
     const style =
-      `color:${opts.color}; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:${opts.size}px; ` +
-      `font-weight:${opts.weight ?? 'normal'}; text-align:${opts.align ?? 'left'}; line-height:1.3; ` +
+      `color:${opts.color}; font-family: ${opts.retro ? RETRO_FONT : UI_FONT}; font-size:${opts.size}px; ` +
+      `font-weight:${opts.weight ?? 'normal'}; text-align:${opts.align ?? 'left'}; line-height:1.5; ` +
       (opts.width ? `width:${opts.width}px;` : 'white-space:nowrap;');
-    // setText(), no node.textContent directo: el origen centrado necesita que
-    // Phaser sepa el ancho actual del div para calcular el offset, y solo lo
+    const el = this.add.dom(x, y, 'div', style).setOrigin(opts.align === 'center' ? 0.5 : 0, 0);
+    // setText()/setHTML(), no node.textContent directo: el origen centrado necesita
+    // que Phaser sepa el ancho actual del div para calcular el offset, y solo lo
     // recalcula (updateSize()) cuando el texto cambia a través de su propio método
     // — mismo bug ya encontrado en TouchControls (ver ese commit).
-    return this.add.dom(x, y, 'div', style).setOrigin(opts.align === 'center' ? 0.5 : 0, 0).setText(text);
+    if (opts.html) el.setHTML(opts.html);
+    else el.setText(text);
+    // el elemento puede haberse destruido (cambió de paso) para cuando la fuente
+    // esté lista — `document.body.contains` es más confiable acá que `.active`
+    // (Phaser no siempre lo pone en false al destruir un DOMElement).
+    if (opts.retro) {
+      this.retroRefreshers.push(() => {
+        if (!document.body.contains(el.node)) return;
+        if (opts.html) el.setHTML(opts.html!);
+        else el.setText(text);
+      });
+    }
+    return el;
   }
 
   private track(obj: Phaser.GameObjects.GameObject): void {
