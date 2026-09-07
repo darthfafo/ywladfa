@@ -143,25 +143,44 @@ pregunta si el jugador es varón o mujer, antes de elegir personaje.
 
 ### cutscene_enlistamiento_m — Enlistándose con el capitán Pepperell (varón)
 ```
-A dockside scene at a 19th century Welsh emigrant port, a young man in
-travel-worn brown coat and dark wool beret standing before a small wooden
-table where a stern maritime captain in a navy coat reviews a passenger
-ledger, the tall masts and rigging of the sailing ship Mimosa looming
-behind them, other emigrant families waiting in a loose line with bundles
-and trunks, overcast light, the quiet bureaucracy before a one-way voyage.
+A dockside scene at a 19th century Welsh emigrant port. A young man — early
+20s, travel-worn brown coat, dark wool beret, tired but hopeful expression —
+stands before a small wooden table where a stern maritime captain — 40s-50s,
+dark navy captain's cap (not a top hat), wool sea coat, impatient
+authoritative bearing — reviews a passenger ledger. The tall masts and
+rigging of the three-masted sailing ship Mimosa loom behind them, other
+emigrant families wait in a loose line with bundles and trunks, overcast
+light, the quiet bureaucracy before a one-way voyage.
 ```
-Guardar como `enlistamiento_m.png`.
+Guardar como `enlistamiento_m.png`. Mismos personajes que `pc_m` y
+`pepperell` en la sección 1 — misma ropa, mismo tocado, misma actitud.
 
 ### cutscene_enlistamiento_f — Enlistándose con el capitán Pepperell (mujer)
 ```
-A dockside scene at a 19th century Welsh emigrant port, a young woman in a
-plain travel dress and dark wool headscarf standing before a small wooden
-table where a stern maritime captain in a navy coat reviews a passenger
-ledger, the tall masts and rigging of the sailing ship Mimosa looming
-behind them, other emigrant families waiting in a loose line with bundles
-and trunks, overcast light, the quiet bureaucracy before a one-way voyage.
+A dockside scene at a 19th century Welsh emigrant port. A young woman —
+early 20s, dark wool headscarf tied simply at the back (not a hat), plain
+travel dress with a wool shawl over the shoulders, tired but hopeful
+expression — stands before a small wooden table where a stern maritime
+captain — 40s-50s, dark navy captain's cap (not a top hat), wool sea coat,
+impatient authoritative bearing — reviews a passenger ledger. The tall
+masts and rigging of the three-masted sailing ship Mimosa loom behind them,
+other emigrant families wait in a loose line with bundles and trunks,
+overcast light, the quiet bureaucracy before a one-way voyage.
 ```
-Guardar como `enlistamiento_f.png`.
+Guardar como `enlistamiento_f.png`. Mismos personajes que `pc_f` y
+`pepperell` en la sección 1 — misma ropa, mismo tocado, misma actitud.
+
+### cutscene_travesia — Dos meses de mar
+```
+Wide view of the three-masted sailing ship Mimosa on the open Atlantic, no
+land anywhere in sight, full sails set, a moderate grey swell, overcast sky
+meeting empty horizon, a small Welsh flag (green, white, touch of red) at
+the main mast, a faint huddle of emigrants visible at the rail — the long
+empty middle of a two-month crossing, not arrival, not departure.
+```
+Guardar como `travesia.png` — hoy esa pantalla (BootScene.renderVoyage) usa
+un barco animado por código; el día que este PNG exista, avisen y se
+engancha ahí en vez del placeholder animado.
 
 ### cutscene_cold_open — El bote llegando a la costa
 ```
@@ -286,5 +305,7 @@ the edge, top-down game tile, small scale, muted blue-grey water tone.
 ---
 
 *Generado como referencia para herramientas de imagen externas. Ninguna de
-estas imágenes existe todavía en el repo — cuando se generen, van a
-`public/assets/` según la convención de docs/03-assets.md.*
+estas imágenes existe todavía en el repo — retratos y escenas van a
+`src/assets/portraits/` y `src/assets/scenes/` (no `public/`: ver la nota en
+`src/util/assets.ts` sobre por qué). Los elementos de mapa de la sección 3
+todavía no tienen ese enganche de código — son referencia a futuro.*
