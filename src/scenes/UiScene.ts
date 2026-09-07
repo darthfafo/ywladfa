@@ -116,7 +116,7 @@ export class UiScene extends Phaser.Scene {
     track(
       crisp(
         this.add
-          .text(CARGA_LABEL_X, 19, 'carga', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
+          .text(CARGA_LABEL_X, 19, 'CARGA', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
           .setDepth(62)
           .setResolution(4),
       ),
@@ -166,13 +166,16 @@ export class UiScene extends Phaser.Scene {
 
   private refreshTime(): void {
     const s = game.state.progress;
-    this.dayText.setText(`Jornada ${s.day} · ${game.time.label()}`);
+    // mayúsculas acá (y en el resto del HUD): a tamaño de letra chico en un celular
+    // real, minúsculas con ascendentes/descendentes finos se pierden contra el
+    // reescalado del canvas — las formas más simples de las mayúsculas aguantan mejor.
+    this.dayText.setText(`JORNADA ${s.day} · ${game.time.label().toUpperCase()}`);
   }
 
   private refreshResources(): void {
     for (const [id, t] of this.resTexts) {
       const v = game.res.get(id);
-      t.setText(`${RES_LABEL[id] ?? id} ${Math.round(v)}`);
+      t.setText(`${(RES_LABEL[id] ?? id).toUpperCase()} ${Math.round(v)}`);
       t.setColor(game.res.isCritical(id) ? '#DE7050' : '#EAE8E0');
     }
   }
@@ -186,13 +189,13 @@ export class UiScene extends Phaser.Scene {
 
   private showToast(text: string): void {
     if (!text) return;
-    this.toast.setText(text).setAlpha(1);
+    this.toast.setText(text.toUpperCase()).setAlpha(1);
     this.tweens.killTweensOf(this.toast);
     this.tweens.add({ targets: this.toast, alpha: 0, delay: 1800, duration: 400 });
   }
 
   private showZone(label: string): void {
-    this.zoneLabel.setText(label).setAlpha(1);
+    this.zoneLabel.setText(label.toUpperCase()).setAlpha(1);
     this.tweens.killTweensOf(this.zoneLabel);
     this.tweens.add({ targets: this.zoneLabel, alpha: 0, delay: 1400, duration: 600 });
   }

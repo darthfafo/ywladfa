@@ -121,8 +121,14 @@ export class DialogueBox {
       return;
     }
 
-    this.nameText.setText(line.isNarrator ? '' : line.speakerName);
-    const portraitId = line.isNarrator ? null : portraitIdForSpeaker(line.speakerId, game.state.player.gender);
+    // con opciones, el nodo sigue teniendo como `speaker` a quien preguntó (ej. Edwyn),
+    // pero lo que se muestra abajo son las respuestas del jugador — sin este cambio
+    // quedaba el nombre/retrato del NPC encabezando lo que decía el propio jugador.
+    const hasChoices = line.choices.length > 0;
+    const speakerId = hasChoices ? 'pc' : line.speakerId;
+    const speakerName = hasChoices ? game.state.player.name : line.speakerName;
+    this.nameText.setText(line.isNarrator ? '' : speakerName);
+    const portraitId = line.isNarrator ? null : portraitIdForSpeaker(speakerId, game.state.player.gender);
     const key = portraitId ? portraitTextureKey(portraitId, line.portrait) : null;
     const hasArt = !!key && this.scene.textures.exists(key);
     this.portrait.setVisible(!line.isNarrator && !hasArt);
