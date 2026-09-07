@@ -52,10 +52,26 @@ apenas están (`src/util/assets.ts`) — no hace falta tocar código ni tenerlos
 todos: el personaje que todavía no tiene PNG sigue mostrando el rectángulo de
 color placeholder.
 
+**Para que no salgan todos con la misma cara:** los generadores conversacionales
+(Gemini, ChatGPT, etc.) tienden a repetir la cara del personaje anterior si le
+seguís pidiendo "uno más" en la misma conversación. Dos cosas ayudan:
+1. Generar cada personaje en una conversación/chat nueva, no encadenado atrás
+   del anterior.
+2. Agregar esta línea al final de cada prompt (ya sumada abajo en cada uno):
+   `This is a completely different individual from any other character —
+   distinct face, build and features, do not reuse the appearance of
+   previously generated portraits.`
+Los prompts de abajo también tienen ahora un rasgo físico bien concreto y
+distinto por personaje (contextura, vello facial, alguna marca), no solo el
+sombrero — el sombrero solo no alcanza para que el modelo diferencie caras.
+
 ### pc_m (jugador, varón — Idris Vaughan, ficticio)
 ```
-Young Welsh colonist man, early-to-mid 20s, travel-worn clothing, dark wool
-beret, tired but hopeful expression, weathered face from the sea crossing.
+Young Welsh colonist man, early-to-mid 20s, lean build, travel-worn
+clothing, dark wool beret, tired but hopeful expression, weathered face
+from the sea crossing. This is a completely different individual from any
+other character — distinct face, build and features, do not reuse the
+appearance of previously generated portraits.
 ```
 
 ### pc_f (jugador, mujer — Elin Vaughan, ficticio)
@@ -63,14 +79,19 @@ beret, tired but hopeful expression, weathered face from the sea crossing.
 Young Welsh colonist woman, early-to-mid 20s, dark wool headscarf tied
 simply at the back (not a hat), plain travel dress with a wool shawl over
 the shoulders, hair pulled back practically, tired but hopeful expression,
-weathered face from the sea crossing.
+weathered face from the sea crossing. This is a completely different
+individual from any other character — distinct face, build and features,
+do not reuse the appearance of previously generated portraits.
 ```
 
 ### lewis (Lewis Jones, real — el que prometió)
 ```
-Man in his 40s, neat beard, black top hat, the group's organizer — carries
-himself like a leader trying to hold defensive optimism together even when
-it's cracking.
+Man in his 40s, stocky heavyset build, neat dark beard, heavy brow, deep-set
+eyes, black top hat, the group's organizer — carries himself like a leader
+trying to hold defensive optimism together even when it's cracking. This is
+a completely different individual from any other character — distinct face,
+build and features, do not reuse the appearance of previously generated
+portraits.
 ```
 
 ### edwyn (Edwyn C. Roberts, real — el que falló con el depósito)
@@ -84,8 +105,11 @@ dark 1px outlines, limited color count per asset (8-16 colors max), dignified
 and realistic — not cartoonish, not caricature. Overcast coastal Patagonian
 light, windswept and sparse, austere mood.
 
-Another Man in his 30s-40s, dark wool beret, angular tired face, guilty evasive eyes
-that avoid direct contact — a competent man carrying visible shame.
+Another Man in his 30s-40s, thin wiry build, dark wool beret, angular tired
+face, unshaven stubble, sunken guilty evasive eyes that avoid direct contact
+— a competent man carrying visible shame. This is a completely different
+individual from any other character — distinct face, build and features, do
+not reuse the appearance of previously generated portraits.
 
 48x48 pixel art portrait, square format,
 solid plain dark background, bust framing, [EXPRESIÓN], three expression set
@@ -94,36 +118,49 @@ needed: neutral / tense / warm.
 
 ### matthews (Rev. Abraham Matthews, real — la voz que sostiene)
 ```
-Man in his 40s-50s, simple clerical collar, black top hat or plain wide-brim
-pastor's hat, calm steady gaze — the group's moral anchor, unshaken.
+Man in his 40s-50s, tall and gaunt, hollow cheeks, close-cropped grey hair,
+simple clerical collar, black top hat or plain wide-brim pastor's hat, calm
+steady gaze — the group's moral anchor, unshaken. This is a completely
+different individual from any other character — distinct face, build and
+features, do not reuse the appearance of previously generated portraits.
 ```
 
 ### berwyn (Richard Jones Berwyn, real — maestro y escribiente)
 ```
-Younger man, mid-20s, black top hat, thin wire spectacles, attentive
-observant expression — a teacher and record-keeper, always watching, always
-writing.
+Younger man, mid-20s, slight narrow build, long straight nose, black top
+hat, thin wire spectacles, attentive observant expression — a teacher and
+record-keeper, always watching, always writing. This is a completely
+different individual from any other character — distinct face, build and
+features, do not reuse the appearance of previously generated portraits.
 ```
 
 ### pepperell (Cap. George Pepperell, real — capitán del Mimosa)
 ```
-Man in his 40s-50s, dark navy maritime captain's cap (not a top hat), wool
-sea coat, impatient authoritative expression — he is leaving, they are not,
-and it shows.
+Man in his 40s-50s, broad-shouldered, weathered ruddy sun-worn skin, thick
+grey mustache, dark navy maritime captain's cap (not a top hat), wool sea
+coat, impatient authoritative expression — he is leaving, they are not, and
+it shows. This is a completely different individual from any other
+character — distinct face, build and features, do not reuse the appearance
+of previously generated portraits.
 ```
 
 ### mari (Mari Vaughan, ficticia — madre del PC)
 ```
-Woman in her late 40s-50s, dark wool headscarf (not a hat), tired maternal
-warmth in her eyes. For the "tense" variant: visible paleness and a cough,
-foreshadowing illness.
+Woman in her late 40s-50s, slightly stooped posture, deep wrinkles around
+the eyes, dark wool headscarf (not a hat), tired maternal warmth in her
+eyes. For the "tense" variant: visible paleness and a cough, foreshadowing
+illness. This is a completely different individual from any other
+character — distinct face, build and features, do not reuse the appearance
+of previously generated portraits.
 ```
 
 ### dafydd (Dafydd, ficticio — 9 años)
 ```
-9-year-old boy, oversized dark wool beret, round curious face, restless
-inquisitive expression — the character who teaches the player how to
-explore.
+9-year-old boy, small and thin for his age, oversized dark wool beret,
+round curious face, freckles, restless inquisitive expression — the
+character who teaches the player how to explore. This is a completely
+different individual from any other character — distinct face, build and
+features, do not reuse the appearance of previously generated portraits.
 ```
 
 ---
@@ -205,10 +242,24 @@ into an unknown empty land.
 
 ### cutscene_fogon_grande — Fogón nocturno, fuego grande
 ```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. Overcast coastal Patagonian
+light, windswept and sparse, austere mood.
+
 Night scene, a large campfire glowing warm amber against a dark barranca
 cliff backdrop, several small huddled colonist silhouettes seated around it,
 sparks rising, cold blue night sky above, sense of warmth and fragile
 community.
+
+3:4 vertical aspect ratio, cinematic game
+cutscene illustration, important content centered with generous margin on
+all sides for safe cropping on different phone screens, no text, no UI
+elements.
 ```
 
 ### cutscene_fogon_chico — Fogón nocturno, fuego chico
