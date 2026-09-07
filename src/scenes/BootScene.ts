@@ -3,7 +3,7 @@ import { PAL, VIEW } from '@/config';
 import { game } from '@/core/Game';
 import { createInitialState } from '@/core/GameState';
 import { saveSystem } from '@/systems/SaveSystem';
-import { preloadArt, sceneTextureKey } from '@/util/assets';
+import { addSceneBackground, preloadArt, sceneTextureKey } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { SelectList } from '@/util/selectList';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
@@ -286,20 +286,8 @@ export class BootScene extends Phaser.Scene {
   /** Fondo cinemático de pantalla completa si ya existe el PNG; si no, no dibuja nada
    * y quedan a la vista las franjas de color placeholder puestas en create(). */
   private renderBackground(sceneId: string): void {
-    const key = sceneTextureKey(sceneId);
-    if (!this.textures.exists(key)) return;
-    const img = this.add.image(VIEW.width / 2, VIEW.height / 2, key).setDepth(-5);
-    // las escenas se piden en 3:4 (docs/05-prompts-arte.txt), más "cuadradas" que la
-    // pantalla real de 9:16 — si se estira a 270×480 exacto queda deformada. Se
-    // escala para CUBRIR el marco (como background-size:cover) y se recortan los
-    // costados, que es justo para lo que el prompt pide márgenes seguros.
-    const scale = Math.max(VIEW.width / img.width, VIEW.height / img.height);
-    img.setScale(scale);
-    // son ilustraciones pintadas, no pixel art de bordes duros: con pixelArt:true el
-    // filtro por default es NEAREST, que al reescalar una imagen grande se ve
-    // dentado — igual que crisp() hace con el texto (util/text.ts).
-    img.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
-    this.track(img);
+    const img = addSceneBackground(this, sceneId, VIEW.width / 2, VIEW.height / 2, VIEW.width, VIEW.height);
+    if (img) this.track(img.setDepth(-5));
   }
 
   /** Franja oscura semitransparente para que el texto se lea encima de un fondo cinemático. */

@@ -184,8 +184,7 @@
         "id": "npc_edwyn",
         "x": 31,
         "y": 98,
-        "day": 1,
-        "afterFlag": "n1_cajones_6"
+        "day": 1
       },
       {
         "id": "npc_lewis",

@@ -113,7 +113,16 @@ export class DialogueBox {
     this.portrait.setVisible(!line.isNarrator && !hasArt);
     this.portrait.setFillStyle(portraitColor(line.portrait));
     this.portraitImg.setVisible(hasArt);
-    if (hasArt) this.portraitImg.setTexture(key!);
+    if (hasArt) {
+      // el archivo puede venir a cualquier resolución (se pide más grande que 48x48
+      // para no perder nitidez al bajar de tamaño, ver docs/05-prompts-arte.txt §1):
+      // siempre se muestra a 48x48 acá adentro, sea cual sea el tamaño nativo.
+      this.portraitImg.setTexture(key!).setDisplaySize(48, 48);
+      // son ilustraciones pintadas, no pixel art de bordes duros — con pixelArt:true
+      // el filtro por default es NEAREST y queda dentado al reescalar (igual que los
+      // fondos cinemáticos, ver addSceneBackground en util/assets.ts).
+      this.portraitImg.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+    }
     this.bodyText.setPosition(line.isNarrator ? 10 : 64, line.isNarrator ? 14 : 21);
     this.bodyText.setWordWrapWidth(line.isNarrator ? TRAY.w - 20 : TRAY.w - 74);
     this.bodyText.setColor(line.isNarrator ? '#9BAEB4' : '#EAE8E0');

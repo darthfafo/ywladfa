@@ -4,6 +4,7 @@ import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
 import type { ResourceId } from '@/core/types';
+import { addSceneBackground } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { TouchControls } from '@/ui/TouchControls';
 import { input } from '@/util/input';
@@ -26,6 +27,12 @@ const LOADBAR_X = 165;
 const LOADBAR_W = 48;
 const CARGA_LABEL_X = 217;
 
+/** Diálogos que arrancan como cutscene de pantalla completa: fondo real detrás
+ * (si ya existe el PNG) y HUD oculto mientras dura — docs/01-nivel-01.md §4. */
+const CUTSCENE_DIALOGUES: Record<string, string> = {
+  d_n1_cold_open: 'cold_open',
+};
+
 export class UiScene extends Phaser.Scene {
   private dayText!: Phaser.GameObjects.Text;
   private resTexts = new Map<ResourceId, Phaser.GameObjects.Text>();
@@ -36,6 +43,8 @@ export class UiScene extends Phaser.Scene {
   private touch!: TouchControls;
   private overlay: Phaser.GameObjects.Container | null = null;
   private overlayNav: SelectList | null = null;
+  private hudObjects: Array<Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle> = [];
+  private cutsceneBg: Phaser.GameObjects.Image | null = null;
 
   constructor() {
     super('Ui');
@@ -73,8 +82,11 @@ export class UiScene extends Phaser.Scene {
    */
   private buildHud(): void {
     const h = VIEW.hud;
-    this.add.rectangle(h.x, h.y, h.w, h.h, PAL.ink, 0.96).setOrigin(0, 0).setDepth(60);
-    this.add.rectangle(h.x, h.y + h.h - 1, h.w, 1, PAL.slate).setOrigin(0, 0).setDepth(61);
+    const track = (o: Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle): void => {
+      this.hudObjects.push(o);
+    };
+    track(this.add.rectangle(h.x, h.y, h.w, h.h, PAL.ink, 0.96).setOrigin(0, 0).setDepth(60));
+    track(this.add.rectangle(h.x, h.y + h.h - 1, h.w, 1, PAL.slate).setOrigin(0, 0).setDepth(61));
 
     // fila 1: jornada y turno, sin nada más — nunca se queda sin lugar
     // (antes había 4 puntitos de turno acá; redundantes con el texto, se sacaron)
@@ -84,6 +96,7 @@ export class UiScene extends Phaser.Scene {
         .setDepth(62)
         .setResolution(4),
     );
+    track(this.dayText);
 
     // fila 2: recursos con nombre completo + barra de carga, en columnas fijas
     HUD_RESOURCES.forEach((id, i) => {
@@ -94,16 +107,25 @@ export class UiScene extends Phaser.Scene {
           .setResolution(4),
       );
       this.resTexts.set(id, t);
+      track(t);
     });
 
-    this.add.rectangle(LOADBAR_X, 20, LOADBAR_W, 5, PAL.ink2).setOrigin(0, 0).setDepth(62);
+    track(this.add.rectangle(LOADBAR_X, 20, LOADBAR_W, 5, PAL.ink2).setOrigin(0, 0).setDepth(62));
     this.loadBar = this.add.rectangle(LOADBAR_X, 20, 0, 5, PAL.moss).setOrigin(0, 0).setDepth(63);
-    crisp(
-      this.add
-        .text(CARGA_LABEL_X, 19, 'carga', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
-        .setDepth(62)
-        .setResolution(4),
+    track(this.loadBar);
+    track(
+      crisp(
+        this.add
+          .text(CARGA_LABEL_X, 19, 'carga', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
+          .setDepth(62)
+          .setResolution(4),
+      ),
     );
+  }
+
+  /** Oculta/muestra el HUD entero — cutscenes de pantalla completa lo tapan (docs/01 §4). */
+  private setHudVisible(visible: boolean): void {
+    for (const o of this.hudObjects) o.setVisible(visible);
   }
 
   /* ---------------- bandeja (franja inferior, 96 px) ---------------- */
@@ -178,7 +200,20 @@ export class UiScene extends Phaser.Scene {
   /* ---------------- modales ---------------- */
 
   private openDialogue(id: string): void {
-    this.dialogue.start(id, () => this.touch.setContext(null));
+    const cutsceneId = CUTSCENE_DIALOGUES[id];
+    if (cutsceneId) {
+      this.setHudVisible(false);
+      this.cutsceneBg = addSceneBackground(this, cutsceneId, VIEW.width / 2, VIEW.height / 2, VIEW.width, VIEW.height);
+      this.cutsceneBg?.setDepth(-5);
+    }
+    this.dialogue.start(id, () => {
+      this.touch.setContext(null);
+      if (cutsceneId) {
+        this.setHudVisible(true);
+        this.cutsceneBg?.destroy();
+        this.cutsceneBg = null;
+      }
+    });
   }
 
   private openTutorial(id: string): void {

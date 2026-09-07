@@ -1,4 +1,4 @@
-import type Phaser from 'phaser';
+import Phaser from 'phaser';
 
 /**
  * `src/assets/` (no `public/`) porque el proyecto tiene un modo de build de un solo
@@ -49,6 +49,31 @@ export function sceneTextureKey(id: string): string {
 /** true si YA hay PNG real para esa escena (para decidir si mostrar imagen o placeholder). */
 export function hasSceneArt(id: string): boolean {
   return sceneUrls.has(id);
+}
+
+/**
+ * Fondo cinemático de pantalla completa si ya existe el PNG de esa escena — cubre el
+ * rectángulo (x,y,w,h) sin deformarse (como background-size:cover: las escenas se
+ * piden en 3:4, más "cuadradas" que la pantalla 9:16, así que recorta los costados
+ * en vez de estirar) y con filtro lineal (son ilustraciones pintadas, no pixel art de
+ * bordes duros; con pixelArt:true el filtro por default es NEAREST y queda dentado).
+ * Devuelve null si el PNG todavía no existe — el llamador decide el placeholder.
+ */
+export function addSceneBackground(
+  scene: Phaser.Scene,
+  sceneId: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): Phaser.GameObjects.Image | null {
+  const key = sceneTextureKey(sceneId);
+  if (!scene.textures.exists(key)) return null;
+  const img = scene.add.image(x, y, key);
+  const scale = Math.max(w / img.width, h / img.height);
+  img.setScale(scale);
+  img.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+  return img;
 }
 
 /** Registra en el loader de la escena todo el arte real que exista bajo src/assets/. */
