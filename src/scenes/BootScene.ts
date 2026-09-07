@@ -7,6 +7,7 @@ import { preloadArt, sceneTextureKey } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { SelectList } from '@/util/selectList';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
+import { makeProps } from '@/util/textures';
 
 type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
@@ -37,10 +38,13 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     const cx = VIEW.width / 2;
+    makeProps(this); // trae 'prop_mimosa': WorldScene todavía no corrió, no existe todavía
 
-    this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void).setOrigin(0, 0);
-    this.add.rectangle(0, 300, VIEW.width, 60, PAL.sea, 0.5).setOrigin(0, 0);
-    this.add.rectangle(0, 360, VIEW.width, 120, PAL.soil, 0.6).setOrigin(0, 0);
+    // profundidad negativa: si un paso pone un fondo cinemático real (renderBackground)
+    // tiene que quedar delante de estas franjas placeholder, no tapado por ellas.
+    this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void).setOrigin(0, 0).setDepth(-10);
+    this.add.rectangle(0, 300, VIEW.width, 60, PAL.sea, 0.5).setOrigin(0, 0).setDepth(-10);
+    this.add.rectangle(0, 360, VIEW.width, 120, PAL.soil, 0.6).setOrigin(0, 0).setDepth(-10);
 
     crisp(
       this.add
@@ -69,10 +73,13 @@ export class BootScene extends Phaser.Scene {
   private renderTitle(): void {
     this.clearStep();
     const cx = VIEW.width / 2;
+    // acá arranca la historia de verdad: la salida de Gales, no la llegada a Punta
+    // Cuevas (docs/04-guia-historica.md — el Mimosa zarpa el 28-V-1865 de Liverpool).
+    this.renderBackground('mimosa_puerto');
     this.track(
       crisp(
         this.add
-          .text(cx, 172, 'Punta Cuevas, Golfo Nuevo\n28 de julio de 1865', {
+          .text(cx, 172, 'Liverpool, Gales\n28 de mayo de 1865', {
             fontFamily: FONT_FAMILY,
             fontSize: FONT.body,
             color: '#9BAEB4',
@@ -83,14 +90,11 @@ export class BootScene extends Phaser.Scene {
           .setResolution(4),
       ),
     );
-    this.track(
-      crisp(
-        this.add
-          .text(cx, 236, '«Nos dijeron que era verde.»', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#7FB0B8' })
-          .setOrigin(0.5)
-          .setResolution(4),
-      ),
-    );
+    // mientras no haya PNG real (mimosa_puerto.png), el barco placeholder es el
+    // mismo sprite procedural que ya se ve anclado en el mundo (textures.ts).
+    if (!this.textures.exists(sceneTextureKey('mimosa_puerto'))) {
+      this.track(this.add.image(cx, 275, 'prop_mimosa').setScale(4).setDepth(-5));
+    }
 
     const options: Array<{ label: string; onPick: () => void }> = [];
     const save = saveSystem.peek();
