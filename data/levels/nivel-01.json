@@ -221,7 +221,7 @@
         ],
         "movesTo": {
           "day": 2,
-          "turn": "manana",
+          "turn": "tarde",
           "x": 11,
           "y": 9
         }
@@ -636,6 +636,7 @@
         7,
         7
       ],
+      "requires": "flags.n1_dafydd_perdido == true",
       "once": true,
       "turnCost": 1,
       "action": {

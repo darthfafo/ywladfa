@@ -140,8 +140,9 @@ export class WorldScene extends Phaser.Scene {
   /**
    * Los NPC no están siempre en el mismo lugar ni siempre presentes: `day` decide si
    * aparecen, `afterFlag` si ya se ganó verlos, `movesTo` si ya llegó el momento de
-   * reubicarlos (ej. Dafydd, sentado junto al manantial desde la mañana de J2 — el
-   * cañadón se puede pisar desde esa hora, así que no puede llegar más tarde que eso).
+   * reubicarlos (ej. Dafydd, sentado junto al manantial recién en J2 tarde — coincide
+   * con `trig_dafydd_perdido`; `trig_manantial` pide el mismo flag para no poder
+   * "encontrar el agua" antes de que Dafydd se haya perdido en la ficción).
    */
   private updateNpcVisibility(): void {
     const day = game.state.progress.day;
