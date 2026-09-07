@@ -19,6 +19,7 @@ export class DialogueBox {
   private bg: Phaser.GameObjects.Rectangle;
   private portrait: Phaser.GameObjects.Rectangle;
   private portraitImg: Phaser.GameObjects.Image;
+  private portraitFrame: Phaser.GameObjects.Rectangle;
   private nameText: Phaser.GameObjects.Text;
   private bodyText: Phaser.GameObjects.Text;
   private hint: Phaser.GameObjects.Text;
@@ -32,10 +33,16 @@ export class DialogueBox {
     this.sys = new DialogueSystem(game);
 
     this.bg = scene.add.rectangle(0, 0, TRAY.w, TRAY.h, PAL.ink, 0.97).setOrigin(0, 0).setStrokeStyle(1, PAL.slate);
-    this.portrait = scene.add.rectangle(8, 12, 48, 48, PAL.slate).setOrigin(0, 0).setStrokeStyle(1, PAL.seaPale, 0.5);
+    this.portrait = scene.add.rectangle(8, 12, 48, 48, PAL.slate).setOrigin(0, 0);
     // placeholder de color mientras no haya PNG real para ese personaje/expresión
     // (src/util/assets.ts decide en show() cuál de los dos se ve).
     this.portraitImg = scene.add.image(8, 12, '__DEFAULT').setOrigin(0, 0).setVisible(false);
+    // marco propio, separado del rectángulo de placeholder: antes el borde vivía en
+    // `portrait` y desaparecía junto con él apenas había arte real, así que solo los
+    // placeholders tenían recuadro. Este se ve siempre (arte o placeholder), mismo
+    // color que el borde de las imágenes cinemáticas (BootScene.renderImage), "para
+    // normalizar la imagen".
+    this.portraitFrame = scene.add.rectangle(8, 12, 48, 48).setOrigin(0, 0).setStrokeStyle(1, PAL.seaPale, 0.6);
     this.nameText = crisp(
       scene.add
         .text(64, 7, '', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#D9A845' })
@@ -60,7 +67,15 @@ export class DialogueBox {
     );
 
     this.root = scene.add
-      .container(TRAY.x, TRAY.y, [this.bg, this.portrait, this.portraitImg, this.nameText, this.bodyText, this.hint])
+      .container(TRAY.x, TRAY.y, [
+        this.bg,
+        this.portrait,
+        this.portraitImg,
+        this.portraitFrame,
+        this.nameText,
+        this.bodyText,
+        this.hint,
+      ])
       .setDepth(80)
       .setVisible(false);
 
@@ -113,6 +128,7 @@ export class DialogueBox {
     this.portrait.setVisible(!line.isNarrator && !hasArt);
     this.portrait.setFillStyle(portraitColor(line.portrait));
     this.portraitImg.setVisible(hasArt);
+    this.portraitFrame.setVisible(!line.isNarrator);
     if (hasArt) {
       // el archivo puede venir a cualquier resolución (se pide más grande que 48x48
       // para no perder nitidez al bajar de tamaño, ver docs/05-prompts-arte.txt §1):
