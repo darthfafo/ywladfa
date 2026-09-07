@@ -157,6 +157,8 @@ export class BootScene extends Phaser.Scene {
     this.clearStep();
     const cx = VIEW.width / 2;
 
+    this.renderBackground('mimosa_puerto');
+    this.renderTextBacking(100, 210);
     // pegado al subtítulo: es la única zona que un teclado virtual (que tapa desde
     // la mitad de la pantalla para abajo) nunca llega a cubrir.
     this.track(
@@ -201,6 +203,8 @@ export class BootScene extends Phaser.Scene {
 
   private renderConfirmOverwrite(): void {
     this.clearStep();
+    this.renderBackground('mimosa_puerto');
+    this.renderTextBacking(100, 210);
     this.track(
       crisp(
         this.add
