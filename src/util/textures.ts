@@ -283,6 +283,57 @@ function makeShip(scene: Phaser.Scene, key = 'prop_mimosa'): void {
   tex!.refresh();
 }
 
+/**
+ * Versión grande del Mimosa (72×54), solo para las cinemáticas del arranque, donde
+ * se ve a mucho más escala que el prop chico del mundo — un barco de tres mástiles
+ * real (trinquete, mayor, mesana), no el casco simple de `makeShip`.
+ */
+export function makeShipLarge(scene: Phaser.Scene, key = 'prop_mimosa_grande'): void {
+  if (scene.textures.exists(key)) return;
+  const W = 72;
+  const H = 54;
+  const tex = scene.textures.createCanvas(key, W, H);
+  const ctx = tex!.getContext();
+  const DECK = 33;
+
+  // casco
+  ctx.fillStyle = hex(PAL.ink);
+  ctx.fillRect(6, DECK + 1, 60, 9);
+  ctx.fillStyle = hex(PAL.soil2);
+  ctx.fillRect(7, DECK + 2, 58, 6);
+  ctx.fillStyle = hex(PAL.soil);
+  ctx.fillRect(10, DECK + 7, 52, 2); // línea de flotación
+  // cubierta
+  ctx.fillStyle = hex(PAL.sandLight);
+  ctx.fillRect(8, DECK, 56, 1);
+
+  // trinquete (proa) · mayor (centro, el más alto) · mesana (popa)
+  const masts = [
+    { x: 20, top: 12 },
+    { x: 36, top: 4 },
+    { x: 52, top: 16 },
+  ];
+  ctx.fillStyle = hex(PAL.ink);
+  for (const m of masts) ctx.fillRect(m.x, m.top, 1, DECK - m.top);
+
+  // vela cuadra por mástil: verga oscura arriba, lienzo abajo
+  ctx.fillStyle = hex(PAL.bone);
+  for (const m of masts) ctx.fillRect(m.x - 5, m.top + 4, 10, 15);
+  ctx.fillStyle = hex(PAL.ink);
+  for (const m of masts) ctx.fillRect(m.x - 6, m.top + 3, 12, 1);
+
+  // gallardete galés en la punta del mástil mayor
+  const main = masts[1]!;
+  ctx.fillStyle = hex(PAL.moss);
+  ctx.fillRect(main.x + 1, main.top, 7, 3);
+  ctx.fillStyle = hex(PAL.snow);
+  ctx.fillRect(main.x + 1, main.top + 3, 7, 3);
+  ctx.fillStyle = hex(PAL.blood);
+  ctx.fillRect(main.x + 2, main.top + 2, 3, 2);
+
+  tex!.refresh();
+}
+
 function makeRect(scene: Phaser.Scene, key: string, w: number, h: number, fill: number, edge: number): void {
   if (scene.textures.exists(key)) return;
   const tex = scene.textures.createCanvas(key, w, h);

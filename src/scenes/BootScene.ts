@@ -7,7 +7,7 @@ import { preloadArt, sceneTextureKey } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { SelectList } from '@/util/selectList';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
-import { makePortraits, makeProps } from '@/util/textures';
+import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
 
 type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
@@ -39,6 +39,7 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     const cx = VIEW.width / 2;
     makeProps(this); // trae 'prop_mimosa': WorldScene todavía no corrió, no existe todavía
+    makeShipLarge(this); // versión grande de 3 mástiles, solo para estas cinemáticas
     makePortraits(this); // retratos placeholder por si el diálogo de enlistamiento ya los necesita
 
     // profundidad negativa: si un paso pone un fondo cinemático real (renderBackground)
@@ -78,10 +79,13 @@ export class BootScene extends Phaser.Scene {
     // (docs/04-guia-historica.md — el Mimosa zarpa el 28-V-1865 de Liverpool. Liverpool
     // es un puerto inglés, no galés — los colonos viajaron hasta ahí para embarcarse).
     this.renderBackground('mimosa_puerto');
+    // todo lo interactivo va pegado al título/subtítulo, no más abajo: es lo único
+    // que queda siempre libre de un teclado virtual (que tapa desde la mitad de la
+    // pantalla para abajo) y no depende de que el reajuste de escala llegue a tiempo.
     this.track(
       crisp(
         this.add
-          .text(cx, 172, 'Liverpool\n28 de mayo de 1865', {
+          .text(cx, 122, 'Liverpool\n28 de mayo de 1865', {
             fontFamily: FONT_FAMILY,
             fontSize: FONT.body,
             color: '#9BAEB4',
@@ -92,17 +96,19 @@ export class BootScene extends Phaser.Scene {
           .setResolution(4),
       ),
     );
-    // mientras no haya PNG real (mimosa_puerto.png), el barco placeholder es el
-    // mismo sprite procedural que ya se ve anclado en el mundo (textures.ts).
-    if (!this.textures.exists(sceneTextureKey('mimosa_puerto'))) {
-      this.track(this.add.image(cx, 275, 'prop_mimosa').setScale(4).setDepth(-5));
-    }
 
     const options: Array<{ label: string; onPick: () => void }> = [];
     const save = saveSystem.peek();
     if (save) options.push({ label: `Continuar — Jornada ${save.day}`, onPick: () => this.continueGame() });
     options.push({ label: 'Nueva partida', onPick: () => this.renderGenderIntro() });
-    this.renderOptions(options, save ? 396 : 410);
+    this.renderOptions(options, 185);
+
+    // mientras no haya PNG real (mimosa_puerto.png), el barco placeholder es la
+    // versión grande de tres mástiles — acá se ve bastante más grande que en el
+    // mundo, así que vale la pena que tenga más detalle (textures.ts).
+    if (!this.textures.exists(sceneTextureKey('mimosa_puerto'))) {
+      this.track(this.add.image(cx, 310, 'prop_mimosa_grande').setScale(2.3).setDepth(-5));
+    }
   }
 
   /* ---------------- paso 2: la Mimosa en el puerto, ¿varón o mujer? ---------------- */
@@ -110,12 +116,12 @@ export class BootScene extends Phaser.Scene {
   private renderGenderIntro(): void {
     this.clearStep();
     this.renderBackground('mimosa_puerto');
-    this.renderTextBacking(280);
+    this.renderTextBacking(108, 235);
     const cx = VIEW.width / 2;
     this.track(
       crisp(
         this.add
-          .text(cx, 320, '¿Sos varón o mujer?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+          .text(cx, 128, '¿Sos varón o mujer?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
           .setOrigin(0.5)
           .setResolution(4),
       ),
@@ -125,7 +131,7 @@ export class BootScene extends Phaser.Scene {
         { label: 'Varón', onPick: () => this.pickGender('m') },
         { label: 'Mujer', onPick: () => this.pickGender('f') },
       ],
-      370,
+      170,
     );
   }
 
@@ -140,10 +146,12 @@ export class BootScene extends Phaser.Scene {
     this.clearStep();
     const cx = VIEW.width / 2;
 
+    // pegado al subtítulo: es la única zona que un teclado virtual (que tapa desde
+    // la mitad de la pantalla para abajo) nunca llega a cubrir.
     this.track(
       crisp(
         this.add
-          .text(cx, 300, '¿Cómo te llamás?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+          .text(cx, 118, '¿Cómo te llamás?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
           .setOrigin(0.5)
           .setResolution(4),
       ),
@@ -152,7 +160,7 @@ export class BootScene extends Phaser.Scene {
     const defaultName = DEFAULT_NAME[this.playerGender];
     this.nameInput = this.add.dom(
       cx,
-      330,
+      148,
       'input',
       'width:140px; padding:5px; text-align:center; font-family: ui-monospace, "SF Mono", Menlo, monospace; ' +
         'font-size:13px; background:#18262A; color:#EAE8E0; border:1px solid #2E464F; outline:none;',
@@ -168,7 +176,7 @@ export class BootScene extends Phaser.Scene {
     });
     inputEl.focus();
 
-    this.renderOptions([{ label: 'Siguiente', onPick: () => this.confirmName() }], 370);
+    this.renderOptions([{ label: 'Siguiente', onPick: () => this.confirmName() }], 188);
   }
 
   private confirmName(): void {
@@ -185,7 +193,7 @@ export class BootScene extends Phaser.Scene {
     this.track(
       crisp(
         this.add
-          .text(VIEW.width / 2, 320, 'Se pierde la partida guardada.', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#DE7050' })
+          .text(VIEW.width / 2, 118, 'Se pierde la partida guardada.', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#DE7050' })
           .setOrigin(0.5)
           .setResolution(4),
       ),
@@ -195,7 +203,7 @@ export class BootScene extends Phaser.Scene {
         { label: 'Sí, empezar de nuevo', onPick: () => this.renderEnlist() },
         { label: 'Volver', onPick: () => this.renderName() },
       ],
-      360,
+      160,
     );
   }
 
@@ -230,7 +238,9 @@ export class BootScene extends Phaser.Scene {
       this.tweens.add({ targets: w, x: -60, duration: 1600 + i * 260, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     }
 
-    const ship = this.add.image(cx, 220, 'prop_mimosa').setScale(3.2).setDepth(-5);
+    // acá se ve mucho más grande que en el mundo, así que usa la versión de tres
+    // mástiles en vez del casco simple del prop chico (textures.ts).
+    const ship = this.add.image(cx, 210, 'prop_mimosa_grande').setScale(2.6).setDepth(-5);
     this.track(ship);
     this.tweens.add({ targets: ship, y: '+=6', duration: 1500, yoyo: true, repeat: -1, ease: 'sine.inOut' });
 
@@ -275,8 +285,8 @@ export class BootScene extends Phaser.Scene {
   }
 
   /** Franja oscura semitransparente para que el texto se lea encima de un fondo cinemático. */
-  private renderTextBacking(fromY: number): void {
-    this.track(this.add.rectangle(0, fromY, VIEW.width, VIEW.height - fromY, PAL.void, 0.55).setOrigin(0, 0).setDepth(-1));
+  private renderTextBacking(fromY: number, toY: number = VIEW.height): void {
+    this.track(this.add.rectangle(0, fromY, VIEW.width, toY - fromY, PAL.void, 0.55).setOrigin(0, 0).setDepth(-1));
   }
 
   private renderOptions(options: Array<{ label: string; onPick: () => void }>, startY: number): void {
