@@ -37,7 +37,6 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    const cx = VIEW.width / 2;
     makeProps(this); // trae 'prop_mimosa': WorldScene todavía no corrió, no existe todavía
     makeShipLarge(this); // versión grande de 3 mástiles, solo para estas cinemáticas
     makePortraits(this); // retratos placeholder por si el diálogo de enlistamiento ya los necesita
@@ -47,25 +46,6 @@ export class BootScene extends Phaser.Scene {
     this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void).setOrigin(0, 0).setDepth(-10);
     this.add.rectangle(0, 300, VIEW.width, 60, PAL.sea, 0.5).setOrigin(0, 0).setDepth(-10);
     this.add.rectangle(0, 360, VIEW.width, 120, PAL.soil, 0.6).setOrigin(0, 0).setDepth(-10);
-
-    crisp(
-      this.add
-        .text(cx, 60, 'Y WLADFA', { fontFamily: FONT_FAMILY, fontSize: FONT.hero, color: '#EAE8E0', align: 'center' })
-        .setOrigin(0.5)
-        .setResolution(4),
-    );
-    crisp(
-      this.add
-        .text(cx, 90, 'La Huella de los Rifleros', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
-        .setOrigin(0.5)
-        .setResolution(4),
-    );
-    crisp(
-      this.add
-        .text(cx, 458, 'prototipo v0.1 · arte placeholder', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
-        .setOrigin(0.5)
-        .setResolution(4),
-    );
 
     this.renderTitle();
   }
@@ -79,6 +59,35 @@ export class BootScene extends Phaser.Scene {
     // (docs/04-guia-historica.md — el Mimosa zarpa el 28-V-1865 de Liverpool. Liverpool
     // es un puerto inglés, no galés — los colonos viajaron hasta ahí para embarcarse).
     this.renderBackground('mimosa_puerto');
+    // el título/subtítulo SOLO van en este paso: antes se creaban una vez en create()
+    // y quedaban flotando arriba de TODAS las pantallas siguientes (género, nombre, y
+    // hasta la escena del enlistamiento) — de ahí que se leyeran mal en todos lados.
+    this.track(
+      crisp(
+        this.add
+          .text(cx, 60, 'Y WLADFA', { fontFamily: FONT_FAMILY, fontSize: FONT.hero, color: '#EAE8E0', align: 'center' })
+          .setOrigin(0.5)
+          .setResolution(4)
+          .setShadow(0, 2, '#0E1416', 6, false, true),
+      ),
+    );
+    this.track(
+      crisp(
+        this.add
+          .text(cx, 90, 'La Huella de los Rifleros', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+          .setOrigin(0.5)
+          .setResolution(4)
+          .setShadow(0, 2, '#0E1416', 6, false, true),
+      ),
+    );
+    this.track(
+      crisp(
+        this.add
+          .text(cx, 458, 'prototipo v0.1 · arte placeholder', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
+          .setOrigin(0.5)
+          .setResolution(4),
+      ),
+    );
     // la caja va al medio de la pantalla, no pegada al subtítulo: el título tiene que
     // leerse solo, sobre el cielo limpio de la foto, y abajo tiene que quedar bastante
     // imagen a la vista (el barco, la gente en el muelle) — no todo tapado por texto.
@@ -230,8 +239,15 @@ export class BootScene extends Phaser.Scene {
   private renderVoyage(): void {
     this.clearStep();
     const cx = VIEW.width / 2;
-    const hasArt = this.textures.exists(sceneTextureKey('travesia'));
-    this.renderBackground('travesia');
+    const bg = addSceneBackground(this, 'travesia', cx, VIEW.height / 2, VIEW.width, VIEW.height);
+    if (bg) {
+      // esta toma tiene mucho cielo vacío arriba (el barco está compuesto más abajo):
+      // se agranda un poco más del mínimo de "cover" y se corre hacia arriba, para que
+      // el barco llene el cuadro en vez de dejar tanto cielo vacío arriba.
+      bg.setScale(bg.scaleX * 1.3).setY(bg.y - 60).setDepth(-5);
+      this.track(bg);
+    }
+    const hasArt = !!bg;
 
     if (!hasArt) {
       // mar animado por código: placeholder hasta que exista travesia.png
