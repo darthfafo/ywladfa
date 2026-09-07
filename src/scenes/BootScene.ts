@@ -5,7 +5,6 @@ import { createInitialState } from '@/core/GameState';
 import { saveSystem } from '@/systems/SaveSystem';
 import { addSceneBackground, preloadArt } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
-import { SelectList } from '@/util/selectList';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
 import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
 
@@ -31,7 +30,6 @@ const IMG_CY = TOP_H + IMG_H / 2;
 export class BootScene extends Phaser.Scene {
   /** Todo lo que dibuja el paso actual (menos el título/bandeja fijos), para borrarlo al cambiar de paso. */
   private stepObjects: Phaser.GameObjects.GameObject[] = [];
-  private optionNav: SelectList | null = null;
   private nameInput: Phaser.GameObjects.DOMElement | null = null;
   private dialogue: DialogueBox | null = null;
 
@@ -198,25 +196,7 @@ export class BootScene extends Phaser.Scene {
     inputEl.focus();
 
     // botón compacto al lado del campo, no una opción de lista aparte más abajo.
-    const btnX = cx + 68;
-    const chip = this.add
-      .rectangle(btnX, rowY, 62, 24, PAL.slate, 0.9)
-      .setStrokeStyle(1, PAL.seaPale, 0.6)
-      .setDepth(1)
-      .setInteractive({ useHandCursor: true });
-    chip.on('pointerdown', () => this.confirmName());
-    chip.on('pointerover', () => chip.setFillStyle(PAL.slate, 1));
-    chip.on('pointerout', () => chip.setFillStyle(PAL.slate, 0.9));
-    this.track(chip);
-    this.track(
-      crisp(
-        this.add
-          .text(btnX, rowY, 'Ir ›', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#D9A845' })
-          .setOrigin(0.5)
-          .setResolution(4)
-          .setDepth(2),
-      ),
-    );
+    this.track(this.renderDomButton(cx + 68, rowY, 'Ir ›', () => this.confirmName(), 62));
   }
 
   private confirmName(): void {
@@ -361,43 +341,39 @@ export class BootScene extends Phaser.Scene {
       );
     }
 
-    const navItems = options.map((o, i) => {
-      const t = crisp(
-        this.add
-          .text(0, boxY + 8 + promptH + i * rowH, o.label, { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#BFD3D8' })
-          .setDepth(16)
-          .setResolution(4),
-      );
-      t.setX(cx - t.width / 2); // centrado como bloque, pero con origen izquierdo: así el
-      // cursor "›" de SelectList (que se para a la izquierda del texto) queda bien puesto.
-      t.setInteractive({ useHandCursor: true });
-      t.input!.hitArea = new Phaser.Geom.Rectangle(-24, -6, t.width + 48, rowH - 2);
-      t.on('pointerover', () => t.setColor('#D9A845'));
-      t.on('pointerout', () => t.setColor('#BFD3D8'));
-      t.on('pointerdown', () => o.onPick());
-      this.track(t);
-      return { text: t, onPick: o.onPick };
+    options.forEach((o, i) => {
+      const y = boxY + 8 + promptH + i * rowH + (rowH - 2) / 2;
+      this.track(this.renderDomButton(cx, y, o.label, o.onPick, VIEW.width - 64));
     });
-    this.optionNav = new SelectList(this, navItems, { normal: '#BFD3D8', selected: '#D9A845' });
   }
 
   private renderOptions(options: Array<{ label: string; onPick: () => void }>, startY: number): void {
-    const x = 16;
-    const navItems = options.map((o, i) => {
-      const t = crisp(
-        this.add
-          .text(x, startY + i * 22, o.label, { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#BFD3D8' })
-          .setDepth(22)
-          .setResolution(4),
-      ).setInteractive({ useHandCursor: true });
-      t.input!.hitArea = new Phaser.Geom.Rectangle(-8, -6, VIEW.width - 2 * x + 16, 22);
-      t.on('pointerover', () => t.setColor('#D9A845'));
-      t.on('pointerout', () => t.setColor('#BFD3D8'));
-      t.on('pointerdown', () => o.onPick());
-      this.track(t);
-      return { text: t, onPick: o.onPick };
+    options.forEach((o, i) => {
+      this.track(this.renderDomButton(VIEW.width / 2, startY + i * 24 + 10, o.label, o.onPick, VIEW.width - 32));
     });
-    this.optionNav = new SelectList(this, navItems, { normal: '#BFD3D8', selected: '#D9A845' });
+  }
+
+  /** Botón HTML real, no texto de Phaser con hit-area manual: en varios celulares el
+   * mapeo de coordenadas touch→canvas quedaba un pelo desincronizado y hacían falta
+   * varios toques para acertar. Un <button> lo maneja el navegador directo, sin pasar
+   * por esa traducción — la razón de ser de la misma excepción que ya tiene el campo
+   * de nombre (`this.add.dom`, ver renderName). */
+  private renderDomButton(x: number, y: number, label: string, onPick: () => void, width: number): Phaser.GameObjects.DOMElement {
+    const el = this.add.dom(
+      x,
+      y,
+      'button',
+      `width:${width}px; padding:6px 10px; background:#2E464F; color:#BFD3D8; border:1px solid #7FB0B8; ` +
+        'font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12px; text-align:center; ' +
+        'cursor:pointer; -webkit-tap-highlight-color:transparent;',
+    );
+    const btn = el.node as HTMLButtonElement;
+    btn.textContent = label;
+    btn.type = 'button';
+    btn.addEventListener('click', onPick);
+    btn.addEventListener('touchstart', () => btn.style.background = '#3A5560', { passive: true });
+    btn.addEventListener('touchend', () => (btn.style.background = '#2E464F'));
+    return el.setDepth(16);
   }
 
   private track(obj: Phaser.GameObjects.GameObject): void {
@@ -406,8 +382,6 @@ export class BootScene extends Phaser.Scene {
 
   /** Limpia todo lo que dibujó el paso anterior (no el título/bandeja fijos), para dejar lugar al siguiente. */
   private clearStep(): void {
-    this.optionNav?.destroy();
-    this.optionNav = null;
     for (const o of this.stepObjects) o.destroy();
     this.stepObjects = [];
     if (this.nameInput) {
