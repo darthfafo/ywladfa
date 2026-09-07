@@ -109,7 +109,7 @@ export class BootScene extends Phaser.Scene {
         width: VIEW.width - 32,
         retro: true,
         html:
-          '<span style="color:#D9A845">Liverpool, 28 de mayo de 1865.</span> El Mimosa lleva colonos galeses ' +
+          '<span style="color:#D9A845">Liverpool, 28 de mayo de 1865.</span><br>El Mimosa lleva colonos galeses ' +
           'rumbo a Sudamérica: van a fundar Y Wladfa, la Colonia.',
       }),
     );
@@ -315,7 +315,27 @@ export class BootScene extends Phaser.Scene {
 
     // dos meses de travesía real: 28-V-1865 (zarpada, Liverpool) a 28-VII-1865
     // (desembarco, Punta Cuevas) — docs/04-guia-historica.md.
-    this.track(this.renderDomText(16, TRAY_Y + 18, 'Dos meses de mar, rumbo al sur.', { size: 11, color: '#EAE8E0' }));
+    const voyageBase = 'Dos meses en el mar, rumbo al Sur';
+    const voyageText = this.renderDomText(16, TRAY_Y + 18, voyageBase, {
+      size: 9,
+      color: '#EAE8E0',
+      width: VIEW.width - 32,
+      retro: true,
+    });
+    this.track(voyageText);
+    // puntos suspensivos animados: sin esto la escena parece trabada durante los
+    // 4.5s fijos que dura (no hay nada más en pantalla que se mueva) y da la
+    // sensación de que el juego colgó en vez de estar en una cinemática.
+    const dots = ['', '.', '..', '...'];
+    let dotFrame = 0;
+    this.time.addEvent({
+      delay: 400,
+      loop: true,
+      callback: () => {
+        dotFrame = (dotFrame + 1) % dots.length;
+        voyageText.setText(voyageBase + dots[dotFrame]);
+      },
+    });
     // sin forma de adelantarla: un toque de una pantalla anterior que todavía
     // estuviera "en vuelo" alcanzaba para saltear la cinemática antes de que se
     // llegara a ver un solo frame. Esta y cualquier cinemática futura corren su
