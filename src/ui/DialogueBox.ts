@@ -3,6 +3,7 @@ import { PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { DialogueSystem, type RenderedLine } from '@/systems/DialogueSystem';
+import { portraitIdForSpeaker, portraitTextureKey } from '@/util/assets';
 import { input } from '@/util/input';
 import { SelectList } from '@/util/selectList';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
@@ -17,6 +18,7 @@ export class DialogueBox {
   private root: Phaser.GameObjects.Container;
   private bg: Phaser.GameObjects.Rectangle;
   private portrait: Phaser.GameObjects.Rectangle;
+  private portraitImg: Phaser.GameObjects.Image;
   private nameText: Phaser.GameObjects.Text;
   private bodyText: Phaser.GameObjects.Text;
   private hint: Phaser.GameObjects.Text;
@@ -31,6 +33,9 @@ export class DialogueBox {
 
     this.bg = scene.add.rectangle(0, 0, TRAY.w, TRAY.h, PAL.ink, 0.97).setOrigin(0, 0).setStrokeStyle(1, PAL.slate);
     this.portrait = scene.add.rectangle(8, 12, 48, 48, PAL.slate).setOrigin(0, 0).setStrokeStyle(1, PAL.seaPale, 0.5);
+    // placeholder de color mientras no haya PNG real para ese personaje/expresión
+    // (src/util/assets.ts decide en show() cuál de los dos se ve).
+    this.portraitImg = scene.add.image(8, 12, '__DEFAULT').setOrigin(0, 0).setVisible(false);
     this.nameText = crisp(
       scene.add
         .text(64, 7, '', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#D9A845' })
@@ -55,7 +60,7 @@ export class DialogueBox {
     );
 
     this.root = scene.add
-      .container(TRAY.x, TRAY.y, [this.bg, this.portrait, this.nameText, this.bodyText, this.hint])
+      .container(TRAY.x, TRAY.y, [this.bg, this.portrait, this.portraitImg, this.nameText, this.bodyText, this.hint])
       .setDepth(80)
       .setVisible(false);
 
@@ -102,8 +107,13 @@ export class DialogueBox {
     }
 
     this.nameText.setText(line.isNarrator ? '' : line.speakerName);
-    this.portrait.setVisible(!line.isNarrator);
+    const portraitId = line.isNarrator ? null : portraitIdForSpeaker(line.speakerId, game.state.player.gender);
+    const key = portraitId ? portraitTextureKey(portraitId, line.portrait) : null;
+    const hasArt = !!key && this.scene.textures.exists(key);
+    this.portrait.setVisible(!line.isNarrator && !hasArt);
     this.portrait.setFillStyle(portraitColor(line.portrait));
+    this.portraitImg.setVisible(hasArt);
+    if (hasArt) this.portraitImg.setTexture(key!);
     this.bodyText.setPosition(line.isNarrator ? 10 : 64, line.isNarrator ? 14 : 21);
     this.bodyText.setWordWrapWidth(line.isNarrator ? TRAY.w - 20 : TRAY.w - 74);
     this.bodyText.setColor(line.isNarrator ? '#9BAEB4' : '#EAE8E0');

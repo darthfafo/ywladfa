@@ -46,6 +46,12 @@ Agregar al final de cada prompt: `48x48 pixel art portrait, square format,
 solid plain dark background, bust framing, [EXPRESIÓN], three expression set
 needed: neutral / tense / warm.`
 
+**Dónde va cada PNG:** `src/assets/portraits/<id>_<neutral|tenso|calido>.png`
+(ej. `pepperell_neutral.png`, `pc_f_calido.png`). El juego los detecta solos
+apenas están (`src/util/assets.ts`) — no hace falta tocar código ni tenerlos
+todos: el personaje que todavía no tiene PNG sigue mostrando el rectángulo de
+color placeholder.
+
 ### pc_m (jugador, varón — Idris Vaughan, ficticio)
 ```
 Young Welsh colonist man, early-to-mid 20s, travel-worn clothing, dark wool
@@ -120,15 +126,42 @@ cutscene illustration, important content centered with generous margin on
 all sides for safe cropping on different phone screens, no text, no UI
 elements.`
 
-### cutscene_enlistamiento — Enlistándose con el capitán Pepperell
+**Dónde va cada PNG:** `src/assets/scenes/<id>.png` (el id es el nombre que
+sigue a "cutscene_", ej. `mimosa_puerto.png`, `enlistamiento_m.png`). Mismo
+criterio que los retratos: si el archivo no está, esa pantalla usa el fondo
+de color placeholder en vez de romperse.
+
+### cutscene_mimosa_puerto — La Mimosa amarrada en el puerto
 ```
-A dockside scene at Liverpool or a Welsh port, a young emigrant standing
-before a small wooden table where a stern maritime captain in a navy coat
-reviews a passenger ledger, the tall masts and rigging of the sailing ship
-Mimosa looming behind them, other emigrant families waiting in a loose line
-with bundles and trunks, overcast light, the quiet bureaucracy before a
-one-way voyage.
+The sailing ship Mimosa moored at a busy 19th century Liverpool dock, seen
+from the pier, other tall ships and rigging in the background, dock workers
+and waiting emigrant families with trunks and bundles in the distance,
+overcast harbor light, a sense of imminent departure into the unknown.
 ```
+Guardar como `mimosa_puerto.png` — fondo de la pantalla donde el juego
+pregunta si el jugador es varón o mujer, antes de elegir personaje.
+
+### cutscene_enlistamiento_m — Enlistándose con el capitán Pepperell (varón)
+```
+A dockside scene at a 19th century Welsh emigrant port, a young man in
+travel-worn brown coat and dark wool beret standing before a small wooden
+table where a stern maritime captain in a navy coat reviews a passenger
+ledger, the tall masts and rigging of the sailing ship Mimosa looming
+behind them, other emigrant families waiting in a loose line with bundles
+and trunks, overcast light, the quiet bureaucracy before a one-way voyage.
+```
+Guardar como `enlistamiento_m.png`.
+
+### cutscene_enlistamiento_f — Enlistándose con el capitán Pepperell (mujer)
+```
+A dockside scene at a 19th century Welsh emigrant port, a young woman in a
+plain travel dress and dark wool headscarf standing before a small wooden
+table where a stern maritime captain in a navy coat reviews a passenger
+ledger, the tall masts and rigging of the sailing ship Mimosa looming
+behind them, other emigrant families waiting in a loose line with bundles
+and trunks, overcast light, the quiet bureaucracy before a one-way voyage.
+```
+Guardar como `enlistamiento_f.png`.
 
 ### cutscene_cold_open — El bote llegando a la costa
 ```

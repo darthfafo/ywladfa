@@ -3,6 +3,7 @@ import { PAL, VIEW } from '@/config';
 import { game } from '@/core/Game';
 import { createInitialState } from '@/core/GameState';
 import { saveSystem } from '@/systems/SaveSystem';
+import { preloadArt, sceneTextureKey } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { SelectList } from '@/util/selectList';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
@@ -11,9 +12,9 @@ type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
 
 /**
- * Portada + arranque de partida. Antes, cualquier toque tiraba directo al juego;
- * ahora hay una secuencia corta: título → nombre (con "continuar" al lado si hay
- * partida guardada) → género → enlistamiento con Pepperell → recién ahí el Nivel 1.
+ * Portada + arranque de partida. La secuencia es: título (continuar/nueva partida)
+ * → la Mimosa en el puerto, preguntando género → nombre → enlistamiento con
+ * Pepperell (con la escena correspondiente al género) → recién ahí el Nivel 1.
  * Así conocés al capitán ANTES de que te grite en la playa (docs/01 T1).
  */
 export class BootScene extends Phaser.Scene {
@@ -28,6 +29,10 @@ export class BootScene extends Phaser.Scene {
 
   constructor() {
     super('Boot');
+  }
+
+  preload(): void {
+    preloadArt(this);
   }
 
   create(): void {
@@ -59,7 +64,7 @@ export class BootScene extends Phaser.Scene {
     this.renderTitle();
   }
 
-  /* ---------------- paso 1: título ---------------- */
+  /* ---------------- paso 1: título (continuar / nueva partida) ---------------- */
 
   private renderTitle(): void {
     this.clearStep();
@@ -86,20 +91,44 @@ export class BootScene extends Phaser.Scene {
           .setResolution(4),
       ),
     );
-    const start = crisp(
-      this.add
-        .text(cx, 420, 'TOCAR PARA EMPEZAR', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#EAE8E0' })
-        .setOrigin(0.5)
-        .setResolution(4),
-    );
-    this.track(start);
-    this.tweens.add({ targets: start, alpha: 0.3, duration: 900, yoyo: true, repeat: -1 });
 
-    this.input.once('pointerdown', () => this.renderName());
-    this.input.keyboard?.once('keydown', () => this.renderName());
+    const options: Array<{ label: string; onPick: () => void }> = [];
+    const save = saveSystem.peek();
+    if (save) options.push({ label: `Continuar — Jornada ${save.day}`, onPick: () => this.continueGame() });
+    options.push({ label: 'Nueva partida', onPick: () => this.renderGenderIntro() });
+    this.renderOptions(options, save ? 396 : 410);
   }
 
-  /* ---------------- paso 2: nombre (+ continuar si hay guardado) ---------------- */
+  /* ---------------- paso 2: la Mimosa en el puerto, ¿varón o mujer? ---------------- */
+
+  private renderGenderIntro(): void {
+    this.clearStep();
+    this.renderBackground('mimosa_puerto');
+    this.renderTextBacking(280);
+    const cx = VIEW.width / 2;
+    this.track(
+      crisp(
+        this.add
+          .text(cx, 320, '¿Sos varón o mujer?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+          .setOrigin(0.5)
+          .setResolution(4),
+      ),
+    );
+    this.renderOptions(
+      [
+        { label: 'Varón', onPick: () => this.pickGender('m') },
+        { label: 'Mujer', onPick: () => this.pickGender('f') },
+      ],
+      370,
+    );
+  }
+
+  private pickGender(g: Gender): void {
+    this.playerGender = g;
+    this.renderName();
+  }
+
+  /* ---------------- paso 3: nombre ---------------- */
 
   private renderName(): void {
     this.clearStep();
@@ -131,42 +160,12 @@ export class BootScene extends Phaser.Scene {
     });
     inputEl.focus();
 
-    const options = [{ label: 'Siguiente', onPick: () => this.confirmName() }];
-    const save = saveSystem.peek();
-    if (save) options.push({ label: `Continuar — Jornada ${save.day}`, onPick: () => this.continueGame() });
-    this.renderOptions(options, 370);
+    this.renderOptions([{ label: 'Siguiente', onPick: () => this.confirmName() }], 370);
   }
 
   private confirmName(): void {
     const raw = (this.nameInput?.node as HTMLInputElement | undefined)?.value.trim() ?? '';
     this.playerName = raw || DEFAULT_NAME[this.playerGender];
-    this.renderGender();
-  }
-
-  /* ---------------- paso 3: género ---------------- */
-
-  private renderGender(): void {
-    this.clearStep();
-    const cx = VIEW.width / 2;
-    this.track(
-      crisp(
-        this.add
-          .text(cx, 320, '¿Sos varón o mujer?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
-          .setOrigin(0.5)
-          .setResolution(4),
-      ),
-    );
-    this.renderOptions(
-      [
-        { label: 'Varón', onPick: () => this.pickGender('m') },
-        { label: 'Mujer', onPick: () => this.pickGender('f') },
-      ],
-      370,
-    );
-  }
-
-  private pickGender(g: Gender): void {
-    this.playerGender = g;
     if (saveSystem.hasSave()) this.renderConfirmOverwrite();
     else this.renderEnlist();
   }
@@ -196,6 +195,9 @@ export class BootScene extends Phaser.Scene {
 
   private renderEnlist(): void {
     this.clearStep();
+    // sin franja oscura acá: la imagen ocupa mundo+HUD (0-384) y el diálogo, opaco,
+    // ya cubre la bandeja (384-480) por su cuenta.
+    this.renderBackground(`enlistamiento_${this.playerGender}`);
     this.dialogue = new DialogueBox(this);
     this.dialogue.start('d_n1_enlistamiento', () => this.beginNewGame());
   }
@@ -215,6 +217,19 @@ export class BootScene extends Phaser.Scene {
   }
 
   /* ---------------- helpers de UI ---------------- */
+
+  /** Fondo cinemático de pantalla completa si ya existe el PNG; si no, no dibuja nada
+   * y quedan a la vista las franjas de color placeholder puestas en create(). */
+  private renderBackground(sceneId: string): void {
+    const key = sceneTextureKey(sceneId);
+    if (!this.textures.exists(key)) return;
+    this.track(this.add.image(0, 0, key).setOrigin(0, 0).setDisplaySize(VIEW.width, VIEW.height).setDepth(-5));
+  }
+
+  /** Franja oscura semitransparente para que el texto se lea encima de un fondo cinemático. */
+  private renderTextBacking(fromY: number): void {
+    this.track(this.add.rectangle(0, fromY, VIEW.width, VIEW.height - fromY, PAL.void, 0.55).setOrigin(0, 0).setDepth(-1));
+  }
 
   private renderOptions(options: Array<{ label: string; onPick: () => void }>, startY: number): void {
     const x = 40;
