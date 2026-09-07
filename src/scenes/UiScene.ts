@@ -203,7 +203,9 @@ export class UiScene extends Phaser.Scene {
     const cutsceneId = CUTSCENE_DIALOGUES[id];
     if (cutsceneId) {
       this.setHudVisible(false);
-      this.cutsceneBg = addSceneBackground(this, cutsceneId, VIEW.width / 2, VIEW.height / 2, VIEW.width, VIEW.height);
+      // solo contra el área sin bandeja (0-384, el HUD ya está oculto): cubrir la
+      // pantalla 9:16 entera recortaba mucho más de una imagen pedida en 3:4.
+      this.cutsceneBg = addSceneBackground(this, cutsceneId, VIEW.width / 2, VIEW.tray.y / 2, VIEW.width, VIEW.tray.y);
       this.cutsceneBg?.setDepth(-5);
     }
     this.dialogue.start(id, () => {

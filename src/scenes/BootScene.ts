@@ -3,7 +3,7 @@ import { PAL, VIEW } from '@/config';
 import { game } from '@/core/Game';
 import { createInitialState } from '@/core/GameState';
 import { saveSystem } from '@/systems/SaveSystem';
-import { addSceneBackground, preloadArt, sceneTextureKey } from '@/util/assets';
+import { addSceneBackground, preloadArt } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { SelectList } from '@/util/selectList';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
@@ -12,6 +12,16 @@ import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
 type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
 
+// tres franjas fijas durante todo el arranque, igual de espíritu que HUD/mundo/bandeja
+// del juego real (VIEW en config.ts): título arriba, imagen al medio, diálogo abajo.
+// Achica bastante el recorte de las escenas 3:4 contra la pantalla 9:16 completa, y el
+// título deja de competir con lo que haya debajo — tiene su propio fondo sólido.
+const TOP_H = 70;
+const TRAY_Y = VIEW.tray.y;
+const TRAY_H = VIEW.tray.h;
+const IMG_H = TRAY_Y - TOP_H;
+const IMG_CY = TOP_H + IMG_H / 2;
+
 /**
  * Portada + arranque de partida. La secuencia es: título (continuar/nueva partida)
  * → la Mimosa en el puerto, preguntando género → nombre → enlistamiento con
@@ -19,7 +29,7 @@ const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
  * Así conocés al capitán ANTES de que te grite en la playa (docs/01 T1).
  */
 export class BootScene extends Phaser.Scene {
-  /** Todo lo que dibuja el paso actual (menos el título fijo), para poder borrarlo al cambiar de paso. */
+  /** Todo lo que dibuja el paso actual (menos el título/bandeja fijos), para borrarlo al cambiar de paso. */
   private stepObjects: Phaser.GameObjects.GameObject[] = [];
   private optionNav: SelectList | null = null;
   private nameInput: Phaser.GameObjects.DOMElement | null = null;
@@ -37,15 +47,38 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    const cx = VIEW.width / 2;
     makeProps(this); // trae 'prop_mimosa': WorldScene todavía no corrió, no existe todavía
     makeShipLarge(this); // versión grande de 3 mástiles, solo para estas cinemáticas
     makePortraits(this); // retratos placeholder por si el diálogo de enlistamiento ya los necesita
 
-    // profundidad negativa: si un paso pone un fondo cinemático real (renderBackground)
-    // tiene que quedar delante de estas franjas placeholder, no tapado por ellas.
+    // placeholder de color mientras no haya PNG real, acotado al área de la imagen.
     this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void).setOrigin(0, 0).setDepth(-10);
-    this.add.rectangle(0, 300, VIEW.width, 60, PAL.sea, 0.5).setOrigin(0, 0).setDepth(-10);
-    this.add.rectangle(0, 360, VIEW.width, 120, PAL.soil, 0.6).setOrigin(0, 0).setDepth(-10);
+    this.add.rectangle(0, TOP_H + IMG_H * 0.55, VIEW.width, IMG_H * 0.2, PAL.sea, 0.5).setOrigin(0, 0).setDepth(-10);
+    this.add.rectangle(0, TOP_H + IMG_H * 0.75, VIEW.width, IMG_H * 0.25, PAL.soil, 0.6).setOrigin(0, 0).setDepth(-10);
+
+    // franja superior fija: título/subtítulo, siempre visibles durante todo el arranque,
+    // con su propio fondo sólido — así nunca compiten con la imagen de atrás.
+    this.add.rectangle(0, 0, VIEW.width, TOP_H, PAL.ink, 0.97).setOrigin(0, 0).setDepth(20);
+    this.add.rectangle(0, TOP_H - 1, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21);
+    crisp(
+      this.add
+        .text(cx, 24, 'Y WLADFA', { fontFamily: FONT_FAMILY, fontSize: FONT.hero, color: '#EAE8E0', align: 'center' })
+        .setOrigin(0.5)
+        .setResolution(4)
+        .setDepth(22),
+    );
+    crisp(
+      this.add
+        .text(cx, 48, 'La Huella de los Rifleros', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+        .setOrigin(0.5)
+        .setResolution(4)
+        .setDepth(22),
+    );
+
+    // bandeja inferior fija: mismo estilo que la bandeja real del juego (UiScene.buildTray).
+    this.add.rectangle(0, TRAY_Y, VIEW.width, TRAY_H, PAL.ink, 0.97).setOrigin(0, 0).setDepth(20);
+    this.add.rectangle(0, TRAY_Y, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21);
 
     this.renderTitle();
   }
@@ -54,55 +87,28 @@ export class BootScene extends Phaser.Scene {
 
   private renderTitle(): void {
     this.clearStep();
-    const cx = VIEW.width / 2;
     // acá arranca la historia de verdad: la salida, no la llegada a Punta Cuevas
     // (docs/04-guia-historica.md — el Mimosa zarpa el 28-V-1865 de Liverpool. Liverpool
     // es un puerto inglés, no galés — los colonos viajaron hasta ahí para embarcarse).
-    this.renderBackground('mimosa_puerto');
-    // el título/subtítulo SOLO van en este paso: antes se creaban una vez en create()
-    // y quedaban flotando arriba de TODAS las pantallas siguientes (género, nombre, y
-    // hasta la escena del enlistamiento) — de ahí que se leyeran mal en todos lados.
+    this.renderImage('mimosa_puerto');
+
+    // contexto + opciones en la bandeja, igual que un diálogo con narrador y elecciones.
     this.track(
       crisp(
         this.add
-          .text(cx, 60, 'Y WLADFA', { fontFamily: FONT_FAMILY, fontSize: FONT.hero, color: '#EAE8E0', align: 'center' })
-          .setOrigin(0.5)
-          .setResolution(4)
-          .setShadow(0, 2, '#0E1416', 6, false, true),
-      ),
-    );
-    this.track(
-      crisp(
-        this.add
-          .text(cx, 90, 'La Huella de los Rifleros', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
-          .setOrigin(0.5)
-          .setResolution(4)
-          .setShadow(0, 2, '#0E1416', 6, false, true),
-      ),
-    );
-    this.track(
-      crisp(
-        this.add
-          .text(cx, 458, 'prototipo v0.1 · arte placeholder', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
-          .setOrigin(0.5)
-          .setResolution(4),
-      ),
-    );
-    // la caja va al medio de la pantalla, no pegada al subtítulo: el título tiene que
-    // leerse solo, sobre el cielo limpio de la foto, y abajo tiene que quedar bastante
-    // imagen a la vista (el barco, la gente en el muelle) — no todo tapado por texto.
-    this.renderTextBacking(165, 295);
-    this.track(
-      crisp(
-        this.add
-          .text(cx, 196, 'Liverpool\n28 de mayo de 1865', {
-            fontFamily: FONT_FAMILY,
-            fontSize: FONT.body,
-            color: '#9BAEB4',
-            align: 'center',
-            lineSpacing: 5,
-          })
-          .setOrigin(0.5)
+          .text(
+            16,
+            TRAY_Y + 8,
+            'Liverpool, 28 de mayo de 1865. El Mimosa lleva colonos galeses rumbo a Sudamérica: van a fundar Y Wladfa, la Colonia.',
+            {
+              fontFamily: FONT_FAMILY,
+              fontSize: FONT.tiny,
+              color: '#9BAEB4',
+              wordWrap: { width: VIEW.width - 32 },
+              lineSpacing: 3,
+            },
+          )
+          .setDepth(22)
           .setResolution(4),
       ),
     );
@@ -111,29 +117,19 @@ export class BootScene extends Phaser.Scene {
     const save = saveSystem.peek();
     if (save) options.push({ label: `Continuar — Jornada ${save.day}`, onPick: () => this.continueGame() });
     options.push({ label: 'Nueva partida', onPick: () => this.renderGenderIntro() });
-    this.renderOptions(options, 236);
-
-    // mientras no haya PNG real (mimosa_puerto.png), el barco placeholder es la
-    // versión grande de tres mástiles, más abajo para no pisar la caja del medio.
-    if (!this.textures.exists(sceneTextureKey('mimosa_puerto'))) {
-      this.track(this.add.image(cx, 365, 'prop_mimosa_grande').setScale(2.1).setDepth(-5));
-    }
+    this.renderOptions(options, TRAY_Y + 46);
   }
 
   /* ---------------- paso 2: la Mimosa en el puerto, ¿varón o mujer? ---------------- */
 
   private renderGenderIntro(): void {
     this.clearStep();
-    this.renderBackground('mimosa_puerto');
-    // misma caja al medio que el título (renderTitle), para que el paso siguiente no
-    // salte de posición — el título/subtítulo de arriba queda igual, sobre la foto.
-    this.renderTextBacking(165, 280);
-    const cx = VIEW.width / 2;
+    this.renderImage('mimosa_puerto');
     this.track(
       crisp(
         this.add
-          .text(cx, 196, '¿Sos varón o mujer?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
-          .setOrigin(0.5)
+          .text(16, TRAY_Y + 10, '¿Sos varón o mujer?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+          .setDepth(22)
           .setResolution(4),
       ),
     );
@@ -142,7 +138,7 @@ export class BootScene extends Phaser.Scene {
         { label: 'Varón', onPick: () => this.pickGender('m') },
         { label: 'Mujer', onPick: () => this.pickGender('f') },
       ],
-      236,
+      TRAY_Y + 44,
     );
   }
 
@@ -157,23 +153,28 @@ export class BootScene extends Phaser.Scene {
     this.clearStep();
     const cx = VIEW.width / 2;
 
-    this.renderBackground('mimosa_puerto');
-    this.renderTextBacking(100, 210);
-    // pegado al subtítulo: es la única zona que un teclado virtual (que tapa desde
-    // la mitad de la pantalla para abajo) nunca llega a cubrir.
+    // la misma escena de enlistamiento a la que se llega después, ya con el género
+    // elegido — no la Mimosa genérica de los pasos anteriores.
+    this.renderImage(`enlistamiento_${this.playerGender}`);
+    // esta pantalla es la única excepción a "todo el diálogo va en la bandeja de
+    // abajo": el campo de nombre tiene que quedar arriba, pegado a la franja del
+    // título, porque un teclado virtual de celular tapa desde la mitad de la
+    // pantalla para abajo — si viviera en la bandeja, quedaría inaccesible al escribir.
+    this.renderTextBacking(TOP_H, TOP_H + 120);
     this.track(
       crisp(
         this.add
-          .text(cx, 118, '¿Cómo te llamás?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+          .text(cx, TOP_H + 30, '¿Cómo te llamás?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
           .setOrigin(0.5)
-          .setResolution(4),
+          .setResolution(4)
+          .setDepth(1),
       ),
     );
 
     const defaultName = DEFAULT_NAME[this.playerGender];
     this.nameInput = this.add.dom(
       cx,
-      148,
+      TOP_H + 60,
       'input',
       'width:140px; padding:5px; text-align:center; font-family: ui-monospace, "SF Mono", Menlo, monospace; ' +
         'font-size:13px; background:#18262A; color:#EAE8E0; border:1px solid #2E464F; outline:none;',
@@ -189,7 +190,7 @@ export class BootScene extends Phaser.Scene {
     });
     inputEl.focus();
 
-    this.renderOptions([{ label: 'Siguiente', onPick: () => this.confirmName() }], 188);
+    this.renderOptions([{ label: 'Siguiente', onPick: () => this.confirmName() }], TOP_H + 100);
   }
 
   private confirmName(): void {
@@ -203,13 +204,12 @@ export class BootScene extends Phaser.Scene {
 
   private renderConfirmOverwrite(): void {
     this.clearStep();
-    this.renderBackground('mimosa_puerto');
-    this.renderTextBacking(100, 210);
+    this.renderImage(`enlistamiento_${this.playerGender}`);
     this.track(
       crisp(
         this.add
-          .text(VIEW.width / 2, 118, 'Se pierde la partida guardada.', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#DE7050' })
-          .setOrigin(0.5)
+          .text(16, TRAY_Y + 10, 'Se pierde la partida guardada.', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#DE7050' })
+          .setDepth(22)
           .setResolution(4),
       ),
     );
@@ -218,7 +218,7 @@ export class BootScene extends Phaser.Scene {
         { label: 'Sí, empezar de nuevo', onPick: () => this.renderEnlist() },
         { label: 'Volver', onPick: () => this.renderName() },
       ],
-      160,
+      TRAY_Y + 44,
     );
   }
 
@@ -231,9 +231,7 @@ export class BootScene extends Phaser.Scene {
     // jugaba todavía con el estado por defecto ("Elin"), sin importar qué se eligiera.
     saveSystem.clear();
     game.replaceState(createInitialState('nivel-01', this.playerName, this.playerGender));
-    // sin franja oscura acá: la imagen ocupa mundo+HUD (0-384) y el diálogo, opaco,
-    // ya cubre la bandeja (384-480) por su cuenta.
-    this.renderBackground(`enlistamiento_${this.playerGender}`);
+    this.renderImage(`enlistamiento_${this.playerGender}`);
     this.dialogue = new DialogueBox(this);
     this.dialogue.start('d_n1_enlistamiento', () => this.renderVoyage());
   }
@@ -243,32 +241,22 @@ export class BootScene extends Phaser.Scene {
   private renderVoyage(): void {
     this.clearStep();
     const cx = VIEW.width / 2;
-    const bg = addSceneBackground(this, 'travesia', cx, VIEW.height / 2, VIEW.width, VIEW.height);
-    if (bg) {
-      // esta toma tiene mucho cielo vacío arriba (el barco está compuesto más abajo):
-      // se agranda un poco más del mínimo de "cover" y se corre hacia arriba, para que
-      // el barco llene el cuadro en vez de dejar tanto cielo vacío arriba.
-      bg.setScale(bg.scaleX * 1.3).setY(bg.y - 60).setDepth(-5);
-      this.track(bg);
-    }
-    const hasArt = !!bg;
+    const bg = this.renderImage('travesia');
 
-    if (!hasArt) {
+    if (!bg) {
       // mar animado por código: placeholder hasta que exista travesia.png
-      this.track(this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.sea, 0.9).setOrigin(0, 0).setDepth(-8));
+      this.track(this.add.rectangle(0, TOP_H, VIEW.width, IMG_H, PAL.sea, 0.9).setOrigin(0, 0).setDepth(-8));
       for (let i = 0; i < 5; i++) {
-        const y = 90 + i * 46;
+        const y = TOP_H + 20 + i * 46;
         const w = this.add.rectangle(0, y, VIEW.width * 1.4, 2, PAL.seaPale, 0.3).setOrigin(0, 0).setDepth(-7);
         this.track(w);
         this.tweens.add({ targets: w, x: -60, duration: 1600 + i * 260, yoyo: true, repeat: -1, ease: 'sine.inOut' });
       }
       // acá se ve mucho más grande que en el mundo, así que usa la versión de tres
       // mástiles en vez del casco simple del prop chico (textures.ts).
-      const ship = this.add.image(cx, 210, 'prop_mimosa_grande').setScale(2.6).setDepth(-5);
+      const ship = this.add.image(cx, IMG_CY, 'prop_mimosa_grande').setScale(2.3).setDepth(-5);
       this.track(ship);
       this.tweens.add({ targets: ship, y: '+=6', duration: 1500, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-    } else {
-      this.renderTextBacking(370, 430);
     }
 
     this.track(
@@ -276,13 +264,12 @@ export class BootScene extends Phaser.Scene {
         this.add
           // dos meses de travesía real: 28-V-1865 (zarpada, Liverpool) a 28-VII-1865
           // (desembarco, Punta Cuevas) — docs/04-guia-historica.md.
-          .text(cx, 400, 'Dos meses de mar, rumbo al sur.', {
+          .text(16, TRAY_Y + 18, 'Dos meses de mar, rumbo al sur.', {
             fontFamily: FONT_FAMILY,
             fontSize: FONT.body,
             color: '#EAE8E0',
-            align: 'center',
           })
-          .setOrigin(0.5)
+          .setDepth(22)
           .setResolution(4),
       ),
     );
@@ -303,11 +290,14 @@ export class BootScene extends Phaser.Scene {
 
   /* ---------------- helpers de UI ---------------- */
 
-  /** Fondo cinemático de pantalla completa si ya existe el PNG; si no, no dibuja nada
-   * y quedan a la vista las franjas de color placeholder puestas en create(). */
-  private renderBackground(sceneId: string): void {
-    const img = addSceneBackground(this, sceneId, VIEW.width / 2, VIEW.height / 2, VIEW.width, VIEW.height);
+  /** Imagen cinemática acotada al área del medio (entre el título y la bandeja) si ya
+   * existe el PNG; si no, no dibuja nada y queda el placeholder de color de create().
+   * Al no cubrir la pantalla 9:16 entera, sino solo esta franja más "cuadrada", el
+   * recorte contra el original 3:4 es mucho menor (docs/05-prompts-arte.txt §2). */
+  private renderImage(sceneId: string): Phaser.GameObjects.Image | null {
+    const img = addSceneBackground(this, sceneId, VIEW.width / 2, IMG_CY, VIEW.width, IMG_H);
     if (img) this.track(img.setDepth(-5));
+    return img;
   }
 
   /** Franja oscura semitransparente para que el texto se lea encima de un fondo cinemático. */
@@ -316,14 +306,15 @@ export class BootScene extends Phaser.Scene {
   }
 
   private renderOptions(options: Array<{ label: string; onPick: () => void }>, startY: number): void {
-    const x = 40;
+    const x = 16;
     const navItems = options.map((o, i) => {
       const t = crisp(
         this.add
-          .text(x, startY + i * 24, o.label, { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#BFD3D8' })
+          .text(x, startY + i * 22, o.label, { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#BFD3D8' })
+          .setDepth(22)
           .setResolution(4),
       ).setInteractive({ useHandCursor: true });
-      t.input!.hitArea = new Phaser.Geom.Rectangle(-10, -8, VIEW.width - 2 * x + 20, 24);
+      t.input!.hitArea = new Phaser.Geom.Rectangle(-8, -6, VIEW.width - 2 * x + 16, 22);
       t.on('pointerover', () => t.setColor('#D9A845'));
       t.on('pointerout', () => t.setColor('#BFD3D8'));
       t.on('pointerdown', () => o.onPick());
@@ -337,7 +328,7 @@ export class BootScene extends Phaser.Scene {
     this.stepObjects.push(obj);
   }
 
-  /** Limpia todo lo que dibujó el paso anterior, para dejar lugar al siguiente. */
+  /** Limpia todo lo que dibujó el paso anterior (no el título/bandeja fijos), para dejar lugar al siguiente. */
   private clearStep(): void {
     this.optionNav?.destroy();
     this.optionNav = null;
