@@ -2,10 +2,10 @@ import Phaser from 'phaser';
 import { PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
+import { registry } from '@/core/Registry';
 import { DialogueSystem, type RenderedLine } from '@/systems/DialogueSystem';
 import { portraitIdForSpeaker, portraitTextureKey } from '@/util/assets';
 import { input } from '@/util/input';
-import { SelectList } from '@/util/selectList';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
 
 const TRAY = VIEW.tray;
@@ -22,8 +22,7 @@ export class DialogueBox {
   private nameText: Phaser.GameObjects.Text;
   private bodyText: Phaser.GameObjects.Text;
   private hint: Phaser.GameObjects.Text;
-  private choiceTexts: Phaser.GameObjects.Text[] = [];
-  private choiceNav: SelectList | null = null;
+  private choicesEl: Phaser.GameObjects.DOMElement | null = null;
   private sys: DialogueSystem;
   private current: RenderedLine | null = null;
   private onClose: (() => void) | null = null;
@@ -98,6 +97,28 @@ export class DialogueBox {
     this.show(this.sys.start(dialogueId));
   }
 
+  /** Línea corta de un NPC sin diálogo definido en /data (ej. "— Ahora no."). Va en
+   * la misma bandeja que cualquier línea real, no como toast flotante — es lo que
+   * dice el personaje, tiene que leerse en el mismo lugar que el resto de lo que
+   * dice. No pasa por DialogueSystem (no hay nodos ni elecciones que resolver): se
+   * cierra con el mismo toque/tecla de siempre porque sys.next() sin diálogo activo
+   * ya devuelve null de por sí. */
+  refuse(npcId: string, onClose?: () => void, text = '— Ahora no.'): void {
+    this.onClose = onClose ?? null;
+    input.locked = true;
+    this.bg.setInteractive();
+    this.root.setVisible(true);
+    this.show({
+      nodeId: '__refuse',
+      speakerId: npcId,
+      speakerName: registry.npc(npcId).name,
+      text,
+      portrait: 'neutral',
+      choices: [],
+      isNarrator: false,
+    });
+  }
+
   private advance(): void {
     if (!this.active) return;
     if (this.current?.choices.length) return; // con opciones se avanza eligiendo
@@ -158,55 +179,48 @@ export class DialogueBox {
     }
   }
 
+  /** Opciones como botones HTML reales, no texto de Phaser con hit-area manual: en
+   * el celular real no respondían de forma confiable (mismo problema ya resuelto en
+   * BootScene/TouchControls), y un paso fijo entre opciones tampoco tenía en cuenta
+   * cuántas líneas ocupaba una opción larga al hacer wordWrap — con esto ya no
+   * importa: es un <div> flex en columna, el propio navegador apila cada botón
+   * según lo que realmente ocupa el anterior. */
   private renderChoices(line: RenderedLine): void {
     this.bodyText.setVisible(false);
     this.nameText.setVisible(true);
-    // el paso entre opciones tiene que salir de cuánto ocupó REALMENTE la anterior
-    // (t.height, ya sabe cuántas líneas ocupó por el wordWrap) — con un paso fijo,
-    // una opción larga de dos líneas ("Alguien va a tener que explicar esto.")
-    // pisaba la posición Y (y el área de toque) de la siguiente, así que ni el
-    // texto quedaba bien espaciado ni respondía el click en la opción de abajo.
-    let y = 26; // misma altura que bodyText, para que las opciones sigan la línea
-    const items = line.choices.map((c) => {
-      const t = crisp(
-        this.scene.add
-          // arranca 6px más a la derecha que antes: deja lugar al cursor "›" que
-          // dibuja SelectList a la izquierda de la opción activa, sin pisar el retrato.
-          .text(70, y, c.text, {
-            fontFamily: FONT_FAMILY,
-            fontSize: FONT.body,
-            color: '#BFD3D8',
-            wordWrap: { width: TRAY.w - 80 },
-            lineSpacing: 4,
-          })
-          .setResolution(4),
-      ).setInteractive({ useHandCursor: true });
-      // objetivo táctil de 20px internos mínimo (docs/03-assets.md), con margen extra
-      // (el -14 en vez de -8 compensa que el texto ahora arranca 6px más a la derecha),
-      // y alto real de t.height en vez de un 28 fijo — para que una opción de dos
-      // líneas tenga toda su altura clickeable, no solo la primera línea.
-      t.input!.hitArea = new Phaser.Geom.Rectangle(-14, -8, TRAY.w - 58, t.height + 12);
+
+    // gap y padding chicos a propósito: con 3 opciones y alguna larga (wordWrap a 2
+    // líneas), el bloque tiene que entrar en los ~70px que quedan de bandeja debajo
+    // del nombre — de sobra se corta contra el borde de abajo.
+    const wrap = this.scene.add
+      .dom(70, 26, 'div', `display:flex; flex-direction:column; gap:3px; width:${TRAY.w - 80}px;`)
+      .setOrigin(0, 0);
+    this.root.add(wrap);
+    this.choicesEl = wrap;
+    const container = wrap.node as HTMLDivElement;
+
+    for (const c of line.choices) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = c.text;
+      btn.style.cssText =
+        'display:block; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
+        'text-align:left; color:#BFD3D8; font-family: ui-monospace, "SF Mono", Menlo, monospace; ' +
+        'font-size:11px; line-height:1.15; cursor:pointer; -webkit-tap-highlight-color:transparent;';
       const onPick = (): void => {
         bus.emit('ui:toast', { text: '' });
         this.show(this.sys.choose(c.id));
       };
-      t.on('pointerover', () => t.setColor('#D9A845'));
-      t.on('pointerout', () => t.setColor('#BFD3D8'));
-      t.on('pointerdown', onPick);
-      this.choiceTexts.push(t);
-      this.root.add(t);
-      y += t.height + 6;
-      return { text: t, onPick };
-    });
-    // abajo/arriba + botón de acción, además del click/tap (GDD §8)
-    this.choiceNav = new SelectList(this.scene, items, { normal: '#BFD3D8', selected: '#D9A845' }, this.root);
+      btn.addEventListener('click', onPick);
+      btn.addEventListener('touchstart', () => (btn.style.color = '#D9A845'), { passive: true });
+      btn.addEventListener('touchend', () => (btn.style.color = '#BFD3D8'));
+      container.appendChild(btn);
+    }
   }
 
   private clearChoices(): void {
-    this.choiceNav?.destroy();
-    this.choiceNav = null;
-    for (const t of this.choiceTexts) t.destroy();
-    this.choiceTexts = [];
+    this.choicesEl?.destroy();
+    this.choicesEl = null;
     this.bodyText.setVisible(true);
   }
 }

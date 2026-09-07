@@ -277,8 +277,10 @@ export class WorldScene extends Phaser.Scene {
       this.runTrigger(t as TriggerDef);
       return;
     }
-    const npc = registry.npc(npcId);
-    bus.emit('ui:toast', { text: `${npc.name}: — Ahora no.` });
+    // línea corta en la bandeja de diálogo, no un toast: es lo que dice el NPC,
+    // tiene que leerse en el mismo lugar que cualquier otra línea suya, no flotando
+    // en cualquier lado de la pantalla.
+    this.events.emit('request-refusal', npcId);
   }
 
   private trackTile(): void {

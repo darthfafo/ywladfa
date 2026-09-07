@@ -60,6 +60,7 @@ export class UiScene extends Phaser.Scene {
     const world = this.scene.get('World');
     world.events.on('request-dialogue', (id: string) => this.openDialogue(id));
     world.events.on('request-choice', (id: string) => this.openChoice(id));
+    world.events.on('request-refusal', (npcId: string) => this.openRefusal(npcId));
 
     bus.on('resource:changed', () => this.refreshResources());
     bus.on('time:turn-advanced', () => this.refreshTime());
@@ -226,6 +227,13 @@ export class UiScene extends Phaser.Scene {
         this.cutsceneBg = null;
       }
     });
+  }
+
+  /** El NPC más cercano no tiene nada que decir todavía (requires sin cumplir, o ya
+   * habló lo que tenía). Va por la misma bandeja que cualquier diálogo real. */
+  private openRefusal(npcId: string): void {
+    this.touch.setVisible(false);
+    this.dialogue.refuse(npcId, () => this.touch.setVisible(true));
   }
 
   private openTutorial(id: string): void {
