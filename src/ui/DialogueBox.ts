@@ -161,23 +161,31 @@ export class DialogueBox {
   private renderChoices(line: RenderedLine): void {
     this.bodyText.setVisible(false);
     this.nameText.setVisible(true);
-    const startY = 26; // misma altura que bodyText, para que las opciones sigan la línea
-    const items = line.choices.map((c, i) => {
+    // el paso entre opciones tiene que salir de cuánto ocupó REALMENTE la anterior
+    // (t.height, ya sabe cuántas líneas ocupó por el wordWrap) — con un paso fijo,
+    // una opción larga de dos líneas ("Alguien va a tener que explicar esto.")
+    // pisaba la posición Y (y el área de toque) de la siguiente, así que ni el
+    // texto quedaba bien espaciado ni respondía el click en la opción de abajo.
+    let y = 26; // misma altura que bodyText, para que las opciones sigan la línea
+    const items = line.choices.map((c) => {
       const t = crisp(
         this.scene.add
           // arranca 6px más a la derecha que antes: deja lugar al cursor "›" que
           // dibuja SelectList a la izquierda de la opción activa, sin pisar el retrato.
-          .text(70, startY + i * 26, c.text, {
+          .text(70, y, c.text, {
             fontFamily: FONT_FAMILY,
             fontSize: FONT.body,
             color: '#BFD3D8',
             wordWrap: { width: TRAY.w - 80 },
+            lineSpacing: 4,
           })
           .setResolution(4),
       ).setInteractive({ useHandCursor: true });
       // objetivo táctil de 20px internos mínimo (docs/03-assets.md), con margen extra
-      // (el -14 en vez de -8 compensa que el texto ahora arranca 6px más a la derecha)
-      t.input!.hitArea = new Phaser.Geom.Rectangle(-14, -8, TRAY.w - 58, 28);
+      // (el -14 en vez de -8 compensa que el texto ahora arranca 6px más a la derecha),
+      // y alto real de t.height en vez de un 28 fijo — para que una opción de dos
+      // líneas tenga toda su altura clickeable, no solo la primera línea.
+      t.input!.hitArea = new Phaser.Geom.Rectangle(-14, -8, TRAY.w - 58, t.height + 12);
       const onPick = (): void => {
         bus.emit('ui:toast', { text: '' });
         this.show(this.sys.choose(c.id));
@@ -187,6 +195,7 @@ export class DialogueBox {
       t.on('pointerdown', onPick);
       this.choiceTexts.push(t);
       this.root.add(t);
+      y += t.height + 6;
       return { text: t, onPick };
     });
     // abajo/arriba + botón de acción, además del click/tap (GDD §8)
