@@ -34,8 +34,8 @@ const CUTSCENE_DIALOGUES: Record<string, string> = {
 };
 
 export class UiScene extends Phaser.Scene {
-  private dayText!: Phaser.GameObjects.Text;
-  private resTexts = new Map<ResourceId, Phaser.GameObjects.Text>();
+  private dayEl!: Phaser.GameObjects.DOMElement;
+  private resEls = new Map<ResourceId, HTMLDivElement>();
   private loadBar!: Phaser.GameObjects.Rectangle;
   private toast!: Phaser.GameObjects.Text;
   private zoneLabel!: Phaser.GameObjects.Text;
@@ -43,7 +43,7 @@ export class UiScene extends Phaser.Scene {
   private touch!: TouchControls;
   private overlay: Phaser.GameObjects.Container | null = null;
   private overlayNav: SelectList | null = null;
-  private hudObjects: Array<Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle> = [];
+  private hudObjects: Array<Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle | Phaser.GameObjects.DOMElement> = [];
   private cutsceneBg: Phaser.GameObjects.Image | null = null;
 
   constructor() {
@@ -83,7 +83,7 @@ export class UiScene extends Phaser.Scene {
    */
   private buildHud(): void {
     const h = VIEW.hud;
-    const track = (o: Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle): void => {
+    const track = (o: Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle | Phaser.GameObjects.DOMElement): void => {
       this.hudObjects.push(o);
     };
     // opaco del todo, no 0.96: mismo criterio que la bandeja (DialogueBox.bg,
@@ -91,39 +91,34 @@ export class UiScene extends Phaser.Scene {
     track(this.add.rectangle(h.x, h.y, h.w, h.h, PAL.ink, 1).setOrigin(0, 0).setDepth(60));
     track(this.add.rectangle(h.x, h.y + h.h - 1, h.w, 1, PAL.slate).setOrigin(0, 0).setDepth(61));
 
+    // texto del HUD en HTML real, no Phaser Text: por más que se lo fuerce a
+    // reescalado suave (index.html), a este tamaño (9-10px internos) el texto de
+    // Phaser sigue horneado en un canvas de baja resolución fija y se ve borroso en
+    // un celular real — confirmado en dispositivo, no alcanzaba con eso. Un <div>
+    // lo rasteriza el navegador a la resolución física real de la pantalla, nítido
+    // sin importar el factor de escala.
+    const domStyle = (size: number, color: string): string =>
+      `color:${color}; font-family: ui-monospace, "SF Mono", Menlo, monospace; ` +
+      `font-size:${size}px; white-space:nowrap; pointer-events:none;`;
+
     // fila 1: jornada y turno, sin nada más — nunca se queda sin lugar
     // (antes había 4 puntitos de turno acá; redundantes con el texto, se sacaron)
-    this.dayText = crisp(
-      this.add
-        .text(6, 3, '', { fontFamily: FONT_FAMILY, fontSize: FONT.small, color: '#D9A845' })
-        .setDepth(62)
-        .setResolution(4),
-    );
-    track(this.dayText);
+    this.dayEl = this.add.dom(6, 3, 'div', domStyle(10, '#D9A845')).setOrigin(0, 0);
+    track(this.dayEl);
 
     // fila 2: recursos con nombre completo + barra de carga, en columnas fijas
     HUD_RESOURCES.forEach((id, i) => {
-      const t = crisp(
-        this.add
-          .text(RES_X[i]!, 19, '', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#EAE8E0' })
-          .setDepth(62)
-          .setResolution(4),
-      );
-      this.resTexts.set(id, t);
-      track(t);
+      const el = this.add.dom(RES_X[i]!, 19, 'div', domStyle(9, '#EAE8E0')).setOrigin(0, 0);
+      this.resEls.set(id, el.node as HTMLDivElement);
+      track(el);
     });
 
     track(this.add.rectangle(LOADBAR_X, 20, LOADBAR_W, 5, PAL.ink2).setOrigin(0, 0).setDepth(62));
     this.loadBar = this.add.rectangle(LOADBAR_X, 20, 0, 5, PAL.moss).setOrigin(0, 0).setDepth(63);
     track(this.loadBar);
-    track(
-      crisp(
-        this.add
-          .text(CARGA_LABEL_X, 19, 'CARGA', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
-          .setDepth(62)
-          .setResolution(4),
-      ),
-    );
+    const cargaEl = this.add.dom(CARGA_LABEL_X, 19, 'div', domStyle(9, '#6B6A5E')).setOrigin(0, 0);
+    (cargaEl.node as HTMLDivElement).textContent = 'CARGA';
+    track(cargaEl);
   }
 
   /** Oculta/muestra el HUD entero — cutscenes de pantalla completa lo tapan (docs/01 §4). */
@@ -170,17 +165,16 @@ export class UiScene extends Phaser.Scene {
 
   private refreshTime(): void {
     const s = game.state.progress;
-    // mayúsculas acá (y en el resto del HUD): a tamaño de letra chico en un celular
-    // real, minúsculas con ascendentes/descendentes finos se pierden contra el
-    // reescalado del canvas — las formas más simples de las mayúsculas aguantan mejor.
-    this.dayText.setText(`JORNADA ${s.day} · ${game.time.label().toUpperCase()}`);
+    // mayúsculas en todo el HUD: a este tamaño de letra, minúsculas con
+    // ascendentes/descendentes finos se leen peor en un celular real.
+    this.dayEl.node.textContent = `JORNADA ${s.day} · ${game.time.label().toUpperCase()}`;
   }
 
   private refreshResources(): void {
-    for (const [id, t] of this.resTexts) {
+    for (const [id, el] of this.resEls) {
       const v = game.res.get(id);
-      t.setText(`${(RES_LABEL[id] ?? id).toUpperCase()} ${Math.round(v)}`);
-      t.setColor(game.res.isCritical(id) ? '#DE7050' : '#EAE8E0');
+      el.textContent = `${(RES_LABEL[id] ?? id).toUpperCase()} ${Math.round(v)}`;
+      el.style.color = game.res.isCritical(id) ? '#DE7050' : '#EAE8E0';
     }
   }
 
