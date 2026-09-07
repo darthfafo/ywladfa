@@ -79,16 +79,14 @@ export class BootScene extends Phaser.Scene {
     // (docs/04-guia-historica.md — el Mimosa zarpa el 28-V-1865 de Liverpool. Liverpool
     // es un puerto inglés, no galés — los colonos viajaron hasta ahí para embarcarse).
     this.renderBackground('mimosa_puerto');
-    // franja detrás de la fecha y las opciones nada más: el título/subtítulo se lee
-    // bien directo sobre la imagen, pero la fecha se perdía contra el aparejo del barco.
-    this.renderTextBacking(100, 225);
-    // todo lo interactivo va pegado al título/subtítulo, no más abajo: es lo único
-    // que queda siempre libre de un teclado virtual (que tapa desde la mitad de la
-    // pantalla para abajo) y no depende de que el reajuste de escala llegue a tiempo.
+    // la caja va al medio de la pantalla, no pegada al subtítulo: el título tiene que
+    // leerse solo, sobre el cielo limpio de la foto, y abajo tiene que quedar bastante
+    // imagen a la vista (el barco, la gente en el muelle) — no todo tapado por texto.
+    this.renderTextBacking(165, 295);
     this.track(
       crisp(
         this.add
-          .text(cx, 122, 'Liverpool\n28 de mayo de 1865', {
+          .text(cx, 196, 'Liverpool\n28 de mayo de 1865', {
             fontFamily: FONT_FAMILY,
             fontSize: FONT.body,
             color: '#9BAEB4',
@@ -104,13 +102,12 @@ export class BootScene extends Phaser.Scene {
     const save = saveSystem.peek();
     if (save) options.push({ label: `Continuar — Jornada ${save.day}`, onPick: () => this.continueGame() });
     options.push({ label: 'Nueva partida', onPick: () => this.renderGenderIntro() });
-    this.renderOptions(options, 185);
+    this.renderOptions(options, 236);
 
     // mientras no haya PNG real (mimosa_puerto.png), el barco placeholder es la
-    // versión grande de tres mástiles — acá se ve bastante más grande que en el
-    // mundo, así que vale la pena que tenga más detalle (textures.ts).
+    // versión grande de tres mástiles, más abajo para no pisar la caja del medio.
     if (!this.textures.exists(sceneTextureKey('mimosa_puerto'))) {
-      this.track(this.add.image(cx, 310, 'prop_mimosa_grande').setScale(2.3).setDepth(-5));
+      this.track(this.add.image(cx, 365, 'prop_mimosa_grande').setScale(2.1).setDepth(-5));
     }
   }
 
@@ -119,12 +116,14 @@ export class BootScene extends Phaser.Scene {
   private renderGenderIntro(): void {
     this.clearStep();
     this.renderBackground('mimosa_puerto');
-    this.renderTextBacking(108, 235);
+    // misma caja al medio que el título (renderTitle), para que el paso siguiente no
+    // salte de posición — el título/subtítulo de arriba queda igual, sobre la foto.
+    this.renderTextBacking(165, 280);
     const cx = VIEW.width / 2;
     this.track(
       crisp(
         this.add
-          .text(cx, 128, '¿Sos varón o mujer?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+          .text(cx, 196, '¿Sos varón o mujer?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
           .setOrigin(0.5)
           .setResolution(4),
       ),
@@ -134,7 +133,7 @@ export class BootScene extends Phaser.Scene {
         { label: 'Varón', onPick: () => this.pickGender('m') },
         { label: 'Mujer', onPick: () => this.pickGender('f') },
       ],
-      170,
+      236,
     );
   }
 
