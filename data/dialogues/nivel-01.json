@@ -13,9 +13,27 @@
       "id": "d_n1_enlistamiento",
       "npc": "npc_pepperell",
       "lang": "cym",
-      "start": "e1",
+      "start": "n0",
       "note": "Escena de arranque, antes del Nivel 1 propiamente dicho. Liverpool, el embarque.",
       "nodes": {
+        "n0": {
+          "speaker": "narrator",
+          "text": "El Mimosa lleva colonos galeses rumbo a Sudamérica. Van a fundar Y Wladfa — la Colonia.",
+          "next": "e0"
+        },
+        "e0": {
+          "speaker": "npc_pepperell",
+          "portrait": "neutral",
+          "broken": true,
+          "text": "A ver los papeles.",
+          "next": "e0b"
+        },
+        "e0b": {
+          "speaker": "pc",
+          "portrait": "neutral",
+          "text": "Acá tiene.",
+          "next": "e1"
+        },
         "e1": {
           "speaker": "npc_pepperell",
           "portrait": "neutral",
@@ -26,7 +44,7 @@
         "e2": {
           "speaker": "pc",
           "portrait": "neutral",
-          "text": "Acá tiene.",
+          "text": "Vaughan.",
           "next": "e3"
         },
         "e3": {

@@ -159,6 +159,8 @@ export class BootScene extends Phaser.Scene {
     const inputEl = this.nameInput.node as HTMLInputElement;
     inputEl.value = this.playerName || defaultName; // el 5to arg de add.dom() no sirve para el value de un <input>
     inputEl.maxLength = 18;
+    inputEl.autocomplete = 'off'; // si no, el navegador puede autocompletar/sugerir un nombre ya tipeado antes
+
     inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
       e.stopPropagation();
       if (e.key === 'Enter') this.confirmName();
@@ -209,7 +211,59 @@ export class BootScene extends Phaser.Scene {
     // ya cubre la bandeja (384-480) por su cuenta.
     this.renderBackground(`enlistamiento_${this.playerGender}`);
     this.dialogue = new DialogueBox(this);
-    this.dialogue.start('d_n1_enlistamiento', () => this.scene.start('World'));
+    this.dialogue.start('d_n1_enlistamiento', () => this.renderVoyage());
+  }
+
+  /* ---------------- paso 5: la travesía, cinemática corta ---------------- */
+
+  private renderVoyage(): void {
+    this.clearStep();
+    const cx = VIEW.width / 2;
+
+    // mar de horizonte a horizonte, sin las franjas de tierra del resto del arranque
+    this.track(this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.sea, 0.9).setOrigin(0, 0).setDepth(-8));
+    for (let i = 0; i < 5; i++) {
+      const y = 90 + i * 46;
+      const w = this.add.rectangle(0, y, VIEW.width * 1.4, 2, PAL.seaPale, 0.3).setOrigin(0, 0).setDepth(-7);
+      this.track(w);
+      this.tweens.add({ targets: w, x: -60, duration: 1600 + i * 260, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+    }
+
+    const ship = this.add.image(cx, 220, 'prop_mimosa').setScale(3.2).setDepth(-5);
+    this.track(ship);
+    this.tweens.add({ targets: ship, y: '+=6', duration: 1500, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+
+    this.track(
+      crisp(
+        this.add
+          .text(cx, 400, 'Semanas de mar, rumbo al sur.', {
+            fontFamily: FONT_FAMILY,
+            fontSize: FONT.body,
+            color: '#EAE8E0',
+            align: 'center',
+          })
+          .setOrigin(0.5)
+          .setResolution(4),
+      ),
+    );
+    const hint = crisp(
+      this.add
+        .text(cx, 440, 'toca para continuar', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
+        .setOrigin(0.5)
+        .setResolution(4),
+    );
+    this.track(hint);
+    this.tweens.add({ targets: hint, alpha: 0.3, duration: 900, yoyo: true, repeat: -1 });
+
+    let done = false;
+    const advance = (): void => {
+      if (done) return;
+      done = true;
+      this.scene.start('World');
+    };
+    this.time.delayedCall(4000, advance);
+    this.input.once('pointerdown', advance);
+    this.input.keyboard?.once('keydown', advance);
   }
 
   /* ---------------- arranque ---------------- */
