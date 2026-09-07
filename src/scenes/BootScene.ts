@@ -186,6 +186,15 @@ export class BootScene extends Phaser.Scene {
       e.stopPropagation();
       if (e.key === 'Enter') this.confirmName();
     });
+    // si el jugador cierra el teclado sin todavía avanzar de paso (toca afuera, o el
+    // botón "ocultar teclado" del navegador), el mismo desincronizado de scale.ts
+    // puede pasar ACÁ, antes de llegar a clearStep() — se dispara el mismo reintento
+    // apenas el campo pierde foco, no solo al salir del paso.
+    inputEl.addEventListener('blur', () => {
+      window.dispatchEvent(new Event('resize'));
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 400);
+    });
     inputEl.focus();
 
     // botón compacto al lado del campo, no una opción de lista aparte más abajo.

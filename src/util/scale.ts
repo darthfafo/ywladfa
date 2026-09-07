@@ -47,15 +47,19 @@ export function applyIntegerScale(game: Phaser.Game): void {
     game.scale.refresh();
   };
 
-  fit();
-  window.addEventListener('resize', fit);
-  window.addEventListener('orientationchange', () => {
-    // la barra del navegador y la rotación tardan en asentarse; un solo intento
-    // temprano puede leer medidas a mitad de la animación y quedar "trabado".
+  // la barra del navegador, la rotación Y el cierre del teclado virtual tardan en
+  // asentarse; un solo intento en el momento del evento puede leer medidas a mitad
+  // de la animación (sobre todo `visualViewport` al cerrarse el teclado) y el juego
+  // queda "trabado" en el tamaño chico — reintenta un par de veces más por las dudas.
+  const fitWithRetries = (): void => {
     fit();
     setTimeout(fit, 150);
     setTimeout(fit, 400);
-  });
-  window.visualViewport?.addEventListener('resize', fit);
-  window.visualViewport?.addEventListener('scroll', fit);
+  };
+
+  fit();
+  window.addEventListener('resize', fitWithRetries);
+  window.addEventListener('orientationchange', fitWithRetries);
+  window.visualViewport?.addEventListener('resize', fitWithRetries);
+  window.visualViewport?.addEventListener('scroll', fitWithRetries);
 }
