@@ -9,8 +9,7 @@ import { TURNS } from '@/systems/TimeSystem';
 import { tileCenter, toTile } from '@/util/grid';
 import { input } from '@/util/input';
 import { baseTerrain, buildTerrain, cellVariant, COLLIDES, TERRAIN, TERRAIN_SPEED, tileIndex, zoneAt } from '@/util/mapgen';
-import type { HatStyle } from '@/util/textures';
-import { FACING_FRAME, makeCharacter, makeProps, makeTileset } from '@/util/textures';
+import { FACING_FRAME, makeCharacter, makeProps, makeTileset, NPC_COLORS } from '@/util/textures';
 
 interface Interactable {
   sprite: Phaser.GameObjects.Image;
@@ -18,17 +17,6 @@ interface Interactable {
   id: string;
   label: string;
 }
-
-/** Ropa de colono: negros y marrones, nada de colores vivos (docs/04-guia-historica.md). */
-const NPC_COLORS: Record<string, [number, number, HatStyle]> = {
-  npc_lewis: [PAL.ink2, PAL.ink, 'copa'],
-  npc_edwyn: [PAL.soil, PAL.soil2, 'boina'],
-  npc_matthews: [PAL.ink, PAL.bone, 'copa'],
-  npc_berwyn: [PAL.soil2, PAL.sandLight, 'copa'],
-  npc_pepperell: [PAL.slate, PAL.bone, 'copa'],
-  npc_mari: [PAL.clayDark, PAL.clayPale, 'boina'],
-  npc_dafydd: [PAL.soil2, PAL.coiron, 'boina'],
-};
 
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;

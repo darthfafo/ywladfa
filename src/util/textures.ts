@@ -158,6 +158,81 @@ export function makeCharacter(
 
 export const FACING_FRAME: Record<string, number> = { south: 0, north: 1, east: 2, west: 3 };
 
+/** Cuerpo/sombrero por personaje — misma silueta que ve WorldScene en el sprite del mundo. */
+export const NPC_COLORS: Record<string, [number, number, HatStyle]> = {
+  npc_lewis: [PAL.ink2, PAL.ink, 'copa'],
+  npc_edwyn: [PAL.soil, PAL.soil2, 'boina'],
+  npc_matthews: [PAL.ink, PAL.bone, 'copa'],
+  npc_berwyn: [PAL.soil2, PAL.sandLight, 'copa'],
+  npc_pepperell: [PAL.slate, PAL.bone, 'copa'],
+  npc_mari: [PAL.clayDark, PAL.clayPale, 'boina'],
+  npc_dafydd: [PAL.soil2, PAL.coiron, 'boina'],
+};
+
+const PC_COLORS: Record<string, [number, number, HatStyle]> = {
+  pc_m: [PAL.clay, PAL.ink, 'boina'],
+  pc_f: [PAL.clayDark, PAL.wheat, 'boina'],
+};
+
+/**
+ * Retratos placeholder de diálogo (48×48), uno por personaje × expresión, con el
+ * mismo color de cuerpo/sombrero que el sprite del mundo — así se distingue quién
+ * habla mientras no exista el PNG real (docs/05-prompts-arte.txt §1). DialogueBox
+ * los usa solo si no hay arte real cargado (src/util/assets.ts).
+ */
+export function makePortraits(scene: Phaser.Scene): void {
+  const moods: Array<'neutral' | 'tenso' | 'calido'> = ['neutral', 'tenso', 'calido'];
+  const all: Array<[string, number, number, HatStyle]> = [
+    ...Object.entries(NPC_COLORS).map(([id, c]): [string, number, number, HatStyle] => [id.replace(/^npc_/, ''), ...c]),
+    ...Object.entries(PC_COLORS).map(([id, c]): [string, number, number, HatStyle] => [id, ...c]),
+  ];
+  for (const [id, body, hat, style] of all) {
+    for (const mood of moods) makePortrait(scene, `portrait_${id}_${mood}`, body, hat, style, mood);
+  }
+}
+
+function makePortrait(
+  scene: Phaser.Scene,
+  key: string,
+  body: number,
+  hat: number,
+  hatStyle: HatStyle,
+  mood: 'neutral' | 'tenso' | 'calido',
+): void {
+  if (scene.textures.exists(key)) return;
+  const W = 48;
+  const H = 48;
+  const tex = scene.textures.createCanvas(key, W, H);
+  const ctx = tex!.getContext();
+
+  ctx.fillStyle = hex(PAL.ink2);
+  ctx.fillRect(0, 0, W, H);
+  // hombros
+  ctx.fillStyle = hex(body);
+  ctx.fillRect(4, 30, 40, 18);
+  // cabeza
+  ctx.fillStyle = hex(PAL.clayPale);
+  ctx.fillRect(15, 8, 18, 22);
+  // sombrero: misma silueta que el sprite del mundo
+  ctx.fillStyle = hex(hat);
+  if (hatStyle === 'copa') {
+    ctx.fillRect(12, 7, 24, 3);
+    ctx.fillRect(20, 0, 8, 7);
+  } else {
+    ctx.fillRect(10, 5, 28, 6);
+    ctx.fillRect(32, 2, 6, 6);
+  }
+  // cejas/ojos: apenas cambian con el ánimo, para no depender solo del color de fondo
+  ctx.fillStyle = hex(PAL.ink);
+  const browY = mood === 'tenso' ? 20 : 19;
+  ctx.fillRect(19, browY, 3, 2);
+  ctx.fillRect(27, browY, 3, 2);
+  ctx.fillRect(19, 24, 3, 3);
+  ctx.fillRect(27, 24, 3, 3);
+
+  tex!.refresh();
+}
+
 /** Props chicos: cajón, mata de jarilla, fogón, boca de cueva. */
 export function makeProps(scene: Phaser.Scene): void {
   // oscuro con banda dorada: PAL.soil2 se perdía contra la arena (mismo tono)

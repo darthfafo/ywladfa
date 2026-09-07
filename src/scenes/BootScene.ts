@@ -7,7 +7,7 @@ import { preloadArt, sceneTextureKey } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { SelectList } from '@/util/selectList';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
-import { makeProps } from '@/util/textures';
+import { makePortraits, makeProps } from '@/util/textures';
 
 type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
@@ -39,6 +39,7 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     const cx = VIEW.width / 2;
     makeProps(this); // trae 'prop_mimosa': WorldScene todavía no corrió, no existe todavía
+    makePortraits(this); // retratos placeholder por si el diálogo de enlistamiento ya los necesita
 
     // profundidad negativa: si un paso pone un fondo cinemático real (renderBackground)
     // tiene que quedar delante de estas franjas placeholder, no tapado por ellas.
@@ -248,32 +249,11 @@ export class BootScene extends Phaser.Scene {
           .setResolution(4),
       ),
     );
-    const hint = crisp(
-      this.add
-        .text(cx, 440, 'toca para continuar', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
-        .setOrigin(0.5)
-        .setResolution(4)
-        .setAlpha(0),
-    );
-    this.track(hint);
-
-    let done = false;
-    const advance = (): void => {
-      if (done) return;
-      done = true;
-      this.scene.start('World');
-    };
-    this.time.delayedCall(4500, advance);
-    // el mismo toque que cierra el diálogo anterior todavía se está procesando en
-    // este instante: si el listener de "saltar" se engancha ya mismo, se dispara
-    // solo con ese toque y la cinemática no llega a verse. Se activa un momento
-    // después, cuando ya no puede quedar ningún toque de la pantalla anterior en vuelo.
-    this.time.delayedCall(500, () => {
-      hint.setAlpha(1);
-      this.tweens.add({ targets: hint, alpha: 0.3, duration: 900, yoyo: true, repeat: -1 });
-      this.input.once('pointerdown', advance);
-      this.input.keyboard?.once('keydown', advance);
-    });
+    // sin forma de adelantarla: un toque de una pantalla anterior que todavía
+    // estuviera "en vuelo" alcanzaba para saltear la cinemática antes de que se
+    // llegara a ver un solo frame. Esta y cualquier cinemática futura corren su
+    // tiempo fijo completo, sin listener de toque/tecla que la pueda cortar.
+    this.time.delayedCall(4500, () => this.scene.start('World'));
   }
 
   /* ---------------- arranque ---------------- */

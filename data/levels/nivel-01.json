@@ -631,10 +631,10 @@
       "type": "key",
       "zone": "z5_canadon",
       "rect": [
+        10,
         8,
-        6,
-        7,
-        7
+        3,
+        3
       ],
       "requires": "flags.n1_dafydd_perdido == true",
       "once": true,
