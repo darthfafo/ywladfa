@@ -32,7 +32,12 @@ export class DialogueBox {
 
     // opaco del todo, no 0.97: contra una cutscene con foto de fondo (BootScene,
     // cold_open) ese resto de transparencia bajaba el contraste del texto.
-    this.bg = scene.add.rectangle(0, 0, TRAY.w, TRAY.h, PAL.ink, 1).setOrigin(0, 0).setStrokeStyle(1, PAL.slate);
+    this.bg = scene.add.rectangle(0, 0, TRAY.w, TRAY.h, PAL.ink, 1).setOrigin(0, 0);
+    // línea sola arriba, no un marco de los 4 lados: es el mismo contenedor que la
+    // bandeja vacía (UiScene.buildTray) y el HUD (borde solo en el filo compartido
+    // con el mundo) — un stroke completo le agregaba a esto un borde a la derecha
+    // que ningún otro panel del juego tiene, se notaba distinto en las cutscenes.
+    const topBorder = scene.add.rectangle(0, 0, TRAY.w, 1, PAL.slate).setOrigin(0, 0);
     // el borde importa sobre todo cuando hay arte real: el relleno pasa a PAL.ink
     // (ver show()), el mismo color que el fondo de la bandeja — sin borde el
     // recuadro queda invisible, sin contraste contra lo que lo rodea. PAL.bone a
@@ -71,7 +76,15 @@ export class DialogueBox {
     );
 
     this.root = scene.add
-      .container(TRAY.x, TRAY.y, [this.bg, this.portrait, this.portraitImg, this.nameText, this.bodyText, this.hint])
+      .container(TRAY.x, TRAY.y, [
+        this.bg,
+        topBorder,
+        this.portrait,
+        this.portraitImg,
+        this.nameText,
+        this.bodyText,
+        this.hint,
+      ])
       .setDepth(80)
       .setVisible(false);
 
