@@ -4,8 +4,8 @@
 
   "global": {
     "playerBaseSpeedPxPerSec": 62,
-    "overloadSpeedMultiplier": 0.4,
-    "overloadRangeMultiplier": 1.5,
+    "overloadSpeedMultiplier": 0.3,
+    "overloadRangeMultiplier": 0.35,
     "windSpeedMultiplier": 0.7,
     "trailStepsToForm": 3,
     "bondMaxLevel": 5,
@@ -43,7 +43,7 @@
 
     "startState": {
       "resources": { "agua": 18, "comida": 14, "forraje": 0, "lena": 2, "municion": 6, "materiales": 0 },
-      "playerCapacityKg": 20,
+      "playerCapacityKg": 14,
       "playerCarriedKg": 6,
       "languages": { "cym": 3, "spa": 0, "aon": 0 },
       "morale": 55

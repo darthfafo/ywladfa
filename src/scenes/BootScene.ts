@@ -236,7 +236,9 @@ export class BootScene extends Phaser.Scene {
     this.track(
       crisp(
         this.add
-          .text(cx, 400, 'Semanas de mar, rumbo al sur.', {
+          // dos meses de travesía real: 28-V-1865 (zarpada, Liverpool) a 28-VII-1865
+          // (desembarco, Punta Cuevas) — docs/04-guia-historica.md.
+          .text(cx, 400, 'Dos meses de mar, rumbo al sur.', {
             fontFamily: FONT_FAMILY,
             fontSize: FONT.body,
             color: '#EAE8E0',
@@ -250,10 +252,10 @@ export class BootScene extends Phaser.Scene {
       this.add
         .text(cx, 440, 'toca para continuar', { fontFamily: FONT_FAMILY, fontSize: FONT.tiny, color: '#6B6A5E' })
         .setOrigin(0.5)
-        .setResolution(4),
+        .setResolution(4)
+        .setAlpha(0),
     );
     this.track(hint);
-    this.tweens.add({ targets: hint, alpha: 0.3, duration: 900, yoyo: true, repeat: -1 });
 
     let done = false;
     const advance = (): void => {
@@ -261,9 +263,17 @@ export class BootScene extends Phaser.Scene {
       done = true;
       this.scene.start('World');
     };
-    this.time.delayedCall(4000, advance);
-    this.input.once('pointerdown', advance);
-    this.input.keyboard?.once('keydown', advance);
+    this.time.delayedCall(4500, advance);
+    // el mismo toque que cierra el diálogo anterior todavía se está procesando en
+    // este instante: si el listener de "saltar" se engancha ya mismo, se dispara
+    // solo con ese toque y la cinemática no llega a verse. Se activa un momento
+    // después, cuando ya no puede quedar ningún toque de la pantalla anterior en vuelo.
+    this.time.delayedCall(500, () => {
+      hint.setAlpha(1);
+      this.tweens.add({ targets: hint, alpha: 0.3, duration: 900, yoyo: true, repeat: -1 });
+      this.input.once('pointerdown', advance);
+      this.input.keyboard?.once('keydown', advance);
+    });
   }
 
   /* ---------------- arranque ---------------- */
