@@ -26,9 +26,21 @@ export function applyIntegerScale(game: Phaser.Game): void {
   const parent = document.getElementById('game');
   if (!parent) return;
 
+  // El teclado virtual angosta `visualViewport.height` mucho (250-350px en un celular),
+  // muchísimo más que cualquier barra de navegador (como mucho ~100px). El único <input>
+  // del juego (BootScene.renderName) vive arriba de todo, justamente para no quedar
+  // tapado por ningún teclado — así que el juego no necesita encogerse cuando aparece.
+  // Ante una reducción grande se ignora y se sigue usando el último alto "sin teclado"
+  // conocido, en vez de perseguir un valor chico y transitorio (que además a veces
+  // nunca se termina de recuperar al cerrarse el teclado).
+  let lastStableHeight = window.innerHeight;
+
   const viewportSize = (): { w: number; h: number } => {
     const vv = window.visualViewport;
-    return vv ? { w: vv.width, h: vv.height } : { w: window.innerWidth, h: window.innerHeight };
+    if (!vv) return { w: window.innerWidth, h: window.innerHeight };
+    const keyboardLikelyOpen = window.innerHeight - vv.height > 120;
+    if (!keyboardLikelyOpen) lastStableHeight = vv.height;
+    return { w: vv.width, h: keyboardLikelyOpen ? lastStableHeight : vv.height };
   };
 
   const fit = (): void => {
@@ -47,10 +59,9 @@ export function applyIntegerScale(game: Phaser.Game): void {
     game.scale.refresh();
   };
 
-  // la barra del navegador, la rotación Y el cierre del teclado virtual tardan en
-  // asentarse; un solo intento en el momento del evento puede leer medidas a mitad
-  // de la animación (sobre todo `visualViewport` al cerrarse el teclado) y el juego
-  // queda "trabado" en el tamaño chico — reintenta un par de veces más por las dudas.
+  // la barra del navegador y la rotación tardan en asentarse; un solo intento en el
+  // momento del evento puede leer medidas a mitad de la animación — reintenta un par
+  // de veces más por las dudas.
   const fitWithRetries = (): void => {
     fit();
     setTimeout(fit, 150);
@@ -62,4 +73,11 @@ export function applyIntegerScale(game: Phaser.Game): void {
   window.addEventListener('orientationchange', fitWithRetries);
   window.visualViewport?.addEventListener('resize', fitWithRetries);
   window.visualViewport?.addEventListener('scroll', fitWithRetries);
+
+  // remedio de última instancia: si el resize de arriba no llegó a tiempo o con la
+  // medida correcta, cada toque en la pantalla reajusta el tamaño ANTES de que Phaser
+  // calcule dónde cayó ese mismo toque (capture, no bubble: corre primero) — así un
+  // primer toque "en falso" nunca hace falta para destrabar el encuadre.
+  document.addEventListener('touchstart', fit, { passive: true, capture: true });
+  document.addEventListener('pointerdown', fit, { passive: true, capture: true });
 }

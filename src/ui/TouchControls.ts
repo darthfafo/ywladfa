@@ -34,12 +34,15 @@ export class TouchControls {
   constructor(scene: Phaser.Scene) {
     const world = VIEW.world;
     const centerY = world.y + world.h / 2;
+    // el botón va DEBAJO del joystick (no arriba): así el pulgar que ya está apoyado
+    // en la base del joystick lo alcanza derecho hacia abajo, en vez de tener que
+    // saltar a un botón "colgado" arriba, lejos de donde descansa la mano.
     const jx = CFG.anchorX;
-    const jy = centerY + CFG.gap;
+    const jy = centerY - CFG.gap;
     this.origin = new Phaser.Math.Vector2(jx, jy);
 
     const bx = CFG.anchorX;
-    const by = centerY - CFG.gap;
+    const by = centerY + CFG.gap;
     // la zona de agarre del joystick (grabRadius) y el hitArea del botón (buttonSize/2)
     // no se pueden pisar: la distancia entre centros tiene que ser mayor a la suma de
     // los dos radios, si no, a veces el toque en el botón termina moviendo al joystick.
