@@ -195,11 +195,16 @@ export class BootScene extends Phaser.Scene {
 
   private renderEnlist(): void {
     this.clearStep();
+    // el estado del juego pasa a tener el nombre/género elegidos ANTES de arrancar
+    // el diálogo: si se hacía en beginNewGame() (al cerrarse), la charla misma se
+    // jugaba todavía con el estado por defecto ("Elin"), sin importar qué se eligiera.
+    saveSystem.clear();
+    game.replaceState(createInitialState('nivel-01', this.playerName, this.playerGender));
     // sin franja oscura acá: la imagen ocupa mundo+HUD (0-384) y el diálogo, opaco,
     // ya cubre la bandeja (384-480) por su cuenta.
     this.renderBackground(`enlistamiento_${this.playerGender}`);
     this.dialogue = new DialogueBox(this);
-    this.dialogue.start('d_n1_enlistamiento', () => this.beginNewGame());
+    this.dialogue.start('d_n1_enlistamiento', () => this.scene.start('World'));
   }
 
   /* ---------------- arranque ---------------- */
@@ -207,12 +212,6 @@ export class BootScene extends Phaser.Scene {
   private continueGame(): void {
     const saved = saveSystem.load();
     if (saved) game.replaceState(saved);
-    this.scene.start('World');
-  }
-
-  private beginNewGame(): void {
-    saveSystem.clear();
-    game.replaceState(createInitialState('nivel-01', this.playerName, this.playerGender));
     this.scene.start('World');
   }
 

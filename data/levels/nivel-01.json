@@ -221,7 +221,7 @@
         ],
         "movesTo": {
           "day": 2,
-          "turn": "tarde",
+          "turn": "manana",
           "x": 11,
           "y": 9
         }
@@ -512,6 +512,7 @@
       "id": "trig_eleccion_cueva",
       "type": "choice",
       "zone": "z2_barranca",
+      "rect": [37, 49, 6, 6],
       "once": true,
       "turnCost": 1,
       "action": {
