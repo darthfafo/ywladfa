@@ -345,7 +345,7 @@
         "w": 5,
         "h": 26,
         "note": "la subida de la barranca: corredor vertical largo, es la ascension del nivel",
-        "requires": "flags.n1_cajones_bajados >= 6"
+        "requires": "flags.n1_cajones_bajados >= 8"
       },
       {
         "id": "p_playa_punta",
