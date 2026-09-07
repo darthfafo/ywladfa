@@ -22,7 +22,9 @@ export class DialogueBox {
   private nameText: Phaser.GameObjects.Text;
   private bodyText: Phaser.GameObjects.Text;
   private hint: Phaser.GameObjects.Text;
+  private tapCatcher: Phaser.GameObjects.DOMElement;
   private choicesEl: Phaser.GameObjects.DOMElement | null = null;
+  private choicesKeyCleanup: (() => void) | null = null;
   private sys: DialogueSystem;
   private current: RenderedLine | null = null;
   private onClose: (() => void) | null = null;
@@ -75,10 +77,23 @@ export class DialogueBox {
         .setResolution(4),
     );
 
+    // toque para avanzar de línea: HTML real, no un rectángulo de Phaser con
+    // setInteractive/pointerdown — era el único lugar de todo el diálogo que
+    // seguía con ese mecanismo, y es probablemente donde se colgaba en el celular
+    // real (mismo problema ya resuelto en botones y opciones). Phaser oculta a los
+    // elementos DOM hijos de un container automáticamente cuando ese container no
+    // es visible (willRender()), así que no hace falta togglear nada a mano.
+    this.tapCatcher = scene.add
+      .dom(0, 0, 'div', `width:${TRAY.w}px; height:${TRAY.h}px; cursor:pointer;`)
+      .setOrigin(0, 0)
+      .setDepth(1);
+    (this.tapCatcher.node as HTMLDivElement).addEventListener('click', () => this.advance());
+
     this.root = scene.add
       .container(TRAY.x, TRAY.y, [
         this.bg,
         topBorder,
+        this.tapCatcher,
         this.portrait,
         this.portraitImg,
         this.nameText,
@@ -87,12 +102,6 @@ export class DialogueBox {
       ])
       .setDepth(80)
       .setVisible(false);
-
-    this.bg.setInteractive(new Phaser.Geom.Rectangle(0, 0, TRAY.w, TRAY.h), Phaser.Geom.Rectangle.Contains);
-    this.bg.on('pointerdown', () => this.advance());
-    // ocultar el container no desactiva el input de sus hijos: sin esto, este
-    // rectángulo tapa toda la bandeja (joystick incluido) incluso cerrado.
-    this.bg.disableInteractive();
 
     scene.input.keyboard?.on('keydown-SPACE', () => this.advance());
     scene.input.keyboard?.on('keydown-E', () => this.advance());
@@ -105,7 +114,6 @@ export class DialogueBox {
   start(dialogueId: string, onClose?: () => void): void {
     this.onClose = onClose ?? null;
     input.locked = true;
-    this.bg.setInteractive();
     this.root.setVisible(true);
     this.show(this.sys.start(dialogueId));
   }
@@ -119,7 +127,6 @@ export class DialogueBox {
   refuse(npcId: string, onClose?: () => void, text = '— Ahora no.'): void {
     this.onClose = onClose ?? null;
     input.locked = true;
-    this.bg.setInteractive();
     this.root.setVisible(true);
     this.show({
       nodeId: '__refuse',
@@ -144,7 +151,6 @@ export class DialogueBox {
 
     if (!line) {
       this.root.setVisible(false);
-      this.bg.disableInteractive();
       input.locked = false;
       const cb = this.onClose;
       this.onClose = null;
@@ -197,41 +203,89 @@ export class DialogueBox {
    * BootScene/TouchControls), y un paso fijo entre opciones tampoco tenía en cuenta
    * cuántas líneas ocupaba una opción larga al hacer wordWrap — con esto ya no
    * importa: es un <div> flex en columna, el propio navegador apila cada botón
-   * según lo que realmente ocupa el anterior. */
+   * según lo que realmente ocupa el anterior.
+   * Arriba/abajo + espacio elige entre ellas (con el mismo cursor "›" que se usa en
+   * el resto del juego) además del tap/click — GDD §8, "las dos entradas activas". */
   private renderChoices(line: RenderedLine): void {
     this.bodyText.setVisible(false);
     this.nameText.setVisible(true);
 
     // gap y padding chicos a propósito: con 3 opciones y alguna larga (wordWrap a 2
     // líneas), el bloque tiene que entrar en los ~70px que quedan de bandeja debajo
-    // del nombre — de sobra se corta contra el borde de abajo.
+    // del nombre — de sobra se corta contra el borde de abajo. Depth por encima del
+    // tapCatcher (1): si no, el tap para "avanzar" de la bandeja tapa los botones.
     const wrap = this.scene.add
       .dom(70, 26, 'div', `display:flex; flex-direction:column; gap:3px; width:${TRAY.w - 80}px;`)
-      .setOrigin(0, 0);
+      .setOrigin(0, 0)
+      .setDepth(10);
     this.root.add(wrap);
     this.choicesEl = wrap;
     const container = wrap.node as HTMLDivElement;
 
-    for (const c of line.choices) {
+    const buttons: HTMLButtonElement[] = [];
+    let focused = 0;
+    const paint = (): void => {
+      buttons.forEach((b, i) => {
+        const on = i === focused;
+        b.style.color = on ? '#D9A845' : '#BFD3D8';
+        b.textContent = (on ? '› ' : '  ') + line.choices[i]!.text;
+      });
+    };
+    const pick = (i: number): void => {
+      bus.emit('ui:toast', { text: '' });
+      this.show(this.sys.choose(line.choices[i]!.id));
+    };
+
+    line.choices.forEach((_c, i) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.textContent = c.text;
       btn.style.cssText =
         'display:block; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
         'text-align:left; color:#BFD3D8; font-family: ui-monospace, "SF Mono", Menlo, monospace; ' +
         'font-size:11px; line-height:1.15; cursor:pointer; -webkit-tap-highlight-color:transparent;';
-      const onPick = (): void => {
-        bus.emit('ui:toast', { text: '' });
-        this.show(this.sys.choose(c.id));
-      };
-      btn.addEventListener('click', onPick);
-      btn.addEventListener('touchstart', () => (btn.style.color = '#D9A845'), { passive: true });
-      btn.addEventListener('touchend', () => (btn.style.color = '#BFD3D8'));
+      btn.addEventListener('click', () => pick(i));
+      btn.addEventListener(
+        'touchstart',
+        () => {
+          focused = i;
+          paint();
+        },
+        { passive: true },
+      );
+      buttons.push(btn);
       container.appendChild(btn);
-    }
+    });
+    paint();
+
+    const kb = this.scene.input.keyboard;
+    const onDown = (): void => {
+      focused = Math.min(focused + 1, buttons.length - 1);
+      paint();
+    };
+    const onUp = (): void => {
+      focused = Math.max(focused - 1, 0);
+      paint();
+    };
+    const onSelect = (): void => pick(focused);
+    kb?.on('keydown-DOWN', onDown);
+    kb?.on('keydown-S', onDown);
+    kb?.on('keydown-UP', onUp);
+    kb?.on('keydown-W', onUp);
+    kb?.on('keydown-SPACE', onSelect);
+    kb?.on('keydown-E', onSelect);
+    this.choicesKeyCleanup = () => {
+      kb?.off('keydown-DOWN', onDown);
+      kb?.off('keydown-S', onDown);
+      kb?.off('keydown-UP', onUp);
+      kb?.off('keydown-W', onUp);
+      kb?.off('keydown-SPACE', onSelect);
+      kb?.off('keydown-E', onSelect);
+    };
   }
 
   private clearChoices(): void {
+    this.choicesKeyCleanup?.();
+    this.choicesKeyCleanup = null;
     this.choicesEl?.destroy();
     this.choicesEl = null;
     this.bodyText.setVisible(true);

@@ -6,7 +6,6 @@ import { createInitialState } from '@/core/GameState';
 import { saveSystem } from '@/systems/SaveSystem';
 import { addSceneBackground, preloadArt } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
-import { crisp, FONT, FONT_FAMILY } from '@/util/text';
 import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
 
 type Gender = 'f' | 'm';
@@ -63,20 +62,8 @@ export class BootScene extends Phaser.Scene {
     // contraste para el título contra la imagen de fondo.
     this.add.rectangle(0, 0, VIEW.width, TOP_H, PAL.ink, 1).setOrigin(0, 0).setDepth(20);
     this.add.rectangle(0, TOP_H - 1, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21);
-    crisp(
-      this.add
-        .text(cx, 24, 'Y WLADFA', { fontFamily: FONT_FAMILY, fontSize: FONT.hero, color: '#EAE8E0', align: 'center' })
-        .setOrigin(0.5)
-        .setResolution(4)
-        .setDepth(22),
-    );
-    crisp(
-      this.add
-        .text(cx, 48, 'La Huella de los Rifleros', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
-        .setOrigin(0.5)
-        .setResolution(4)
-        .setDepth(22),
-    );
+    this.renderDomText(cx, 10, 'Y WLADFA', { size: 24, color: '#EAE8E0', align: 'center', weight: 'bold' });
+    this.renderDomText(cx, 38, 'La Huella de los Rifleros', { size: 13, color: '#D9A845', align: 'center' });
 
     // bandeja inferior fija: mismo estilo que la bandeja real del juego (UiScene.buildTray),
     // opaca del todo — igual que DialogueBox.bg, para que no haya un salto de contraste
@@ -98,22 +85,11 @@ export class BootScene extends Phaser.Scene {
 
     // contexto narrativo en la bandeja, como cualquier línea de narrador.
     this.track(
-      crisp(
-        this.add
-          .text(
-            16,
-            TRAY_Y + 14,
-            'Liverpool, 28 de mayo de 1865. El Mimosa lleva colonos galeses rumbo a Sudamérica: van a fundar Y Wladfa, la Colonia.',
-            {
-              fontFamily: FONT_FAMILY,
-              fontSize: FONT.tiny,
-              color: '#9BAEB4',
-              wordWrap: { width: VIEW.width - 32 },
-              lineSpacing: 4,
-            },
-          )
-          .setDepth(22)
-          .setResolution(4),
+      this.renderDomText(
+        16,
+        TRAY_Y + 14,
+        'Liverpool, 28 de mayo de 1865. El Mimosa lleva colonos galeses rumbo a Sudamérica: van a fundar Y Wladfa, la Colonia.',
+        { size: 10, color: '#9BAEB4', width: VIEW.width - 32 },
       ),
     );
 
@@ -211,15 +187,7 @@ export class BootScene extends Phaser.Scene {
     // Una sola franja bajita (campo + botón lado a lado), no un cuadro grande.
     const rowY = TOP_H + 44;
     this.renderTextBacking(TOP_H, TOP_H + 72);
-    this.track(
-      crisp(
-        this.add
-          .text(cx, TOP_H + 14, '¿Cómo te llamás?', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
-          .setOrigin(0.5)
-          .setResolution(4)
-          .setDepth(1),
-      ),
-    );
+    this.track(this.renderDomText(cx, TOP_H + 8, '¿Cómo te llamás?', { size: 13, color: '#D9A845', align: 'center' }));
 
     const defaultName = DEFAULT_NAME[this.playerGender];
     const inputX = cx - 40;
@@ -266,14 +234,7 @@ export class BootScene extends Phaser.Scene {
   private renderConfirmOverwrite(): void {
     this.clearStep();
     this.renderImage(`enlistamiento_${this.playerGender}`);
-    this.track(
-      crisp(
-        this.add
-          .text(16, TRAY_Y + 10, 'Se pierde la partida guardada.', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#DE7050' })
-          .setDepth(22)
-          .setResolution(4),
-      ),
-    );
+    this.track(this.renderDomText(16, TRAY_Y + 10, 'Se pierde la partida guardada.', { size: 11, color: '#DE7050' }));
     this.renderOptions(
       [
         { label: 'Sí, empezar de nuevo', onPick: () => this.renderEnlist() },
@@ -320,20 +281,9 @@ export class BootScene extends Phaser.Scene {
       this.tweens.add({ targets: ship, y: '+=6', duration: 1500, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     }
 
-    this.track(
-      crisp(
-        this.add
-          // dos meses de travesía real: 28-V-1865 (zarpada, Liverpool) a 28-VII-1865
-          // (desembarco, Punta Cuevas) — docs/04-guia-historica.md.
-          .text(16, TRAY_Y + 18, 'Dos meses de mar, rumbo al sur.', {
-            fontFamily: FONT_FAMILY,
-            fontSize: FONT.body,
-            color: '#EAE8E0',
-          })
-          .setDepth(22)
-          .setResolution(4),
-      ),
-    );
+    // dos meses de travesía real: 28-V-1865 (zarpada, Liverpool) a 28-VII-1865
+    // (desembarco, Punta Cuevas) — docs/04-guia-historica.md.
+    this.track(this.renderDomText(16, TRAY_Y + 18, 'Dos meses de mar, rumbo al sur.', { size: 11, color: '#EAE8E0' }));
     // sin forma de adelantarla: un toque de una pantalla anterior que todavía
     // estuviera "en vuelo" alcanzaba para saltear la cinemática antes de que se
     // llegara a ver un solo frame. Esta y cualquier cinemática futura corren su
@@ -390,15 +340,7 @@ export class BootScene extends Phaser.Scene {
       );
     }
     if (prompt) {
-      this.track(
-        crisp(
-          this.add
-            .text(cx, boxY + 8, prompt, { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
-            .setOrigin(0.5, 0)
-            .setDepth(16)
-            .setResolution(4),
-        ),
-      );
+      this.track(this.renderDomText(cx, boxY + 8, prompt, { size: 13, color: '#D9A845', align: 'center' }));
     }
 
     options.forEach((o, i) => {
@@ -446,6 +388,28 @@ export class BootScene extends Phaser.Scene {
     btn.addEventListener('touchstart', () => (btn.style.background = '#3A5560'), { passive: true });
     btn.addEventListener('touchend', () => (btn.style.background = '#2E464F'));
     return el.setDepth(16);
+  }
+
+  /** Texto HTML real, no Phaser Text: aunque se le pida filtro suave al canvas
+   * (index.html), el texto de Phaser sigue horneado en un canvas de resolución
+   * fija baja y se ve borroso en un celular real — confirmado en dispositivo, ver
+   * el mismo cambio en UiScene (HUD). Un <div> lo rasteriza el navegador a la
+   * resolución física real de cada pantalla. */
+  private renderDomText(
+    x: number,
+    y: number,
+    text: string,
+    opts: { size: number; color: string; align?: 'left' | 'center'; width?: number; weight?: string },
+  ): Phaser.GameObjects.DOMElement {
+    const style =
+      `color:${opts.color}; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:${opts.size}px; ` +
+      `font-weight:${opts.weight ?? 'normal'}; text-align:${opts.align ?? 'left'}; line-height:1.3; ` +
+      (opts.width ? `width:${opts.width}px;` : 'white-space:nowrap;');
+    // setText(), no node.textContent directo: el origen centrado necesita que
+    // Phaser sepa el ancho actual del div para calcular el offset, y solo lo
+    // recalcula (updateSize()) cuando el texto cambia a través de su propio método
+    // — mismo bug ya encontrado en TouchControls (ver ese commit).
+    return this.add.dom(x, y, 'div', style).setOrigin(opts.align === 'center' ? 0.5 : 0, 0).setText(text);
   }
 
   private track(obj: Phaser.GameObjects.GameObject): void {
