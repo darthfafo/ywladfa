@@ -181,7 +181,7 @@ export class BootScene extends Phaser.Scene {
         { label: 'Varón', onPick: () => this.pickGender('m') },
         { label: 'Mujer', onPick: () => this.pickGender('f') },
       ],
-      IMG_CY + 60,
+      IMG_CY,
       '¿Sos varón o mujer?',
     );
   }
@@ -339,32 +339,38 @@ export class BootScene extends Phaser.Scene {
 
   /** Menú centrado sobre la imagen, con su propia caja — para las dos decisiones
    * "de portada" (continuar/nueva partida, género), no para el resto de los pasos.
-   * `prompt` opcional: una pregunta como primera línea, adentro de la misma caja. */
+   * `prompt` opcional: una pregunta como primera línea, ARRIBA de las opciones.
+   * Las opciones quedan siempre centradas en `centerY`, tengan o no prompt encima:
+   * antes el prompt sumaba su alto adentro de la misma caja centrada, empujando los
+   * botones hacia abajo — el género quedaba más bajo que el título aunque a los dos
+   * se los llamara con el mismo centerY. Ahora el prompt crece la caja hacia
+   * ARRIBA, no corre las opciones. */
   private renderMenu(options: Array<{ label: string; onPick: () => void }>, centerY: number, prompt?: string): void {
     const cx = VIEW.width / 2;
     const rowH = 26;
-    const promptH = prompt ? 26 : 0;
-    const boxH = promptH + options.length * rowH + 14;
-    const boxY = centerY - boxH / 2;
-    // sin `prompt` (título: nada más que "Nueva partida"/"Continuar") la caja
-    // translúcida es puro relleno — los botones ya son opacos por su cuenta.
-    // Con `prompt` (género: hay una pregunta arriba de las opciones) sigue haciendo
-    // falta para que ese texto se lea contra la imagen.
+    const optionsTop = centerY - (options.length * rowH) / 2;
+
     if (prompt) {
+      const promptH = 22;
+      const pad = 8;
+      const boxTop = optionsTop - promptH - pad;
+      const boxH = promptH + options.length * rowH + pad * 2;
+      // sin `prompt` (título: nada más que "Nueva partida"/"Continuar") la caja
+      // translúcida es puro relleno — los botones ya son opacos por su cuenta.
+      // Con `prompt` (género: hay una pregunta arriba de las opciones) sigue
+      // haciendo falta para que ese texto se lea contra la imagen.
       this.track(
         this.add
-          .rectangle(24, boxY, VIEW.width - 48, boxH, PAL.ink, 0.8)
+          .rectangle(24, boxTop, VIEW.width - 48, boxH, PAL.ink, 0.8)
           .setOrigin(0, 0)
           .setStrokeStyle(1, PAL.seaPale, 0.5)
           .setDepth(15),
       );
-    }
-    if (prompt) {
-      this.track(this.renderDomText(cx, boxY + 8, prompt, { size: 9, color: '#D9A845', align: 'center', retro: true }));
+      this.track(this.renderDomText(cx, boxTop + pad, prompt, { size: 9, color: '#D9A845', align: 'center', retro: true }));
     }
 
     options.forEach((o, i) => {
-      const y = boxY + 8 + promptH + i * rowH + (rowH - 2) / 2;
+      const y = optionsTop + i * rowH + (rowH - 2) / 2;
       this.track(this.renderDomButton(cx, y, o.label, o.onPick, VIEW.width - 64));
     });
   }
