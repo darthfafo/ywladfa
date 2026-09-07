@@ -24,6 +24,13 @@
       -webkit-user-select: none; user-select: none;
       -webkit-tap-highlight-color: transparent;
       display: block;
+      /* Phaser (pixelArt:true) deja el canvas en "pixelated" — perfecto para el
+         mapa/personajes, pero el texto (que ya se renderiza aparte, suavizado,
+         ver util/text.ts) se reescala CON el resto del canvas a la pantalla real
+         y termina viéndose en bloques. "auto" (bilinear) prioriza que el texto se
+         lea bien; a la densidad de píxeles de un celular la diferencia en el arte
+         de mapa es mínima (mismo razonamiento que ya usa util/scale.ts para el DPR). */
+      image-rendering: auto !important;
     }
 
     /* El juego es 9:16 fijo (GDD §2): en horizontal se tapa todo con este aviso. */

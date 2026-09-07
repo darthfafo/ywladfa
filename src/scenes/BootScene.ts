@@ -56,8 +56,10 @@ export class BootScene extends Phaser.Scene {
     this.add.rectangle(0, TOP_H + IMG_H * 0.75, VIEW.width, IMG_H * 0.25, PAL.soil, 0.6).setOrigin(0, 0).setDepth(-10);
 
     // franja superior fija: título/subtítulo, siempre visibles durante todo el arranque,
-    // con su propio fondo sólido — así nunca compiten con la imagen de atrás.
-    this.add.rectangle(0, 0, VIEW.width, TOP_H, PAL.ink, 0.97).setOrigin(0, 0).setDepth(20);
+    // con su propio fondo sólido — así nunca compiten con la imagen de atrás. Opaca del
+    // todo (no 0.97): mismo criterio que la bandeja de diálogo (DialogueBox.bg), más
+    // contraste para el título contra la imagen de fondo.
+    this.add.rectangle(0, 0, VIEW.width, TOP_H, PAL.ink, 1).setOrigin(0, 0).setDepth(20);
     this.add.rectangle(0, TOP_H - 1, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21);
     crisp(
       this.add
@@ -74,8 +76,10 @@ export class BootScene extends Phaser.Scene {
         .setDepth(22),
     );
 
-    // bandeja inferior fija: mismo estilo que la bandeja real del juego (UiScene.buildTray).
-    this.add.rectangle(0, TRAY_Y, VIEW.width, TRAY_H, PAL.ink, 0.97).setOrigin(0, 0).setDepth(20);
+    // bandeja inferior fija: mismo estilo que la bandeja real del juego (UiScene.buildTray),
+    // opaca del todo — igual que DialogueBox.bg, para que no haya un salto de contraste
+    // entre esta franja "de reposo" y la que se ve apenas arranca un diálogo.
+    this.add.rectangle(0, TRAY_Y, VIEW.width, TRAY_H, PAL.ink, 1).setOrigin(0, 0).setDepth(20);
     this.add.rectangle(0, TRAY_Y, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21);
 
     this.renderTitle();

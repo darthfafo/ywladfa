@@ -38,18 +38,22 @@ export class DialogueBox {
     // placeholder de color mientras no haya PNG real para ese personaje/expresión
     // (src/util/assets.ts decide en show() cuál de los dos se ve).
     this.portraitImg = scene.add.image(8, 12, '__DEFAULT').setOrigin(0, 0).setVisible(false);
+    // el nombre arranca a la misma altura (12) que el recuadro de retrato — antes
+    // estaba unos px más arriba (7) y quedaba desalineado con el borde de la foto.
+    // x=70, no 64: un poco más de aire entre el retrato y el texto (mismo x que ya
+    // usan las opciones de diálogo más abajo, ver renderChoices).
     this.nameText = crisp(
       scene.add
-        .text(64, 7, '', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#D9A845' })
+        .text(70, 12, '', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#D9A845' })
         .setResolution(4),
     );
     this.bodyText = crisp(
       scene.add
-        .text(64, 21, '', {
+        .text(70, 26, '', {
           fontFamily: FONT_FAMILY,
           fontSize: FONT.body,
           color: '#EAE8E0',
-          wordWrap: { width: TRAY.w - 74 },
+          wordWrap: { width: TRAY.w - 80 },
           lineSpacing: 4,
         })
         .setResolution(4),
@@ -135,8 +139,8 @@ export class DialogueBox {
       // fondos cinemáticos, ver addSceneBackground en util/assets.ts).
       this.portraitImg.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
     }
-    this.bodyText.setPosition(line.isNarrator ? 10 : 64, line.isNarrator ? 14 : 21);
-    this.bodyText.setWordWrapWidth(line.isNarrator ? TRAY.w - 20 : TRAY.w - 74);
+    this.bodyText.setPosition(line.isNarrator ? 10 : 70, line.isNarrator ? 14 : 26);
+    this.bodyText.setWordWrapWidth(line.isNarrator ? TRAY.w - 20 : TRAY.w - 80);
     this.bodyText.setColor(line.isNarrator ? '#9BAEB4' : '#EAE8E0');
     this.bodyText.setText(line.text);
 
@@ -151,7 +155,7 @@ export class DialogueBox {
   private renderChoices(line: RenderedLine): void {
     this.bodyText.setVisible(false);
     this.nameText.setVisible(true);
-    const startY = 21;
+    const startY = 26; // misma altura que bodyText, para que las opciones sigan la línea
     const items = line.choices.map((c, i) => {
       const t = crisp(
         this.scene.add

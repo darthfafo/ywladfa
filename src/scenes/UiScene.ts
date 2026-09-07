@@ -85,7 +85,9 @@ export class UiScene extends Phaser.Scene {
     const track = (o: Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle): void => {
       this.hudObjects.push(o);
     };
-    track(this.add.rectangle(h.x, h.y, h.w, h.h, PAL.ink, 0.96).setOrigin(0, 0).setDepth(60));
+    // opaco del todo, no 0.96: mismo criterio que la bandeja (DialogueBox.bg,
+    // buildTray) — más contraste para el texto contra el mundo de fondo.
+    track(this.add.rectangle(h.x, h.y, h.w, h.h, PAL.ink, 1).setOrigin(0, 0).setDepth(60));
     track(this.add.rectangle(h.x, h.y + h.h - 1, h.w, 1, PAL.slate).setOrigin(0, 0).setDepth(61));
 
     // fila 1: jornada y turno, sin nada más — nunca se queda sin lugar
@@ -133,8 +135,9 @@ export class UiScene extends Phaser.Scene {
   private buildTray(): void {
     const t = VIEW.tray;
     // PAL.ink, no PAL.void: la bandeja tiene que leerse como panel del juego,
-    // no fundirse con el fondo de la página que queda fuera del canvas.
-    this.add.rectangle(t.x, t.y, t.w, t.h, PAL.ink, 0.97).setOrigin(0, 0).setDepth(40);
+    // no fundirse con el fondo de la página que queda fuera del canvas. Opaca del
+    // todo (no 0.97): mismo criterio que DialogueBox.bg.
+    this.add.rectangle(t.x, t.y, t.w, t.h, PAL.ink, 1).setOrigin(0, 0).setDepth(40);
     this.add.rectangle(t.x, t.y, t.w, 1, PAL.slate).setOrigin(0, 0).setDepth(41);
 
     this.zoneLabel = crisp(
