@@ -79,6 +79,9 @@ export class BootScene extends Phaser.Scene {
     // (docs/04-guia-historica.md — el Mimosa zarpa el 28-V-1865 de Liverpool. Liverpool
     // es un puerto inglés, no galés — los colonos viajaron hasta ahí para embarcarse).
     this.renderBackground('mimosa_puerto');
+    // franja detrás de la fecha y las opciones nada más: el título/subtítulo se lee
+    // bien directo sobre la imagen, pero la fecha se perdía contra el aparejo del barco.
+    this.renderTextBacking(100, 225);
     // todo lo interactivo va pegado al título/subtítulo, no más abajo: es lo único
     // que queda siempre libre de un teclado virtual (que tapa desde la mitad de la
     // pantalla para abajo) y no depende de que el reajuste de escala llegue a tiempo.
@@ -281,7 +284,18 @@ export class BootScene extends Phaser.Scene {
   private renderBackground(sceneId: string): void {
     const key = sceneTextureKey(sceneId);
     if (!this.textures.exists(key)) return;
-    this.track(this.add.image(0, 0, key).setOrigin(0, 0).setDisplaySize(VIEW.width, VIEW.height).setDepth(-5));
+    const img = this.add.image(VIEW.width / 2, VIEW.height / 2, key).setDepth(-5);
+    // las escenas se piden en 3:4 (docs/05-prompts-arte.txt), más "cuadradas" que la
+    // pantalla real de 9:16 — si se estira a 270×480 exacto queda deformada. Se
+    // escala para CUBRIR el marco (como background-size:cover) y se recortan los
+    // costados, que es justo para lo que el prompt pide márgenes seguros.
+    const scale = Math.max(VIEW.width / img.width, VIEW.height / img.height);
+    img.setScale(scale);
+    // son ilustraciones pintadas, no pixel art de bordes duros: con pixelArt:true el
+    // filtro por default es NEAREST, que al reescalar una imagen grande se ve
+    // dentado — igual que crisp() hace con el texto (util/text.ts).
+    img.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+    this.track(img);
   }
 
   /** Franja oscura semitransparente para que el texto se lea encima de un fondo cinemático. */
