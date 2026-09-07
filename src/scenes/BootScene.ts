@@ -230,21 +230,26 @@ export class BootScene extends Phaser.Scene {
   private renderVoyage(): void {
     this.clearStep();
     const cx = VIEW.width / 2;
+    const hasArt = this.textures.exists(sceneTextureKey('travesia'));
+    this.renderBackground('travesia');
 
-    // mar de horizonte a horizonte, sin las franjas de tierra del resto del arranque
-    this.track(this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.sea, 0.9).setOrigin(0, 0).setDepth(-8));
-    for (let i = 0; i < 5; i++) {
-      const y = 90 + i * 46;
-      const w = this.add.rectangle(0, y, VIEW.width * 1.4, 2, PAL.seaPale, 0.3).setOrigin(0, 0).setDepth(-7);
-      this.track(w);
-      this.tweens.add({ targets: w, x: -60, duration: 1600 + i * 260, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+    if (!hasArt) {
+      // mar animado por código: placeholder hasta que exista travesia.png
+      this.track(this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.sea, 0.9).setOrigin(0, 0).setDepth(-8));
+      for (let i = 0; i < 5; i++) {
+        const y = 90 + i * 46;
+        const w = this.add.rectangle(0, y, VIEW.width * 1.4, 2, PAL.seaPale, 0.3).setOrigin(0, 0).setDepth(-7);
+        this.track(w);
+        this.tweens.add({ targets: w, x: -60, duration: 1600 + i * 260, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+      }
+      // acá se ve mucho más grande que en el mundo, así que usa la versión de tres
+      // mástiles en vez del casco simple del prop chico (textures.ts).
+      const ship = this.add.image(cx, 210, 'prop_mimosa_grande').setScale(2.6).setDepth(-5);
+      this.track(ship);
+      this.tweens.add({ targets: ship, y: '+=6', duration: 1500, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+    } else {
+      this.renderTextBacking(370, 430);
     }
-
-    // acá se ve mucho más grande que en el mundo, así que usa la versión de tres
-    // mástiles en vez del casco simple del prop chico (textures.ts).
-    const ship = this.add.image(cx, 210, 'prop_mimosa_grande').setScale(2.6).setDepth(-5);
-    this.track(ship);
-    this.tweens.add({ targets: ship, y: '+=6', duration: 1500, yoyo: true, repeat: -1, ease: 'sine.inOut' });
 
     this.track(
       crisp(
