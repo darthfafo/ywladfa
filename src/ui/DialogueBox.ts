@@ -34,7 +34,13 @@ export class DialogueBox {
     // opaco del todo, no 0.97: contra una cutscene con foto de fondo (BootScene,
     // cold_open) ese resto de transparencia bajaba el contraste del texto.
     this.bg = scene.add.rectangle(0, 0, TRAY.w, TRAY.h, PAL.ink, 1).setOrigin(0, 0).setStrokeStyle(1, PAL.slate);
-    this.portrait = scene.add.rectangle(8, 12, 48, 48, PAL.slate).setOrigin(0, 0);
+    // el borde importa sobre todo cuando hay arte real: el relleno pasa a PAL.ink
+    // (ver show()), el mismo color que el fondo de la bandeja — sin borde el
+    // recuadro queda invisible, sin contraste contra lo que lo rodea. PAL.bone a
+    // baja opacidad, no el celeste que se sacó de las imágenes: mismo tono ya usado
+    // para el joystick (sutil, neutro) y suficientemente claro para no fundirse con
+    // ningún color de relleno posible (ink/slate/clayDark/moss).
+    this.portrait = scene.add.rectangle(8, 12, 48, 48, PAL.slate).setOrigin(0, 0).setStrokeStyle(1, PAL.bone, 0.35);
     // placeholder de color mientras no haya PNG real para ese personaje/expresión
     // (src/util/assets.ts decide en show() cuál de los dos se ve).
     this.portraitImg = scene.add.image(8, 12, '__DEFAULT').setOrigin(0, 0).setVisible(false);

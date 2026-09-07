@@ -40,6 +40,29 @@ export class SaveSystem {
   clear(): void {
     localStorage.removeItem(KEY);
   }
+
+  /** Descarga la partida como archivo — el único slot vive en localStorage del
+   * navegador, así que probar en otro navegador/dispositivo (o que alguien de
+   * afuera revise el estado) no tenía forma de acceder a una partida en curso. */
+  exportToFile(state: GameState): void {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wladfa-jornada${state.progress.day}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /** Lee un archivo exportado con `exportToFile` y lo devuelve, o null si no es válido. */
+  async importFromFile(file: File): Promise<GameState | null> {
+    try {
+      return JSON.parse(await file.text()) as GameState;
+    } catch (e) {
+      console.warn('[SaveSystem] archivo de partida inválido', e);
+      return null;
+    }
+  }
 }
 
 export const saveSystem = new SaveSystem();
