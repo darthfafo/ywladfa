@@ -37,6 +37,7 @@ export class WorldScene extends Phaser.Scene {
   private carriedLena = 0;
   private gateOpen = new Map<string, boolean>();
   private mimosa: Phaser.GameObjects.Image | null = null;
+  private gaviotas: { sprite: Phaser.GameObjects.Sprite; speedPxPerSec: number }[] = [];
 
   constructor() {
     super('World');
@@ -180,7 +181,9 @@ export class WorldScene extends Phaser.Scene {
     // restos de costa y un bote menor — la playa se siente usada, no vacía.
     // Lejos de los cajones y la pila para no confundir qué se puede levantar.
     addPropImage(this, 'restos_costa', tileCenter(10), tileCenter(103), 28)?.setDepth(6);
-    addPropImage(this, 'bote_menor', tileCenter(44), tileCenter(108), 32)?.setDepth(6);
+    // 52, no 32: a 32 no se distinguía que era un bote — es angosto (2:1) y a ese
+    // tamaño quedaba en poco más que una mancha marrón.
+    addPropImage(this, 'bote_menor', tileCenter(44), tileCenter(108), 52)?.setDepth(6);
 
     // el manantial: mismo bloque de tiles que ya pinta buildTerrain() (TERRAIN.SPRING,
     // filas 6-9, columnas 8-11) — la imagen real se pone encima, del mismo tamaño
@@ -196,9 +199,13 @@ export class WorldScene extends Phaser.Scene {
     addPropImage(this, 'perfil_punta_cuevas', tileCenter(46), -40, 210)?.setDepth(-6);
 
     // gaviotas: 2-3 frames animados (ver util/assets.ts PROP_SPRITESHEETS), planeando
-    // de izquierda a derecha sobre la playa — no quietas aleteando en el lugar. Cada
-    // una arranca en su propio punto y cruza hasta más allá del borde de la zona;
-    // al terminar el tween vuelve a su x inicial y repite (repeat:-1 sin yoyo).
+    // de izquierda a derecha sobre la playa. No van con un tween de coordenadas fijas
+    // del mapa: eso las hacía "aparecer" en cualquier punto en cuanto ese tramo del
+    // mapa entraba en cámara, en vez de entrar volando desde el borde. Se mueven a
+    // velocidad constante en updateGaviotas() (llamado desde update()) y se
+    // reposicionan just fuera del borde IZQUIERDO de lo que la cámara esté mostrando
+    // en ese momento apenas cruzan el borde derecho — así siempre entran por donde
+    // corresponde, dondequiera que esté mirando la cámara.
     if (hasPropArt('gaviotas')) {
       const key = propTextureKey('gaviotas');
       if (!this.anims.exists('gaviota_vuelo')) {
@@ -209,24 +216,28 @@ export class WorldScene extends Phaser.Scene {
           repeat: -1,
         });
       }
-      for (const [tx, ty, endTx, duration] of [
-        [18, 96, 58, 13000],
-        [36, 94, 62, 16000],
+      const viewLeft = this.player.x - VIEW.world.w / 2;
+      for (const [ty, offset, speedPxPerSec] of [
+        [96, 0, 16],
+        [94, 90, 12],
       ] as const) {
-        const s = this.add
-          .sprite(tileCenter(tx), tileCenter(ty), key)
+        const sprite = this.add
+          .sprite(viewLeft - 24 - offset, tileCenter(ty), key)
           .setDisplaySize(18, 18)
           .setDepth(11)
           .play('gaviota_vuelo');
-        this.tweens.add({
-          targets: s,
-          x: tileCenter(endTx),
-          y: tileCenter(ty) - 6,
-          duration,
-          repeat: -1,
-          ease: 'Sine.inOut',
-        });
+        this.gaviotas.push({ sprite, speedPxPerSec });
       }
+    }
+  }
+
+  private updateGaviotas(delta: number): void {
+    if (!this.gaviotas.length) return;
+    const view = this.cameras.main.worldView;
+    const margin = 24;
+    for (const g of this.gaviotas) {
+      g.sprite.x += g.speedPxPerSec * (delta / 1000);
+      if (g.sprite.x > view.right + margin) g.sprite.x = view.left - margin;
     }
   }
 
@@ -263,7 +274,9 @@ export class WorldScene extends Phaser.Scene {
     kb.on('keydown-E', () => !input.locked && input.pressAction());
   }
 
-  override update(): void {
+  override update(_time: number, delta: number): void {
+    this.updateGaviotas(delta);
+
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     if (input.locked) {
       body.setVelocity(0, 0);
