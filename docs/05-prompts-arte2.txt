@@ -1,0 +1,531 @@
+# Prompts de generación de imágenes — Y Wladfa, Nivel 1
+
+Todo esto es insumo para un generador de imágenes externo. El arte de código en
+`src/util/textures.ts` sigue siendo el placeholder hasta que estos PNGs existan;
+se reemplaza sin tocar el resto del código (docs/03-assets.md).
+
+---
+
+## 0. Prefijo de estilo compartido
+
+Pegar **al principio de cada prompt**, sin importar si es retrato, escena o
+elemento de mapa. Es lo que mantiene todo con la misma identidad visual.
+
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. Overcast coastal Patagonian
+light, windswept and sparse, austere mood.
+```
+
+**Regla dura:** nada de verdes saturados (quedan reservados para más adelante
+en la campaña). Nada de estereotipos ni caricaturas de ningún grupo — colonos
+galeses incluidos.
+
+---
+
+## 1. Retratos de personajes (diálogo)
+
+Formato: **48×48 px**, cuadrado, fondo sólido liso (no transparente, para que
+combine con el marco del juego), encuadre busto/hombros, de frente. Cada
+personaje necesita **3 variantes de expresión**: `neutral`, `tenso`, `calido`.
+
+**Nota de exportación:** la mayoría de los generadores de imagen entregan
+retratos grandes con un estilo "pixel art" pintado/suave, no pixel art real de
+48×48 con bordes duros. Antes de meterlos al juego hay que bajarlos de tamaño
+a 48×48 con un método que preserve bordes duros (nearest-neighbor / "pixelate",
+no bicúbico ni suavizado) — si no, van a quedar borrosos al lado del resto del
+arte del juego, que es todo de bordes duros. Herramientas como Aseprite tienen
+un modo de "downscale + reducir paleta" pensado justo para esto.
+
+Agregar al final de cada prompt: `48x48 pixel art portrait, square format,
+solid plain dark background, bust framing, [EXPRESIÓN], three expression set
+needed: neutral / tense / warm.`
+
+**Dónde va cada PNG:** `src/assets/portraits/<id>_<neutral|tenso|calido>.png`
+(ej. `pepperell_neutral.png`, `pc_f_calido.png`). El juego los detecta solos
+apenas están (`src/util/assets.ts`) — no hace falta tocar código ni tenerlos
+todos: el personaje que todavía no tiene PNG sigue mostrando el rectángulo de
+color placeholder.
+
+### pc_m (jugador, varón — Idris Vaughan, ficticio)
+```
+Young Welsh colonist man, early-to-mid 20s, travel-worn clothing, dark wool
+beret, tired but hopeful expression, weathered face from the sea crossing.
+```
+
+### pc_f (jugador, mujer — Elin Vaughan, ficticio)
+```
+Young Welsh colonist woman, early-to-mid 20s, dark wool headscarf tied
+simply at the back (not a hat), plain travel dress with a wool shawl over
+the shoulders, hair pulled back practically, tired but hopeful expression,
+weathered face from the sea crossing.
+```
+
+### lewis (Lewis Jones, real — el que prometió)
+```
+Man in his 40s, neat beard, black top hat, the group's organizer — carries
+himself like a leader trying to hold defensive optimism together even when
+it's cracking.
+```
+
+### edwyn (Edwyn C. Roberts, real — el que falló con el depósito)
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. Overcast coastal Patagonian
+light, windswept and sparse, austere mood.
+
+Another Man in his 30s-40s, dark wool beret, angular tired face, guilty evasive eyes
+that avoid direct contact — a competent man carrying visible shame.
+
+48x48 pixel art portrait, square format,
+solid plain dark background, bust framing, [EXPRESIÓN], three expression set
+needed: neutral / tense / warm.
+```
+
+### matthews (Rev. Abraham Matthews, real — la voz que sostiene)
+```
+
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. Overcast coastal Patagonian
+light, windswept and sparse, austere mood.
+
+9-year-old boy, oversized dark wool beret, round curious face, restless
+inquisitive expression — the character who teaches the player how to
+explore.
+
+48x48 pixel art portrait, square format,
+solid plain dark background, bust framing, [EXPRESIÓN], three expression set
+needed: neutral / tense / warm.
+```
+
+### berwyn (Richard Jones Berwyn, real — maestro y escribiente)
+```
+Younger man, mid-20s, black top hat, thin wire spectacles, attentive
+observant expression — a teacher and record-keeper, always watching, always
+writing.
+```
+
+### pepperell (Cap. George Pepperell, real — capitán del Mimosa)
+```
+Man in his 40s-50s, dark navy maritime captain's cap (not a top hat), wool
+sea coat, impatient authoritative expression — he is leaving, they are not,
+and it shows.
+```
+
+### mari (Mari Vaughan, ficticia — madre del PC)
+```
+Woman in her late 40s-50s, dark wool headscarf (not a hat), tired maternal
+warmth in her eyes. For the "tense" variant: visible paleness and a cough,
+foreshadowing illness.
+```
+
+### dafydd (Dafydd, ficticio — 9 años)
+```
+9-year-old boy, oversized dark wool beret, round curious face, restless
+inquisitive expression — the character who teaches the player how to
+explore.
+```
+
+---
+
+## 2. Escenas cinemáticas (fondos narrativos)
+
+Formato: **3:4 vertical**, composición "safe": nada importante pegado a los
+bordes (se recorta distinto según el celular), el foco de la escena centrado.
+Sin texto ni UI dibujada encima — eso lo pone el juego.
+
+Agregar al final de cada prompt: `3:4 vertical aspect ratio, cinematic game
+cutscene illustration, important content centered with generous margin on
+all sides for safe cropping on different phone screens, no text, no UI
+elements.`
+
+**Dónde va cada PNG:** `src/assets/scenes/<id>.png` (el id es el nombre que
+sigue a "cutscene_", ej. `mimosa_puerto.png`, `enlistamiento_m.png`). Mismo
+criterio que los retratos: si el archivo no está, esa pantalla usa el fondo
+de color placeholder en vez de romperse.
+
+### cutscene_mimosa_puerto — La Mimosa amarrada en el puerto
+```
+The sailing ship Mimosa moored at a busy 19th century Liverpool dock, seen
+from the pier, other tall ships and rigging in the background, dock workers
+and waiting emigrant families with trunks and bundles in the distance,
+overcast harbor light, a sense of imminent departure into the unknown.
+```
+Guardar como `mimosa_puerto.png` — fondo de la pantalla donde el juego
+pregunta si el jugador es varón o mujer, antes de elegir personaje.
+
+### cutscene_enlistamiento_m — Enlistándose con el capitán Pepperell (varón)
+```
+A dockside scene at a 19th century Welsh emigrant port. A young man — early
+20s, travel-worn brown coat, dark wool beret, tired but hopeful expression —
+stands before a small wooden table where a stern maritime captain — 40s-50s,
+dark navy captain's cap (not a top hat), wool sea coat, impatient
+authoritative bearing — reviews a passenger ledger. The tall masts and
+rigging of the three-masted sailing ship Mimosa loom behind them, other
+emigrant families wait in a loose line with bundles and trunks, overcast
+light, the quiet bureaucracy before a one-way voyage.
+```
+Guardar como `enlistamiento_m.png`. Mismos personajes que `pc_m` y
+`pepperell` en la sección 1 — misma ropa, mismo tocado, misma actitud.
+
+### cutscene_enlistamiento_f — Enlistándose con el capitán Pepperell (mujer)
+```
+A dockside scene at a 19th century Welsh emigrant port. A young woman —
+early 20s, dark wool headscarf tied simply at the back (not a hat), plain
+travel dress with a wool shawl over the shoulders, tired but hopeful
+expression — stands before a small wooden table where a stern maritime
+captain — 40s-50s, dark navy captain's cap (not a top hat), wool sea coat,
+impatient authoritative bearing — reviews a passenger ledger. The tall
+masts and rigging of the three-masted sailing ship Mimosa loom behind them,
+other emigrant families wait in a loose line with bundles and trunks,
+overcast light, the quiet bureaucracy before a one-way voyage.
+```
+Guardar como `enlistamiento_f.png`. Mismos personajes que `pc_f` y
+`pepperell` en la sección 1 — misma ropa, mismo tocado, misma actitud.
+
+### cutscene_travesia — Dos meses de mar
+```
+Wide view of the three-masted sailing ship Mimosa on the open Atlantic, no
+land anywhere in sight, full sails set, a moderate grey swell, overcast sky
+meeting empty horizon, a small Welsh flag (green, white, touch of red) at
+the main mast, a faint huddle of emigrants visible at the rail — the long
+empty middle of a two-month crossing, not arrival, not departure.
+```
+Guardar como `travesia.png` — hoy esa pantalla (BootScene.renderVoyage) usa
+un barco animado por código; el día que este PNG exista, avisen y se
+engancha ahí en vez del placeholder animado.
+
+### cutscene_cold_open — El bote llegando a la costa
+```
+Wide shot from behind a small rowboat approaching a grey rocky coastline at
+dawn, Patagonian gulf waters, the silhouette of the sailing ship Mimosa
+anchored offshore in the misty background, overcast sky, sense of arrival
+into an unknown empty land.
+```
+
+### cutscene_fogon_grande — Fogón nocturno, fuego grande
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. Overcast coastal Patagonian
+light, windswept and sparse, austere mood.
+
+A small group of colonists standing beside a wooden ox-cart half-loaded with
+crates and bundles on a windswept beach, some crates still on the sand
+unloaded, tense body language, the sea and the departing ship faint in the
+background, the weight of an impossible choice.
+
+3:4 vertical aspect ratio, cinematic game
+cutscene illustration, important content centered with generous margin on
+all sides for safe cropping on different phone screens, no text, no UI
+elements.
+```
+
+### cutscene_fogon_chico — Fogón nocturno, fuego chico
+```
+Same night campfire scene but the fire is small and dim, barely lighting the
+huddled colonist silhouettes around it, more shadow than light, colder and
+more anxious mood than the big-fire version.
+```
+
+### cutscene_manantial — El hallazgo del manantial
+```
+A small boy sitting alone at the bottom of a dry rocky ravine (cañadón), feet
+resting in a thin trickle of water no wider than two fingers, silent and
+still, warm late-afternoon light breaking through the ravine walls, no
+dialogue, the quiet relief of finding water.
+```
+
+### cutscene_decision_carga — La decisión de los bultos
+```
+A small group of colonists standing beside a wooden ox-cart half-loaded with
+crates and bundles on a windswept beach, some crates still on the sand
+unloaded, tense body language, the sea and the departing ship faint in the
+background, the weight of an impossible choice.
+```
+
+### cutscene_punta_final — La despedida desde la punta
+```
+Lone figure standing on a high coastal bluff (Punta Cuevas) looking down at
+empty cave dwellings on the beach below, the sea beyond completely empty —
+the ship Mimosa gone — overcast fading light, quiet finality and loss.
+```
+
+### cutscene_subida_barranca — La subida a la barranca
+```
+Small group of colonists climbing a steep dirt-and-clay cliff path single
+file, carrying bundles on their backs, the beach and sea visible below and
+behind them, the caves of the barranca visible above, a physical sense of
+ascent and effort.
+```
+
+---
+
+## 3. Elementos para sumar al mapa (props e identidad)
+
+Formato variable según el uso — se aclara en cada uno.
+
+### El Mimosa (rediseño — reemplaza el actual, muy simple)
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. Overcast coastal Patagonian
+light, windswept and sparse, austere mood. A three-masted wooden sailing ship anchored offshore,
+seen in profile from the shore, full sails furled, a small Welsh flag (green,
+white, and a touch of red for the dragon) at the main mast, weathered wood
+hull, based on a 19th century emigrant sailing ship. Side-view sprite, transparent
+background, roughly 64x40px pixel art proportions.
+```
+
+### Botes menores cerca de la orilla
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. Overcast coastal Patagonian
+light, windswept and sparse, austere mood. A small wooden rowboat pulled up half onto wet sand
+at the tideline, oars resting inside, weathered and simple. Side-view sprite,
+transparent background, small prop scale (roughly 24x12px proportions).
+```
+
+### Perfil de Punta Cuevas (fondo/parallax)
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. Distant silhouette of a low rocky coastal cliff
+line (Punta Cuevas headland) against an overcast sky, muted flat colors,
+meant as a horizontal background parallax strip, wide aspect ratio, no fine
+detail — just a readable silhouette.
+```
+
+### Restos de costa (troncos, algas, conchillas)
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A small scattered cluster of bleached driftwood,
+dried kelp, and seashell fragments on wet sand, top-down game sprite, small
+scale, transparent background.
+```
+
+### Gaviotas
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A small seagull in flight, simple 2-3 frame pixel
+art animation silhouette, side view, transparent background, tiny scale
+(roughly 12x8px), muted grey-white.
+```
+
+### Matas de coirón (pasto patagónico)
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A clump of dry tussock grass (coirón), standing
+upright, top-down/three-quarter game sprite for scrubland terrain, muted
+tan-brown tones (no saturated green), transparent background, small prop
+scale.
+```
+
+### Guanaco a la distancia
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A single guanaco standing in profile, alert stance,
+distant-silhouette style with minimal detail, muted brown-grey tones,
+transparent background, small sprite scale for background wildlife.
+```
+
+### El manantial (charco con reflejo)
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A tiny natural spring pool at the bottom of a dry
+ravine, a thin trickle of water reflecting pale light, a few reeds growing at
+the edge, top-down game tile, small scale, muted blue-grey water tone.
+```
+## 4. Íconos de los bultos (CargoScene, la decisión de carga)
+
+Mismo estilo pixel art que los props del mapa, pero estos nunca se plantan en el
+mundo — son íconos de un solo objeto, centrados, fondo transparente, silueta clara
+a tamaño chico (se muestran a ~28px en la tarjeta). Van en `src/assets/icons/`, no
+en `props/` — el nombre de archivo es el campo `icon` de cada bulto en
+`data/items.json` (ej. `bulto_harina.png`).
+
+### bulto_harina — Harina y galleta
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A burlap sack of flour tied at the neck next to a
+stack of hardtack ship biscuits, single centered game icon, transparent
+background, small inventory-icon scale, clear silhouette.
+```
+
+### bulto_labranza — Herramientas de labranza
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A bundle of 19th-century farm hand tools tied
+together — a hoe, a spade, a sickle — single centered game icon, transparent
+background, small inventory-icon scale, clear silhouette.
+```
+
+### bulto_imprenta — La imprenta
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A small 19th-century cast-iron hand printing
+press, compact tabletop size, single centered game icon, transparent
+background, small inventory-icon scale, clear silhouette.
+```
+
+### bulto_semilla — Semilla de trigo
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A small burlap seed sack, tied and slightly
+overflowing with visible wheat grains, single centered game icon, transparent
+background, small inventory-icon scale, clear silhouette.
+```
+
+### bulto_organo — El órgano de la capilla
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A small wooden Victorian pump reed organ (chapel
+harmonium), compact upright shape, single centered game icon, transparent
+background, small inventory-icon scale, clear silhouette.
+```
+
+### bulto_abrigo — Ropa de abrigo
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A folded stack of heavy wool coats and blankets
+tied with rope, single centered game icon, transparent background, small
+inventory-icon scale, clear silhouette.
+```
+
+### bulto_hierro — Clavos, hierro y sierra
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A small wooden crate with a hand saw leaning on
+it and a scatter of iron nails and fittings on top, single centered game icon,
+transparent background, small inventory-icon scale, clear silhouette.
+```
+
+### bulto_libros — Libros y biblias
+```
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. A small stack of leather-bound books and bibles
+tied with string, single centered game icon, transparent background, small
+inventory-icon scale, clear silhouette.
+```
+
+Prompt	Nombre de archivo
+Perfil de Punta Cuevas (fondo/parallax)	src/assets/props/perfil_punta_cuevas.png
+Guanaco a la distancia	src/assets/props/guanaco.png
+Matas de coirón	src/assets/props/coiron.png
+El manantial (charco con reflejo)	src/assets/props/manantial.png
+Gaviotas	src/assets/props/gaviotas.png
+Botes menores	src/assets/props/bote_menor.png
+Harina y galleta	src/assets/icons/bulto_harina.png
+Herramientas de labranza	src/assets/icons/bulto_labranza.png
+La imprenta	src/assets/icons/bulto_imprenta.png
+Semilla de trigo	src/assets/icons/bulto_semilla.png
+El órgano de la capilla	src/assets/icons/bulto_organo.png
+Ropa de abrigo	src/assets/icons/bulto_abrigo.png
+Clavos, hierro y sierra	src/assets/icons/bulto_hierro.png
+Libros y biblias	src/assets/icons/bulto_libros.png
+Restos de costa	src/assets/props/restos_costa.png
+El Mimosa (rediseño)	src/assets/props/mimosa.png
+---
+
+*Generado como referencia para herramientas de imagen externas. Ninguna de
+estas imágenes existe todavía en el repo — retratos y escenas van a
+`src/assets/portraits/` y `src/assets/scenes/` (no `public/`: ver la nota en
+`src/util/assets.ts` sobre por qué). Los elementos de mapa de la sección 3
+todavía no tienen ese enganche de código — son referencia a futuro.*

@@ -601,9 +601,12 @@
       "manual": true,
       "once": true,
       "turnCost": 1,
-      "note": "resguardo de trig_vigia_mimosa: si el jugador nunca llega al mirador, hablarle a Lewis en el campamento también empuja Mañana → Tarde. El que dispare primero deja al otro sin efecto (mismo requires de turno).",
+      "note": "resguardo de trig_vigia_mimosa: si el jugador nunca llega al mirador, hablarle a Lewis en el campamento también empuja Mañana → Tarde. El que dispare primero deja al otro sin efecto (mismo requires de turno). n1_vio_zarpar también se marca acá (aunque el jugador no haya visto la escena): el Mimosa ya zarpó de todos modos, no puede seguir amarrado en la playa por no haber subido a mirar.",
       "action": {
-        "dialogue": "d_n1_lewis_j2_manana"
+        "dialogue": "d_n1_lewis_j2_manana",
+        "setFlag": {
+          "n1_vio_zarpar": true
+        }
       }
     },
     {

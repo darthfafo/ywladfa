@@ -28,6 +28,15 @@ const propFiles = import.meta.glob('../assets/props/*.png', {
   import: 'default',
 }) as Record<string, string>;
 
+// íconos chicos de un solo ítem (ej. los bultos de CargoScene) — mismo espíritu que
+// los props del mapa (pixel art, no ilustración pintada) pero nunca se plantan en
+// el mundo, así que van en su propia carpeta en vez de mezclarse con esos.
+const iconFiles = import.meta.glob('../assets/icons/*.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+
 function baseName(path: string): string {
   return path.split('/').pop()!.replace(/\.png$/, '');
 }
@@ -35,6 +44,7 @@ function baseName(path: string): string {
 const portraitUrls = new Map(Object.entries(portraitFiles).map(([path, url]) => [baseName(path), url]));
 const sceneUrls = new Map(Object.entries(sceneFiles).map(([path, url]) => [baseName(path), url]));
 const propUrls = new Map(Object.entries(propFiles).map(([path, url]) => [baseName(path), url]));
+const iconUrls = new Map(Object.entries(iconFiles).map(([path, url]) => [baseName(path), url]));
 
 /** Props que son hoja de sprites (varios frames cuadrados, uno al lado del otro,
  * en un mismo PNG) en vez de una imagen sola — frameSize es el lado de cada
@@ -125,6 +135,33 @@ export function addPropImage(
   return img;
 }
 
+export function iconTextureKey(id: string): string {
+  return `icon_${id}`;
+}
+
+/** true si YA hay PNG real para ese ícono (ej. "bulto_harina", CargoScene). */
+export function hasIconArt(id: string): boolean {
+  return iconUrls.has(id);
+}
+
+/** Ícono chico si ya existe el PNG: mismo criterio que addPropImage (pixel art,
+ * NEAREST, sin filtro lineal) — se escala a `size` píxeles de lado mayor. Devuelve
+ * null si el PNG no existe todavía. */
+export function addIconImage(
+  scene: Phaser.Scene,
+  id: string,
+  x: number,
+  y: number,
+  size: number,
+): Phaser.GameObjects.Image | null {
+  const key = iconTextureKey(id);
+  if (!scene.textures.exists(key)) return null;
+  const img = scene.add.image(x, y, key);
+  const scale = size / Math.max(img.width, img.height);
+  img.setScale(scale);
+  return img;
+}
+
 /** Registra en el loader de la escena todo el arte real que exista bajo src/assets/. */
 export function preloadArt(scene: Phaser.Scene): void {
   for (const [name, url] of portraitUrls) {
@@ -134,6 +171,9 @@ export function preloadArt(scene: Phaser.Scene): void {
   }
   for (const [id, url] of sceneUrls) {
     scene.load.image(sceneTextureKey(id), url);
+  }
+  for (const [id, url] of iconUrls) {
+    scene.load.image(iconTextureKey(id), url);
   }
   for (const [id, url] of propUrls) {
     const sheet = PROP_SPRITESHEETS[id];

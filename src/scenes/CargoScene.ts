@@ -4,8 +4,8 @@ import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
 import type { BultoDef, ResourceId } from '@/core/types';
-import { addSceneBackground } from '@/util/assets';
-import { crisp, FONT, FONT_FAMILY } from '@/util/text';
+import { addIconImage, addSceneBackground } from '@/util/assets';
+import { crisp, FONT, FONT_FAMILY, RETRO_FONT } from '@/util/text';
 
 interface Card {
   bulto: BultoDef;
@@ -56,14 +56,17 @@ export class CargoScene extends Phaser.Scene {
     const bg = addSceneBackground(this, 'decision_carga', VIEW.width / 2, VIEW.height / 2, VIEW.width, VIEW.height);
     this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void, bg ? 0.62 : 1).setOrigin(0, 0);
 
+    // título en la fuente retro, igual que el resto de las pantallas importantes
+    // del juego (arranque, tutoriales) — "La carga" es LA decisión del nivel, tiene
+    // que leerse con el mismo peso que esas, no como un panel más.
     crisp(
       this.add
-        .text(8, 6, 'La carga', { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+        .text(8, 6, 'La carga', { fontFamily: RETRO_FONT, fontSize: FONT.title, color: '#D9A845' })
         .setResolution(4),
     );
     crisp(
       this.add
-        .text(8, 24, 'Los carros llevan 5 bultos. Hay 8. Sin vuelta atrás.', {
+        .text(8, 26, 'Los carros llevan 5 bultos. Hay 8. Sin vuelta atrás.', {
           fontFamily: FONT_FAMILY,
           fontSize: FONT.tiny,
           color: '#9BAEB4',
@@ -77,6 +80,9 @@ export class CargoScene extends Phaser.Scene {
         .setOrigin(1, 0)
         .setResolution(4),
     );
+    // línea divisoria sutil entre el encabezado y la grilla — mismo criterio que ya
+    // separa el HUD del mundo (VIEW.hud) y la bandeja del mundo (VIEW.tray).
+    this.add.rectangle(0, GRID_Y - 6, VIEW.width, 1, PAL.slate, 0.6).setOrigin(0, 0);
 
     registry.bultos.forEach((b, i) => this.buildCard(b, i));
     this.refreshCounter();
@@ -100,15 +106,25 @@ export class CargoScene extends Phaser.Scene {
       .setStrokeStyle(1, PAL.slate)
       .setInteractive({ useHandCursor: true });
 
+    // ícono si ya existe el PNG (b.icon, ej. "bulto_harina") — centrado arriba de
+    // la tarjeta. Si no existe todavía cae en el mismo layout de siempre, solo
+    // texto, sin dejar un hueco vacío donde iría el ícono.
+    const icon = b.icon ? addIconImage(this, b.icon, x + CARD_W / 2, y + 8, 28) : null;
+    icon?.setOrigin(0.5, 0).setDepth(1);
+    const labelY = icon ? y + 40 : y + 8;
+
     const label = crisp(
       this.add
-        .text(x + 8, y + 8, b.label, {
+        .text(x + 8, labelY, b.label, {
           fontFamily: FONT_FAMILY,
           fontSize: FONT.small,
           color: '#EAE8E0',
           wordWrap: { width: CARD_W - 16 },
           lineSpacing: 2,
+          align: icon ? 'center' : 'left',
         })
+        .setOrigin(icon ? 0.5 : 0, 0)
+        .setX(icon ? x + CARD_W / 2 : x + 8)
         .setResolution(4),
     );
     const kg = crisp(

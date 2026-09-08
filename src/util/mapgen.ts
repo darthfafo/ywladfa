@@ -99,11 +99,16 @@ export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => bool
     }
   }
 
-  // borde este: el golfo, del lado de la meseta, la barranca y la punta — un solo
-  // tramo de costa coherente en vez de mar en los cuatro lados del mapa. Solo pisa
-  // relleno todavía sin reclamar (el default de arriba), así que cada zona se queda
-  // con el ancho de playa que le toque según cuánto se acerque al borde real.
+  // borde este: el golfo, del lado de la meseta y de la punta. La barranca queda
+  // afuera a propósito — son cuevas cavadas en el cerro, de cara al campamento, no
+  // a la costa; con mar pegado a su propio borde se veía el golfo "a través" de la
+  // pared de la cueva apenas caminabas unos pasos al este. Solo pisa relleno
+  // todavía sin reclamar (el default de arriba), así que cada zona se queda con el
+  // ancho de playa que le toque según cuánto se acerque al borde real.
+  const barrancaZone = level.zones.find((z) => z.id === 'z2_barranca');
+  const [, barrancaY, , barrancaH] = barrancaZone?.rect ?? [0, -1, 0, 0];
   for (let j = 0; j < 106 && j < H; j++) {
+    if (barrancaZone && j >= barrancaY && j < barrancaY + barrancaH) continue;
     for (let i = 60; i < W; i++) {
       if (g[j]![i] === TERRAIN.ROCK) g[j]![i] = TERRAIN.SEA;
     }
@@ -137,6 +142,20 @@ export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => bool
   // transparente alrededor de la piedra, así que un bloque de agua lisa más grande
   // que eso se veía por las esquinas, como un cuadrado azul plano detrás del dibujo.
   for (let j = 7; j < 9; j++) for (let i = 9; i < 11; i++) g[j]![i] = TERRAIN.SPRING;
+
+  // el cañadón es una zona abierta y grande (26×40) — caminada en línea recta desde
+  // cualquiera de las dos entradas hasta el manantial no se sentía como encontrar
+  // nada, era cruzar un rectángulo vacío. Un par de afloramientos de roca (mismo
+  // acantilado natural que ya se usa para la pared de la barranca) obligan a
+  // bordear un poco sin cerrar ningún camino real — el cañadón sigue siendo
+  // atravesable desde cualquier ángulo, ninguno tapa una entrada ni el manantial.
+  for (const [ci, cj, cw, ch] of [
+    [5, 20, 3, 4],
+    [18, 12, 3, 3],
+    [14, 30, 3, 3],
+  ] as const) {
+    for (let j = cj; j < cj + ch; j++) for (let i = ci; i < ci + cw; i++) g[j]![i] = TERRAIN.CLIFF;
+  }
 
   // resuelve la variante visual de cada celda: mismo mapa siempre, sin patrón obvio
   for (let j = 0; j < H; j++) {

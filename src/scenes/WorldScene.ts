@@ -204,6 +204,21 @@ export class WorldScene extends Phaser.Scene {
     // tamaño quedaba en poco más que una mancha marrón.
     addPropImage(this, 'bote_menor', tileCenter(44), tileCenter(108), 52)?.setDepth(6);
 
+    // fauna del cañadón: es un espacio abierto y grande, no tiene sentido que esté
+    // vacío de vida — mismo guanaco que ya se usa en el monte (roamea Patagonia
+    // entera, no es exclusivo de una zona) y un par de matas de coirón, lejos de
+    // los afloramientos de roca nuevos y del propio manantial.
+    const guanacoCanadon = addPropImage(this, 'guanaco', tileCenter(21), tileCenter(30), 40)?.setDepth(6);
+    if (guanacoCanadon) {
+      this.interactables.push({ sprite: guanacoCanadon, kind: 'guanaco', id: 'guanaco_canadon', label: 'Mirar' });
+    }
+    for (const [tx, ty] of [
+      [6, 11],
+      [23, 36],
+    ] as const) {
+      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty), 30)?.setDepth(6);
+    }
+
     // el manantial: centrado en el mismo bloque de tiles que ya pinta buildTerrain()
     // (TERRAIN.SPRING, un bloque angosto de 2×2 = 32px). La imagen del pozo tiene
     // bastante margen transparente alrededor de la forma orgánica de las piedras
