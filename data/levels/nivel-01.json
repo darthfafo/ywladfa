@@ -488,7 +488,8 @@
     {
       "id": "trig_edwyn_deposito",
       "type": "dialogue",
-      "requires": "flags.n1_cajones_bajados >= 6",
+      "requires": "flags.n1_cajones_bajados >= 8",
+      "note": "los ocho, no antes: no tiene sentido que se ponga a contar el depósito con cajones todavía en la orilla.",
       "manual": true,
       "once": true,
       "turnCost": 1,

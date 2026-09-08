@@ -303,24 +303,38 @@ export class UiScene extends Phaser.Scene {
 
     const items: Phaser.GameObjects.GameObject[] = [bg, titleT, rule, bodyT];
     let y = 80 + bodyT.height + 22;
+    // opciones como cajas con borde, no texto plano — mismo lenguaje visual que los
+    // botones del arranque (BootScene.renderMenu) y las cartas de CargoScene, para
+    // que el selector se sienta parte del mismo juego.
     const navItems = options.map((o) => {
-      const t = crisp(
+      const label = crisp(
         this.add
-          .text(16, y, o.label, {
+          .text(28, y + 8, o.label, {
             fontFamily: retro ? RETRO_FONT : FONT_FAMILY,
             fontSize: retro ? '9px' : FONT.body,
             color: '#BFD3D8',
-            wordWrap: { width: VIEW.width - 32 },
+            wordWrap: { width: VIEW.width - 72 },
           })
           .setResolution(4),
-      ).setInteractive({ useHandCursor: true });
-      t.input!.hitArea = new Phaser.Geom.Rectangle(-8, -10, VIEW.width - 16, t.height + 24);
-      t.on('pointerover', () => t.setColor('#D9A845'));
-      t.on('pointerout', () => t.setColor('#BFD3D8'));
-      t.on('pointerdown', () => o.onPick());
-      items.push(t);
-      y += t.height + 26;
-      return { text: t, onPick: o.onPick };
+      );
+      const boxH = label.height + 16;
+      const box = this.add
+        .rectangle(16, y, VIEW.width - 32, boxH, PAL.ink2, 0.9)
+        .setOrigin(0, 0)
+        .setStrokeStyle(1, PAL.slate)
+        .setInteractive({ useHandCursor: true });
+      box.on('pointerover', () => {
+        box.setStrokeStyle(1, PAL.wheat);
+        label.setColor('#D9A845');
+      });
+      box.on('pointerout', () => {
+        box.setStrokeStyle(1, PAL.slate);
+        label.setColor('#BFD3D8');
+      });
+      box.on('pointerdown', () => o.onPick());
+      items.push(box, label);
+      y += boxH + 8;
+      return { text: label, onPick: o.onPick };
     });
 
     this.overlay = this.add.container(0, 0, items).setDepth(120);

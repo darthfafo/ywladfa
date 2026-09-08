@@ -22,9 +22,13 @@ export class DialogueBox {
   private nameText: Phaser.GameObjects.Text;
   private bodyText: Phaser.GameObjects.Text;
   private hint: Phaser.GameObjects.Text;
+  private signature: Phaser.GameObjects.Text;
   private tapCatcher: Phaser.GameObjects.DOMElement;
   private choicesEl: Phaser.GameObjects.DOMElement | null = null;
   private choicesKeyCleanup: (() => void) | null = null;
+  /** Si las opciones no entran en una sola página, avanza a la siguiente — ver
+   * renderChoices(). null cuando no hay más páginas (o no hay opciones). */
+  private choicesAdvancePage: (() => void) | null = null;
   private sys: DialogueSystem;
   private current: RenderedLine | null = null;
   private onClose: (() => void) | null = null;
@@ -76,6 +80,17 @@ export class DialogueBox {
         .setOrigin(1, 0)
         .setResolution(4),
     );
+    // firma como parte del fondo de la bandeja, no solo en el arranque: se pidió
+    // que se mantenga durante todo el juego. Más grande y visible que la versión
+    // "casi secreta" de BootScene, pero sigue siendo de fondo — esquina opuesta al
+    // "▼" para no competir con nada que se esté leyendo.
+    this.signature = crisp(
+      scene.add
+        .text(8, TRAY.h - 14, 'FP', { fontFamily: FONT_FAMILY, fontSize: '10px', color: '#3A4D54' })
+        .setOrigin(0, 0)
+        .setDepth(0)
+        .setResolution(4),
+    );
 
     // toque para avanzar de línea: HTML real, no un rectángulo de Phaser con
     // setInteractive/pointerdown — era el único lugar de todo el diálogo que
@@ -99,6 +114,7 @@ export class DialogueBox {
         this.nameText,
         this.bodyText,
         this.hint,
+        this.signature,
       ])
       .setDepth(80)
       .setVisible(false);
@@ -141,7 +157,13 @@ export class DialogueBox {
 
   private advance(): void {
     if (!this.active) return;
-    if (this.current?.choices.length) return; // con opciones se avanza eligiendo
+    if (this.current?.choices.length) {
+      // con opciones, tocar la bandeja no cierra nada: si no entraban todas en
+      // una página, pasa a la siguiente (ver renderChoices) — si ya se ven
+      // todas, no hace nada, se elige tocando una opción.
+      this.choicesAdvancePage?.();
+      return;
+    }
     this.show(this.sys.next());
   }
 
@@ -204,16 +226,23 @@ export class DialogueBox {
    * cuántas líneas ocupaba una opción larga al hacer wordWrap — con esto ya no
    * importa: es un <div> flex en columna, el propio navegador apila cada botón
    * según lo que realmente ocupa el anterior.
+   *
+   * Paginado: si el bloque completo (3 opciones, alguna larga con wordWrap a 2-3
+   * líneas) no entra en lo que queda de bandeja debajo del nombre, la última se
+   * salía de la pantalla — invisible, sin scroll ni forma de leerla. Ahora se mide
+   * la altura real ya con el texto puesto (offsetHeight, el navegador ya hizo el
+   * wrap) y se separa en páginas: cada una entra completa, y "▼" (el mismo ícono de
+   * "seguir" del resto del diálogo) indica que hay más — tocar la bandeja o llegar
+   * al final con las flechas pasa de página en vez de no hacer nada.
+   *
    * Arriba/abajo + espacio elige entre ellas (con el mismo cursor "›" que se usa en
    * el resto del juego) además del tap/click — GDD §8, "las dos entradas activas". */
   private renderChoices(line: RenderedLine): void {
     this.bodyText.setVisible(false);
     this.nameText.setVisible(true);
 
-    // gap y padding chicos a propósito: con 3 opciones y alguna larga (wordWrap a 2
-    // líneas), el bloque tiene que entrar en los ~70px que quedan de bandeja debajo
-    // del nombre — de sobra se corta contra el borde de abajo. Depth por encima del
-    // tapCatcher (1): si no, el tap para "avanzar" de la bandeja tapa los botones.
+    // Depth por encima del tapCatcher (1): si no, el tap para "avanzar" de la
+    // bandeja tapa los botones.
     const wrap = this.scene.add
       .dom(70, 26, 'div', `display:flex; flex-direction:column; gap:3px; width:${TRAY.w - 80}px;`)
       .setOrigin(0, 0)
@@ -222,48 +251,84 @@ export class DialogueBox {
     this.choicesEl = wrap;
     const container = wrap.node as HTMLDivElement;
 
-    const buttons: HTMLButtonElement[] = [];
-    let focused = 0;
-    const paint = (): void => {
-      buttons.forEach((b, i) => {
-        const on = i === focused;
-        b.style.color = on ? '#D9A845' : '#BFD3D8';
-        b.textContent = (on ? '› ' : '  ') + line.choices[i]!.text;
-      });
-    };
     const pick = (i: number): void => {
       bus.emit('ui:toast', { text: '' });
       this.show(this.sys.choose(line.choices[i]!.id));
     };
 
-    line.choices.forEach((_c, i) => {
+    const buttons: HTMLButtonElement[] = line.choices.map((c) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.style.cssText =
         'display:block; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
         'text-align:left; color:#BFD3D8; font-family: ui-monospace, "SF Mono", Menlo, monospace; ' +
         'font-size:11px; line-height:1.15; cursor:pointer; -webkit-tap-highlight-color:transparent;';
-      btn.addEventListener('click', () => pick(i));
-      btn.addEventListener(
-        'touchstart',
-        () => {
-          focused = i;
-          paint();
-        },
-        { passive: true },
-      );
-      buttons.push(btn);
+      btn.textContent = c.text; // contenido real puesto ya, para medir el wrap de verdad
       container.appendChild(btn);
+      return btn;
     });
+
+    // altura disponible: TRAY.h menos el nombre de arriba y un margen contra el
+    // borde inferior de la bandeja (mismo espíritu que el resto de la UI, no
+    // pegado al filo).
+    const maxH = TRAY.h - 26 - 6;
+    const GAP = 3;
+
+    // una sola opción larga puede no entrar aunque esté SOLA en su página (el
+    // paginado de abajo solo separa ENTRE opciones) — para esa achica la letra en
+    // pasos hasta que entra, en vez de dejarla salirse del canvas sin que se note.
+    for (const b of buttons) {
+      let size = 11;
+      while (b.offsetHeight > maxH && size > 8) {
+        size -= 1;
+        b.style.fontSize = `${size}px`;
+      }
+    }
+    const pageStart = [0];
+    let acc = 0;
+    buttons.forEach((b, i) => {
+      const h = b.offsetHeight + (i > pageStart[pageStart.length - 1]! ? GAP : 0);
+      if (acc + h > maxH && i > pageStart[pageStart.length - 1]!) {
+        pageStart.push(i);
+        acc = 0;
+      }
+      acc += h;
+    });
+
+    let page = 0;
+    let focused = 0;
+    const pageEnd = (p: number): number => (pageStart[p + 1] ?? buttons.length) - 1;
+    const paint = (): void => {
+      const from = pageStart[page]!;
+      const to = pageEnd(page);
+      buttons.forEach((b, i) => {
+        b.style.display = i >= from && i <= to ? 'block' : 'none';
+        const on = i === focused;
+        b.style.color = on ? '#D9A845' : '#BFD3D8';
+        b.textContent = (on ? '› ' : '  ') + line.choices[i]!.text;
+      });
+      this.hint.setVisible(page < pageStart.length - 1);
+    };
+    const nextPage = (): void => {
+      if (page >= pageStart.length - 1) return;
+      page += 1;
+      focused = pageStart[page]!;
+      paint();
+    };
     paint();
+    this.choicesAdvancePage = pageStart.length > 1 ? nextPage : null;
 
     const kb = this.scene.input.keyboard;
     const onDown = (): void => {
-      focused = Math.min(focused + 1, buttons.length - 1);
+      if (focused >= pageEnd(page)) {
+        nextPage();
+        return;
+      }
+      focused = Math.min(focused + 1, pageEnd(page));
       paint();
     };
     const onUp = (): void => {
-      focused = Math.max(focused - 1, 0);
+      focused = Math.max(focused - 1, pageStart[page]!);
       paint();
     };
     const onSelect = (): void => pick(focused);
@@ -281,11 +346,25 @@ export class DialogueBox {
       kb?.off('keydown-SPACE', onSelect);
       kb?.off('keydown-E', onSelect);
     };
+
+    buttons.forEach((b, i) => {
+      b.addEventListener('click', () => pick(i));
+      b.addEventListener(
+        'touchstart',
+        () => {
+          if (i < pageStart[page]! || i > pageEnd(page)) return;
+          focused = i;
+          paint();
+        },
+        { passive: true },
+      );
+    });
   }
 
   private clearChoices(): void {
     this.choicesKeyCleanup?.();
     this.choicesKeyCleanup = null;
+    this.choicesAdvancePage = null;
     this.choicesEl?.destroy();
     this.choicesEl = null;
     this.bodyText.setVisible(true);

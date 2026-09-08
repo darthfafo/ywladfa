@@ -949,7 +949,7 @@
     {
       "id": "tut_carga",
       "title": "Carga",
-      "text": "Todo lo que levantás pesa. La barra de la derecha es tu carga. Cuando pasa el límite no se bloquea nada: simplemente caminás más lento."
+      "text": "Todo lo que levantás pesa: la barra de la derecha es tu carga, y al pasar el límite no te bloqueás, solo caminás más lento. Llevá los cajones desde la orilla hasta la pila de tierra adentro para descargarlos ahí."
     },
     {
       "id": "tut_peso",
