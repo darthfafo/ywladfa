@@ -108,6 +108,7 @@ export class BootScene extends Phaser.Scene {
         color: '#9BAEB4',
         width: VIEW.width - 32,
         retro: true,
+        lineHeight: 1.9,
         html:
           '<span style="color:#D9A845">Liverpool, 28 de mayo de 1865.</span><br>El Mimosa lleva colonos galeses ' +
           'rumbo a Sudamérica: van a fundar<br>Y Wladfa, la Colonia.',
@@ -463,11 +464,20 @@ export class BootScene extends Phaser.Scene {
     x: number,
     y: number,
     text: string,
-    opts: { size: number; color: string; align?: 'left' | 'center' | 'right'; width?: number; weight?: string; retro?: boolean; html?: string },
+    opts: {
+      size: number;
+      color: string;
+      align?: 'left' | 'center' | 'right';
+      width?: number;
+      weight?: string;
+      retro?: boolean;
+      html?: string;
+      lineHeight?: number;
+    },
   ): Phaser.GameObjects.DOMElement {
     const style =
       `color:${opts.color}; font-family: ${opts.retro ? RETRO_FONT : UI_FONT}; font-size:${opts.size}px; ` +
-      `font-weight:${opts.weight ?? 'normal'}; text-align:${opts.align ?? 'left'}; line-height:1.5; ` +
+      `font-weight:${opts.weight ?? 'normal'}; text-align:${opts.align ?? 'left'}; line-height:${opts.lineHeight ?? 1.5}; ` +
       (opts.width ? `width:${opts.width}px;` : 'white-space:nowrap;');
     const originX = opts.align === 'center' ? 0.5 : opts.align === 'right' ? 1 : 0;
     const el = this.add.dom(x, y, 'div', style).setOrigin(originX, 0);
