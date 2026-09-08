@@ -278,6 +278,18 @@ behind them, the caves of the barranca visible above, a physical sense of
 ascent and effort.
 ```
 
+### cutscene_mimosa_zarpa — El Mimosa zarpando, visto desde el vigía
+```
+A lone figure standing on a high windswept plateau overlooking a wide gulf,
+back to the viewer, watching the small silhouette of a three-masted sailing
+ship (the Mimosa) already far out on the water, sails full, growing smaller
+toward the horizon — the last physical link to everywhere else, quietly
+leaving. Overcast pale light, vast empty sky and sea, a feeling of isolation
+just beginning to set in.
+```
+Guardar como `mimosa_zarpa.png` — trig_vigia_mimosa (J2, el mirador de la
+meseta), hoy ese momento es solo texto narrado, sin imagen.
+
 ---
 
 ## 3. Elementos para sumar al mapa (props e identidad)

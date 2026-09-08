@@ -33,6 +33,7 @@ const CUTSCENE_DIALOGUES: Record<string, string> = {
   d_n1_cold_open: 'cold_open',
   d_n1_subida_barranca: 'subida_barranca',
   d_n1_manantial: 'manantial',
+  d_n1_mimosa_zarpa: 'mimosa_zarpa',
   d_n1_final: 'punta_final',
 };
 

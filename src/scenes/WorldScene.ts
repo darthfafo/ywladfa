@@ -78,11 +78,7 @@ export class WorldScene extends Phaser.Scene {
     // ---- cámara: viewport recortado a la franja del mundo (9:16)
     const cam = this.cameras.main;
     cam.setViewport(VIEW.world.x, VIEW.world.y, VIEW.world.w, VIEW.world.h);
-    // el borde de arriba se extiende un poco más allá del mapa jugable (no se puede
-    // caminar ahí, sigue bloqueado por el acantilado/mar de mapgen.ts) para que la
-    // franja de horizonte (perfil_punta_cuevas, spawnDecor) tenga dónde asomar
-    // cuando la cámara sigue al jugador hasta el borde de la meseta.
-    cam.setBounds(0, -80, map.widthInPixels, map.heightInPixels + 80);
+    cam.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     cam.setRoundPixels(true);
     cam.startFollow(this.player, true, level.camera.follow.lerpX, level.camera.follow.lerpY);
     cam.setDeadzone(48, 96);
@@ -226,14 +222,6 @@ export class WorldScene extends Phaser.Scene {
     // bloque — el borde de piedras del dibujo lo tapa entero contra el terreno del
     // cañadón alrededor, que combina mejor que un cuadrado de agua lisa asomando.
     addPropImage(this, 'manantial', tileCenter(9.5), tileCenter(7.5), 96)?.setDepth(5);
-
-    // perfil de Punta Cuevas: franja de horizonte más allá del borde norte del mapa
-    // (mismo borde donde mapgen.ts ya pinta el mar detrás de la meseta) — da
-    // contexto de "qué bioma es este" sin tapar nada jugable. Altura pensada para
-    // entrar en el margen de cámara extra que se agregó en cam.setBounds() arriba
-    // de y=0 (si no, quedaba siempre fuera de la vista, sin importar hacia dónde
-    // caminaras — la cámara nunca puede scrollear más allá de sus bounds).
-    addPropImage(this, 'perfil_punta_cuevas', tileCenter(46), -40, 210)?.setDepth(-6);
 
     // gaviotas: 2-3 frames animados (ver util/assets.ts PROP_SPRITESHEETS), planeando
     // de izquierda a derecha sobre la playa. No van con un tween de coordenadas fijas
