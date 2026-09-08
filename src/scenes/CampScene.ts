@@ -66,28 +66,34 @@ export class CampScene extends Phaser.Scene {
     // de siempre (rectángulos + círculo animado) sin romper nada.
     const artId = game.res.get('lena') >= 2 ? 'fogon_grande' : 'fogon_chico';
     const bg = addSceneBackground(this, artId, w.x + w.w / 2, w.y + w.h / 2, w.w, w.h);
-    if (!bg) this.add.rectangle(w.x, w.y, w.w, w.h, PAL.ink2).setOrigin(0, 0);
     this.add.rectangle(w.x, w.y + w.h - 60, w.w, 60, PAL.soil, bg ? 0.25 : 0.5).setOrigin(0, 0);
 
-    const fireY = w.y + w.h - 70;
-    const glow = this.add.circle(VIEW.width / 2, fireY, 26, PAL.wheat, 0.18);
-    const fire = this.add.circle(VIEW.width / 2, fireY, 10, PAL.coiron, 0.9);
-    this.tweens.add({
-      targets: [glow, fire],
-      scale: 1.12,
-      alpha: '*=0.85',
-      duration: 700,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.inOut',
-    });
+    // el fuego animado y las siluetas eran EL placeholder de toda la escena — ahora
+    // que fogon_grande/fogon_chico ya pintan gente sentada alrededor del fuego, se
+    // dibujaban los dos a la vez, superpuestos. Con arte real, ninguno de los dos
+    // hace falta; sin arte, siguen siendo el placeholder de siempre.
+    if (!bg) {
+      this.add.rectangle(w.x, w.y, w.w, w.h, PAL.ink2).setOrigin(0, 0);
+      const fireY = w.y + w.h - 70;
+      const glow = this.add.circle(VIEW.width / 2, fireY, 26, PAL.wheat, 0.18);
+      const fire = this.add.circle(VIEW.width / 2, fireY, 10, PAL.coiron, 0.9);
+      this.tweens.add({
+        targets: [glow, fire],
+        scale: 1.12,
+        alpha: '*=0.85',
+        duration: 700,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.inOut',
+      });
 
-    const count = Math.min(MAX_SILUETAS, game.state.party.length);
-    for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 1.4 + Math.PI * 0.15;
-      const x = VIEW.width / 2 + Math.cos(angle) * 36;
-      const y = fireY + Math.sin(angle) * 14;
-      this.add.ellipse(x, y, 12, 18, PAL.void, 0.8).setStrokeStyle(1, PAL.ink2, 0.7);
+      const count = Math.min(MAX_SILUETAS, game.state.party.length);
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 1.4 + Math.PI * 0.15;
+        const x = VIEW.width / 2 + Math.cos(angle) * 36;
+        const y = fireY + Math.sin(angle) * 14;
+        this.add.ellipse(x, y, 12, 18, PAL.void, 0.8).setStrokeStyle(1, PAL.ink2, 0.7);
+      }
     }
   }
 

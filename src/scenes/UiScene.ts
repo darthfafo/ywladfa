@@ -36,6 +36,13 @@ const CUTSCENE_DIALOGUES: Record<string, string> = {
   d_n1_final: 'punta_final',
 };
 
+/** Contexto geográfico para quien ve la escena por primera vez, en la misma
+ * etiqueta que ya usa el juego para el nombre de zona (showZone) — solo donde
+ * hace falta ubicar al jugador (el desembarco), no en cada cutscene. */
+const CUTSCENE_LOCATIONS: Record<string, string> = {
+  d_n1_cold_open: 'Punta Cuevas, Patagonia',
+};
+
 export class UiScene extends Phaser.Scene {
   private dayEl!: Phaser.GameObjects.DOMElement;
   private resEls = new Map<ResourceId, HTMLDivElement>();
@@ -213,6 +220,14 @@ export class UiScene extends Phaser.Scene {
     this.touch.setVisible(false);
     if (cutsceneId) {
       this.setHudVisible(false);
+      // el cartel de zona (showZone) no es parte del HUD de arriba (setHudVisible),
+      // así que sin esto podía quedar terminando de desvanecerse encima de una
+      // cutscene que arranca casi en el mismo instante (ej. z1_playa al spawnear,
+      // justo cuando entra el cold open) — lo corta acá y, si esta escena puntual
+      // tiene un lugar definido, lo deja fijo mientras dure.
+      this.tweens.killTweensOf(this.zoneLabel);
+      const location = CUTSCENE_LOCATIONS[id];
+      this.zoneLabel.setText(location ? location.toUpperCase() : '').setAlpha(location ? 1 : 0);
       // solo contra el área sin bandeja (0-384, el HUD ya está oculto): cubrir la
       // pantalla 9:16 entera recortaba mucho más de una imagen pedida en 3:4.
       this.cutsceneBg = addSceneBackground(this, cutsceneId, VIEW.width / 2, VIEW.tray.y / 2, VIEW.width, VIEW.tray.y);
@@ -232,6 +247,7 @@ export class UiScene extends Phaser.Scene {
         this.setHudVisible(true);
         this.cutsceneBg?.destroy();
         this.cutsceneBg = null;
+        if (CUTSCENE_LOCATIONS[id]) this.zoneLabel.setAlpha(0);
       }
     });
   }
