@@ -102,6 +102,20 @@ export class WorldScene extends Phaser.Scene {
     this.time.delayedCall(120, () => this.checkTriggers());
   }
 
+  /** Al cerrar la noche (CampScene.restoreOnShutdown), el jugador vuelve a aparecer
+   * en el campamento — sin importar desde dónde cayó la noche (ej. todavía en el
+   * cañadón, de vuelta del manantial): te despertás donde corresponde, no donde te
+   * agarró el sueño. Mismo punto que ya usa el spawn de un día>1 recién arrancado. */
+  wakeAtCamp(): void {
+    const sp = game.level.spawns.fogon;
+    this.player.setPosition(tileCenter(sp.x), tileCenter(sp.y));
+    this.facing = 'north';
+    this.player.setFrame(FACING_FRAME.north);
+    this.cameras.main.centerOn(tileCenter(sp.x), tileCenter(sp.y));
+    this.lastTile = { x: -1, y: -1 };
+    this.trackTile();
+  }
+
   private spawnProps(level: typeof game.level): void {
     // el Mimosa, anclado frente a la costa hasta que zarpa (trig_vigia_mimosa) —
     // arte real si ya existe (src/assets/props/mimosa.png), si no el placeholder
@@ -400,8 +414,20 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private talkTo(npcId: string): void {
-    const t = game.level.triggers.find((tr) => tr.action?.dialogue && tr.action.dialogue.includes(shortName(npcId)));
-    if (t && !this.triggers.hasFired(t.id) && game.flags.eval(t.requires)) {
+    // primero por el campo `npc` del propio diálogo (confiable); si no lo tiene,
+    // el nombre corto adentro del id del diálogo (heurística vieja). El chequeo de
+    // hasFired/requires va ADENTRO del find, no después: un personaje puede tener
+    // más de un diálogo que lo mencione (ej. npc_dafydd en trig_dafydd_perdido,
+    // automático y ya disparado, Y en trig_manantial, todavía pendiente) — filtrar
+    // recién al final se quedaba con el primero por orden de archivo aunque ya
+    // hubiera disparado, y nunca llegaba a mirar el que sí correspondía.
+    const t = game.level.triggers.find((tr) => {
+      if (!tr.action?.dialogue) return false;
+      const matches = registry.dialogue(tr.action.dialogue).npc === npcId || tr.action.dialogue.includes(shortName(npcId));
+      if (!matches) return false;
+      return !this.triggers.hasFired(tr.id) && game.flags.eval(tr.requires);
+    });
+    if (t) {
       this.runTrigger(t as TriggerDef);
       return;
     }

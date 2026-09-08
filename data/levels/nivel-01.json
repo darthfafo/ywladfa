@@ -559,7 +559,9 @@
     {
       "id": "trig_fogon_j1",
       "type": "scene",
+      "zone": "z2_barranca",
       "requires": "progress.day == 1 && progress.turn == 'noche'",
+      "note": "solo dispara en el campamento — si cae la noche mientras el jugador sigue en otro lado (ej. la playa), espera a que vuelva en vez de narrar la ronda del fogón con gente que no está ahí.",
       "once": true,
       "turnCost": 1,
       "action": {
@@ -705,7 +707,9 @@
     {
       "id": "trig_fogon_j2",
       "type": "scene",
+      "zone": "z2_barranca",
       "requires": "progress.day == 2 && progress.turn == 'noche'",
+      "note": "mismo motivo que trig_fogon_j1: solo dispara en el campamento, no en cualquier lado donde haya caído la noche (ej. el jugador todavía en el cañadón, volviendo del manantial).",
       "once": true,
       "turnCost": 1,
       "action": {

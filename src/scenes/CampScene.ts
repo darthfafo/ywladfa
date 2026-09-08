@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
+import type { WorldScene } from '@/scenes/WorldScene';
 import { addSceneBackground } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
@@ -103,6 +104,10 @@ export class CampScene extends Phaser.Scene {
 
   /** Por si la escena se cierra por otra vía (cambio de nivel, etc.), no dejar World/Ui pausados. */
   private restoreOnShutdown(): void {
+    // te despertás en el campamento, no donde te agarró el sueño — si la noche cayó
+    // mientras todavía andabas explorando (ej. volviendo del manantial), World seguía
+    // pausado ahí mismo y al reanudar aparecías en pleno cañadón en la jornada nueva.
+    (this.scene.get('World') as WorldScene).wakeAtCamp();
     this.scene.resume('World');
     this.scene.resume('Ui');
     bus.emit('ui:hud-visible', { visible: true });
