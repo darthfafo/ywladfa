@@ -110,7 +110,7 @@ export class BootScene extends Phaser.Scene {
         retro: true,
         html:
           '<span style="color:#D9A845">Liverpool, 28 de mayo de 1865.</span><br>El Mimosa lleva colonos galeses ' +
-          'rumbo a Sudamérica: van a fundar Y Wladfa, la Colonia.',
+          'rumbo a Sudamérica: van a fundar<br>Y Wladfa, la Colonia.',
       }),
     );
 
@@ -315,17 +315,20 @@ export class BootScene extends Phaser.Scene {
 
     // dos meses de travesía real: 28-V-1865 (zarpada, Liverpool) a 28-VII-1865
     // (desembarco, Punta Cuevas) — docs/04-guia-historica.md.
-    const voyageBase = 'Dos meses en el mar, rumbo al Sur';
-    const voyageText = this.renderDomText(16, TRAY_Y + 18, voyageBase, {
-      size: 9,
+    const voyageText = this.renderDomText(16, TRAY_Y + 14, '', {
+      size: 11,
       color: '#EAE8E0',
       width: VIEW.width - 32,
       retro: true,
+      html: 'Dos meses en el mar,<br>rumbo al Sur<span id="voyage-dots"></span>',
     });
     this.track(voyageText);
     // puntos suspensivos animados: sin esto la escena parece trabada durante los
     // 4.5s fijos que dura (no hay nada más en pantalla que se mueva) y da la
-    // sensación de que el juego colgó en vez de estar en una cinemática.
+    // sensación de que el juego colgó en vez de estar en una cinemática. Se anima
+    // solo el <span> (no todo el bloque vía setHTML) para no reflowear las dos
+    // líneas de arriba en cada tick.
+    const dotsSpan = voyageText.node.querySelector('#voyage-dots');
     const dots = ['', '.', '..', '...'];
     let dotFrame = 0;
     this.time.addEvent({
@@ -333,7 +336,7 @@ export class BootScene extends Phaser.Scene {
       loop: true,
       callback: () => {
         dotFrame = (dotFrame + 1) % dots.length;
-        voyageText.setText(voyageBase + dots[dotFrame]);
+        if (dotsSpan) dotsSpan.textContent = dots[dotFrame];
       },
     });
     // sin forma de adelantarla: un toque de una pantalla anterior que todavía
