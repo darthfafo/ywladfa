@@ -41,6 +41,20 @@ export class Game {
   replaceState(next: GameState): void {
     this.state = next;
     this.wire();
+    this.migrateFlags();
+  }
+
+  /** Parche de compatibilidad para partidas guardadas de antes de un cambio de
+   * regla — ej. p_playa_barranca empezó a pedir también n1_edwyn_deposito (no solo
+   * los 8 cajones) para subir a la barranca. Una partida vieja que ya estaba
+   * arriba, guardada con las reglas de antes, quedaba del lado equivocado de un
+   * candado que no existía cuando lo cruzó: sin este parche no podía volver a
+   * bajar a la playa nunca más. Si ya llegó a la barranca, el candado viejo (el
+   * que sea) ya está satisfecho por definición. */
+  private migrateFlags(): void {
+    if (this.flags.is('n1_llego_barranca') && !this.flags.is('n1_edwyn_deposito')) {
+      this.flags.set('n1_edwyn_deposito', true);
+    }
   }
 
   get level() {
