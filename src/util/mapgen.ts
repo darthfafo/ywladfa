@@ -66,10 +66,13 @@ const ZONE_TERRAIN: Record<string, number> = {
  */
 export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => boolean = () => true): number[][] {
   const { widthTiles: W, heightTiles: H } = level.map;
-  // acantilado, no roca genérica: todo lo que no es zona ni pasaje es el borde exterior del
-  // mapa jugable (meseta, monte, el fondo de la playa) — tiene que leerse como el límite
-  // natural del terreno, no como una pared de interior.
-  const g: number[][] = Array.from({ length: H }, () => Array<number>(W).fill(TERRAIN.CLIFF));
+  // roca genérica, no acantilado: el relleno por default es el borde exterior del mapa
+  // jugable (monte, el resto de la meseta) y tiene que leerse como límite natural sin
+  // ser una pared de piedra por todos lados — el acantilado (TERRAIN.CLIFF) se reserva
+  // para donde de verdad hay una pared con intención (la barranca, más abajo). El mar
+  // sí marca border explícito, pero solo donde corresponde (playa al sur, golfo al
+  // este) — no en los cuatro lados por igual.
+  const g: number[][] = Array.from({ length: H }, () => Array<number>(W).fill(TERRAIN.ROCK));
 
   // zonas
   for (const z of level.zones) {
@@ -92,17 +95,13 @@ export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => bool
     }
   }
 
-  // vista al golfo desde la meseta: más allá de su borde norte, el mar — para que el punto
-  // de vigía (trig_vigia_mimosa, donde se ve zarpar el Mimosa) mire efectivamente al agua y
-  // no a un acantilado ciego. z5_canadon linda con el mismo borde pero queda afuera a
-  // propósito: sigue "oculto", sin vista franca (docs/01-nivel-01.md §2.1).
-  const meseta = level.zones.find((z) => z.id === 'z4_meseta');
-  if (meseta) {
-    const [mx, , mw] = meseta.rect;
-    for (let j = 0; j < 3 && j < H; j++) {
-      for (let i = mx; i < mx + mw && i < W; i++) {
-        g[j]![i] = j < 2 ? TERRAIN.SEA : TERRAIN.CLIFF;
-      }
+  // borde este: el golfo, del lado de la meseta, la barranca y la punta — un solo
+  // tramo de costa coherente en vez de mar en los cuatro lados del mapa. Solo pisa
+  // relleno todavía sin reclamar (el default de arriba), así que cada zona se queda
+  // con el ancho de playa que le toque según cuánto se acerque al borde real.
+  for (let j = 0; j < 106 && j < H; j++) {
+    for (let i = 60; i < W; i++) {
+      if (g[j]![i] === TERRAIN.ROCK) g[j]![i] = TERRAIN.SEA;
     }
   }
 

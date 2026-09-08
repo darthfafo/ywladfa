@@ -33,7 +33,12 @@ export class TriggerSystem {
     if (!this.hasFired(id)) this.game.state.triggersFired.push(id);
   }
 
-  /** Triggers espaciales y de estado, evaluados al moverse o al cambiar el turno. */
+  /** Triggers espaciales y de estado, evaluados al moverse o al cambiar el turno.
+   * Solo se dispara `out[0]` (WorldScene.checkTriggers) — por eso los que sí exigen
+   * una zona o un rect concretos van primero: si uno sin ubicación (ej.
+   * `trig_pepperell_cajones`) quedó pendiente por algún motivo, no puede colarse
+   * delante del trigger que corresponde a dónde está el jugador parado ahora mismo,
+   * como el cierre del nivel en `z6_punta`. */
   check(ctx: TriggerContext): TriggerDef[] {
     const out: TriggerDef[] = [];
     for (const t of this.triggers) {
@@ -44,6 +49,7 @@ export class TriggerSystem {
       if (!this.game.flags.eval(t.requires)) continue;
       out.push(t);
     }
+    out.sort((a, b) => Number(!!b.zone || !!b.rect) - Number(!!a.zone || !!a.rect));
     return out;
   }
 

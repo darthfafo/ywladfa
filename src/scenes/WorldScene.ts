@@ -111,10 +111,15 @@ export class WorldScene extends Phaser.Scene {
         this.add.image(tileCenter(27), tileCenter(110), 'prop_mimosa');
       this.mimosa.setDepth(7);
     }
-    // cajones a bajar
-    for (const [i, c] of level.spawns.cajones.entries()) {
-      const s = this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cajon').setDepth(10);
-      this.interactables.push({ sprite: s, kind: 'cajon', id: `cajon_${i}`, label: 'Levantar' });
+    // cajones a bajar — si ya se entregaron los 8 (ej. se retomó una partida guardada
+    // en J2/J3, donde WorldScene.create() corre de cero otra vez) no hay que volver a
+    // tirarlos desparramados en la playa: ya cumplieron su función.
+    const cajonesFaltan = Number(game.flags.get('n1_cajones_bajados') ?? 0) < level.spawns.cajones.length;
+    if (cajonesFaltan) {
+      for (const [i, c] of level.spawns.cajones.entries()) {
+        const s = this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cajon').setDepth(10);
+        this.interactables.push({ sprite: s, kind: 'cajon', id: `cajon_${i}`, label: 'Levantar' });
+      }
     }
     // la pila donde se dejan: tierra adentro, lejos de la marea — por eso hay que
     // bajarlos ahí y no dejarlos donde el bote los tiró, cerca del agua
@@ -419,7 +424,24 @@ export class WorldScene extends Phaser.Scene {
     const tx = toTile(this.player.x);
     const ty = toTile(this.player.y + 8);
     const list = this.triggers.check({ tileX: tx, tileY: ty, zoneId: game.state.progress.zone });
-    if (list.length) this.runTrigger(list[0]!);
+    if (list.length) {
+      this.runTrigger(list[0]!);
+      return;
+    }
+    this.checkLevelOver();
+  }
+
+  /** Red de contención (R7: el Nivel 1 no se puede perder ni quedar trabado): si ya
+   * se pasaron los días del nivel y el cierre (`trig_punta_final`) todavía no
+   * disparó, lo fuerza acá en vez de dejar que el reloj siga corriendo hacia una
+   * "Jornada 4" que no existe en el diseño (`data/levels/nivel-01.json` solo define
+   * 3 días de guion). */
+  private checkLevelOver(): void {
+    if (game.state.progress.day <= game.level.schedule.days) return;
+    if (!game.flags.get('n1_carga')) return;
+    const t = game.level.triggers.find((x) => x.id === 'trig_punta_final') as TriggerDef | undefined;
+    if (!t || this.triggers.hasFired(t.id)) return;
+    this.runTrigger(t);
   }
 
   private fireEventTriggers(name: string, payload: Record<string, unknown>): void {
