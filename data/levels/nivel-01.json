@@ -646,7 +646,9 @@
     {
       "id": "trig_dafydd_perdido",
       "type": "scene",
+      "zone": "z2_barranca",
       "requires": "progress.day == 2 && progress.turn == 'tarde'",
+      "note": "espera a que estés en el campamento — es Mari la que habla, y ahí es donde está (docs/01-nivel-01.md, elenco): no tiene que sonar de la nada si andás lejos.",
       "once": true,
       "turnCost": 0,
       "action": {
@@ -728,7 +730,9 @@
     {
       "id": "trig_anuncio_marcha",
       "type": "scene",
+      "zone": "z2_barranca",
       "requires": "progress.day == 3 && progress.turn == 'amanecer'",
+      "note": "espera a que estés en el campamento — habla Lewis (y Matthews, Berwyn, Pepperell), todos ahí (docs/01-nivel-01.md §9.3).",
       "once": true,
       "turnCost": 0,
       "action": {

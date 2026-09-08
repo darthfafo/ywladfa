@@ -22,12 +22,27 @@ const sceneFiles = import.meta.glob('../assets/scenes/*.png', {
   import: 'default',
 }) as Record<string, string>;
 
+const propFiles = import.meta.glob('../assets/props/*.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+
 function baseName(path: string): string {
   return path.split('/').pop()!.replace(/\.png$/, '');
 }
 
 const portraitUrls = new Map(Object.entries(portraitFiles).map(([path, url]) => [baseName(path), url]));
 const sceneUrls = new Map(Object.entries(sceneFiles).map(([path, url]) => [baseName(path), url]));
+const propUrls = new Map(Object.entries(propFiles).map(([path, url]) => [baseName(path), url]));
+
+/** Props que son hoja de sprites (varios frames cuadrados, uno al lado del otro,
+ * en un mismo PNG) en vez de una imagen sola — frameSize es el lado de cada
+ * cuadro, no el total. Si se regenera el PNG a otra resolución, actualizar acá.
+ * El resto de los props de `src/assets/props/` son imagen única. */
+const PROP_SPRITESHEETS: Record<string, { frames: number; frameSize: number }> = {
+  gaviotas: { frames: 3, frameSize: 724 },
+};
 
 export type Mood = 'neutral' | 'tenso' | 'calido';
 
@@ -76,6 +91,37 @@ export function addSceneBackground(
   return img;
 }
 
+export function propTextureKey(id: string): string {
+  return `prop_art_${id}`;
+}
+
+/** true si YA hay PNG real para ese elemento de mapa (guanaco, coirón, etc). */
+export function hasPropArt(id: string): boolean {
+  return propUrls.has(id);
+}
+
+/**
+ * Prop suelto (no de pantalla completa) si ya existe el PNG: lo escala a `size`
+ * píxeles de lado mayor mantenendo proporción, filtro lineal (son ilustraciones
+ * pintadas, no pixel art de bordes duros). Devuelve null si el PNG no existe
+ * todavía — el llamador decide qué hacer (nada, o el placeholder de código).
+ */
+export function addPropImage(
+  scene: Phaser.Scene,
+  id: string,
+  x: number,
+  y: number,
+  size: number,
+): Phaser.GameObjects.Image | null {
+  const key = propTextureKey(id);
+  if (!scene.textures.exists(key)) return null;
+  const img = scene.add.image(x, y, key);
+  const scale = size / Math.max(img.width, img.height);
+  img.setScale(scale);
+  img.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+  return img;
+}
+
 /** Registra en el loader de la escena todo el arte real que exista bajo src/assets/. */
 export function preloadArt(scene: Phaser.Scene): void {
   for (const [name, url] of portraitUrls) {
@@ -85,5 +131,16 @@ export function preloadArt(scene: Phaser.Scene): void {
   }
   for (const [id, url] of sceneUrls) {
     scene.load.image(sceneTextureKey(id), url);
+  }
+  for (const [id, url] of propUrls) {
+    const sheet = PROP_SPRITESHEETS[id];
+    if (sheet) {
+      scene.load.spritesheet(propTextureKey(id), url, {
+        frameWidth: sheet.frameSize,
+        frameHeight: sheet.frameSize,
+      });
+    } else {
+      scene.load.image(propTextureKey(id), url);
+    }
   }
 }

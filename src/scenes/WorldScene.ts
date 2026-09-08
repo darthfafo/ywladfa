@@ -6,6 +6,7 @@ import { registry } from '@/core/Registry';
 import type { PasajeDef, TriggerDef } from '@/core/types';
 import { TriggerSystem } from '@/systems/TriggerSystem';
 import { TURNS } from '@/systems/TimeSystem';
+import { addPropImage, hasPropArt, propTextureKey } from '@/util/assets';
 import { tileCenter, toTile } from '@/util/grid';
 import { input } from '@/util/input';
 import { baseTerrain, buildTerrain, cellVariant, COLLIDES, TERRAIN, TERRAIN_SPEED, tileIndex, zoneAt } from '@/util/mapgen';
@@ -71,11 +72,16 @@ export class WorldScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.layer);
 
     this.spawnProps(level);
+    this.spawnDecor();
 
     // ---- cámara: viewport recortado a la franja del mundo (9:16)
     const cam = this.cameras.main;
     cam.setViewport(VIEW.world.x, VIEW.world.y, VIEW.world.w, VIEW.world.h);
-    cam.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    // el borde de arriba se extiende un poco más allá del mapa jugable (no se puede
+    // caminar ahí, sigue bloqueado por el acantilado/mar de mapgen.ts) para que la
+    // franja de horizonte (perfil_punta_cuevas, spawnDecor) tenga dónde asomar
+    // cuando la cámara sigue al jugador hasta el borde de la meseta.
+    cam.setBounds(0, -80, map.widthInPixels, map.heightInPixels + 80);
     cam.setRoundPixels(true);
     cam.startFollow(this.player, true, level.camera.follow.lerpX, level.camera.follow.lerpY);
     cam.setDeadzone(48, 96);
@@ -96,9 +102,14 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private spawnProps(level: typeof game.level): void {
-    // el Mimosa, anclado frente a la costa hasta que zarpa (trig_vigia_mimosa)
+    // el Mimosa, anclado frente a la costa hasta que zarpa (trig_vigia_mimosa) —
+    // arte real si ya existe (src/assets/props/mimosa.png), si no el placeholder
+    // de siempre (util/textures.ts).
     if (!game.flags.is('n1_vio_zarpar')) {
-      this.mimosa = this.add.image(tileCenter(27), tileCenter(110), 'prop_mimosa').setDepth(7);
+      this.mimosa =
+        addPropImage(this, 'mimosa', tileCenter(27), tileCenter(110), 72) ??
+        this.add.image(tileCenter(27), tileCenter(110), 'prop_mimosa');
+      this.mimosa.setDepth(7);
     }
     // cajones a bajar
     for (const [i, c] of level.spawns.cajones.entries()) {
@@ -136,6 +147,68 @@ export class WorldScene extends Phaser.Scene {
       this.interactables.push({ sprite: s, kind: 'npc', id: n.id, label: 'Hablar' });
     }
     this.updateNpcVisibility();
+  }
+
+  /**
+   * Elementos de ambiente puramente decorativos (sin interactable, no bloquean
+   * paso): solo se dibujan si ya existe el PNG real en src/assets/props/ — si
+   * todavía no está ese archivo, esta función no dibuja nada, no hay placeholder
+   * de código para estos (a diferencia de los props jugables de spawnProps()).
+   * Tamaño grande a propósito: tienen que reconocerse desde lejos e invitar a
+   * acercarse, no ser un detalle que se pierde contra el terreno.
+   */
+  private spawnDecor(): void {
+    // guanaco a la distancia — vida silvestre del monte, mismo espíritu que
+    // hint_agua_3 (huella de guanaco → agua), pero lejos de los nodos de jarilla.
+    addPropImage(this, 'guanaco', tileCenter(9), tileCenter(59), 28)?.setDepth(6);
+
+    // coirón disperso por el monte — decoración de terreno, no interactuable
+    // (distinto de la jarilla, que sí se corta).
+    for (const [tx, ty] of [
+      [4, 47],
+      [20, 51],
+      [12, 73],
+    ] as const) {
+      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty), 20)?.setDepth(6);
+    }
+
+    // restos de costa y un bote menor — la playa se siente usada, no vacía.
+    // Lejos de los cajones y la pila para no confundir qué se puede levantar.
+    addPropImage(this, 'restos_costa', tileCenter(10), tileCenter(103), 28)?.setDepth(6);
+    addPropImage(this, 'bote_menor', tileCenter(44), tileCenter(108), 32)?.setDepth(6);
+
+    // el manantial: mismo bloque de tiles que ya pinta buildTerrain() (TERRAIN.SPRING,
+    // filas 6-9, columnas 8-11) — la imagen real se pone encima, del mismo tamaño
+    // que ese bloque (4 tiles = 64px), para que se lea como el terreno mismo.
+    addPropImage(this, 'manantial', tileCenter(9.5), tileCenter(7.5), 64)?.setDepth(5);
+
+    // perfil de Punta Cuevas: franja de horizonte más allá del borde norte del mapa
+    // (mismo borde donde mapgen.ts ya pinta el mar detrás de la meseta) — da
+    // contexto de "qué bioma es este" sin tapar nada jugable. Altura pensada para
+    // entrar en el margen de cámara extra que se agregó en cam.setBounds() arriba
+    // de y=0 (si no, quedaba siempre fuera de la vista, sin importar hacia dónde
+    // caminaras — la cámara nunca puede scrollear más allá de sus bounds).
+    addPropImage(this, 'perfil_punta_cuevas', tileCenter(46), -40, 210)?.setDepth(-6);
+
+    // gaviotas: 2-3 frames animados (ver util/assets.ts PROP_SPRITESHEETS), un par
+    // de instancias planeando sobre la playa.
+    if (hasPropArt('gaviotas')) {
+      const key = propTextureKey('gaviotas');
+      if (!this.anims.exists('gaviota_vuelo')) {
+        this.anims.create({
+          key: 'gaviota_vuelo',
+          frames: this.anims.generateFrameNumbers(key, { start: 0, end: 2 }),
+          frameRate: 4,
+          repeat: -1,
+        });
+      }
+      for (const [tx, ty] of [
+        [18, 96],
+        [36, 94],
+      ] as const) {
+        this.add.sprite(tileCenter(tx), tileCenter(ty), key).setDisplaySize(18, 18).setDepth(11).play('gaviota_vuelo');
+      }
+    }
   }
 
   /**

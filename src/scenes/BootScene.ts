@@ -21,7 +21,7 @@ const UI_FONT = 'ui-monospace, "SF Mono", Menlo, monospace';
 // del juego real (VIEW en config.ts): título arriba, imagen al medio, diálogo abajo.
 // Achica bastante el recorte de las escenas 3:4 contra la pantalla 9:16 completa, y el
 // título deja de competir con lo que haya debajo — tiene su propio fondo sólido.
-const TOP_H = 70;
+const TOP_H = 86;
 const TRAY_Y = VIEW.tray.y;
 const TRAY_H = VIEW.tray.h;
 const IMG_H = TRAY_Y - TOP_H;
@@ -76,6 +76,21 @@ export class BootScene extends Phaser.Scene {
     this.add.rectangle(0, TOP_H - 1, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21);
     this.renderDomText(cx, 14, 'Y WLADFA', { size: 15, color: '#EAE8E0', align: 'center', retro: true });
     this.renderDomText(cx, 42, 'La Huella de los Rifleros', { size: 9, color: '#D9A845', align: 'center', retro: true });
+    // contexto para quien lo ve por primera vez: el subtítulo es evocador, esto dice
+    // llanamente de qué trata. Debajo, la aclaración de rigor histórico — blanca,
+    // la más chica de las cuatro líneas, no compite con el título ni el subtítulo.
+    this.renderDomText(cx, 58, 'La colonia galesa en Chubut', {
+      size: 7,
+      color: '#9BAEB4',
+      align: 'center',
+      retro: true,
+    });
+    this.renderDomText(cx, 71, 'JUEGO CON RIGOR HISTÓRICO, ASÍ SUCEDIÓ', {
+      size: 6,
+      color: '#EAE8E0',
+      align: 'center',
+      retro: true,
+    });
 
     // bandeja inferior fija: mismo estilo que la bandeja real del juego (UiScene.buildTray),
     // opaca del todo — igual que DialogueBox.bg, para que no haya un salto de contraste
