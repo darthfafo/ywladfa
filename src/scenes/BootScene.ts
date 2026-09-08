@@ -324,7 +324,7 @@ export class BootScene extends Phaser.Scene {
     });
     this.track(voyageText);
     // puntos suspensivos animados: sin esto la escena parece trabada durante los
-    // 4.5s fijos que dura (no hay nada más en pantalla que se mueva) y da la
+    // 9s fijos que dura (no hay nada más en pantalla que se mueva) y da la
     // sensación de que el juego colgó en vez de estar en una cinemática. Se anima
     // solo el <span> (no todo el bloque vía setHTML) para no reflowear las dos
     // líneas de arriba en cada tick.
@@ -343,7 +343,7 @@ export class BootScene extends Phaser.Scene {
     // estuviera "en vuelo" alcanzaba para saltear la cinemática antes de que se
     // llegara a ver un solo frame. Esta y cualquier cinemática futura corren su
     // tiempo fijo completo, sin listener de toque/tecla que la pueda cortar.
-    this.time.delayedCall(4500, () => this.scene.start('World'));
+    this.time.delayedCall(9000, () => this.scene.start('World'));
   }
 
   /* ---------------- arranque ---------------- */
