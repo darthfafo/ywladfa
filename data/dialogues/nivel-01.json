@@ -246,6 +246,32 @@
       }
     },
     {
+      "id": "d_n1_mari_flavor",
+      "lang": "cym",
+      "start": "mf1",
+      "nodes": {
+        "mf1": {
+          "speaker": "npc_mari",
+          "portrait": "calido",
+          "text": "Comé vos primero, después vemos. (una tos corta) No es nada. El viento, nomás.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_matthews_flavor",
+      "lang": "cym",
+      "start": "mtf1",
+      "nodes": {
+        "mtf1": {
+          "speaker": "npc_matthews",
+          "portrait": "calido",
+          "text": "No hace falta rezar para que esto tenga sentido. Alcanza con seguir cocinando la misma sopa todas las noches.",
+          "end": true
+        }
+      }
+    },
+    {
       "id": "d_n1_fogon_j1",
       "context": "camp",
       "lang": "cym",
@@ -383,6 +409,34 @@
               }
             }
           ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_lewis_j2_manana",
+      "lang": "cym",
+      "start": "lm_agua",
+      "nodes": {
+        "lm_agua": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "condition": "flags.n1_tarea == 'agua'",
+          "text": "El agua no grita. Se queda calladita bajo las matas verdes. Si subís a mirar el golfo de paso, vas a ver algo que conviene ver antes de que caiga la noche.",
+          "end": true
+        },
+        "lm_lena": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "condition": "flags.n1_tarea == 'lena'",
+          "text": "Buen día para el monte. Traé lo que puedas, que a la noche el frío no negocia. Si te da el tiempo, date una vuelta por la meseta: desde ahí se ve todo lo que hay para ver.",
+          "end": true
+        },
+        "lm_cuevas": {
+          "speaker": "npc_lewis",
+          "portrait": "calido",
+          "condition": "flags.n1_tarea == 'cuevas'",
+          "text": "Quedate tranquilo, hoy sobran manos acá. Yo en tu lugar, antes de que baje el sol, subiría hasta la meseta. Se ve el golfo entero desde arriba.",
           "end": true
         }
       }

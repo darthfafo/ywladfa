@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { PAL, VIEW } from '@/config';
+import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
 import type { BultoDef, ResourceId } from '@/core/types';
@@ -39,6 +40,9 @@ export class CargoScene extends Phaser.Scene {
     this.scene.bringToTop();
     this.scene.pause('World');
     this.scene.pause('Ui');
+    // pausar Ui no la oculta: el HUD es HTML aparte del canvas y se queda flotando
+    // arriba de esta escena sin importar el depth.
+    bus.emit('ui:hud-visible', { visible: false });
     this.taken.clear();
     this.closing = false;
 
@@ -75,6 +79,7 @@ export class CargoScene extends Phaser.Scene {
     this.events.once('shutdown', () => {
       this.scene.resume('World');
       this.scene.resume('Ui');
+      bus.emit('ui:hud-visible', { visible: true });
     });
   }
 

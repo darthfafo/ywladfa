@@ -510,6 +510,28 @@
       }
     },
     {
+      "id": "trig_mari_flavor",
+      "type": "dialogue",
+      "requires": "flags.n1_llego_barranca == true",
+      "manual": true,
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_mari_flavor"
+      }
+    },
+    {
+      "id": "trig_matthews_flavor",
+      "type": "dialogue",
+      "requires": "flags.n1_llego_barranca == true",
+      "manual": true,
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_matthews_flavor"
+      }
+    },
+    {
       "id": "trig_eleccion_cueva",
       "type": "choice",
       "zone": "z2_barranca",
@@ -560,9 +582,22 @@
       "type": "choice",
       "requires": "flags.n1_amanecer_j2 == true",
       "once": true,
-      "turnCost": 0,
+      "turnCost": 1,
+      "note": "el turno que consume es lo que empuja de Amanecer a Mañana en J2 — sin esto el reloj no tiene forma de avanzar ese día (ver docs/01-nivel-01.md, ritmo J2).",
       "action": {
         "choice": "ch_n1_tareas"
+      }
+    },
+    {
+      "id": "trig_lewis_j2_manana",
+      "type": "dialogue",
+      "requires": "progress.day == 2 && progress.turn == 'manana'",
+      "manual": true,
+      "once": true,
+      "turnCost": 1,
+      "note": "resguardo de trig_vigia_mimosa: si el jugador nunca llega al mirador, hablarle a Lewis en el campamento también empuja Mañana → Tarde. El que dispare primero deja al otro sin efecto (mismo requires de turno).",
+      "action": {
+        "dialogue": "d_n1_lewis_j2_manana"
       }
     },
     {
@@ -588,9 +623,10 @@
         6,
         6
       ],
-      "requires": "progress.day >= 2",
+      "requires": "progress.day == 2 && progress.turn == 'manana'",
+      "note": "llegar acá durante la Mañana de J2 empuja el turno a Tarde (ver trig_lewis_j2_manana para el resguardo si nunca se visita).",
       "once": true,
-      "turnCost": 0,
+      "turnCost": 1,
       "action": {
         "dialogue": "d_n1_mimosa_zarpa"
       }

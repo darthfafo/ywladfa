@@ -68,6 +68,9 @@ export class UiScene extends Phaser.Scene {
     bus.on('ui:toast', ({ text }) => this.showToast(text));
     bus.on('ui:tutorial', ({ id }) => this.openTutorial(id));
     bus.on('zone:entered', ({ label }) => this.showZone(label));
+    // CampScene/CargoScene pausan Ui pero no la ocultan: el HUD es HTML aparte del
+    // canvas (ver buildHud) y se queda flotando arriba de esas escenas sin esto.
+    bus.on('ui:hud-visible', ({ visible }) => this.setHudVisible(visible));
 
     this.refreshResources();
     this.refreshTime();
@@ -251,10 +254,13 @@ export class UiScene extends Phaser.Scene {
     );
   }
 
-  /** Panel a pantalla completa: en 9:16 no entran las ventanas flotantes (GDD §8).
-   * `retro` es para los tutoriales (título + único botón, siempre cortos) — las
+  /** Panel a pantalla completa: en 9:16 no entran las ventanas flotantes (GDD §8), pero con
+   * marco — mismo lenguaje visual que las cajas del arranque (BootScene.renderMenu), en vez de
+   * un rectángulo plano borde a borde.
+   * `retro` es para las OPCIONES de los tutoriales (título + único botón, siempre cortos) — las
    * pantallas de decisión tienen oraciones largas de datos y en Press Start 2P
-   * (mucho más ancha por carácter) arriesgan un wrap de demasiadas líneas. */
+   * (mucho más ancha por carácter) arriesgan un wrap de demasiadas líneas. El título sí va
+   * siempre en fuente retro: es corto en todos los casos ("Carga", "Decisión", etc). */
   private openOverlay(
     title: string,
     body: string,
@@ -268,16 +274,21 @@ export class UiScene extends Phaser.Scene {
     // flotando arriba de este panel entero, sin importar el depth del overlay.
     this.setHudVisible(false);
 
-    const bg = this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void, 0.96).setOrigin(0, 0);
+    const margin = 10;
+    const bg = this.add
+      .rectangle(margin, margin, VIEW.width - margin * 2, VIEW.height - margin * 2, PAL.void, 0.96)
+      .setOrigin(0, 0)
+      .setStrokeStyle(1, PAL.seaPale, 0.5);
     const titleT = crisp(
       this.add
         .text(16, 56, title, {
-          fontFamily: retro ? RETRO_FONT : FONT_FAMILY,
-          fontSize: retro ? '11px' : FONT.title,
+          fontFamily: RETRO_FONT,
+          fontSize: '11px',
           color: '#D9A845',
         })
         .setResolution(4),
     );
+    const rule = this.add.rectangle(16, 74, VIEW.width - 32, 1, PAL.seaPale, 0.35).setOrigin(0, 0);
     const bodyT = crisp(
       this.add
         .text(16, 80, body, {
@@ -290,7 +301,7 @@ export class UiScene extends Phaser.Scene {
         .setResolution(4),
     );
 
-    const items: Phaser.GameObjects.GameObject[] = [bg, titleT, bodyT];
+    const items: Phaser.GameObjects.GameObject[] = [bg, titleT, rule, bodyT];
     let y = 80 + bodyT.height + 22;
     const navItems = options.map((o) => {
       const t = crisp(

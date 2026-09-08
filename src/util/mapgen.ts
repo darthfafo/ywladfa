@@ -66,7 +66,10 @@ const ZONE_TERRAIN: Record<string, number> = {
  */
 export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => boolean = () => true): number[][] {
   const { widthTiles: W, heightTiles: H } = level.map;
-  const g: number[][] = Array.from({ length: H }, () => Array<number>(W).fill(TERRAIN.ROCK));
+  // acantilado, no roca genérica: todo lo que no es zona ni pasaje es el borde exterior del
+  // mapa jugable (meseta, monte, el fondo de la playa) — tiene que leerse como el límite
+  // natural del terreno, no como una pared de interior.
+  const g: number[][] = Array.from({ length: H }, () => Array<number>(W).fill(TERRAIN.CLIFF));
 
   // zonas
   for (const z of level.zones) {
@@ -85,6 +88,20 @@ export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => bool
       for (let i = 0; i < W; i++) {
         const inBeachX = i >= px - 2 && i < px + pw + 2;
         g[j]![i] = j >= 109 ? TERRAIN.SEA : inBeachX ? TERRAIN.SAND_WET : TERRAIN.SEA;
+      }
+    }
+  }
+
+  // vista al golfo desde la meseta: más allá de su borde norte, el mar — para que el punto
+  // de vigía (trig_vigia_mimosa, donde se ve zarpar el Mimosa) mire efectivamente al agua y
+  // no a un acantilado ciego. z5_canadon linda con el mismo borde pero queda afuera a
+  // propósito: sigue "oculto", sin vista franca (docs/01-nivel-01.md §2.1).
+  const meseta = level.zones.find((z) => z.id === 'z4_meseta');
+  if (meseta) {
+    const [mx, , mw] = meseta.rect;
+    for (let j = 0; j < 3 && j < H; j++) {
+      for (let i = mx; i < mx + mw && i < W; i++) {
+        g[j]![i] = j < 2 ? TERRAIN.SEA : TERRAIN.CLIFF;
       }
     }
   }

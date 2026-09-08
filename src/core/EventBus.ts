@@ -33,6 +33,7 @@ export type GameEvents = {
   'ui:toast': { text: string; icon?: string };
   'ui:tutorial': { id: string };
   'ui:action-context': { label: string | null };
+  'ui:hud-visible': { visible: boolean };
 };
 
 type Handler<T> = (payload: T) => void;

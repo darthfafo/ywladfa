@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { PAL, VIEW } from '@/config';
+import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
@@ -31,6 +32,9 @@ export class CampScene extends Phaser.Scene {
     this.scene.bringToTop();
     this.scene.pause('World');
     this.scene.pause('Ui');
+    // pausar Ui no la oculta: el HUD es HTML aparte del canvas y se queda flotando
+    // arriba de esta escena sin importar el depth.
+    bus.emit('ui:hud-visible', { visible: false });
 
     this.buildNightScene();
 
@@ -89,5 +93,6 @@ export class CampScene extends Phaser.Scene {
   private restoreOnShutdown(): void {
     this.scene.resume('World');
     this.scene.resume('Ui');
+    bus.emit('ui:hud-visible', { visible: true });
   }
 }
