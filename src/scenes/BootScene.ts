@@ -58,6 +58,11 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    // la pantalla de espera de puro HTML/CSS (index.html) ya cumplió: create() solo
+    // corre acá una vez que preload() terminó de bajar todo, así que el juego ya
+    // tiene algo real para mostrar.
+    document.getElementById('boot-loading')?.remove();
+
     const cx = VIEW.width / 2;
     makeProps(this); // trae 'prop_mimosa': WorldScene todavía no corrió, no existe todavía
     makeShipLarge(this); // versión grande de 3 mástiles, solo para estas cinemáticas
