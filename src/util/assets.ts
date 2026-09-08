@@ -41,7 +41,7 @@ const propUrls = new Map(Object.entries(propFiles).map(([path, url]) => [baseNam
  * cuadro, no el total. Si se regenera el PNG a otra resolución, actualizar acá.
  * El resto de los props de `src/assets/props/` son imagen única. */
 const PROP_SPRITESHEETS: Record<string, { frames: number; frameSize: number }> = {
-  gaviotas: { frames: 3, frameSize: 724 },
+  gaviotas: { frames: 3, frameSize: 64 },
 };
 
 export type Mood = 'neutral' | 'tenso' | 'calido';
@@ -102,9 +102,13 @@ export function hasPropArt(id: string): boolean {
 
 /**
  * Prop suelto (no de pantalla completa) si ya existe el PNG: lo escala a `size`
- * píxeles de lado mayor mantenendo proporción, filtro lineal (son ilustraciones
- * pintadas, no pixel art de bordes duros). Devuelve null si el PNG no existe
- * todavía — el llamador decide qué hacer (nada, o el placeholder de código).
+ * píxeles de lado mayor mantenendo proporción. A diferencia de las escenas
+ * cinemáticas (pintadas), estos son elementos de mapa en el mismo estilo pixel
+ * art que el resto del juego — nada de filtro lineal, que a estos tamaños tan
+ * chicos los emborronaba en vez de suavizarlos. Se apoya en el NEAREST que ya
+ * es default de todo el juego (`pixelArt: true`, config.ts).
+ * Devuelve null si el PNG no existe todavía — el llamador decide qué hacer
+ * (nada, o el placeholder de código).
  */
 export function addPropImage(
   scene: Phaser.Scene,
@@ -118,7 +122,6 @@ export function addPropImage(
   const img = scene.add.image(x, y, key);
   const scale = size / Math.max(img.width, img.height);
   img.setScale(scale);
-  img.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
   return img;
 }
 

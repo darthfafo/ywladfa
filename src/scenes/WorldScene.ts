@@ -195,8 +195,10 @@ export class WorldScene extends Phaser.Scene {
     // caminaras — la cámara nunca puede scrollear más allá de sus bounds).
     addPropImage(this, 'perfil_punta_cuevas', tileCenter(46), -40, 210)?.setDepth(-6);
 
-    // gaviotas: 2-3 frames animados (ver util/assets.ts PROP_SPRITESHEETS), un par
-    // de instancias planeando sobre la playa.
+    // gaviotas: 2-3 frames animados (ver util/assets.ts PROP_SPRITESHEETS), planeando
+    // de izquierda a derecha sobre la playa — no quietas aleteando en el lugar. Cada
+    // una arranca en su propio punto y cruza hasta más allá del borde de la zona;
+    // al terminar el tween vuelve a su x inicial y repite (repeat:-1 sin yoyo).
     if (hasPropArt('gaviotas')) {
       const key = propTextureKey('gaviotas');
       if (!this.anims.exists('gaviota_vuelo')) {
@@ -207,11 +209,23 @@ export class WorldScene extends Phaser.Scene {
           repeat: -1,
         });
       }
-      for (const [tx, ty] of [
-        [18, 96],
-        [36, 94],
+      for (const [tx, ty, endTx, duration] of [
+        [18, 96, 58, 13000],
+        [36, 94, 62, 16000],
       ] as const) {
-        this.add.sprite(tileCenter(tx), tileCenter(ty), key).setDisplaySize(18, 18).setDepth(11).play('gaviota_vuelo');
+        const s = this.add
+          .sprite(tileCenter(tx), tileCenter(ty), key)
+          .setDisplaySize(18, 18)
+          .setDepth(11)
+          .play('gaviota_vuelo');
+        this.tweens.add({
+          targets: s,
+          x: tileCenter(endTx),
+          y: tileCenter(ty) - 6,
+          duration,
+          repeat: -1,
+          ease: 'Sine.inOut',
+        });
       }
     }
   }
