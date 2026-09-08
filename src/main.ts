@@ -5,13 +5,14 @@ import { BootScene } from './scenes/BootScene';
 import { CampScene } from './scenes/CampScene';
 import { CargoScene } from './scenes/CargoScene';
 import { saveSystem } from './systems/SaveSystem';
+import { TransitionScene } from './scenes/TransitionScene';
 import { UiScene } from './scenes/UiScene';
 import { WorldScene } from './scenes/WorldScene';
 import { applyIntegerScale } from './util/scale';
 
 const game = new Phaser.Game({
   ...GAME_CONFIG,
-  scene: [BootScene, WorldScene, UiScene, CampScene, CargoScene],
+  scene: [BootScene, WorldScene, UiScene, CampScene, CargoScene, TransitionScene],
 });
 
 applyIntegerScale(game);

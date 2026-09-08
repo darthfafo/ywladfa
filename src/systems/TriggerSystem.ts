@@ -70,7 +70,7 @@ export class TriggerSystem {
   }
 
   /** Ejecuta la parte "de datos" de la acción y devuelve lo que la escena tiene que hacer. */
-  consume(t: TriggerDef): { dialogue?: string; choice?: string; scene?: string; tutorial?: string; toast?: string } {
+  consume(t: TriggerDef): { dialogue?: string; choice?: string; scene?: string; tutorial?: string; toast?: string; next?: string } {
     this.markFired(t.id);
     bus.emit('trigger:fired', { triggerId: t.id });
 
@@ -91,6 +91,7 @@ export class TriggerSystem {
       scene: a.scene,
       tutorial: a.tutorial,
       toast: a.toast ?? a.modifier?.toast ?? a.hint,
+      next: a.next,
     };
   }
 }

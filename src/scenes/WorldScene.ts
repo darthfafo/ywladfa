@@ -18,6 +18,11 @@ interface Interactable {
   label: string;
 }
 
+/** Personajes (PC + NPCs) nativos a 16×24 se perdían contra el mapa (270px de
+ * ancho de pantalla) — 1.5× los hace legibles sin que dejen de leerse como
+ * personajes de un tile de ancho. pixelArt:true + NEAREST los mantiene nítidos. */
+const CHAR_SCALE = 1.5;
+
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private layer!: Phaser.Tilemaps.TilemapLayer;
@@ -57,6 +62,10 @@ export class WorldScene extends Phaser.Scene {
     const sp = game.state.progress.day > 1 ? level.spawns.fogon : level.spawns.player;
     this.player = this.physics.add.sprite(tileCenter(sp.x), tileCenter(sp.y), 'pc', FACING_FRAME.north);
     this.player.setDepth(20);
+    // 1.5×: a 16×24 nativos el personaje se perdía contra el mapa (270px de ancho
+    // de pantalla). El cuerpo de colisión se define en píxeles SIN escalar — Arcade
+    // Physics multiplica por scale solo, no hace falta tocar los números.
+    this.player.setScale(CHAR_SCALE);
     this.player.body!.setSize(10, 8);
     (this.player.body as Phaser.Physics.Arcade.Body).setOffset(3, 15);
     this.physics.add.collider(this.player, this.layer);
@@ -120,7 +129,10 @@ export class WorldScene extends Phaser.Scene {
     }
     // NPCs
     for (const n of level.spawns.npcs) {
-      const s = this.add.image(tileCenter(n.x), tileCenter(n.y), n.id, FACING_FRAME.south).setDepth(15);
+      const s = this.add
+        .image(tileCenter(n.x), tileCenter(n.y), n.id, FACING_FRAME.south)
+        .setDepth(15)
+        .setScale(CHAR_SCALE);
       this.interactables.push({ sprite: s, kind: 'npc', id: n.id, label: 'Hablar' });
     }
     this.updateNpcVisibility();
@@ -354,7 +366,7 @@ export class WorldScene extends Phaser.Scene {
     if (out.tutorial) bus.emit('ui:tutorial', { id: out.tutorial });
     if (out.dialogue && registry.dialogue(out.dialogue).context === 'camp') {
       this.scene.launch('Camp', { dialogueId: out.dialogue });
-    } else if (out.dialogue) this.events.emit('request-dialogue', out.dialogue);
+    } else if (out.dialogue) this.events.emit('request-dialogue', { id: out.dialogue, next: out.next });
     else if (out.choice) this.events.emit('request-choice', out.choice);
     else if (out.scene && this.scene.get(out.scene)) this.scene.launch(out.scene);
     else if (out.scene) bus.emit('ui:toast', { text: `[escena pendiente: ${out.scene}]` });

@@ -58,7 +58,7 @@ export class UiScene extends Phaser.Scene {
     this.touch = new TouchControls(this);
 
     const world = this.scene.get('World');
-    world.events.on('request-dialogue', (id: string) => this.openDialogue(id));
+    world.events.on('request-dialogue', (p: { id: string; next?: string }) => this.openDialogue(p.id, p.next));
     world.events.on('request-choice', (id: string) => this.openChoice(id));
     world.events.on('request-refusal', (npcId: string) => this.openRefusal(npcId));
 
@@ -203,7 +203,7 @@ export class UiScene extends Phaser.Scene {
 
   /* ---------------- modales ---------------- */
 
-  private openDialogue(id: string): void {
+  private openDialogue(id: string, next?: string): void {
     const cutsceneId = CUTSCENE_DIALOGUES[id];
     // el joystick/botón son HTML aparte del canvas: no se tapan solos detrás de una
     // cutscene ni de ningún diálogo, hay que ocultarlos a mano.
@@ -216,6 +216,13 @@ export class UiScene extends Phaser.Scene {
       this.cutsceneBg?.setDepth(-5);
     }
     this.dialogue.start(id, () => {
+      // `next` viene del trigger que disparó este diálogo (ej. trig_punta_final):
+      // si lo tiene, era el cierre del nivel — no hay nada más que restaurar acá,
+      // TransitionScene reemplaza World/Ui entero.
+      if (next) {
+        this.scene.launch('Transition', { next });
+        return;
+      }
       this.touch.setContext(null);
       this.touch.setVisible(true);
       if (cutsceneId) {
