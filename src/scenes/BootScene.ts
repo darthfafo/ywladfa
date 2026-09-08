@@ -7,14 +7,14 @@ import { saveSystem } from '@/systems/SaveSystem';
 import { addSceneBackground, preloadArt } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
+import { RETRO_FONT } from '@/util/text';
 
 type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
 
-// Solo para el arranque (título, menús, botones): "Press Start 2P" (Google Fonts,
-// index.html) es bien ancha por carácter, así que se usa a tamaños chicos y con
-// fallback al monoespaciado de siempre si no llegó a cargar (o no hay internet).
-const RETRO_FONT = '"Press Start 2P", ui-monospace, "SF Mono", Menlo, monospace';
+// "Press Start 2P" (Google Fonts, index.html) es bien ancha por carácter, así que se
+// usa a tamaños chicos y con fallback al monoespaciado de siempre si no llegó a
+// cargar (o no hay internet).
 const UI_FONT = 'ui-monospace, "SF Mono", Menlo, monospace';
 
 // tres franjas fijas durante todo el arranque, igual de espíritu que HUD/mundo/bandeja

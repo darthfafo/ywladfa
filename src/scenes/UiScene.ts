@@ -9,7 +9,7 @@ import { DialogueBox } from '@/ui/DialogueBox';
 import { TouchControls } from '@/ui/TouchControls';
 import { input } from '@/util/input';
 import { SelectList } from '@/util/selectList';
-import { crisp, FONT, FONT_FAMILY } from '@/util/text';
+import { crisp, FONT, FONT_FAMILY, RETRO_FONT } from '@/util/text';
 
 /** Recursos que se muestran en el HUD del Nivel 1. El resto vive en el panel de jornada. */
 const HUD_RESOURCES: ResourceId[] = ['agua', 'comida', 'lena'];
@@ -233,7 +233,7 @@ export class UiScene extends Phaser.Scene {
   private openTutorial(id: string): void {
     const t = registry.tutorial(id);
     if (!t) return;
-    this.openOverlay(t.title, t.text, [{ label: 'Entendido', onPick: () => this.closeOverlay() }]);
+    this.openOverlay(t.title, t.text, [{ label: 'Entendido', onPick: () => this.closeOverlay() }], true);
   }
 
   private openChoice(id: string): void {
@@ -251,16 +251,31 @@ export class UiScene extends Phaser.Scene {
     );
   }
 
-  /** Panel a pantalla completa: en 9:16 no entran las ventanas flotantes (GDD §8). */
-  private openOverlay(title: string, body: string, options: Array<{ label: string; onPick: () => void }>): void {
+  /** Panel a pantalla completa: en 9:16 no entran las ventanas flotantes (GDD §8).
+   * `retro` es para los tutoriales (título + único botón, siempre cortos) — las
+   * pantallas de decisión tienen oraciones largas de datos y en Press Start 2P
+   * (mucho más ancha por carácter) arriesgan un wrap de demasiadas líneas. */
+  private openOverlay(
+    title: string,
+    body: string,
+    options: Array<{ label: string; onPick: () => void }>,
+    retro = false,
+  ): void {
     this.closeOverlay();
     input.locked = true;
     this.touch.setVisible(false);
+    // el HUD es HTML aparte del canvas (ver buildHud): sin ocultarlo se queda
+    // flotando arriba de este panel entero, sin importar el depth del overlay.
+    this.setHudVisible(false);
 
     const bg = this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void, 0.96).setOrigin(0, 0);
     const titleT = crisp(
       this.add
-        .text(16, 56, title, { fontFamily: FONT_FAMILY, fontSize: FONT.title, color: '#D9A845' })
+        .text(16, 56, title, {
+          fontFamily: retro ? RETRO_FONT : FONT_FAMILY,
+          fontSize: retro ? '11px' : FONT.title,
+          color: '#D9A845',
+        })
         .setResolution(4),
     );
     const bodyT = crisp(
@@ -281,8 +296,8 @@ export class UiScene extends Phaser.Scene {
       const t = crisp(
         this.add
           .text(16, y, o.label, {
-            fontFamily: FONT_FAMILY,
-            fontSize: FONT.body,
+            fontFamily: retro ? RETRO_FONT : FONT_FAMILY,
+            fontSize: retro ? '9px' : FONT.body,
             color: '#BFD3D8',
             wordWrap: { width: VIEW.width - 32 },
           })
@@ -309,5 +324,6 @@ export class UiScene extends Phaser.Scene {
     this.overlay = null;
     input.locked = false;
     this.touch.setVisible(true);
+    this.setHudVisible(true);
   }
 }
