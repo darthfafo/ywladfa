@@ -261,9 +261,12 @@ export class UiScene extends Phaser.Scene {
     );
   }
 
-  /** Panel a pantalla completa: en 9:16 no entran las ventanas flotantes (GDD §8), pero con
-   * marco — mismo lenguaje visual que las cajas del arranque (BootScene.renderMenu), en vez de
-   * un rectángulo plano borde a borde.
+  /** Panel confinado al cuadro de mapa (VIEW.world: la franja del medio, entre HUD y
+   * bandeja) — no a la pantalla entera. El HUD y la bandeja se quedan a la vista
+   * alrededor, no hace falta ocultarlos ni ganan sentido las "ventanas flotantes"
+   * que evita GDD §8: esto sigue siendo un panel fijo, solo que del tamaño de la
+   * franja que le corresponde en las tres bandas del layout (docs/00-GDD.md §8),
+   * con el mismo marco con borde que las cajas del arranque (BootScene.renderMenu).
    * `retro` es para las OPCIONES de los tutoriales (título + único botón, siempre cortos) — las
    * pantallas de decisión tienen oraciones largas de datos y en Press Start 2P
    * (mucho más ancha por carácter) arriesgan un wrap de demasiadas líneas. El título sí va
@@ -277,28 +280,26 @@ export class UiScene extends Phaser.Scene {
     this.closeOverlay();
     input.locked = true;
     this.touch.setVisible(false);
-    // el HUD es HTML aparte del canvas (ver buildHud): sin ocultarlo se queda
-    // flotando arriba de este panel entero, sin importar el depth del overlay.
-    this.setHudVisible(false);
 
+    const top = VIEW.world.y;
     const margin = 10;
     const bg = this.add
-      .rectangle(margin, margin, VIEW.width - margin * 2, VIEW.height - margin * 2, PAL.void, 0.96)
+      .rectangle(margin, top + margin, VIEW.width - margin * 2, VIEW.world.h - margin * 2, PAL.void, 0.96)
       .setOrigin(0, 0)
       .setStrokeStyle(1, PAL.seaPale, 0.5);
     const titleT = crisp(
       this.add
-        .text(16, 56, title, {
+        .text(16, top + 24, title, {
           fontFamily: RETRO_FONT,
           fontSize: '11px',
           color: '#D9A845',
         })
         .setResolution(4),
     );
-    const rule = this.add.rectangle(16, 74, VIEW.width - 32, 1, PAL.seaPale, 0.35).setOrigin(0, 0);
+    const rule = this.add.rectangle(16, top + 42, VIEW.width - 32, 1, PAL.seaPale, 0.35).setOrigin(0, 0);
     const bodyT = crisp(
       this.add
-        .text(16, 80, body, {
+        .text(16, top + 48, body, {
           fontFamily: FONT_FAMILY,
           fontSize: FONT.body,
           color: '#EAE8E0',
@@ -309,7 +310,7 @@ export class UiScene extends Phaser.Scene {
     );
 
     const items: Phaser.GameObjects.GameObject[] = [bg, titleT, rule, bodyT];
-    let y = 80 + bodyT.height + 22;
+    let y = top + 48 + bodyT.height + 22;
     // opciones como cajas con borde, no texto plano — mismo lenguaje visual que los
     // botones del arranque (BootScene.renderMenu) y las cartas de CargoScene, para
     // que el selector se sienta parte del mismo juego.
@@ -356,6 +357,5 @@ export class UiScene extends Phaser.Scene {
     this.overlay = null;
     input.locked = false;
     this.touch.setVisible(true);
-    this.setHudVisible(true);
   }
 }

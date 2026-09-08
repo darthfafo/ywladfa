@@ -83,6 +83,16 @@ export class BootScene extends Phaser.Scene {
     this.add.rectangle(0, TRAY_Y, VIEW.width, TRAY_H, PAL.ink, 1).setOrigin(0, 0).setDepth(20);
     this.add.rectangle(0, TRAY_Y, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21);
 
+    // firma discreta — fuera de cualquier paso (no this.track()) para que sobreviva
+    // los clearStep() y se vea en todo el arranque, hasta la travesía; una vez que
+    // arranca World esta escena entera se destruye sola, se va con ella.
+    this.renderDomText(VIEW.width - 8, TRAY_Y + TRAY_H - 12, 'FP', {
+      size: 7,
+      color: '#22343A',
+      align: 'right',
+      retro: true,
+    });
+
     this.renderTitle();
 
     document.fonts?.ready.then(() => {
@@ -112,17 +122,6 @@ export class BootScene extends Phaser.Scene {
         html:
           '<span style="color:#D9A845">Liverpool, 28 de mayo de 1865.</span><br>El Mimosa lleva colonos galeses ' +
           'rumbo a Sudamérica: van a fundar<br>Y Wladfa, la Colonia.',
-      }),
-    );
-
-    // firma discreta, solo acá (primera pantalla del juego) — un color muy cercano
-    // al fondo (PAL.ink #18262A) para que sea casi un secreto, no un crédito visible.
-    this.track(
-      this.renderDomText(VIEW.width - 8, TRAY_Y + TRAY_H - 12, 'FP', {
-        size: 7,
-        color: '#22343A',
-        align: 'right',
-        retro: true,
       }),
     );
 

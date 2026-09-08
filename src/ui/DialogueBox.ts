@@ -22,13 +22,15 @@ export class DialogueBox {
   private nameText: Phaser.GameObjects.Text;
   private bodyText: Phaser.GameObjects.Text;
   private hint: Phaser.GameObjects.Text;
-  private signature: Phaser.GameObjects.Text;
   private tapCatcher: Phaser.GameObjects.DOMElement;
   private choicesEl: Phaser.GameObjects.DOMElement | null = null;
   private choicesKeyCleanup: (() => void) | null = null;
   /** Si las opciones no entran en una sola página, avanza a la siguiente — ver
    * renderChoices(). null cuando no hay más páginas (o no hay opciones). */
   private choicesAdvancePage: (() => void) | null = null;
+  /** Texto del NODO ACTUAL que todavía no se mostró — ver setBodyTextPaginated().
+   * null cuando ya se ve todo lo que tiene ese nodo. */
+  private pendingText: string | null = null;
   private sys: DialogueSystem;
   private current: RenderedLine | null = null;
   private onClose: (() => void) | null = null;
@@ -80,18 +82,6 @@ export class DialogueBox {
         .setOrigin(1, 0)
         .setResolution(4),
     );
-    // firma como parte del fondo de la bandeja, no solo en el arranque: se pidió
-    // que se mantenga durante todo el juego. Más grande y visible que la versión
-    // "casi secreta" de BootScene, pero sigue siendo de fondo — esquina opuesta al
-    // "▼" para no competir con nada que se esté leyendo.
-    this.signature = crisp(
-      scene.add
-        .text(8, TRAY.h - 14, 'FP', { fontFamily: FONT_FAMILY, fontSize: '10px', color: '#3A4D54' })
-        .setOrigin(0, 0)
-        .setDepth(0)
-        .setResolution(4),
-    );
-
     // toque para avanzar de línea: HTML real, no un rectángulo de Phaser con
     // setInteractive/pointerdown — era el único lugar de todo el diálogo que
     // seguía con ese mecanismo, y es probablemente donde se colgaba en el celular
@@ -114,7 +104,6 @@ export class DialogueBox {
         this.nameText,
         this.bodyText,
         this.hint,
-        this.signature,
       ])
       .setDepth(80)
       .setVisible(false);
@@ -157,6 +146,13 @@ export class DialogueBox {
 
   private advance(): void {
     if (!this.active) return;
+    if (this.pendingText) {
+      // el propio nodo todavía tiene texto sin mostrar (ver setBodyTextPaginated):
+      // sigue paginando ANTES de pasar al siguiente nodo o mostrar sus opciones.
+      this.setBodyTextPaginated(this.pendingText);
+      this.updateTail();
+      return;
+    }
     if (this.current?.choices.length) {
       // con opciones, tocar la bandeja no cierra nada: si no entraban todas en
       // una página, pasa a la siguiente (ver renderChoices) — si ya se ven
@@ -170,6 +166,7 @@ export class DialogueBox {
   private show(line: RenderedLine | null): void {
     this.clearChoices();
     this.current = line;
+    this.pendingText = null;
 
     if (!line) {
       this.root.setVisible(false);
@@ -210,11 +207,45 @@ export class DialogueBox {
     this.bodyText.setPosition(line.isNarrator ? 10 : 70, line.isNarrator ? 14 : 26);
     this.bodyText.setWordWrapWidth(line.isNarrator ? TRAY.w - 20 : TRAY.w - 80);
     this.bodyText.setColor(line.isNarrator ? '#9BAEB4' : '#EAE8E0');
-    this.bodyText.setText(line.text);
+    this.setBodyTextPaginated(line.text);
+    this.updateTail();
+  }
 
-    if (line.choices.length) {
+  /** Pone `fullText` en `bodyText`; si no entra entero en lo que queda de bandeja
+   * (mismo problema que ya se arregló en renderChoices — una línea larga se salía
+   * del canvas, invisible), corta en el último espacio que sí entra y guarda el
+   * resto en `pendingText` para la próxima página (ver advance()). */
+  private setBodyTextPaginated(fullText: string): void {
+    this.bodyText.setText(fullText);
+    const maxH = TRAY.h - this.bodyText.y - 6;
+    if (this.bodyText.height <= maxH) {
+      this.pendingText = null;
+      return;
+    }
+    const words = fullText.split(' ');
+    let shown = '';
+    for (const w of words) {
+      const attempt = shown ? `${shown} ${w}` : w;
+      this.bodyText.setText(attempt);
+      if (this.bodyText.height > maxH) break;
+      shown = attempt;
+    }
+    if (!shown) shown = words[0] ?? ''; // ni la primera palabra entraría — caso límite, mostrarla igual
+    this.bodyText.setText(shown);
+    this.pendingText = fullText.slice(shown.length).trim() || null;
+  }
+
+  /** Qué va debajo del cuerpo, ya mostrada (una página de) su texto: si el nodo
+   * actual todavía tiene texto sin paginar, "▼" (seguir paginando, no elegir ni
+   * pasar de nodo); si no, las opciones si las tiene, o "▼" para el siguiente nodo. */
+  private updateTail(): void {
+    if (this.pendingText) {
+      this.hint.setVisible(true);
+      return;
+    }
+    if (this.current?.choices.length) {
       this.hint.setVisible(false);
-      this.renderChoices(line);
+      this.renderChoices(this.current);
     } else {
       this.hint.setVisible(true);
     }
