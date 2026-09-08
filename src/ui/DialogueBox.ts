@@ -144,6 +144,25 @@ export class DialogueBox {
     });
   }
 
+  /** Línea narrada suelta, sin diálogo registrado en /data — mismo espíritu que
+   * refuse() pero para texto de sistema con partes dinámicas (ej. "Jornada 3.",
+   * con el número armado en código) que no tiene sentido guardar como entrada de
+   * diálogo fija. */
+  announce(text: string, onClose?: () => void): void {
+    this.onClose = onClose ?? null;
+    input.locked = true;
+    this.root.setVisible(true);
+    this.show({
+      nodeId: '__announce',
+      speakerId: 'narrator',
+      speakerName: '',
+      text,
+      portrait: 'neutral',
+      choices: [],
+      isNarrator: true,
+    });
+  }
+
   private advance(): void {
     if (!this.active) return;
     if (this.pendingText) {

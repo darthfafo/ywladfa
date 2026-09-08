@@ -74,7 +74,14 @@ export class UiScene extends Phaser.Scene {
     world.events.on('request-refusal', (npcId: string) => this.openRefusal(npcId));
 
     bus.on('resource:changed', () => this.refreshResources());
-    bus.on('time:turn-advanced', () => this.refreshTime());
+    bus.on('time:turn-advanced', ({ day, turn, prevTurn }) => {
+      this.refreshTime();
+      // no el día 1: ese arranque ya tiene su propia apertura fuerte (el cold
+      // open) — la escena de amanecer marca el ritmo a partir de ahí, cuando
+      // "un día nuevo" ya es un concepto que el jugador reconoce y agradece
+      // que se lo señalen, en vez de competir con la primera escena del nivel.
+      if (turn === 'amanecer' && prevTurn !== 'amanecer' && day > 1) this.showSunrise(day);
+    });
     bus.on('inventory:weight-changed', () => this.refreshLoad());
     bus.on('ui:toast', ({ text }) => this.showToast(text));
     bus.on('ui:tutorial', ({ id }) => this.openTutorial(id));
@@ -214,6 +221,51 @@ export class UiScene extends Phaser.Scene {
     this.zoneLabel.setText(label.toUpperCase()).setAlpha(1);
     this.tweens.killTweensOf(this.zoneLabel);
     this.tweens.add({ targets: this.zoneLabel, alpha: 0, delay: 1400, duration: 600 });
+  }
+
+  /** Cutscene corta al empezar el Amanecer de cada día (menos el 1, que ya tiene su
+   * propia apertura): marca el ritmo de jornada a jornada con el mismo lenguaje que
+   * cualquier otra cutscene (fondo real si existe, "JORNADA N" en la fuente retro
+   * arriba, toca para seguir) en vez de que el único indicio sea el texto chico del
+   * HUD. Si todavía no hay `sunrise.png` cae en un sol simple dibujado por código, no
+   * en nada — este momento no puede quedar vacío. */
+  private showSunrise(day: number): void {
+    this.touch.setVisible(false);
+    this.setHudVisible(false);
+    this.tweens.killTweensOf(this.zoneLabel);
+    this.zoneLabel.setAlpha(0);
+
+    const cx = VIEW.width / 2;
+    const cy = VIEW.tray.y / 2;
+    const bg = addSceneBackground(this, 'sunrise', cx, cy, VIEW.width, VIEW.tray.y);
+    bg?.setDepth(-5);
+    const extras: Phaser.GameObjects.GameObject[] = [];
+    if (!bg) {
+      extras.push(this.add.rectangle(0, 0, VIEW.width, VIEW.tray.y, PAL.ink2).setOrigin(0, 0).setDepth(-6));
+      const horizonY = cy + 30;
+      const glow = this.add.circle(cx, horizonY, 70, PAL.wheat, 0.12).setDepth(-5);
+      const sun = this.add.circle(cx, horizonY + 40, 22, PAL.wheat, 0.9).setDepth(-4);
+      extras.push(glow, sun);
+      this.tweens.add({ targets: [glow, sun], y: `-=40`, duration: 1400, ease: 'Sine.out' });
+      this.tweens.add({ targets: glow, alpha: 0.22, duration: 1400, ease: 'Sine.out' });
+    }
+
+    const title = crisp(
+      this.add
+        .text(cx, 16, `JORNADA ${day}`, { fontFamily: RETRO_FONT, fontSize: FONT.title, color: '#D9A845' })
+        .setOrigin(0.5, 0)
+        .setDepth(-3)
+        .setResolution(4),
+    );
+
+    this.dialogue.announce(`Jornada ${day}.`, () => {
+      this.touch.setContext(null);
+      this.touch.setVisible(true);
+      this.setHudVisible(true);
+      bg?.destroy();
+      title.destroy();
+      for (const o of extras) o.destroy();
+    });
   }
 
   /* ---------------- modales ---------------- */

@@ -290,6 +290,17 @@ just beginning to set in.
 Guardar como `mimosa_zarpa.png` — trig_vigia_mimosa (J2, el mirador de la
 meseta), hoy ese momento es solo texto narrado, sin imagen.
 
+### cutscene_sunrise — Amanece un día nuevo
+```
+Dawn breaking over the barranca and the coast below, the sun just above the
+horizon line, long soft shadows, the colonists' cave dwellings and the
+gulf faintly visible below in the early light — no figures, an empty
+establishing shot, the quiet start of a new day.
+```
+Guardar como `sunrise.png` — se ve al empezar el Amanecer de cada jornada
+(menos la primera), con "JORNADA N" arriba. Sin este PNG, ese momento cae en
+un sol simple dibujado por código en vez de romperse.
+
 ---
 
 ## 3. Elementos para sumar al mapa (props e identidad)
