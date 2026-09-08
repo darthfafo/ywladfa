@@ -61,14 +61,17 @@ export function applyIntegerScale(game: Phaser.Game): void {
 
   // la barra del navegador y la rotación tardan en asentarse; un solo intento en el
   // momento del evento puede leer medidas a mitad de la animación — reintenta un par
-  // de veces más por las dudas.
+  // de veces más por las dudas. El arranque en frío en un celular (primera vez que
+  // se abre la URL, no una recarga) es el caso más lento de asentar: por eso el
+  // último reintento llega bastante más tarde que los de un resize normal.
   const fitWithRetries = (): void => {
     fit();
     setTimeout(fit, 150);
     setTimeout(fit, 400);
+    setTimeout(fit, 1000);
   };
 
-  fit();
+  fitWithRetries();
   window.addEventListener('resize', fitWithRetries);
   window.addEventListener('orientationchange', fitWithRetries);
   window.visualViewport?.addEventListener('resize', fitWithRetries);
