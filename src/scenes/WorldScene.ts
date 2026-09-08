@@ -14,7 +14,7 @@ import { FACING_FRAME, makeCharacter, makeProps, makeTileset, NPC_COLORS } from 
 
 interface Interactable {
   sprite: Phaser.GameObjects.Image;
-  kind: 'cajon' | 'npc' | 'jarilla' | 'pila' | 'cueva' | 'fogon';
+  kind: 'cajon' | 'npc' | 'jarilla' | 'pila' | 'cueva' | 'fogon' | 'guanaco';
   id: string;
   label: string;
 }
@@ -166,16 +166,21 @@ export class WorldScene extends Phaser.Scene {
   private spawnDecor(): void {
     // guanaco a la distancia — vida silvestre del monte, mismo espíritu que
     // hint_agua_3 (huella de guanaco → agua), pero lejos de los nodos de jarilla.
-    addPropImage(this, 'guanaco', tileCenter(9), tileCenter(59), 28)?.setDepth(6);
+    // 42, no 28: a 28 no se distinguía la silueta. Interactuable con una línea de
+    // sabor nada más (no da ni pide nada) — que el jugador se acerque a mirarlo
+    // tiene que valer la pena con algo, aunque sea un chiste.
+    const guanaco = addPropImage(this, 'guanaco', tileCenter(9), tileCenter(59), 42)?.setDepth(6);
+    if (guanaco) this.interactables.push({ sprite: guanaco, kind: 'guanaco', id: 'guanaco', label: 'Mirar' });
 
     // coirón disperso por el monte — decoración de terreno, no interactuable
-    // (distinto de la jarilla, que sí se corta).
+    // (distinto de la jarilla, que sí se corta). 32, no 20: a 20 no se distinguía
+    // la mata de pasto de una mancha de ruido del terreno.
     for (const [tx, ty] of [
       [4, 47],
       [20, 51],
       [12, 73],
     ] as const) {
-      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty), 20)?.setDepth(6);
+      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty), 32)?.setDepth(6);
     }
 
     // restos de costa y un bote menor — la playa se siente usada, no vacía.
@@ -185,10 +190,13 @@ export class WorldScene extends Phaser.Scene {
     // tamaño quedaba en poco más que una mancha marrón.
     addPropImage(this, 'bote_menor', tileCenter(44), tileCenter(108), 52)?.setDepth(6);
 
-    // el manantial: mismo bloque de tiles que ya pinta buildTerrain() (TERRAIN.SPRING,
-    // filas 6-9, columnas 8-11) — la imagen real se pone encima, del mismo tamaño
-    // que ese bloque (4 tiles = 64px), para que se lea como el terreno mismo.
-    addPropImage(this, 'manantial', tileCenter(9.5), tileCenter(7.5), 64)?.setDepth(5);
+    // el manantial: centrado en el mismo bloque de tiles que ya pinta buildTerrain()
+    // (TERRAIN.SPRING, un bloque angosto de 2×2 = 32px). La imagen del pozo tiene
+    // bastante margen transparente alrededor de la forma orgánica de las piedras
+    // (no es un cuadrado sólido), así que se pone bien más grande (96) que ese
+    // bloque — el borde de piedras del dibujo lo tapa entero contra el terreno del
+    // cañadón alrededor, que combina mejor que un cuadrado de agua lisa asomando.
+    addPropImage(this, 'manantial', tileCenter(9.5), tileCenter(7.5), 96)?.setDepth(5);
 
     // perfil de Punta Cuevas: franja de horizonte más allá del borde norte del mapa
     // (mismo borde donde mapgen.ts ya pinta el mar detrás de la meseta) — da
@@ -384,6 +392,9 @@ export class WorldScene extends Phaser.Scene {
         break;
       case 'cueva':
         this.runTriggerById('trig_eleccion_cueva');
+        break;
+      case 'guanaco':
+        bus.emit('ui:toast', { text: '— Guarda que escupen.' });
         break;
     }
   }

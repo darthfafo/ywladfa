@@ -184,15 +184,20 @@ export class DialogueBox {
     // vos" sin ocupar una línea entera repitiendo el nombre del jugador.
     const hasChoices = line.choices.length > 0;
     const speakerId = hasChoices ? 'pc' : line.speakerId;
+    // el nodo que arma la ronda puede estar narrado ("El fuego alcanza para tres
+    // conversaciones...", speaker: narrator) — pero en cuanto tiene opciones, siempre
+    // es al jugador a quien hay que mostrar retrato, sea cual sea el `speaker` que
+    // dejó planteada la pregunta.
+    const showPortrait = hasChoices || !line.isNarrator;
     this.nameText.setText(line.isNarrator || hasChoices ? '' : line.speakerName);
-    const portraitId = line.isNarrator ? null : portraitIdForSpeaker(speakerId, game.state.player.gender);
+    const portraitId = showPortrait ? portraitIdForSpeaker(speakerId, game.state.player.gender) : null;
     const key = portraitId ? portraitTextureKey(portraitId, line.portrait) : null;
     const hasArt = !!key && this.scene.textures.exists(key);
     // el recuadro de fondo se ve SIEMPRE que hay retrato, con o sin arte real: sin
     // esto, el retrato pintado quedaba flotando suelto sobre el fondo de la bandeja,
     // sin ningún borde/caja que lo contenga (a diferencia del placeholder de color,
     // que siempre se sintió "encajado" por ser él mismo un rectángulo sólido).
-    this.portrait.setVisible(!line.isNarrator);
+    this.portrait.setVisible(showPortrait);
     this.portrait.setFillStyle(hasArt ? PAL.ink : portraitColor(line.portrait));
     this.portraitImg.setVisible(hasArt);
     if (hasArt) {

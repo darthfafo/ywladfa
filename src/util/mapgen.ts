@@ -54,7 +54,11 @@ const ZONE_TERRAIN: Record<string, number> = {
   z1_playa: TERRAIN.SAND_DRY,
   z6_punta: TERRAIN.PEBBLE,
   z2_barranca: TERRAIN.CLAY,
-  z3_monte: TERRAIN.SCRUB,
+  // el monte usa el mismo terreno que la meseta, no SCRUB: todavía no hay verdes en
+  // el juego (docs/03-assets.md — se reservan para más adelante en la campaña) y el
+  // monte se lee como una continuación abierta de la meseta, no como una zona propia
+  // con su propio color.
+  z3_monte: TERRAIN.MESA,
   z4_meseta: TERRAIN.MESA,
   z5_canadon: TERRAIN.CANYON,
 };
@@ -128,8 +132,11 @@ export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => bool
     }
   }
 
-  // el manantial, al fondo del cañadón
-  for (let j = 6; j < 10; j++) for (let i = 8; i < 12; i++) g[j]![i] = TERRAIN.SPRING;
+  // el manantial, al fondo del cañadón — bloque angosto (2×2, no 4×4): la imagen
+  // real que se pone encima (WorldScene.spawnDecor) tiene bastante margen
+  // transparente alrededor de la piedra, así que un bloque de agua lisa más grande
+  // que eso se veía por las esquinas, como un cuadrado azul plano detrás del dibujo.
+  for (let j = 7; j < 9; j++) for (let i = 9; i < 11; i++) g[j]![i] = TERRAIN.SPRING;
 
   // resuelve la variante visual de cada celda: mismo mapa siempre, sin patrón obvio
   for (let j = 0; j < H; j++) {

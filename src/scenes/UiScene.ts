@@ -134,9 +134,13 @@ export class UiScene extends Phaser.Scene {
     track(cargaEl);
   }
 
-  /** Oculta/muestra el HUD entero — cutscenes de pantalla completa lo tapan (docs/01 §4). */
+  /** Oculta/muestra el HUD entero — cutscenes de pantalla completa lo tapan (docs/01 §4).
+   * El joystick/botón de acción también: CampScene/CargoScene pausan World (nadie
+   * vuelve a limpiar el contexto del botón, ej. "HABLAR" quedaba flotando congelado
+   * sobre la escena nueva) y de por sí no hacen falta en una pantalla sin mundo. */
   private setHudVisible(visible: boolean): void {
     for (const o of this.hudObjects) o.setVisible(visible);
+    this.touch.setVisible(visible);
   }
 
   /* ---------------- bandeja (franja inferior, 96 px) ---------------- */
