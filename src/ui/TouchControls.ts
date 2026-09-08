@@ -8,7 +8,11 @@ const CFG = {
   thumbRadius: 9,
   deadZone: 4,
   grabRadius: 30, // zona de agarre más generosa que el círculo visual del joystick
-  rightEdge: VIEW.width - 8, // margen derecho compartido: acá se alinean joystick y botón
+  // margen derecho compartido: acá se alinean joystick y botón. 20, no 8: con 8 el
+  // punto más lejano al que llega la palanca (rightEdge) quedaba pegado al borde
+  // físico de la pantalla — en un celular real el dedo se salía del vidrio al
+  // empujar del todo hacia la derecha.
+  rightEdge: VIEW.width - 20,
   btnAboveTray: 26, // centro del botón, medido hacia arriba desde el borde de la bandeja
   joyAboveBtn: 60, // separación entre el centro del joystick y el del botón
 };
