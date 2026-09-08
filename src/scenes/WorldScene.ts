@@ -451,6 +451,21 @@ export class WorldScene extends Phaser.Scene {
       game.state.progress.zone = zone.id;
       bus.emit('zone:entered', { zoneId: zone.id, label: zone.label });
     }
+
+    // red de contención: los dos pasajes al cañadón ya exigen n1_dafydd_perdido,
+    // así que esto no debería poder pasar nunca — pero si por lo que sea el
+    // jugador termina adentro antes de tiempo, lo saca en vez de dejarlo ver el
+    // manantial fuera de hora. Mejor esto que confiar solo en la colisión.
+    if (zone?.id === 'z5_canadon' && !game.flags.is('n1_dafydd_perdido')) {
+      this.player.setPosition(tileCenter(32), tileCenter(24));
+      this.lastTile = { x: -1, y: -1 };
+      const back = zoneAt(game.level, 32, 24);
+      if (back) game.state.progress.zone = back.id;
+      bus.emit('ui:toast', { text: 'Todavía no. Hay que volver más tarde.' });
+      this.checkTriggers();
+      return;
+    }
+
     this.checkTriggers();
   }
 
