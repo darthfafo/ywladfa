@@ -180,10 +180,11 @@ export class DialogueBox {
     // con opciones, el nodo sigue teniendo como `speaker` a quien preguntó (ej. Edwyn),
     // pero lo que se muestra abajo son las respuestas del jugador — sin este cambio
     // quedaba el nombre/retrato del NPC encabezando lo que decía el propio jugador.
+    // El nombre no hace falta: el retrato solo ya alcanza para leer "esto lo elegís
+    // vos" sin ocupar una línea entera repitiendo el nombre del jugador.
     const hasChoices = line.choices.length > 0;
     const speakerId = hasChoices ? 'pc' : line.speakerId;
-    const speakerName = hasChoices ? game.state.player.name : line.speakerName;
-    this.nameText.setText(line.isNarrator ? '' : speakerName);
+    this.nameText.setText(line.isNarrator || hasChoices ? '' : line.speakerName);
     const portraitId = line.isNarrator ? null : portraitIdForSpeaker(speakerId, game.state.player.gender);
     const key = portraitId ? portraitTextureKey(portraitId, line.portrait) : null;
     const hasArt = !!key && this.scene.textures.exists(key);
@@ -346,6 +347,16 @@ export class DialogueBox {
       focused = pageStart[page]!;
       paint();
     };
+    // el toque en la bandeja (choicesAdvancePage, más abajo) solo va hacia adelante
+    // — "seguir" es siempre para adelante — pero con teclado subir tiene que poder
+    // cruzar de vuelta a la página anterior: sin esto, una vez que bajabas a una
+    // página siguiente quedabas sin forma de volver a ver las opciones de arriba.
+    const prevPage = (): void => {
+      if (page <= 0) return;
+      page -= 1;
+      focused = pageEnd(page);
+      paint();
+    };
     paint();
     this.choicesAdvancePage = pageStart.length > 1 ? nextPage : null;
 
@@ -359,6 +370,10 @@ export class DialogueBox {
       paint();
     };
     const onUp = (): void => {
+      if (focused <= pageStart[page]!) {
+        prevPage();
+        return;
+      }
       focused = Math.max(focused - 1, pageStart[page]!);
       paint();
     };

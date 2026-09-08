@@ -149,7 +149,7 @@
           "choices": [
             {
               "id": "c_culpar",
-              "text": "Alguien va a tener que explicar esto.",
+              "text": "Tenés que explicar esto.",
               "next": "e_culpar",
               "effects": [
                 {
@@ -167,7 +167,7 @@
             },
             {
               "id": "c_ayudar",
-              "text": "Contemos de nuevo. Los dos.",
+              "text": "Contemos de nuevo, juntos.",
               "next": "e_ayudar",
               "effects": [
                 {
@@ -185,7 +185,7 @@
             },
             {
               "id": "c_callar",
-              "text": "(No decir nada.)",
+              "text": "(Callarte.)",
               "next": "e_callar",
               "effects": [
                 {

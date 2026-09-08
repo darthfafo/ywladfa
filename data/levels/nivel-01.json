@@ -344,8 +344,8 @@
         "y": 68,
         "w": 5,
         "h": 26,
-        "note": "la subida de la barranca: corredor vertical largo, es la ascension del nivel",
-        "requires": "flags.n1_cajones_bajados >= 8"
+        "note": "la subida de la barranca: corredor vertical largo, es la ascension del nivel. Pide también haber pasado por la escena de Edwyn (trig_edwyn_deposito) — no alcanza con los 8 cajones, así no se puede subir sin haberlo escuchado.",
+        "requires": "flags.n1_cajones_bajados >= 8 && flags.n1_edwyn_deposito == true"
       },
       {
         "id": "p_playa_punta",
@@ -488,13 +488,16 @@
     {
       "id": "trig_edwyn_deposito",
       "type": "dialogue",
+      "zone": "z1_playa",
       "requires": "flags.n1_cajones_bajados >= 8",
-      "note": "los ocho, no antes: no tiene sentido que se ponga a contar el depósito con cajones todavía en la orilla.",
-      "manual": true,
+      "note": "los ocho, no antes: no tiene sentido que se ponga a contar el depósito con cajones todavía en la orilla. Automático (no manual): dispara solo apenas se baja el octavo cajón, no depende de que el jugador vaya a buscarlo — y n1_edwyn_deposito es lo que exige p_playa_barranca, así no se puede subir a la barranca sin haber pasado por esta escena.",
       "once": true,
       "turnCost": 1,
       "action": {
-        "dialogue": "d_n1_edwyn_deposito"
+        "dialogue": "d_n1_edwyn_deposito",
+        "setFlag": {
+          "n1_edwyn_deposito": true
+        }
       }
     },
     {
