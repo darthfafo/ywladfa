@@ -504,7 +504,7 @@
       "once": true,
       "turnCost": 0,
       "action": {
-        "toast": "Las cuevas.",
+        "dialogue": "d_n1_subida_barranca",
         "setFlag": {
           "n1_llego_barranca": true
         }

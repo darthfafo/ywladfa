@@ -246,6 +246,24 @@
       }
     },
     {
+      "id": "d_n1_subida_barranca",
+      "lang": "none",
+      "start": "sb1",
+      "note": "Primera llegada a z2_barranca — antes de la elección de cueva (ch_n1_cueva).",
+      "nodes": {
+        "sb1": {
+          "speaker": "narrator",
+          "text": "Las cuevas. Bocas oscuras en la pared de arcilla, sobre la playa.",
+          "next": "sb2"
+        },
+        "sb2": {
+          "speaker": "narrator",
+          "text": "Ahí va a dormir la colonia esta noche. Y muchas noches más.",
+          "end": true
+        }
+      }
+    },
+    {
       "id": "d_n1_mari_flavor",
       "lang": "cym",
       "start": "mf1",

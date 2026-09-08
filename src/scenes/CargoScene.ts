@@ -4,6 +4,7 @@ import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
 import type { BultoDef, ResourceId } from '@/core/types';
+import { addSceneBackground } from '@/util/assets';
 import { crisp, FONT, FONT_FAMILY } from '@/util/text';
 
 interface Card {
@@ -49,7 +50,11 @@ export class CargoScene extends Phaser.Scene {
     const level = game.state.progress.level;
     this.capacity = registry.levelBalance(level).cargoDecision?.capacity ?? 5;
 
-    this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void).setOrigin(0, 0);
+    // fondo real si ya existe (los bultos amontonados, listos para elegir) — se ve
+    // detrás de la grilla, oscurecido para no competir con la lectura de las 8
+    // tarjetas: esta pantalla no puede perder legibilidad por atmósfera.
+    const bg = addSceneBackground(this, 'decision_carga', VIEW.width / 2, VIEW.height / 2, VIEW.width, VIEW.height);
+    this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void, bg ? 0.62 : 1).setOrigin(0, 0);
 
     crisp(
       this.add

@@ -31,6 +31,7 @@ const CARGA_LABEL_X = 217;
  * (si ya existe el PNG) y HUD oculto mientras dura — docs/01-nivel-01.md §4. */
 const CUTSCENE_DIALOGUES: Record<string, string> = {
   d_n1_cold_open: 'cold_open',
+  d_n1_subida_barranca: 'subida_barranca',
   d_n1_manantial: 'manantial',
   d_n1_final: 'punta_final',
 };
