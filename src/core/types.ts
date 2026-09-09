@@ -219,10 +219,15 @@ export interface ChoiceScreenDef {
   prompt: string;
   turnCost: number;
   options: Array<{ id: string; text: string; effects?: DialogueEffect[] }>;
+  /** Aclaración técnica sobre la decisión (consecuencias no obvias en el texto de
+   * las opciones) — va en el pie del panel, ver UiScene.openOverlay. */
+  hint?: string;
 }
 
 export interface TutorialDef {
   id: string;
   title: string;
   text: string;
+  /** Consejo de juego breve, en el pie del panel — ver UiScene.openOverlay. */
+  hint?: string;
 }

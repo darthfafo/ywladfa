@@ -1004,6 +1004,110 @@
           "end": true
         }
       }
+    },
+    {
+      "id": "d_n1_edwyn_flavor",
+      "npc": "npc_edwyn",
+      "lang": "cym",
+      "start": "ef_j1_pocos",
+      "note": "resguardo de trig_edwyn_flavor, ver d_n1_lewis_flavor. Cubre la playa (J1, antes y después de contar el depósito) y la barranca (J2-J3, adonde se muda con movesTo).",
+      "nodes": {
+        "ef_j1_pocos": {
+          "speaker": "npc_edwyn",
+          "portrait": "tenso",
+          "condition": "progress.day == 1 && flags.n1_edwyn_deposito != true && flags.n1_cajones_bajados < 4",
+          "text": "Van pocos. Movete, que la marea no espera a nadie.",
+          "end": true
+        },
+        "ef_j1_varios": {
+          "speaker": "npc_edwyn",
+          "portrait": "tenso",
+          "condition": "progress.day == 1 && flags.n1_edwyn_deposito != true",
+          "text": "Ya casi. Los que faltan, más vale que estén enteros.",
+          "end": true
+        },
+        "ef_j1_despues": {
+          "speaker": "npc_edwyn",
+          "portrait": "neutral",
+          "condition": "progress.day == 1",
+          "text": "Cuando suban al campamento, voy con ustedes. Acá abajo ya no me queda nada.",
+          "end": true
+        },
+        "ef_j2_culpa": {
+          "speaker": "npc_edwyn",
+          "portrait": "tenso",
+          "condition": "progress.day == 2 && flags.n1_culpo_edwyn == true",
+          "text": "Seguís mirándome así. Está bien. Yo también me miro así.",
+          "end": true
+        },
+        "ef_j2_bond": {
+          "speaker": "npc_edwyn",
+          "portrait": "calido",
+          "condition": "progress.day == 2 && flags.n1_bond_edwyn >= 1",
+          "text": "Contamos bien las bolsas esa vez. Fue algo, al menos.",
+          "end": true
+        },
+        "ef_j2": {
+          "speaker": "npc_edwyn",
+          "portrait": "neutral",
+          "condition": "progress.day == 2",
+          "text": "Acá arriba se ve mejor el desastre que dejé abajo.",
+          "end": true
+        },
+        "ef_j3": {
+          "speaker": "npc_edwyn",
+          "portrait": "neutral",
+          "condition": "progress.day == 3",
+          "text": "Lo que llevemos de acá, que alcance. No prometo nada más.",
+          "end": true
+        },
+        "ef_default": {
+          "speaker": "npc_edwyn",
+          "portrait": "neutral",
+          "text": "Después seguimos.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_pepperell_flavor",
+      "npc": "npc_pepperell",
+      "lang": "cym",
+      "start": "pf_pocos",
+      "note": "resguardo de trig_pepperell_flavor, ver d_n1_lewis_flavor. Solo J1: Pepperell no está en el mapa ningún otro día.",
+      "nodes": {
+        "pf_pocos": {
+          "speaker": "npc_pepperell",
+          "portrait": "tenso",
+          "broken": true,
+          "condition": "flags.n1_cajones_bajados < 4",
+          "text": "Muevan. La marea no perdona.",
+          "end": true
+        },
+        "pf_varios": {
+          "speaker": "npc_pepperell",
+          "portrait": "neutral",
+          "broken": true,
+          "condition": "flags.n1_cajones_bajados < 8",
+          "text": "Van bien. No se paren.",
+          "end": true
+        },
+        "pf_listo": {
+          "speaker": "npc_pepperell",
+          "portrait": "neutral",
+          "broken": true,
+          "condition": "flags.n1_edwyn_deposito != true",
+          "text": "Ya está de mi lado. Ahora es cosa de ustedes.",
+          "end": true
+        },
+        "pf_default": {
+          "speaker": "npc_pepperell",
+          "portrait": "tenso",
+          "broken": true,
+          "text": "Yo ya cumplí. Suerte allá arriba.",
+          "end": true
+        }
+      }
     }
   ],
   "choices": [
@@ -1011,6 +1115,7 @@
       "id": "ch_n1_cueva",
       "prompt": "Hay tres cuevas libres. Elegí la de tu familia.",
       "turnCost": 1,
+      "hint": "No hay opción sin costo: cada cueva mueve la salud y el ánimo de tu madre para un lado distinto, no solo la comodidad.",
       "options": [
         {
           "id": "cueva_alta",
@@ -1072,6 +1177,7 @@
       "id": "ch_n1_tareas",
       "prompt": "Lewis reparte el día. Solo alcanza para una cosa.",
       "turnCost": 0,
+      "hint": "Cada tarea deja algo más que la excusa para moverte: la leña suma al instante, quedarte ayuda a tu madre, y el agua depende de si subís a la meseta o bajás al cañadón.",
       "options": [
         {
           "id": "t_agua",
@@ -1132,22 +1238,26 @@
     {
       "id": "tut_carga",
       "title": "Carga",
-      "text": "Todo lo que levantás pesa: la barra de la derecha es tu carga, y al pasar el límite no te bloqueás, solo caminás más lento. Llevá los 8 cajones desde la orilla hasta la pila de tierra para descargarlos."
+      "text": "Todo lo que levantás pesa: la barra de la derecha es tu carga, y al pasar el límite no te bloqueás, solo caminás más lento. Llevá los 8 cajones desde la orilla hasta la pila de tierra para descargarlos.",
+      "hint": "Consejo: conviene explorar el resto de la playa antes de cargar el primer cajón — vas a caminar mucho más lento en cuanto empieces."
     },
     {
       "id": "tut_peso",
       "title": "Sobrecarga",
-      "text": "Estás sobre tu capacidad. Podés seguir así, o dejar algo y volver a buscarlo. Volver cuesta tiempo, y el tiempo es lo único que no se recupera."
+      "text": "Estás sobre tu capacidad. Podés seguir así, o dejar algo y volver a buscarlo. Volver cuesta tiempo, y el tiempo es lo único que no se recupera.",
+      "hint": "Consejo: la sobrecarga nunca te deja trabado, solo frena — si el tiempo apremia, a veces conviene aguantar el peso y no volver."
     },
     {
       "id": "tut_turnos",
       "title": "La jornada",
-      "text": "El día tiene cuatro momentos. El reloj no corre solo: avanza cuando hacés algo que cuesta tiempo. Caminar y mirar es gratis."
+      "text": "El día tiene cuatro momentos. El reloj no corre solo: avanza cuando hacés algo que cuesta tiempo. Caminar y mirar es gratis.",
+      "hint": "Consejo: mirá bien antes de actuar. Ir y volver de un lugar sin hacer nada ahí no gasta turno — decidir mal sí."
     },
     {
       "id": "tut_noche",
       "title": "La noche",
-      "text": "Cada noche el grupo come y bebe. Si hay leña, el fuego es grande y la gente se recupera. Si no, no."
+      "text": "Cada noche el grupo come y bebe. Si hay leña, el fuego es grande y la gente se recupera. Si no, no.",
+      "hint": "Consejo: juntá algo de leña temprano en el día — de noche, con lo justo, el fuego sale chico aunque corras a buscar más."
     }
   ]
 }

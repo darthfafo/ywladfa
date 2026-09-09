@@ -336,7 +336,7 @@ export class UiScene extends Phaser.Scene {
   private openTutorial(id: string): void {
     const t = registry.tutorial(id);
     if (!t) return;
-    this.openOverlay(t.title, t.text, [{ label: 'Entendido', onPick: () => this.closeOverlay() }], true);
+    this.openOverlay(t.title, t.text, [{ label: 'Entendido', onPick: () => this.closeOverlay() }], true, t.hint);
   }
 
   private openChoice(id: string): void {
@@ -351,6 +351,8 @@ export class UiScene extends Phaser.Scene {
           this.closeOverlay();
         },
       })),
+      false,
+      c.hint,
     );
   }
 
@@ -363,12 +365,17 @@ export class UiScene extends Phaser.Scene {
    * `retro` es para las OPCIONES de los tutoriales (título + único botón, siempre cortos) — las
    * pantallas de decisión tienen oraciones largas de datos y en Press Start 2P
    * (mucho más ancha por carácter) arriesgan un wrap de demasiadas líneas. El título sí va
-   * siempre en fuente retro: es corto en todos los casos ("Carga", "Decisión", etc). */
+   * siempre en fuente retro: es corto en todos los casos ("Carga", "Decisión", etc).
+   * `footer` (opcional) es la aclaración técnica o el consejo de juego de
+   * `hint` en los datos (choices/tutoriales) — va anclado abajo del todo del
+   * panel, separado por su propia línea, para no dejar vacío el resto de la
+   * franja cuando el cuerpo y las opciones son cortos (que es casi siempre). */
   private openOverlay(
     title: string,
     body: string,
     options: Array<{ label: string; onPick: () => void }>,
     retro = false,
+    footer?: string,
   ): void {
     this.closeOverlay();
     input.locked = true;
@@ -437,6 +444,27 @@ export class UiScene extends Phaser.Scene {
       y += boxH + 8;
       return { text: label, onPick: o.onPick };
     });
+
+    if (footer) {
+      const panelBottom = top + VIEW.world.h - margin;
+      const footerT = crisp(
+        this.add
+          .text(16, 0, footer, {
+            fontFamily: FONT_FAMILY,
+            fontSize: FONT.small,
+            color: '#7FB0B8',
+            wordWrap: { width: VIEW.width - 32 },
+            lineSpacing: 3,
+          })
+          .setResolution(4),
+      );
+      // anclado abajo del todo salvo que las opciones ya lleguen tan abajo que se
+      // pisarían — en ese caso, se corre justo debajo de la última opción.
+      const footerY = Math.max(y + 4, panelBottom - footerT.height - 12);
+      footerT.setPosition(16, footerY);
+      const footerRule = this.add.rectangle(16, footerY - 8, VIEW.width - 32, 1, PAL.seaPale, 0.25).setOrigin(0, 0);
+      items.push(footerRule, footerT);
+    }
 
     this.overlay = this.add.container(0, 0, items).setDepth(120);
     // abajo/arriba + botón de acción, además del click/tap (GDD §8)

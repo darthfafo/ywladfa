@@ -184,7 +184,17 @@
         "id": "npc_edwyn",
         "x": 31,
         "y": 98,
-        "day": 1
+        "day": [
+          1,
+          2,
+          3
+        ],
+        "movesTo": {
+          "day": 2,
+          "turn": "amanecer",
+          "x": 30,
+          "y": 52
+        }
       },
       {
         "id": "npc_lewis",
@@ -824,6 +834,28 @@
       "turnCost": 0,
       "action": {
         "dialogue": "d_n1_berwyn_flavor"
+      }
+    },
+    {
+      "id": "trig_edwyn_flavor",
+      "type": "dialogue",
+      "note": "resguardo de trig_edwyn_deposito (una sola vez): antes y después, siempre algo en vez de 'Ahora no.', tanto en la playa (J1) como en la barranca (J2-J3, adonde se muda).",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_edwyn_flavor"
+      }
+    },
+    {
+      "id": "trig_pepperell_flavor",
+      "type": "dialogue",
+      "note": "resguardo de trig_pepperell_cajones (una sola vez, la intro): de ahí en más, siempre algo en vez de 'Ahora no.' — mientras dure J1, que es el único día que está en el mapa.",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_pepperell_flavor"
       }
     }
   ],
