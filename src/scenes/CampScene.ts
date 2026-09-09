@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
+import type { UiScene } from '@/scenes/UiScene';
 import type { WorldScene } from '@/scenes/WorldScene';
 import { addSceneBackground } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
@@ -107,12 +108,27 @@ export class CampScene extends Phaser.Scene {
 
   /** Por si la escena se cierra por otra vía (cambio de nivel, etc.), no dejar World/Ui pausados. */
   private restoreOnShutdown(): void {
+    this.scene.resume('World');
+    this.scene.resume('Ui');
+    // hud-visible ANTES de tocar cualquier diálogo nuevo: pisa touch/HUD a mano
+    // (ver UiScene.setHudVisible) y si corriera DESPUÉS de abrir uno, se lo tapaba
+    // — el joystick volvía a aparecer encima de un diálogo con el juego bloqueado
+    // (input.locked), que es exactamente lo que se veía "trabado" cada amanecer.
+    bus.emit('ui:hud-visible', { visible: true });
+
+    const world = this.scene.get('World') as WorldScene;
+    const ui = this.scene.get('Ui') as UiScene;
     // te despertás en el campamento, no donde te agarró el sueño — si la noche cayó
     // mientras todavía andabas explorando (ej. volviendo del manantial), World seguía
     // pausado ahí mismo y al reanudar aparecías en pleno cañadón en la jornada nueva.
-    (this.scene.get('World') as WorldScene).wakeAtCamp();
-    this.scene.resume('World');
-    this.scene.resume('Ui');
-    bus.emit('ui:hud-visible', { visible: true });
+    // La cutscene de amanecer (si corresponde) va ANTES de reposicionar: así cierra
+    // sola del todo (su propio diálogo, su propio cierre) antes de que
+    // wakeAtCamp()→trackTile() pueda disparar trig_amanecer_j2 — nunca compiten por
+    // el mismo DialogueBox (ver UiScene.showSunrise).
+    if (game.state.progress.turn === 'amanecer') {
+      ui.showSunrise(game.state.progress.day, () => world.wakeAtCamp());
+    } else {
+      world.wakeAtCamp();
+    }
   }
 }
