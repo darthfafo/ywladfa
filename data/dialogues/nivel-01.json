@@ -537,6 +537,12 @@
               "codex": "cod_agua_patagonia"
             }
           ],
+          "next": "m4"
+        },
+        "m4": {
+          "speaker": "npc_dafydd",
+          "portrait": "neutral",
+          "text": "Volvamos. Ya casi anochece.",
           "end": true
         }
       }

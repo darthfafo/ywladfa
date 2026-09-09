@@ -223,7 +223,8 @@
           "turn": "tarde",
           "x": 11,
           "y": 9
-        }
+        },
+        "hiddenAfterFlag": "_dafydd_se_fue"
       }
     ],
     "gatherNodes": [

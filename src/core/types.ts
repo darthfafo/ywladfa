@@ -157,6 +157,8 @@ export interface LevelDef {
       afterFlag?: string;
       /** Una reubicación programada: a partir de este día/turno, aparece en x,y en vez de la posición base. */
       movesTo?: { day: number; turn: TurnId; x: number; y: number };
+      /** Una vez que este flag está, el NPC deja de mostrarse en el mapa (ya se despidió y se fue). */
+      hiddenAfterFlag?: string;
     }>;
     gatherNodes: Array<{ id: string; type: ResourceId; x: number; y: number }>;
     cajones: Array<{ x: number; y: number }>;

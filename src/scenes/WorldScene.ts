@@ -112,6 +112,29 @@ export class WorldScene extends Phaser.Scene {
     this.trackTile();
   }
 
+  /** Al cerrar d_n1_manantial (UiScene.openDialogue), Dafydd se despide y arranca a
+   * caminar de vuelta al fogón en vez de quedarse plantado sentado ahí el resto de
+   * la jornada. El flag `_dafydd_se_fue` lo pone ESTE método, no el trigger ni el
+   * diálogo: `trig_manantial` ya pone `n1_encontro_manantial` en su propia acción,
+   * ANTES de que el diálogo llegue a abrirse (TriggerSystem.consume aplica setFlag
+   * y spendTurns antes de que la escena lance nada) — usar ese flag como
+   * `hiddenAfterFlag` escondía el sprite de un frame al otro sin que se viera
+   * nunca la despedida. Con un flag propio, puesto acá, el tween sí se ve. */
+  sendDafyddHome(): void {
+    const it = this.interactables.find((x) => x.kind === 'npc' && x.id === 'npc_dafydd');
+    if (!it || !it.sprite.visible) return;
+    game.flags.set('_dafydd_se_fue', true);
+    const sp = game.level.spawns.fogon;
+    this.tweens.add({
+      targets: it.sprite,
+      x: tileCenter(sp.x),
+      y: tileCenter(sp.y),
+      duration: 1200,
+      ease: 'Sine.inOut',
+      onComplete: () => it.sprite.setVisible(false).setActive(false),
+    });
+  }
+
   private spawnProps(level: typeof game.level): void {
     // el Mimosa, anclado frente a la costa hasta que zarpa (trig_vigia_mimosa) —
     // arte real si ya existe (src/assets/props/mimosa.png), si no el placeholder
@@ -282,7 +305,8 @@ export class WorldScene extends Phaser.Scene {
 
       const dayOk = n.day === '*' || (Array.isArray(n.day) ? n.day.includes(day) : n.day === day);
       const flagOk = !n.afterFlag || game.flags.is(n.afterFlag);
-      const visible = dayOk && flagOk;
+      const hidden = !!n.hiddenAfterFlag && game.flags.is(n.hiddenAfterFlag);
+      const visible = dayOk && flagOk && !hidden;
       it.sprite.setVisible(visible).setActive(visible);
 
       const m = n.movesTo;

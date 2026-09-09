@@ -4,6 +4,7 @@ import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
 import type { ResourceId } from '@/core/types';
+import type { WorldScene } from '@/scenes/WorldScene';
 import { addSceneBackground } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { TouchControls } from '@/ui/TouchControls';
@@ -298,6 +299,7 @@ export class UiScene extends Phaser.Scene {
         this.scene.launch('Transition', { next });
         return;
       }
+      if (id === 'd_n1_manantial') (this.scene.get('World') as WorldScene).sendDafyddHome();
       this.touch.setContext(null);
       this.touch.setVisible(true);
       if (cutsceneId) {
