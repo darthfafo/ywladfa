@@ -781,6 +781,50 @@
         "next": "nivel-02",
         "dialogue": "d_n1_final"
       }
+    },
+    {
+      "id": "trig_lewis_flavor",
+      "type": "dialogue",
+      "note": "resguardo de trig_lewis_j2_manana (una sola vez): fuera de esa ventana, o después de que ya disparó, Lewis siempre tiene algo que decir en vez de 'Ahora no.' — condicionado por día/turno/flags, ver d_n1_lewis_flavor.",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_lewis_flavor"
+      }
+    },
+    {
+      "id": "trig_matthews_flavor_2",
+      "type": "dialogue",
+      "note": "resguardo de trig_matthews_flavor (una sola vez, la primera charla): de ahí en más, siempre algo en vez de 'Ahora no.'",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_matthews_flavor_2"
+      }
+    },
+    {
+      "id": "trig_mari_flavor_2",
+      "type": "dialogue",
+      "note": "resguardo de trig_mari_flavor (una sola vez, la primera charla): de ahí en más, siempre algo en vez de 'Ahora no.'",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_mari_flavor_2"
+      }
+    },
+    {
+      "id": "trig_berwyn_flavor",
+      "type": "dialogue",
+      "note": "resguardo de trig_berwyn_libreta (una sola vez, cuando entrega la libreta): antes y después de eso, siempre algo en vez de 'Ahora no.'",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_berwyn_flavor"
+      }
     }
   ],
   "hints": [

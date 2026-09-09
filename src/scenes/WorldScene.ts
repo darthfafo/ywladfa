@@ -448,11 +448,16 @@ export class WorldScene extends Phaser.Scene {
     // automático y ya disparado, Y en trig_manantial, todavía pendiente) — filtrar
     // recién al final se quedaba con el primero por orden de archivo aunque ya
     // hubiera disparado, y nunca llegaba a mirar el que sí correspondía.
+    // hasFired solo descarta si `once` (igual que TriggerSystem.check): los
+    // resguardos de charla repetible (ej. trig_lewis_flavor, once:false) tienen
+    // que poder volver a disparar — si no, la primera vez que dan su línea ya
+    // quedan marcados en triggersFired y el personaje cae en "Ahora no." igual.
     const t = game.level.triggers.find((tr) => {
       if (!tr.action?.dialogue) return false;
       const matches = registry.dialogue(tr.action.dialogue).npc === npcId || tr.action.dialogue.includes(shortName(npcId));
       if (!matches) return false;
-      return !this.triggers.hasFired(tr.id) && game.flags.eval(tr.requires);
+      if (tr.once && this.triggers.hasFired(tr.id)) return false;
+      return game.flags.eval(tr.requires);
     });
     if (t) {
       this.runTrigger(t as TriggerDef);

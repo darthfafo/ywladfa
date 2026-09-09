@@ -846,6 +846,164 @@
           "end": true
         }
       }
+    },
+    {
+      "id": "d_n1_lewis_flavor",
+      "npc": "npc_lewis",
+      "lang": "cym",
+      "start": "lf_j1",
+      "note": "resguardo de trig_lewis_flavor: siempre hay una línea de Lewis según día/turno/flags, para no caer en 'Ahora no.' fuera de trig_lewis_j2_manana. Nodos en orden de más específico a más genérico (ver DialogueSystem.resolveCurrent).",
+      "nodes": {
+        "lf_j1": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "condition": "progress.day == 1",
+          "text": "Esta noche paramos acá. Mañana vemos el agua y la leña. Por ahora, que no falte nada para la cena.",
+          "end": true
+        },
+        "lf_j2_dafydd_buscar": {
+          "speaker": "npc_lewis",
+          "portrait": "tenso",
+          "condition": "progress.day == 2 && progress.turn == 'tarde' && flags.n1_dafydd_perdido == true && flags.n1_encontro_manantial != true",
+          "text": "Andá a buscarlo. Yo me quedo acá por si vuelve solo.",
+          "end": true
+        },
+        "lf_j2_dafydd_antes": {
+          "speaker": "npc_lewis",
+          "portrait": "tenso",
+          "condition": "progress.day == 2 && progress.turn == 'tarde'",
+          "text": "¿Viste al chico? Se me perdió de vista hace un rato. Dale una vuelta, que no se aleje mucho.",
+          "end": true
+        },
+        "lf_j3_sin_carga": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "condition": "progress.day == 3 && flags.n1_carga == null",
+          "text": "Cuando estés listo, elegí qué llevamos. No hay vuelta atrás después, pensalo bien.",
+          "end": true
+        },
+        "lf_j3_con_carga": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "condition": "progress.day == 3",
+          "text": "Ya está. Lo que quedó, quedó. Ahora hay que caminar.",
+          "end": true
+        },
+        "lf_default": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "text": "Sigamos. No hay mucho más que decir por ahora.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_matthews_flavor_2",
+      "npc": "npc_matthews",
+      "lang": "cym",
+      "start": "mtf2_j1",
+      "note": "resguardo de trig_matthews_flavor_2, ver d_n1_lewis_flavor.",
+      "nodes": {
+        "mtf2_j1": {
+          "speaker": "npc_matthews",
+          "portrait": "calido",
+          "condition": "progress.day == 1",
+          "text": "La sopa de esta noche también va a alcanzar. Ya es una buena noticia, para el día que tuvimos.",
+          "end": true
+        },
+        "mtf2_j2": {
+          "speaker": "npc_matthews",
+          "portrait": "neutral",
+          "condition": "progress.day == 2",
+          "text": "Nadie te va a preguntar si tenés miedo. Yo tampoco lo pregunto. Pero lo veo.",
+          "end": true
+        },
+        "mtf2_j3": {
+          "speaker": "npc_matthews",
+          "portrait": "calido",
+          "condition": "progress.day == 3",
+          "text": "Lo que decidas llevar, llevalo bien. El resto se las arregla solo — o nosotros, que para eso estamos.",
+          "end": true
+        },
+        "mtf2_default": {
+          "speaker": "npc_matthews",
+          "portrait": "neutral",
+          "text": "Seguí. Yo sigo atrás, rezando bajito para que no me escuchen.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_mari_flavor_2",
+      "npc": "npc_mari",
+      "lang": "cym",
+      "start": "mf2_j1",
+      "note": "resguardo de trig_mari_flavor_2, ver d_n1_lewis_flavor.",
+      "nodes": {
+        "mf2_j1": {
+          "speaker": "npc_mari",
+          "portrait": "calido",
+          "condition": "progress.day == 1",
+          "text": "¿Ya comiste? Comé antes de que se enfríe. Yo como después.",
+          "end": true
+        },
+        "mf2_j2": {
+          "speaker": "npc_mari",
+          "portrait": "tenso",
+          "condition": "progress.day == 2",
+          "text": "(tose) No es nada, ya te dije. El viento, nomás.",
+          "end": true
+        },
+        "mf2_j3": {
+          "speaker": "npc_mari",
+          "portrait": "neutral",
+          "condition": "progress.day == 3",
+          "text": "Estoy mejor. No preguntes tanto y caminá.",
+          "end": true
+        },
+        "mf2_default": {
+          "speaker": "npc_mari",
+          "portrait": "calido",
+          "text": "Andá, andá. Yo estoy bien acá.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_berwyn_flavor",
+      "npc": "npc_berwyn",
+      "lang": "cym",
+      "start": "bf_sin_libreta",
+      "note": "resguardo de trig_berwyn_flavor, ver d_n1_lewis_flavor. Antes de trig_berwyn_libreta explica por qué todavía no tiene nada para anotar; después, sostiene el hábito del diario.",
+      "nodes": {
+        "bf_sin_libreta": {
+          "speaker": "npc_berwyn",
+          "portrait": "neutral",
+          "condition": "flags.n1_fogon_2 != true",
+          "text": "Todavía no tengo nada para anotar. Esperá a que pase algo que valga la pena.",
+          "end": true
+        },
+        "bf_con_libreta_j2": {
+          "speaker": "npc_berwyn",
+          "portrait": "calido",
+          "condition": "progress.day == 2",
+          "text": "¿Ya escribiste algo? Lo que sea. Mañana ya va a sonar distinto.",
+          "end": true
+        },
+        "bf_con_libreta_j3": {
+          "speaker": "npc_berwyn",
+          "portrait": "calido",
+          "condition": "progress.day == 3",
+          "text": "Anotá esto también, aunque sea una línea. Después no te vas a acordar cómo fue de verdad.",
+          "end": true
+        },
+        "bf_default": {
+          "speaker": "npc_berwyn",
+          "portrait": "neutral",
+          "text": "Después seguimos. Tengo que terminar esto.",
+          "end": true
+        }
+      }
     }
   ],
   "choices": [
