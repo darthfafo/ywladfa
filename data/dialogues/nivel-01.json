@@ -814,6 +814,17 @@
               "morale": -4
             }
           ],
+          "next": "m3"
+        },
+        "m3": {
+          "speaker": "narrator",
+          "text": "Mari está un poco más allá, mirando el mismo punto. No se movió de ahí desde que empezaste a subir.",
+          "next": "m4"
+        },
+        "m4": {
+          "speaker": "npc_mari",
+          "portrait": "neutral",
+          "text": "Ya está. Andá bajando, que hace frío.",
           "end": true
         }
       }
