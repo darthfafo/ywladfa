@@ -402,10 +402,11 @@
         "id": "p_meseta_canadon",
         "from": "z4_meseta",
         "to": "z5_canadon",
-        "x": 26,
-        "y": 20,
+        "x": 23,
+        "y": 32,
         "w": 5,
-        "h": 5,
+        "h": 6,
+        "note": "entra cerca del fondo del cañadón, no a mitad de camino — antes caía casi al lado del manantial y se saltaba la mitad del laberinto (mapgen.ts buildTerrain); ahora las dos entradas arrancan del mismo lugar, abajo de todo.",
         "requires": "progress.day >= 2 && flags.n1_dafydd_perdido == true"
       }
     ]

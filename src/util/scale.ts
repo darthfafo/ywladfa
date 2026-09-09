@@ -43,11 +43,20 @@ export function applyIntegerScale(game: Phaser.Game): void {
     return { w: vv.width, h: keyboardLikelyOpen ? lastStableHeight : vv.height };
   };
 
+  // `devicePixelRatio >= 2` sola no distingue un teléfono de una Mac con pantalla
+  // Retina: una notebook de escritorio con mouse también reporta dpr 2, pero ahí
+  // "aprovechar toda la pantalla" (una ventana ancha, no 9:16) estira el contenedor
+  // muy por fuera de la proporción del juego — Phaser sigue calculando el
+  // letterboxing bien, pero la superposición HTML (joystick, botón, HUD) queda
+  // mucho más lejos del centro de lo esperado. `pointer: coarse` sí es específico
+  // de touch: una Mac con trackpad/mouse da `false` aunque tenga Retina.
+  const isTouchPrimary = window.matchMedia('(pointer: coarse)').matches;
+
   const fit = (): void => {
     const { w, h } = viewportSize();
     const dpr = window.devicePixelRatio || 1;
 
-    if (dpr >= 2) {
+    if (dpr >= 2 && isTouchPrimary) {
       parent.style.width = `${w}px`;
       parent.style.height = `${h}px`;
     } else {

@@ -38,6 +38,12 @@ export class WorldScene extends Phaser.Scene {
   private gateOpen = new Map<string, boolean>();
   private mimosa: Phaser.GameObjects.Image | null = null;
   private gaviotas: { sprite: Phaser.GameObjects.Sprite; speedPxPerSec: number }[] = [];
+  /** Dafydd, de vuelta del manantial: no es un tween a un punto fijo (cruzaba
+   * paredes y props en línea recta, "volando" por encima de todo) — sigue el
+   * rastro real de pasos del jugador, así camina por donde vos caminaste. Ver
+   * sendDafyddHome() y el bloque de seguimiento en update(). */
+  private dafyddFollow: Phaser.GameObjects.Image | null = null;
+  private playerTrail: { x: number; y: number }[] = [];
 
   constructor() {
     super('World');
@@ -113,26 +119,21 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /** Al cerrar d_n1_manantial (UiScene.openDialogue), Dafydd se despide y arranca a
-   * caminar de vuelta al fogón en vez de quedarse plantado sentado ahí el resto de
-   * la jornada. El flag `_dafydd_se_fue` lo pone ESTE método, no el trigger ni el
-   * diálogo: `trig_manantial` ya pone `n1_encontro_manantial` en su propia acción,
-   * ANTES de que el diálogo llegue a abrirse (TriggerSystem.consume aplica setFlag
-   * y spendTurns antes de que la escena lance nada) — usar ese flag como
-   * `hiddenAfterFlag` escondía el sprite de un frame al otro sin que se viera
-   * nunca la despedida. Con un flag propio, puesto acá, el tween sí se ve. */
+   * seguirte de vuelta al campamento en vez de quedarse plantado sentado ahí el
+   * resto de la jornada. No es un tween a un punto fijo (cruzaba paredes y props
+   * en línea recta, "volando" por encima de todo el cañadón) — camina por el
+   * rastro real de pasos que vos vas dejando, ver el bloque de seguimiento en
+   * update(). El flag `_dafydd_se_fue` (que lo esconde del mapa vía
+   * `hiddenAfterFlag`) recién se pone cuando de verdad llega a la barranca, en
+   * trackTile() — no acá: `trig_manantial` ya pone `n1_encontro_manantial` en su
+   * propia acción ANTES de que el diálogo llegue a abrirse, así que usar ESE flag
+   * como disparador escondía el sprite de un frame al otro sin que se viera nunca
+   * la despedida (ya lo pisó un bug antes). */
   sendDafyddHome(): void {
     const it = this.interactables.find((x) => x.kind === 'npc' && x.id === 'npc_dafydd');
     if (!it || !it.sprite.visible) return;
-    game.flags.set('_dafydd_se_fue', true);
-    const sp = game.level.spawns.fogon;
-    this.tweens.add({
-      targets: it.sprite,
-      x: tileCenter(sp.x),
-      y: tileCenter(sp.y),
-      duration: 1200,
-      ease: 'Sine.inOut',
-      onComplete: () => it.sprite.setVisible(false).setActive(false),
-    });
+    this.dafyddFollow = it.sprite;
+    this.playerTrail = [{ x: this.player.x, y: this.player.y }];
   }
 
   private spawnProps(level: typeof game.level): void {
@@ -238,6 +239,47 @@ export class WorldScene extends Phaser.Scene {
       addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty), 30)?.setDepth(6);
     }
 
+    // la meseta: pasto y agua en algún lado (por algo baja Lewis a buscarla ahí) —
+    // dos tropillas de guanaco (3-4 juntos, que es como se los ve de verdad, no de
+    // a uno suelto como en el monte o el cañadón) y varios juncos dispersos. Cada
+    // tropilla registra un solo guanaco como interactuable ("Mirar"); el resto es
+    // decoración — se lee igual como grupo, no hace falta que los cuatro respondan.
+    const mesetaGroups: Array<{ id: string; spots: ReadonlyArray<readonly [number, number]> }> = [
+      {
+        id: 'guanaco_meseta_1',
+        spots: [
+          [35, 15],
+          [37, 16.5],
+          [34, 17],
+          [36, 18.5],
+        ],
+      },
+      {
+        id: 'guanaco_meseta_2',
+        spots: [
+          [48, 25],
+          [50, 26.5],
+          [47, 27],
+        ],
+      },
+    ];
+    for (const group of mesetaGroups) {
+      group.spots.forEach(([gx, gy], i) => {
+        const s = addPropImage(this, 'guanaco', tileCenter(gx), tileCenter(gy), 38)?.setDepth(6);
+        if (s && i === 0) this.interactables.push({ sprite: s, kind: 'guanaco', id: group.id, label: 'Mirar' });
+      });
+    }
+    for (const [tx, ty] of [
+      [33, 10],
+      [42, 12],
+      [55, 18],
+      [38, 29],
+      [52, 30],
+      [44, 21],
+    ] as const) {
+      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty), 32)?.setDepth(6);
+    }
+
     // el manantial: centrado en el mismo bloque de tiles que ya pinta buildTerrain()
     // (TERRAIN.SPRING, un bloque angosto de 2×2 = 32px). La imagen del pozo tiene
     // bastante margen transparente alrededor de la forma orgánica de las piedras
@@ -302,6 +344,11 @@ export class WorldScene extends Phaser.Scene {
     for (const n of game.level.spawns.npcs) {
       const it = this.interactables.find((x) => x.kind === 'npc' && x.id === n.id);
       if (!it) continue;
+      // Dafydd siguiendo al jugador (ver sendDafyddHome): su posición la maneja el
+      // seguimiento cuadro a cuadro, no esto — si algo dispara un turno mientras
+      // camina detrás tuyo, sin este corte lo hacía "saltar" de vuelta al manantial
+      // (su posición de movesTo) en medio del camino.
+      if (this.dafyddFollow && n.id === 'npc_dafydd') continue;
 
       const dayOk = n.day === '*' || (Array.isArray(n.day) ? n.day.includes(day) : n.day === day);
       const flagOk = !n.afterFlag || game.flags.is(n.afterFlag);
@@ -355,7 +402,36 @@ export class WorldScene extends Phaser.Scene {
 
     this.updateNearest();
     if (input.takeAction()) this.interact();
+    this.updateDafyddFollow(delta);
     this.trackTile();
+  }
+
+  /** Dafydd caminando detrás tuyo (ver sendDafyddHome): en vez de perseguir tu
+   * posición ACTUAL (eso lo pegaba pegado al jugador, o lo hacía cortar camino
+   * en diagonal atravesando paredes si vos doblabas una esquina), persigue un
+   * punto de tu propio rastro de pasos con un retraso fijo — así su camino es,
+   * literal, el mismo que el tuyo. */
+  private updateDafyddFollow(delta: number): void {
+    if (!this.dafyddFollow) return;
+    const MAX_TRAIL = 90; // ~1.5s de rastro a 60fps, de sobra para el retraso de abajo
+    const LAG_STEPS = 20; // cuántas muestras atrás sigue — más cerca sin pisarte los talones
+    this.playerTrail.push({ x: this.player.x, y: this.player.y });
+    if (this.playerTrail.length > MAX_TRAIL) this.playerTrail.shift();
+
+    const idx = Math.max(0, this.playerTrail.length - 1 - LAG_STEPS);
+    const target = this.playerTrail[idx]!;
+    const sprite = this.dafyddFollow;
+    const dx = target.x - sprite.x;
+    const dy = target.y - sprite.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 1) return;
+
+    const speed = registry.balance.global.playerBaseSpeedPxPerSec as number;
+    const step = Math.min(dist, (speed * delta) / 1000);
+    sprite.x += (dx / dist) * step;
+    sprite.y += (dy / dist) * step;
+    const dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'east' : 'west') : dy > 0 ? 'south' : 'north';
+    sprite.setFrame(FACING_FRAME[dir]);
   }
 
   private currentSpeed(): number {
@@ -479,6 +555,17 @@ export class WorldScene extends Phaser.Scene {
     if (zone && zone.id !== game.state.progress.zone) {
       game.state.progress.zone = zone.id;
       bus.emit('zone:entered', { zoneId: zone.id, label: zone.label });
+    }
+
+    // Dafydd te siguió hasta acá (ver sendDafyddHome): recién al llegar de
+    // verdad a la barranca se despide del todo — el flag lo esconde del mapa
+    // (updateNpcVisibility → hiddenAfterFlag) sin que updateNpcVisibility haya
+    // podido tironear su posición mientras todavía estaba caminando detrás tuyo.
+    if (this.dafyddFollow && zone?.id === 'z2_barranca') {
+      this.dafyddFollow.setVisible(false).setActive(false);
+      this.dafyddFollow = null;
+      this.playerTrail = [];
+      game.flags.set('_dafydd_se_fue', true);
     }
 
     // red de contención: los dos pasajes al cañadón ya exigen n1_dafydd_perdido,

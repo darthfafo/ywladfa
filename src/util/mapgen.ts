@@ -166,29 +166,52 @@ export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => bool
   // el cañadón es una zona abierta y grande (26×38) — un par de afloramientos
   // sueltos no alcanzaban a hacer que encontrar el manantial se sintiera como
   // encontrar algo, era cruzar un rectángulo vacío bordeando dos piedras. Ahora
-  // un laberinto simple de paredes de barranco ocupa la franja del medio, de
-  // punta a punta del ancho de la zona: cinco paredes en zigzag (el hueco
-  // alterna izquierda/derecha), cada una de 2 filas de espesor, mismo acantilado
-  // natural que ya usa la pared de la barranca. El manantial queda del otro
-  // lado (filas 2-12, al norte), y las dos entradas reales (p_monte_canadon al
-  // sur, p_meseta_canadon del lado este, cayendo justo en el hueco de la
-  // tercera pared) desembocan en la franja abierta de más abajo, nunca dentro
-  // de una pared. Solo bloquea `TERRAIN.CANYON` propio: nunca pisa un pasaje.
-  const canadonMazeWalls: Array<{ y: number; gapSide: 'left' | 'right' }> = [
-    { y: 13, gapSide: 'right' },
-    { y: 18, gapSide: 'left' },
-    { y: 23, gapSide: 'right' },
-    { y: 28, gapSide: 'left' },
-    { y: 33, gapSide: 'right' },
+  // un laberinto en zigzag ocupa la franja del medio, de punta a punta del
+  // ancho de la zona: cinco paredes de barranco (2 filas de espesor cada una,
+  // mismo acantilado que ya usa la pared de la barranca), el hueco real
+  // alternando izquierda/derecha. Dos de las paredes tienen ADEMÁS un hueco
+  // falso que no lleva a ningún lado — un cajón sin salida sellado por los
+  // tres costados, para que equivocarse de hueco cueste volver — sin tocar el
+  // hueco real de esa misma pared. El manantial queda del otro lado (filas
+  // 2-12, al norte); las dos entradas reales (p_monte_canadon al sur,
+  // p_meseta_canadon reubicado cerca del mismo punto, ver nivel-01.json)
+  // arrancan las dos desde abajo de todo, así que ninguna se salta la mitad
+  // del recorrido. Solo bloquea `TERRAIN.CANYON` propio: nunca pisa un pasaje.
+  const canadonMazeWalls: Array<{ y: number; segments: Array<[number, number]> }> = [
+    { y: 13, segments: [[2, 22]] },
+    { y: 18, segments: [[8, 16], [20, 28]] }, // hueco real 2-7, hueco falso 16-19
+    { y: 23, segments: [[2, 22]] },
+    { y: 28, segments: [[8, 12], [16, 28]] }, // hueco real 2-7, hueco falso 12-15
+    { y: 33, segments: [[2, 22]] },
+  ];
+  // los dos callejones sin salida: cajón de 4×1 caminable, cerrado por los dos
+  // costados y el fondo — la única salida es volver por el mismo hueco falso.
+  // Una sola fila de profundidad, no dos: la franja abierta entre paredes mide
+  // 3 filas — un cajón de 2 de profundidad (más 1 de fondo) la ocupaba ENTERA
+  // de lado a lado, y sin querer cortaba el paso lateral de todo el ancho del
+  // laberinto en dos mitades sin conexión entre sí. Con 1 fila de cajón + 1 de
+  // fondo queda una fila libre para bordearlo.
+  const canadonDeadEnds: Array<[number, number, number, number]> = [
+    [15, 20, 1, 1],
+    [20, 20, 1, 1],
+    [15, 21, 6, 1],
+    [11, 30, 1, 1],
+    [16, 30, 1, 1],
+    [11, 31, 6, 1],
   ];
   if (canadonZone) {
-    const [zx, , zw] = canadonZone.rect;
-    const gapWidth = 6;
     for (const wall of canadonMazeWalls) {
-      const wallStart = wall.gapSide === 'right' ? zx : zx + gapWidth;
-      const wallEnd = wall.gapSide === 'right' ? zx + zw - gapWidth : zx + zw;
-      for (let j = wall.y; j < wall.y + 2; j++) {
-        for (let i = wallStart; i < wallEnd && i < W; i++) {
+      for (const [start, end] of wall.segments) {
+        for (let j = wall.y; j < wall.y + 2; j++) {
+          for (let i = start; i < end && i < W; i++) {
+            if (g[j]![i] === TERRAIN.CANYON) g[j]![i] = TERRAIN.CLIFF;
+          }
+        }
+      }
+    }
+    for (const [ci, cj, cw, ch] of canadonDeadEnds) {
+      for (let j = cj; j < cj + ch; j++) {
+        for (let i = ci; i < ci + cw; i++) {
           if (g[j]![i] === TERRAIN.CANYON) g[j]![i] = TERRAIN.CLIFF;
         }
       }
