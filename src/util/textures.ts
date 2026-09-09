@@ -71,10 +71,27 @@ export function makeTileset(scene: Phaser.Scene, key = 'tiles'): void {
         ctx.fillRect(ox + fx, fy + 2, 2, 1);
       }
       if (id === TERRAIN.CLIFF) {
-        // una veta de sedimento angosta, en una fila al azar — erosión, no mampostería
+        // grietas cortas y en diagonal, nunca una línea recta de lado a lado: una
+        // veta prolija de ancho completo, repetida tile tras tile en un bloque,
+        // se leía como hilada de ladrillos (mampostería) en vez de piedra natural.
+        // Tres trazos cortos por variante, en ángulos y posiciones distintas.
         ctx.fillStyle = hex(PAL.ink2);
-        const bandY = 2 + Math.floor(noise(idx * 7 + v * 19, 3) * (TILE - 6));
-        ctx.fillRect(ox, bandY, TILE, 1);
+        for (let k = 0; k < 3; k++) {
+          const sx = Math.floor(noise(idx * 7 + v * 19 + k * 5, 3 + k) * (TILE - 6));
+          const sy = Math.floor(noise(idx * 11 + v * 23 + k * 3, 9 + k) * (TILE - 5));
+          const len = 3 + Math.floor(noise(idx * 3 + v, k * 2) * 4);
+          const dy = noise(idx * 4 + v, k * 6) > 0.5 ? 1 : -1;
+          for (let s = 0; s < len; s++) {
+            const px = ox + sx + s;
+            const py = sy + Math.floor(s * 0.4) * dy;
+            if (px >= ox && px < ox + TILE && py >= 0 && py < TILE) ctx.fillRect(px, py, 1, 1);
+          }
+        }
+        // una faceta más clara — luz rasante sobre una cara de la piedra
+        ctx.fillStyle = hex(PAL.soil2);
+        const fx2 = Math.floor(noise(idx * 5 + v * 31, 4) * (TILE - 5));
+        const fy2 = Math.floor(noise(idx * 13 + v * 3, 8) * (TILE - 5));
+        ctx.fillRect(ox + fx2, fy2, 3, 2);
       }
       if (id === TERRAIN.SEA) {
         ctx.fillStyle = hex(PAL.seaPale);

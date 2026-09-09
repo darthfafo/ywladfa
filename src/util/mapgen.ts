@@ -163,18 +163,36 @@ export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => bool
   // que eso se veía por las esquinas, como un cuadrado azul plano detrás del dibujo.
   for (let j = 7; j < 9; j++) for (let i = 9; i < 11; i++) g[j]![i] = TERRAIN.SPRING;
 
-  // el cañadón es una zona abierta y grande (26×40) — caminada en línea recta desde
-  // cualquiera de las dos entradas hasta el manantial no se sentía como encontrar
-  // nada, era cruzar un rectángulo vacío. Un par de afloramientos de roca (mismo
-  // acantilado natural que ya se usa para la pared de la barranca) obligan a
-  // bordear un poco sin cerrar ningún camino real — el cañadón sigue siendo
-  // atravesable desde cualquier ángulo, ninguno tapa una entrada ni el manantial.
-  for (const [ci, cj, cw, ch] of [
-    [5, 20, 3, 4],
-    [18, 12, 3, 3],
-    [14, 30, 3, 3],
-  ] as const) {
-    for (let j = cj; j < cj + ch; j++) for (let i = ci; i < ci + cw; i++) g[j]![i] = TERRAIN.CLIFF;
+  // el cañadón es una zona abierta y grande (26×38) — un par de afloramientos
+  // sueltos no alcanzaban a hacer que encontrar el manantial se sintiera como
+  // encontrar algo, era cruzar un rectángulo vacío bordeando dos piedras. Ahora
+  // un laberinto simple de paredes de barranco ocupa la franja del medio, de
+  // punta a punta del ancho de la zona: cinco paredes en zigzag (el hueco
+  // alterna izquierda/derecha), cada una de 2 filas de espesor, mismo acantilado
+  // natural que ya usa la pared de la barranca. El manantial queda del otro
+  // lado (filas 2-12, al norte), y las dos entradas reales (p_monte_canadon al
+  // sur, p_meseta_canadon del lado este, cayendo justo en el hueco de la
+  // tercera pared) desembocan en la franja abierta de más abajo, nunca dentro
+  // de una pared. Solo bloquea `TERRAIN.CANYON` propio: nunca pisa un pasaje.
+  const canadonMazeWalls: Array<{ y: number; gapSide: 'left' | 'right' }> = [
+    { y: 13, gapSide: 'right' },
+    { y: 18, gapSide: 'left' },
+    { y: 23, gapSide: 'right' },
+    { y: 28, gapSide: 'left' },
+    { y: 33, gapSide: 'right' },
+  ];
+  if (canadonZone) {
+    const [zx, , zw] = canadonZone.rect;
+    const gapWidth = 6;
+    for (const wall of canadonMazeWalls) {
+      const wallStart = wall.gapSide === 'right' ? zx : zx + gapWidth;
+      const wallEnd = wall.gapSide === 'right' ? zx + zw - gapWidth : zx + zw;
+      for (let j = wall.y; j < wall.y + 2; j++) {
+        for (let i = wallStart; i < wallEnd && i < W; i++) {
+          if (g[j]![i] === TERRAIN.CANYON) g[j]![i] = TERRAIN.CLIFF;
+        }
+      }
+    }
   }
 
   // resuelve la variante visual de cada celda: mismo mapa siempre, sin patrón obvio
