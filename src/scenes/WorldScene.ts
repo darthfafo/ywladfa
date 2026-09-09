@@ -485,11 +485,16 @@ export class WorldScene extends Phaser.Scene {
     // así que esto no debería poder pasar nunca — pero si por lo que sea el
     // jugador termina adentro antes de tiempo, lo saca en vez de dejarlo ver el
     // manantial fuera de hora. Mejor esto que confiar solo en la colisión.
+    // Vuelve al fogón, no a un punto fijo en la meseta: la meseta tiene sus
+    // propios pasajes cerrados hasta el día 2 (p_barranca_meseta), así que un
+    // punto "seguro" ahí podía dejar al jugador atrapado sin salida en la
+    // jornada 1 — el fogón, en cambio, siempre es territorio ya alcanzado.
     if (zone?.id === 'z5_canadon' && !game.flags.is('n1_dafydd_perdido')) {
-      this.player.setPosition(tileCenter(32), tileCenter(24));
+      const back = game.level.spawns.fogon;
+      this.player.setPosition(tileCenter(back.x), tileCenter(back.y));
       this.lastTile = { x: -1, y: -1 };
-      const back = zoneAt(game.level, 32, 24);
-      if (back) game.state.progress.zone = back.id;
+      const backZone = zoneAt(game.level, back.x, back.y);
+      if (backZone) game.state.progress.zone = backZone.id;
       bus.emit('ui:toast', { text: 'Todavía no. Hay que volver más tarde.' });
       this.checkTriggers();
       return;

@@ -137,6 +137,26 @@ export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => bool
     }
   }
 
+  // la pared norte de la barranca, donde el cañadón la toca directo: los dos
+  // pasajes de verdad al cañadón (p_monte_canadon, p_meseta_canadon) entran por
+  // otro lado — acá los rects de las dos zonas simplemente se tocan (sin gap),
+  // así que sin esta pared quedaba un tramo caminable de punta a punta que se
+  // saltea los dos pasajes (y su `requires`) por completo. Se pinta sobre las
+  // últimas filas del propio cañadón, no de la barranca (mismo criterio que la
+  // pared sur: nunca pisa el rect de la zona que da al campamento).
+  const canadonZone = level.zones.find((z) => z.id === 'z5_canadon');
+  if (barranca && canadonZone) {
+    const [bx, by, bw] = barranca.rect;
+    const [cx, , cw] = canadonZone.rect;
+    const overlapStart = Math.max(bx, cx);
+    const overlapEnd = Math.min(bx + bw, cx + cw);
+    for (let i = overlapStart; i < overlapEnd && i < W; i++) {
+      for (let j = by - 2; j < by && j >= 0; j++) {
+        if (g[j]![i] !== TERRAIN.PATH) g[j]![i] = TERRAIN.CLIFF;
+      }
+    }
+  }
+
   // el manantial, al fondo del cañadón — bloque angosto (2×2, no 4×4): la imagen
   // real que se pone encima (WorldScene.spawnDecor) tiene bastante margen
   // transparente alrededor de la piedra, así que un bloque de agua lisa más grande
