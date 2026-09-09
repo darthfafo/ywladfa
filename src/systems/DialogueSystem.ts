@@ -11,6 +11,9 @@ export interface RenderedLine {
   portrait: 'neutral' | 'tenso' | 'calido';
   choices: DialogueChoice[];
   isNarrator: boolean;
+  /** Pisa el color por default del cuerpo (ver DialogueBox.show) — solo lo usan
+   * las líneas armadas a mano (announce/refuse), nunca los nodos de /data. */
+  color?: string;
 }
 
 /**

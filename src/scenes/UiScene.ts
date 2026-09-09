@@ -265,23 +265,41 @@ export class UiScene extends Phaser.Scene {
       this.tweens.add({ targets: glow, alpha: 0.22, duration: 1400, ease: 'Sine.out' });
     }
 
+    // más grande que un título de overlay común (FONT.title) y con sombra: esto
+    // marca el arranque de una jornada nueva, no una pantalla de trámite — tiene
+    // que pegar más fuerte que "Decisión" o "Carga".
     const title = crisp(
       this.add
-        .text(cx, 16, `JORNADA ${day}`, { fontFamily: RETRO_FONT, fontSize: FONT.title, color: '#D9A845' })
+        .text(cx, 14, `JORNADA ${day}`, { fontFamily: RETRO_FONT, fontSize: '16px', color: '#D9A845' })
         .setOrigin(0.5, 0)
+        .setShadow(2, 2, '#000000', 4, true, true)
         .setDepth(-3)
         .setResolution(4),
     );
 
-    this.dialogue.announce(`Jornada ${day}.`, () => {
-      this.touch.setContext(null);
-      this.touch.setVisible(true);
-      this.setHudVisible(true);
-      bg?.destroy();
-      title.destroy();
-      for (const o of extras) o.destroy();
-      onDone?.();
-    });
+    // no repite "Jornada N." (eso ya lo dice el título de arriba): adelanta de
+    // qué va el día, con el mismo one-liner que ya usa docs/01-nivel-01.md §4
+    // para cada jornada — así el pie de esta pantalla suma algo en vez de ser el
+    // mismo texto dos veces.
+    const preview: Record<number, string> = {
+      2: 'Hoy el objetivo es el agua. Lewis reparte las tareas apenas salga el sol.',
+      3: 'Hoy se decide qué se lleva al sur y qué se queda. No hay vuelta atrás.',
+    };
+    this.dialogue.announce(
+      preview[day] ?? `Jornada ${day}.`,
+      () => {
+        this.touch.setContext(null);
+        this.touch.setVisible(true);
+        this.setHudVisible(true);
+        bg?.destroy();
+        title.destroy();
+        for (const o of extras) o.destroy();
+        onDone?.();
+      },
+      // más claro que el gris apagado de narración ambiental (ver DialogueBox.show):
+      // acá el pie ES el contenido de la pantalla, no una línea de flavor de fondo.
+      '#EAE8E0',
+    );
   }
 
   /* ---------------- modales ---------------- */

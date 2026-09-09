@@ -153,10 +153,12 @@ export class DialogueBox {
   }
 
   /** Línea narrada suelta, sin diálogo registrado en /data — mismo espíritu que
-   * refuse() pero para texto de sistema con partes dinámicas (ej. "Jornada 3.",
-   * con el número armado en código) que no tiene sentido guardar como entrada de
-   * diálogo fija. */
-  announce(text: string, onClose?: () => void): void {
+   * refuse() pero para texto de sistema con partes dinámicas (ej. la bajada de la
+   * cutscene de amanecer, con el día armado en código) que no tiene sentido
+   * guardar como entrada de diálogo fija. `color` pisa el gris apagado de
+   * narrador por default — pensado para texto de un momento fuerte (ver
+   * UiScene.showSunrise), no para narración ambiental de fondo. */
+  announce(text: string, onClose?: () => void, color?: string): void {
     this.onClose = onClose ?? null;
     input.locked = true;
     this.root.setVisible(true);
@@ -168,6 +170,7 @@ export class DialogueBox {
       portrait: 'neutral',
       choices: [],
       isNarrator: true,
+      color,
     });
   }
 
@@ -241,7 +244,7 @@ export class DialogueBox {
     }
     this.bodyText.setPosition(line.isNarrator ? 10 : 70, line.isNarrator ? 14 : 26);
     this.bodyText.setWordWrapWidth(line.isNarrator ? TRAY.w - 20 : TRAY.w - 80);
-    this.bodyText.setColor(line.isNarrator ? '#9BAEB4' : '#EAE8E0');
+    this.bodyText.setColor(line.color ?? (line.isNarrator ? '#9BAEB4' : '#EAE8E0'));
     this.setBodyTextPaginated(line.text);
     this.updateTail();
   }
