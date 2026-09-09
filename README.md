@@ -8,33 +8,42 @@ Top-down pixel art 16-bit · **vertical 9:16, mobile-first** · Phaser 3 · Type
 > *Julio de 1865. Ciento cincuenta galeses desembarcan en una playa de la Patagonia a la que
 > les dijeron que era verde. No lo es.*
 
+**🎮 Jugalo acá: [ywladfa.fede-puratich.workers.dev](https://ywladfa.fede-puratich.workers.dev)**
+
 ---
 
 ## Estado
 
-**Prototipo jugable.** Se camina por la playa y la barranca, se bajan los cajones, se habla con los
-NPCs y corren los diálogos con ramas. Faltan las tres escenas que cierran el nivel.
+**El Nivel 1 se juega de punta a punta**, desde el desembarco hasta la decisión de carga y la
+salida hacia el sur: desembarco, bajar los ocho cajones, subir a la barranca, elegir cueva,
+repartir tareas, encontrar el manantial, perder y reencontrar a Dafydd, dos noches de fogón con
+diálogos propios, el diario y el códice de Berwyn, la pantalla de carga (5 de 8 bultos, sin
+vuelta atrás) y el cierre en la punta.
 
 ```
-✔ docs/    diseño completo
-✔ data/    contenido en JSON + 8 schemas de validación
-✔ src/     core + 7 sistemas + 3 escenas + UI táctil (commits 1-8 de 12)
-✔ tests/   20 tests en verde
-◐ assets/  arte generado por código, con los tamaños finales
+✔ docs/    diseño completo (GDD, spec del nivel, arquitectura, guía histórica)
+✔ data/    16 archivos JSON · 7 NPCs · 33 triggers · 24 diálogos · 13 fichas de códice
+✔ src/     core + 7 sistemas + 6 escenas + UI táctil, las 12 etapas del plan original
+✔ src/assets/  48 piezas de arte real (13 escenas, 27 retratos, 8 props) + resto generado por código
+✔ tests/   20 tests en verde, sin navegador
 ```
+
+Todos los NPCs (reales y ficticios) tienen algo que decir en cualquier momento del nivel, no solo
+en su escena guionada — y varios dan pistas de hacia dónde seguir en vez de callarse.
 
 ## Correrlo
 
 ```bash
 npm install
 npm run dev            # http://localhost:5173
-npm test
-npm run validate:data
-npm run build:single   # dist/index.html autocontenido
+npm test                # 20 tests de sistemas
+npm run validate:data   # integridad referencial de todo /data
+npm run build:single    # dist/index.html autocontenido, se abre con doble clic
 ```
 
 La pantalla es **270 × 480 (9:16) fija**. En el navegador de escritorio conviene abrirlo con el
-emulador de móvil activado; se juega con WASD/flechas + Espacio, o con el joystick táctil.
+emulador de móvil activado; se juega con WASD/flechas + Espacio, o con el joystick táctil
+(aparece donde toques, no en un punto fijo).
 
 ---
 
@@ -54,10 +63,14 @@ data/
   items.json                 12 ítems + los 8 bultos de la decisión del Nivel 1
   npcs.json                  7 personajes del Nivel 1 (5 reales, 2 ficticios)
   codex.json                 13 fichas históricas, cada una con lo documentado y lo dramatizado
-  levels/nivel-01.json       zonas, spawns, objetivos y 24 triggers
-  dialogues/nivel-01.json    10 diálogos con ramas + 2 pantallas de elección + 4 tutoriales
+  levels/nivel-01.json       zonas, spawns, objetivos y triggers
+  dialogues/nivel-01.json    diálogos con ramas, pantallas de elección y tutoriales
   quests/nivel-01.json       6 quests con fracaso suave
   schemas/                   8 JSON Schema para validar todo lo anterior
+src/
+  systems/                   lógica pura sin Phaser (TimeSystem, ResourceSystem, DialogueSystem...)
+  scenes/                    Boot, World, Ui, Camp, Cargo, Transition
+  assets/                    arte real (escenas, retratos, props) — el resto cae en placeholders de código
 ```
 
 ---
@@ -80,10 +93,10 @@ para el viaje al sur. La última decisión no se puede deshacer, y el juego no t
 
 ## Cómo seguir
 
-1. Leer `CLAUDE.md`.
-2. Leer `docs/00-GDD.md` §3 (los pilares) y `docs/01-nivel-01.md` completo.
-3. Seguir por los commits 9-12 del plan de `docs/02-arquitectura.md` §10: `CampScene`, `CargoScene`, guardado y transición.
+El Nivel 1 está cerrado y jugable de punta a punta. Lo que sigue es Nivel 2 (`docs/00-GDD.md`),
+más el arte que todavía cae en placeholder generado por código, y una pasada de guardado /
+exportar-importar partida más robusta.
 
 ---
 
-*Preproducción · septiembre 2026 · v0.1*
+*Desarrollado junto con Claude (Anthropic) — Fede Puratich.*
