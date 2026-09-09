@@ -44,10 +44,15 @@ export class ResourceSystem {
     this.change('comida', -nc.comidaPerPerson * groupSize, 'cena');
     this.change('agua', -nc.aguaPerGroup, 'noche');
 
-    const lena = this.get('lena');
     const big = registry.balance.nightRecovery.bigFire.requiresLena as number;
     const small = registry.balance.nightRecovery.smallFire.requiresLena as number;
+    // nunca queda en cero: siempre se junta algo — ramas, lo que haya — para
+    // prender al menos un fuego chico. Sin esto, con leña en 0 la escena del
+    // fogón igual mostraba fogon_chico.png (que SÍ tiene una llama real) y a la
+    // mañana siguiente el aviso decía "No hubo fuego" — rompía la continuidad.
+    if (this.get('lena') < small) this.change('lena', small - this.get('lena'), 'lo último que se consigue a último momento');
 
+    const lena = this.get('lena');
     if (lena >= big) {
       this.change('lena', -big, 'fuego grande');
       return 'bigFire';

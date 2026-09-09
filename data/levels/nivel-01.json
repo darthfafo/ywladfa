@@ -80,9 +80,9 @@
       "id": "z6_punta",
       "label": "La punta",
       "rect": [
-        48,
+        50,
         70,
-        15,
+        13,
         26
       ],
       "music": "mus_playa",
@@ -143,7 +143,7 @@
         2,
         2,
         26,
-        40
+        38
       ],
       "music": "mus_silencio",
       "ambient": [

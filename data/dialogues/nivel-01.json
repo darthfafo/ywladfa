@@ -549,13 +549,13 @@
       "nodes": {
         "g1": {
           "speaker": "narrator",
-          "condition": "resources.lena >= 2",
+          "condition": "flags._lastFire == 'bigFire'",
           "text": "El fuego es grande. Se puede estar sentado sin darle la espalda al viento.",
           "next": "g_lewis"
         },
         "g1_frio": {
           "speaker": "narrator",
-          "condition": "resources.lena < 2",
+          "condition": "flags._lastFire != 'bigFire'",
           "text": "El fuego es chico. Nadie dice nada, pero todos se sientan del mismo lado.",
           "next": "g_lewis"
         },

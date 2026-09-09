@@ -94,6 +94,12 @@ export class Game {
   private runNight(): void {
     const groupSize = registry.levelBalance(this.state.progress.level).groupSize as number;
     const fire = this.res.applyNight(groupSize);
+    // no es un flag de nivel (por eso el prefijo "_", no "n1_"): CampScene y las
+    // ramas de d_n1_fogon_j2 necesitan saber qué fuego se prendió, y mirar la leña
+    // que queda no sirve — ResourceSystem.applyNight() ya la descontó ANTES de
+    // que nada de esto se lea, así que "leña actual >= 2" casi nunca coincide con
+    // el fuego que en realidad se prendió esa noche.
+    this.flags.set('_lastFire', fire);
     this.party.applyNight(fire);
     const fireText = fire === 'bigFire' ? 'El fuego es grande.' : fire === 'smallFire' ? 'El fuego es chico.' : 'No hubo fuego.';
     // autoguardado al cerrar jornada, un solo slot (docs/01-nivel-01.md checklist)

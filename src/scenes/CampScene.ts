@@ -62,10 +62,13 @@ export class CampScene extends Phaser.Scene {
     );
 
     const w = VIEW.world;
-    // fuego grande o chico, mismo criterio que ya usa el diálogo de la segunda noche
-    // (d_n1_fogon_j2, nodos g1/g1_frio) — si no hay PNG todavía, cae en el placeholder
-    // de siempre (rectángulos + círculo animado) sin romper nada.
-    const artId = game.res.get('lena') >= 2 ? 'fogon_grande' : 'fogon_chico';
+    // fuego grande o chico según lo que REALMENTE se prendió anoche (game.flags,
+    // ver Game.runNight) — no la leña que queda ahora: ResourceSystem.applyNight()
+    // ya la descontó antes de que esto se lea, así que "leña actual >= 2" casi
+    // nunca coincidía con el fuego real (con 2 de leña, fuego grande la consume
+    // toda y dejaba 0 — se mostraba fogon_chico igual). Si no hay PNG todavía,
+    // cae en el placeholder de siempre (rectángulos + círculo animado).
+    const artId = game.flags.get('_lastFire') === 'bigFire' ? 'fogon_grande' : 'fogon_chico';
     const bg = addSceneBackground(this, artId, w.x + w.w / 2, w.y + w.h / 2, w.w, w.h);
     this.add.rectangle(w.x, w.y + w.h - 60, w.w, 60, PAL.soil, bg ? 0.25 : 0.5).setOrigin(0, 0);
 

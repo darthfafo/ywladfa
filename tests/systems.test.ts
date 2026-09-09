@@ -70,9 +70,9 @@ describe('ResourceSystem', () => {
     expect(g.res.get('agua')).toBe(aguaAntes - nc.aguaPerGroup);
   });
 
-  it('sin leña suficiente, no hay fuego', () => {
+  it('sin leña, igual se prende un fuego chico (nunca "no hubo fuego")', () => {
     g.res.change('lena', -99, 'test');
-    expect(g.res.applyNight(9)).toBe('noFire');
+    expect(g.res.applyNight(9)).toBe('smallFire');
   });
 
   it('con leña de sobra, fuego grande', () => {
