@@ -60,9 +60,17 @@ export class DialogueBox {
     // estaba unos px más arriba (7) y quedaba desalineado con el borde de la foto.
     // x=70, no 64: un poco más de aire entre el retrato y el texto (mismo x que ya
     // usan las opciones de diálogo más abajo, ver renderChoices).
+    // wordWrap por si el título de decisión (ver show()) no entra en una sola
+    // línea junto al retrato — un nombre normal nunca lo necesita, pero no
+    // cuesta nada tenerlo por si acaso.
     this.nameText = crisp(
       scene.add
-        .text(70, 12, '', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#D9A845' })
+        .text(70, 12, '', {
+          fontFamily: FONT_FAMILY,
+          fontSize: FONT.body,
+          color: '#D9A845',
+          wordWrap: { width: TRAY.w - 78 },
+        })
         .setResolution(4),
     );
     this.bodyText = crisp(
@@ -199,8 +207,6 @@ export class DialogueBox {
     // con opciones, el nodo sigue teniendo como `speaker` a quien preguntó (ej. Edwyn),
     // pero lo que se muestra abajo son las respuestas del jugador — sin este cambio
     // quedaba el nombre/retrato del NPC encabezando lo que decía el propio jugador.
-    // El nombre no hace falta: el retrato solo ya alcanza para leer "esto lo elegís
-    // vos" sin ocupar una línea entera repitiendo el nombre del jugador.
     const hasChoices = line.choices.length > 0;
     const speakerId = hasChoices ? 'pc' : line.speakerId;
     // el nodo que arma la ronda puede estar narrado ("El fuego alcanza para tres
@@ -208,7 +214,11 @@ export class DialogueBox {
     // es al jugador a quien hay que mostrar retrato, sea cual sea el `speaker` que
     // dejó planteada la pregunta.
     const showPortrait = hasChoices || !line.isNarrator;
-    this.nameText.setText(line.isNarrator || hasChoices ? '' : line.speakerName);
+    // en el lugar del nombre va un título fijo, no vacío: la línea que planteó la
+    // pregunta ya desapareció de la bandeja (la reemplazan las opciones), así que
+    // sin esto las tres respuestas aparecían solas, sin nada que avise que hay
+    // que elegir una.
+    this.nameText.setText(hasChoices ? 'Tenés que decidir.' : line.isNarrator ? '' : line.speakerName);
     const portraitId = showPortrait ? portraitIdForSpeaker(speakerId, game.state.player.gender) : null;
     const key = portraitId ? portraitTextureKey(portraitId, line.portrait) : null;
     const hasArt = !!key && this.scene.textures.exists(key);
