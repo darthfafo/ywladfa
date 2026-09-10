@@ -11,6 +11,7 @@ import { TouchControls } from '@/ui/TouchControls';
 import { input } from '@/util/input';
 import { SelectList } from '@/util/selectList';
 import { crisp, FONT, RETRO_FONT } from '@/util/text';
+import { TURNS } from '@/systems/TimeSystem';
 
 /** Recursos que se muestran en el HUD del Nivel 1. El resto vive en el panel de jornada. */
 const HUD_RESOURCES: ResourceId[] = ['agua', 'comida', 'lena'];
@@ -22,11 +23,12 @@ const RES_LABEL: Record<string, string> = {
   municion: 'Munición',
   materiales: 'Materiales',
 };
-/** x de cada columna de recursos, medido para el peor caso ("Comida 30") con margen. */
-const RES_X = [6, 54, 113];
-const LOADBAR_X = 165;
-const LOADBAR_W = 48;
-const CARGA_LABEL_X = 217;
+/** x de cada columna de recursos, medido para el peor caso ("Comida 30") en RETRO_FONT
+ * (bien más ancha por carácter que el monoespaciado de sistema que usaba esto antes)
+ * con margen real. */
+const RES_X = [6, 68, 146];
+const LOADBAR_X = 210;
+const LOADBAR_W = 54;
 
 /** Diálogos que arrancan como cutscene de pantalla completa: fondo real detrás
  * (si ya existe el PNG) y HUD oculto mientras dura — docs/01-nivel-01.md §4. */
@@ -114,42 +116,46 @@ export class UiScene extends Phaser.Scene {
     track(this.add.rectangle(h.x, h.y + h.h - 1, h.w, 1, PAL.slate).setOrigin(0, 0).setDepth(61));
 
     // texto del HUD en HTML real, no Phaser Text: por más que se lo fuerce a
-    // reescalado suave (index.html), a este tamaño (9-10px internos) el texto de
+    // reescalado suave (index.html), a este tamaño (8-9px internos) el texto de
     // Phaser sigue horneado en un canvas de baja resolución fija y se ve borroso en
     // un celular real — confirmado en dispositivo, no alcanzaba con eso. Un <div>
     // lo rasteriza el navegador a la resolución física real de la pantalla, nítido
     // sin importar el factor de escala.
     const domStyle = (size: number, color: string): string =>
-      `color:${color}; font-family: ui-monospace, "SF Mono", Menlo, monospace; ` +
-      `font-size:${size}px; white-space:nowrap; pointer-events:none;`;
+      `color:${color}; font-family: ${RETRO_FONT}; font-size:${size}px; white-space:nowrap; pointer-events:none;`;
 
-    // fila 1: jornada y turno, sin nada más — nunca se queda sin lugar
-    // (antes había 4 puntitos de turno acá; redundantes con el texto, se sacaron)
-    // fuente pixel del título (no domStyle): al lado de todo lo demás ya migrado a
-    // RETRO_FONT, el monoespaciado de sistema acá desentonaba.
+    // fila 1: jornada y turno, centrados, con los 4 puntitos de turno (uno por
+    // amanecer/mañana/tarde/noche, el de hoy resaltado) a la derecha del texto —
+    // un solo <div> flex para que el grupo entero quede centrado sin tener que medir
+    // el ancho del texto a mano (varía con "JORNADA 1" vs "JORNADA 10").
     this.dayEl = this.add
       .dom(
-        6,
-        3,
+        h.w / 2,
+        5,
         'div',
-        `color:#D9A845; font-family: ${RETRO_FONT}; font-size:${FONT.tiny}; white-space:nowrap; pointer-events:none;`,
+        `display:flex; align-items:center; justify-content:center; gap:6px; pointer-events:none; ` +
+          `font-family: ${RETRO_FONT}; font-size:${FONT.tiny};`,
       )
-      .setOrigin(0, 0);
+      .setOrigin(0.5, 0);
     track(this.dayEl);
 
-    // fila 2: recursos con nombre completo + barra de carga, en columnas fijas
+    // fila 2: recursos con nombre completo y barra de carga, en columnas fijas.
+    // Tamaño más chico (8px) que antes: RETRO_FONT es bien más ancha que el
+    // monoespaciado de sistema que tenía esto, y a 9px "COMIDA 30" ya no entraba
+    // en su columna (medido con el ancho real renderizado).
     HUD_RESOURCES.forEach((id, i) => {
-      const el = this.add.dom(RES_X[i]!, 19, 'div', domStyle(9, '#EAE8E0')).setOrigin(0, 0);
+      const el = this.add.dom(RES_X[i]!, 19, 'div', domStyle(8, '#EAE8E0')).setOrigin(0, 0);
       this.resEls.set(id, el.node as HTMLDivElement);
       track(el);
     });
 
+    // sin la palabra "CARGA" al lado: ocupaba tanto lugar como la barra misma y
+    // quedaba apretada contra los recursos. La barra ya se explica sola (el
+    // tutorial tut_carga la señala como "la barra de la derecha") y gana el ancho
+    // que liberó la etiqueta.
     track(this.add.rectangle(LOADBAR_X, 20, LOADBAR_W, 5, PAL.ink2).setOrigin(0, 0).setDepth(62));
     this.loadBar = this.add.rectangle(LOADBAR_X, 20, 0, 5, PAL.moss).setOrigin(0, 0).setDepth(63);
     track(this.loadBar);
-    const cargaEl = this.add.dom(CARGA_LABEL_X, 19, 'div', domStyle(9, '#6B6A5E')).setOrigin(0, 0);
-    (cargaEl.node as HTMLDivElement).textContent = 'CARGA';
-    track(cargaEl);
   }
 
   /** Oculta/muestra el HUD entero — cutscenes de pantalla completa lo tapan (docs/01 §4).
@@ -200,9 +206,25 @@ export class UiScene extends Phaser.Scene {
 
   private refreshTime(): void {
     const s = game.state.progress;
-    // mayúsculas en todo el HUD: a este tamaño de letra, minúsculas con
+    // los 4 puntitos, uno por turno del día (TURNS): el de hoy resaltado en dorado,
+    // el resto apagado — la misma información que ya da el texto, pero de un
+    // vistazo, sin tener que leer la palabra.
+    const dots = TURNS.map(
+      (_, i) =>
+        `<span style="width:5px; height:5px; display:inline-block; background:${
+          i === game.time.turnIndex ? '#D9A845' : '#3A4A50'
+        };"></span>`,
+    ).join('');
+    // setHTML(), no node.textContent/innerHTML directo: el centrado (origen 0.5)
+    // necesita que Phaser sepa el ancho ACTUAL del div para su offset, y solo lo
+    // recalcula (updateSize()) cuando el contenido cambia a través de su propio
+    // método — mismo bug ya encontrado en TouchControls (ver ese commit).
+    // Mayúsculas en todo el HUD: a este tamaño de letra, minúsculas con
     // ascendentes/descendentes finos se leen peor en un celular real.
-    this.dayEl.node.textContent = `JORNADA ${s.day} · ${game.time.label().toUpperCase()}`;
+    this.dayEl.setHTML(
+      `<span style="color:#D9A845;">JORNADA ${s.day} · ${game.time.label().toUpperCase()}</span>` +
+        `<span style="display:inline-flex; gap:3px;">${dots}</span>`,
+    );
   }
 
   private refreshResources(): void {
