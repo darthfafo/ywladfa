@@ -81,15 +81,14 @@ export class DialogueBox {
     // más angosta (Jersey 10) para leer mejor un párrafo largo sonaba bien, pero a un
     // tamaño en px comparable esa fuente se ve mucho más chica/fina que esta: el
     // cuerpo quedaba "diminuto" al lado de un nombre "enorme" en vez de leerse como
-    // parte de la misma UI. 10px, no FONT.body (11px): a 11 quedaban demasiadas
-    // palabras solas colgando en una página aparte — este es EL box que lleva todo
-    // el texto narrado del juego, del cold open al último diálogo, así que este
-    // tamaño rige en todos lados por igual, un solo lugar.
+    // parte de la misma UI. 9px: este es EL box que lleva todo el texto narrado
+    // del juego, del cold open al último diálogo, así que este tamaño rige en
+    // todos lados por igual, un solo lugar.
     this.bodyText = crisp(
       scene.add
         .text(70, 26, '', {
           fontFamily: RETRO_FONT,
-          fontSize: '10px',
+          fontSize: '9px',
           color: '#EAE8E0',
           wordWrap: { width: TRAY.w - 80 },
           lineSpacing: 6,
@@ -256,7 +255,10 @@ export class DialogueBox {
     }
     this.bodyText.setPosition(line.isNarrator ? 10 : 70, line.isNarrator ? 14 : 26);
     this.bodyText.setWordWrapWidth(line.isNarrator ? TRAY.w - 20 : TRAY.w - 80);
-    this.bodyText.setColor(line.color ?? (line.isNarrator ? '#9BAEB4' : '#EAE8E0'));
+    // blanco por default en narrador también: el gris apagado (#9BAEB4) se leía
+    // peor que el resto del diálogo sin ganar nada — ya se distingue de una línea
+    // hablada por el layout (sin nombre, sin retrato) y el wrap más ancho.
+    this.bodyText.setColor(line.color ?? '#EAE8E0');
     this.setBodyTextPaginated(line.text);
     this.updateTail();
   }

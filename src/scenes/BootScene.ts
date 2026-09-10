@@ -107,11 +107,13 @@ export class BootScene extends Phaser.Scene {
 
     // firma discreta — fuera de cualquier paso (no this.track()) para que sobreviva
     // los clearStep() y se vea en todo el arranque, hasta la travesía; una vez que
-    // arranca World esta escena entera se destruye sola, se va con ella.
-    this.renderDomText(VIEW.width - 8, TRAY_Y + TRAY_H - 12, 'FP', {
+    // arranca World esta escena entera se destruye sola, se va con ella. Esquina
+    // inferior IZQUIERDA, no derecha: ahí abajo a la derecha vive el "▼" de
+    // DialogueBox que avisa que hay más texto — coincidían casi pixel a pixel.
+    this.renderDomText(8, TRAY_Y + TRAY_H - 12, 'FP', {
       size: 7,
       color: '#22343A',
-      align: 'right',
+      align: 'left',
       retro: true,
     });
 
@@ -145,13 +147,13 @@ export class BootScene extends Phaser.Scene {
     this.track(
       this.renderDomText(16, TRAY_Y + 10, '', {
         size: 7,
-        color: '#9BAEB4',
+        color: '#EAE8E0',
         width: VIEW.width - 32,
         retro: true,
         lineHeight: 1.5,
         html:
           '<span style="color:#D9A845">Liverpool, 28 de mayo de 1865.</span><br>El Mimosa lleva colonos galeses ' +
-          'rumbo a Sudamérica: van a fundar Y Wladfa, la Colonia.',
+          'rumbo a Sudamérica: van a fundar<br>Y Wladfa, la Colonia.',
       }),
     );
 
@@ -248,17 +250,22 @@ export class BootScene extends Phaser.Scene {
     // pantalla para abajo — si viviera en la bandeja, quedaría inaccesible al escribir.
     // Una sola franja bajita (campo + botón lado a lado), no un cuadro grande.
     const rowY = TOP_H + 44;
-    this.renderTextBacking(TOP_H, TOP_H + 72);
+    // backing más alta que antes: le hace lugar a la línea narrativa de abajo, que
+    // antes esta pantalla no tenía — era el único paso del arranque sin ningún
+    // contexto de qué estás haciendo, solo el campo suelto.
+    this.renderTextBacking(TOP_H, TOP_H + 108);
     this.track(this.renderDomText(cx, TOP_H + 8, '¿Cómo te llamás?', { size: 13, color: '#D9A845', align: 'center' }));
 
     const defaultName = DEFAULT_NAME[this.playerGender];
     const inputX = cx - 40;
+    // RETRO_FONT, no el monoespaciado de sistema: era el único campo del arranque
+    // que había quedado afuera, al lado del botón "Ir" que sí ya la usa.
     this.nameInput = this.add.dom(
       inputX,
       rowY,
       'input',
-      'width:104px; padding:4px; text-align:center; font-family: ui-monospace, "SF Mono", Menlo, monospace; ' +
-        'font-size:12px; background:#18262A; color:#EAE8E0; border:1px solid #2E464F; outline:none;',
+      `width:104px; padding:4px; text-align:center; font-family: ${RETRO_FONT}; ` +
+        'font-size:9px; background:#18262A; color:#EAE8E0; border:1px solid #2E464F; outline:none;',
     );
     const inputEl = this.nameInput.node as HTMLInputElement;
     inputEl.value = this.playerName || defaultName; // el 5to arg de add.dom() no sirve para el value de un <input>
@@ -282,6 +289,18 @@ export class BootScene extends Phaser.Scene {
 
     // botón compacto al lado del campo, no una opción de lista aparte más abajo.
     this.track(this.renderDomButton(cx + 68, rowY, 'Ir ›', () => this.confirmName(), 62, 24));
+
+    // contexto narrativo debajo del campo — antes este paso era el único del
+    // arranque sin ninguna línea de qué está pasando, solo el campo suelto.
+    this.track(
+      this.renderDomText(cx, rowY + 26, 'Vas a enlistarte para viajar en el Mimosa junto a tu madre.', {
+        size: 9,
+        color: '#9BAEB4',
+        align: 'center',
+        width: VIEW.width - 32,
+        lineHeight: 1.5,
+      }),
+    );
   }
 
   private confirmName(): void {
