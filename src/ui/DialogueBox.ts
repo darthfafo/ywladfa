@@ -6,7 +6,7 @@ import { registry } from '@/core/Registry';
 import { DialogueSystem, type RenderedLine } from '@/systems/DialogueSystem';
 import { portraitIdForSpeaker, portraitTextureKey } from '@/util/assets';
 import { input } from '@/util/input';
-import { crisp, FONT, RETRO_FONT } from '@/util/text';
+import { crisp, FONT, NARRATIVE_FONT, RETRO_FONT } from '@/util/text';
 
 const TRAY = VIEW.tray;
 
@@ -76,10 +76,13 @@ export class DialogueBox {
         })
         .setResolution(4),
     );
+    // NARRATIVE_FONT, no RETRO_FONT: Press Start 2P es bien ancha por carácter y la
+    // mayoría de las líneas del juego pasaban a una segunda página por una sola
+    // palabra de sobra — acá, y solo acá, se prioriza que entre más texto por página.
     this.bodyText = crisp(
       scene.add
         .text(70, 26, '', {
-          fontFamily: RETRO_FONT,
+          fontFamily: NARRATIVE_FONT,
           fontSize: FONT.tiny,
           color: '#EAE8E0',
           wordWrap: { width: TRAY.w - 80 },
@@ -340,18 +343,39 @@ export class DialogueBox {
       return btn;
     });
 
+    // "▼ más" DENTRO de la lista, no solo el toque en la bandeja: en un celular real
+    // los botones pueden llegar a ocupar toda la altura disponible de la bandeja sin
+    // dejar ningún resquicio tocable fuera de ellos — ahí no había forma de pasar de
+    // página. Este botón vive en el mismo lugar tocable que el resto de las opciones.
+    const moreBtn = document.createElement('button');
+    moreBtn.type = 'button';
+    moreBtn.style.cssText =
+      'display:none; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
+      `text-align:left; color:#7FB0B8; font-family: ${RETRO_FONT}; ` +
+      'font-size:9px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;';
+    moreBtn.textContent = '▼ más';
+    container.appendChild(moreBtn);
+
     // altura disponible: TRAY.h menos el nombre de arriba y un margen contra el
     // borde inferior de la bandeja (mismo espíritu que el resto de la UI, no
     // pegado al filo).
     const maxH = TRAY.h - 26 - 6;
     const GAP = 3;
 
+    // mide moreBtn con display real (display:none mide 0, mismo problema que ya se
+    // resolvió en TouchControls) y le reserva ese lugar a TODAS las páginas, no solo
+    // a la que lo termina mostrando: no se sabe cuál es la última hasta armarlas todas.
+    moreBtn.style.display = 'block';
+    const moreH = moreBtn.offsetHeight + GAP;
+    moreBtn.style.display = 'none';
+    const packH = maxH - moreH;
+
     // una sola opción larga puede no entrar aunque esté SOLA en su página (el
     // paginado de abajo solo separa ENTRE opciones) — para esa achica la letra en
     // pasos hasta que entra, en vez de dejarla salirse del canvas sin que se note.
     for (const b of buttons) {
       let size = 9;
-      while (b.offsetHeight > maxH && size > 7) {
+      while (b.offsetHeight > packH && size > 7) {
         size -= 1;
         b.style.fontSize = `${size}px`;
       }
@@ -360,7 +384,7 @@ export class DialogueBox {
     let acc = 0;
     buttons.forEach((b, i) => {
       const h = b.offsetHeight + (i > pageStart[pageStart.length - 1]! ? GAP : 0);
-      if (acc + h > maxH && i > pageStart[pageStart.length - 1]!) {
+      if (acc + h > packH && i > pageStart[pageStart.length - 1]!) {
         pageStart.push(i);
         acc = 0;
       }
@@ -373,13 +397,15 @@ export class DialogueBox {
     const paint = (): void => {
       const from = pageStart[page]!;
       const to = pageEnd(page);
+      const hasMore = page < pageStart.length - 1;
       buttons.forEach((b, i) => {
         b.style.display = i >= from && i <= to ? 'block' : 'none';
         const on = i === focused;
         b.style.color = on ? '#D9A845' : '#BFD3D8';
         b.textContent = (on ? '› ' : '  ') + line.choices[i]!.text;
       });
-      this.hint.setVisible(page < pageStart.length - 1);
+      moreBtn.style.display = hasMore ? 'block' : 'none';
+      this.hint.setVisible(hasMore);
     };
     const nextPage = (): void => {
       if (page >= pageStart.length - 1) return;
@@ -387,6 +413,7 @@ export class DialogueBox {
       focused = pageStart[page]!;
       paint();
     };
+    moreBtn.addEventListener('click', nextPage);
     // el toque en la bandeja (choicesAdvancePage, más abajo) solo va hacia adelante
     // — "seguir" es siempre para adelante — pero con teclado subir tiene que poder
     // cruzar de vuelta a la página anterior: sin esto, una vez que bajabas a una

@@ -3,9 +3,16 @@ import Phaser from 'phaser';
 /** Fuente y tamaños de todo el texto del juego. Un solo lugar, nada de strings sueltos por escena. */
 export const FONT_FAMILY = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 
-/** Fuente retro (index.html la carga desde Google Fonts) para títulos, diálogos y
- * botones de acción. */
+/** Fuente retro (index.html la carga desde Google Fonts) para títulos, nombres de
+ * diálogo y botones de acción. */
 export const RETRO_FONT = '"Press Start 2P", ui-monospace, "SF Mono", Menlo, monospace';
+
+/** Solo para el cuerpo narrado de los diálogos (DialogueBox.bodyText): Press Start
+ * 2P es bien ancha por carácter y la mayoría de las líneas del juego terminaban
+ * pasando a una segunda página por una sola palabra de sobra. Jersey 10 (index.html)
+ * es más angosta a la misma altura de línea — mismo espíritu pixel/retro, entra
+ * más texto por página. */
+export const NARRATIVE_FONT = '"Jersey 10", ui-monospace, "SF Mono", Menlo, monospace';
 
 export const FONT = {
   tiny: '9px', // pie de portada, "carga"

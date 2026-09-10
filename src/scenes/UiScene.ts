@@ -125,7 +125,16 @@ export class UiScene extends Phaser.Scene {
 
     // fila 1: jornada y turno, sin nada más — nunca se queda sin lugar
     // (antes había 4 puntitos de turno acá; redundantes con el texto, se sacaron)
-    this.dayEl = this.add.dom(6, 3, 'div', domStyle(10, '#D9A845')).setOrigin(0, 0);
+    // fuente pixel del título (no domStyle): al lado de todo lo demás ya migrado a
+    // RETRO_FONT, el monoespaciado de sistema acá desentonaba.
+    this.dayEl = this.add
+      .dom(
+        6,
+        3,
+        'div',
+        `color:#D9A845; font-family: ${RETRO_FONT}; font-size:${FONT.tiny}; white-space:nowrap; pointer-events:none;`,
+      )
+      .setOrigin(0, 0);
     track(this.dayEl);
 
     // fila 2: recursos con nombre completo + barra de carga, en columnas fijas
