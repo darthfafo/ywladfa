@@ -22,8 +22,10 @@ const TERRAIN_COLORS: Record<number, [number, number]> = {
   [TERRAIN.CANYON]: [PAL.clayPale, PAL.clayLight],
   [TERRAIN.PATH]: [PAL.sandLight, PAL.bone],
   [TERRAIN.SPRING]: [PAL.seaLight, PAL.seaPale],
-  // el acantilado natural de la barranca: erosión, nunca mampostería.
-  [TERRAIN.CLIFF]: [PAL.clayDark, PAL.soil2],
+  // el acantilado natural de la barranca: erosión, nunca mampostería. Misma base
+  // oscura que ROCK (arena mojada, no la piedra más clara de antes) — las paredes
+  // del mapa y de las cuevas se leen como un solo material, no dos distintos.
+  [TERRAIN.CLIFF]: [PAL.soil, PAL.clayDark],
   // pasaje cerrado: arena oscura marcada, distinta del acantilado — se lee como
   // obstáculo temporal, no como parte del paisaje.
   [TERRAIN.GATE]: [PAL.soil, PAL.soil2],

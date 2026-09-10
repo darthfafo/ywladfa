@@ -125,17 +125,16 @@ export class UiScene extends Phaser.Scene {
       `color:${color}; font-family: ${RETRO_FONT}; font-size:${size}px; white-space:nowrap; pointer-events:none;`;
 
     // fila 1: jornada y turno, centrados, con los 4 puntitos de turno (uno por
-    // amanecer/mañana/tarde/noche, el de hoy resaltado) a la derecha del texto —
-    // un solo <div> flex para que el grupo entero quede centrado sin tener que medir
-    // el ancho del texto a mano (varía con "JORNADA 1" vs "JORNADA 10").
+    // amanecer/mañana/tarde/noche, el de hoy resaltado) a la derecha del texto.
+    // El "display:flex" NO puede ir en el <div> que crea este DOMElement: Phaser le
+    // pisa el estilo `display` a mano en cada frame (lo fuerza a "block" para
+    // mostrar/ocultar el elemento — mismo mecanismo que ya rompió un botón de
+    // TouchControls esta sesión), así que un flex puesto ACÁ se pierde apenas
+    // Phaser renderiza una vez y el gap/centrado interno deja de aplicar aunque el
+    // texto se vea bien. El flex real vive en un <div> HIJO, adentro, que Phaser no
+    // toca — ver refreshTime().
     this.dayEl = this.add
-      .dom(
-        h.w / 2,
-        5,
-        'div',
-        `display:flex; align-items:center; justify-content:center; gap:6px; pointer-events:none; ` +
-          `font-family: ${RETRO_FONT}; font-size:${FONT.tiny};`,
-      )
+      .dom(h.w / 2, 5, 'div', `pointer-events:none; font-family: ${RETRO_FONT}; font-size:${FONT.tiny};`)
       .setOrigin(0.5, 0);
     track(this.dayEl);
 
@@ -222,16 +221,24 @@ export class UiScene extends Phaser.Scene {
     // Mayúsculas en todo el HUD: a este tamaño de letra, minúsculas con
     // ascendentes/descendentes finos se leen peor en un celular real.
     this.dayEl.setHTML(
-      `<span style="color:#D9A845;">JORNADA ${s.day} · ${game.time.label().toUpperCase()}</span>` +
-        `<span style="display:inline-flex; gap:3px;">${dots}</span>`,
+      `<div style="display:flex; align-items:center; justify-content:center; gap:6px;">` +
+        `<span style="color:#D9A845;">JORNADA ${s.day} · ${game.time.label().toUpperCase()}</span>` +
+        `<span style="display:inline-flex; gap:3px;">${dots}</span>` +
+        `</div>`,
     );
   }
 
+  // nombre en un tono apagado, cantidad en uno bien claro: antes los tres recursos
+  // se leían del mismo color y tamaño, pegados uno al lado del otro ("AGUA
+  // 18COMIDA 14LEÑA 2") — a simple vista costaba separar dónde termina un recurso
+  // y empieza el siguiente. El contraste de color hace ese corte solo, sin gastar
+  // ancho en separadores.
   private refreshResources(): void {
     for (const [id, el] of this.resEls) {
       const v = game.res.get(id);
-      el.textContent = `${(RES_LABEL[id] ?? id).toUpperCase()} ${Math.round(v)}`;
-      el.style.color = game.res.isCritical(id) ? '#DE7050' : '#EAE8E0';
+      const label = (RES_LABEL[id] ?? id).toUpperCase();
+      const valueColor = game.res.isCritical(id) ? '#DE7050' : '#EAE8E0';
+      el.innerHTML = `<span style="color:#7FB0B8">${label}</span> <span style="color:${valueColor}">${Math.round(v)}</span>`;
     }
   }
 

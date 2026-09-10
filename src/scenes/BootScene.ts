@@ -137,12 +137,14 @@ export class BootScene extends Phaser.Scene {
     // RETRO_FONT (default de renderDomText), como todo el resto del juego. Un solo
     // salto manual (la fecha en su propia línea, a propósito); el resto fluye solo
     // con el ancho — forzar otro salto después de "fundar" quedaba como un corte al
-    // azar en cuanto el texto entraba más ancho. size 8, no el 7 original: mismo
-    // texto, un toque más grande sin perder el margen vertical de la bandeja
-    // (medido con el alto real renderizado).
+    // azar en cuanto el texto entraba más ancho. size 7: a 8, "Liverpool, 28 de
+    // mayo de 1865." mide 240px reales contra 238 disponibles — se pasaba por 2px,
+    // justo lo bastante para que redondeos de subpíxel distintos entre navegadores
+    // lo hicieran partir en dos líneas ("1865." solo, huérfano) en algunos casos y
+    // no en otros. A 7 mide 210, con margen real.
     this.track(
       this.renderDomText(16, TRAY_Y + 10, '', {
-        size: 8,
+        size: 7,
         color: '#9BAEB4',
         width: VIEW.width - 32,
         retro: true,
