@@ -143,10 +143,27 @@ export class TouchControls {
   }
 
   /** El botón cambia de texto según lo que haya cerca: hablar / levantar / cavar /
-   * entrar — y solo se muestra cuando hay algo que hacer, ver refreshButton(). */
+   * entrar — y solo se muestra cuando hay algo que hacer, ver refreshButton().
+   *
+   * `DOMElement.setText()` llama a `updateSize()`, que mide `node.clientWidth`
+   * — 0 en un elemento `display:none`. Con ancho 0, el origen (1, 0.5) no corre
+   * nada hacia la izquierda (el corrimiento es `ancho × originX`), así que el
+   * botón quedaba anclado por su borde IZQUIERDO en vez del derecho, con el
+   * ancho real cayéndose de la pantalla por la derecha — exactamente lo que se
+   * veía en el celular real ("HA" cortado en el borde).
+   *
+   * `this.button.setVisible(true)` NO alcanza para evitarlo: solo toca
+   * `renderFlags` (la property `visible` de Phaser), y `node.style.display`
+   * recién se actualiza en el próximo render de Phaser — que todavía no pasó
+   * en el mismo tick en que se llama `setText()` a continuación. Por eso acá
+   * se fuerza `display:block` directo sobre el nodo, sin esperar ese ciclo.
+   */
   setContext(label: string | null): void {
     this.contextLabel = label;
-    if (label) this.button.setText(label.toUpperCase());
+    if (label) {
+      (this.button.node as HTMLElement).style.display = 'block';
+      this.button.setText(label.toUpperCase());
+    }
     this.refreshButton();
   }
 
