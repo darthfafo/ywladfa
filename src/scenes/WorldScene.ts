@@ -684,7 +684,7 @@ export class WorldScene extends Phaser.Scene {
     if (out.toast) bus.emit('ui:toast', { text: out.toast });
     if (out.tutorial) bus.emit('ui:tutorial', { id: out.tutorial });
     if (out.dialogue && registry.dialogue(out.dialogue).context === 'camp') {
-      this.scene.launch('Camp', { dialogueId: out.dialogue });
+      this.scene.launch('Camp', { dialogueId: out.dialogue, night: out.night });
     } else if (out.dialogue) this.events.emit('request-dialogue', { id: out.dialogue, next: out.next });
     else if (out.choice) this.events.emit('request-choice', out.choice);
     else if (out.scene && this.scene.get(out.scene)) this.scene.launch(out.scene);

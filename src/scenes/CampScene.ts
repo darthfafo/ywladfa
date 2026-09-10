@@ -10,6 +10,7 @@ import { crisp, FONT, RETRO_FONT } from '@/util/text';
 
 interface CampData {
   dialogueId: string;
+  night?: number;
 }
 
 const MAX_SILUETAS = 4;
@@ -21,6 +22,7 @@ const MAX_SILUETAS = 4;
  */
 export class CampScene extends Phaser.Scene {
   private dialogueId!: string;
+  private night!: number;
   private dialogue!: DialogueBox;
 
   constructor() {
@@ -29,6 +31,12 @@ export class CampScene extends Phaser.Scene {
 
   init(data: CampData): void {
     this.dialogueId = data.dialogueId;
+    // el trigger que abre esta escena ya gastó su turno (TriggerSystem.consume) antes
+    // de llegar acá, y eso puede haber hecho rodar game.state.progress.day — por eso
+    // el número de jornada viaja como dato del trigger (action.payload.night en
+    // data/levels/nivel-01.json), no se lee en vivo. El fallback es solo para no
+    // romper si algún día se lanza Camp sin pasar por un trigger de fogón.
+    this.night = data.night ?? game.state.progress.day;
   }
 
   create(): void {
@@ -54,7 +62,7 @@ export class CampScene extends Phaser.Scene {
     this.add.rectangle(h.x, h.y, h.w, h.h, PAL.ink, 0.96).setOrigin(0, 0);
     crisp(
       this.add
-        .text(6, 4, `Jornada ${game.state.progress.day} · Noche`, {
+        .text(6, 4, `Jornada ${this.night} · Noche`, {
           fontFamily: RETRO_FONT,
           fontSize: FONT.small,
           color: '#D9A845',

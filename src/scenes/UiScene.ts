@@ -185,16 +185,23 @@ export class UiScene extends Phaser.Scene {
         .setResolution(8),
     );
 
+    // origin (0.5, 1) + ancla pegada al borde de la bandeja: los toasts más largos
+    // ("+3 haz de leña (a cargar hasta el fogón)") no entran en una línea ni al
+    // tamaño más chico legible (miden 320px contra 270 de pantalla) — con wordWrap
+    // crecen hacia ARRIBA desde ese punto fijo, así nunca se meten en la bandeja
+    // sin importar cuántas líneas terminen ocupando.
     this.toast = crisp(
       this.add
-        .text(VIEW.width / 2, VIEW.tray.y - 18, '', {
+        .text(VIEW.width / 2, VIEW.tray.y - 4, '', {
           fontFamily: RETRO_FONT,
-          fontSize: FONT.body,
+          fontSize: FONT.tiny,
           color: '#D9A845',
           backgroundColor: '#18262A',
           padding: { x: 4, y: 2 },
+          align: 'center',
+          wordWrap: { width: VIEW.width - 24 },
         })
-        .setOrigin(0.5, 0)
+        .setOrigin(0.5, 1)
         .setDepth(70)
         .setAlpha(0)
         .setResolution(8),
