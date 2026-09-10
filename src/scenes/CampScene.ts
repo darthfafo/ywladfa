@@ -59,7 +59,7 @@ export class CampScene extends Phaser.Scene {
           fontSize: FONT.small,
           color: '#D9A845',
         })
-        .setResolution(4),
+        .setResolution(8),
     );
 
     const w = VIEW.world;

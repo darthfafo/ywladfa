@@ -76,7 +76,7 @@ export class DialogueBox {
           color: '#D9A845',
           wordWrap: { width: TRAY.w - 78 },
         })
-        .setResolution(4),
+        .setResolution(8),
     );
     this.bodyText = crisp(
       scene.add
@@ -87,13 +87,13 @@ export class DialogueBox {
           wordWrap: { width: TRAY.w - 80 },
           lineSpacing: 6,
         })
-        .setResolution(4),
+        .setResolution(8),
     );
     this.hint = crisp(
       scene.add
         .text(TRAY.w - 8, TRAY.h - 13, '▼', { fontFamily: RETRO_FONT, fontSize: FONT.body, color: '#7FB0B8' })
         .setOrigin(1, 0)
-        .setResolution(4),
+        .setResolution(8),
     );
     // toque para avanzar de línea: HTML real, no un rectángulo de Phaser con
     // setInteractive/pointerdown — era el único lugar de todo el diálogo que

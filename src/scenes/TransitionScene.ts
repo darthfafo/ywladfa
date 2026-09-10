@@ -35,7 +35,7 @@ export class TransitionScene extends Phaser.Scene {
           color: '#D9A845',
         })
         .setOrigin(0.5, 0.5)
-        .setResolution(4),
+        .setResolution(8),
     );
 
     this.renderButton(VIEW.width / 2, VIEW.height / 2 + 30, '› Jugar otra vez', () => this.playAgain());
@@ -46,7 +46,7 @@ export class TransitionScene extends Phaser.Scene {
       this.add
         .text(cx, y, label, { fontFamily: RETRO_FONT, fontSize: '12px', color: '#BFD3D8' })
         .setOrigin(0.5, 0.5)
-        .setResolution(4),
+        .setResolution(8),
     );
     const w = text.width + 32;
     const h = text.height + 16;

@@ -34,7 +34,7 @@ export class SelectList {
     this.cursor = crisp(
       scene.add
         .text(0, 0, CURSOR, { fontFamily: style.fontFamily, fontSize: style.fontSize, color: this.colors.selected })
-        .setResolution(4)
+        .setResolution(8)
         // sin esto el cursor queda en profundidad 0 por default: en una pantalla que usa
         // setDepth() a propósito (BootScene.renderMenu, con su propia caja de fondo) el
         // cursor terminaba dibujado DETRÁS de la caja, invisible.

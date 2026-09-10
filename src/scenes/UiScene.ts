@@ -177,7 +177,7 @@ export class UiScene extends Phaser.Scene {
         .setOrigin(0.5, 0)
         .setDepth(70)
         .setAlpha(0)
-        .setResolution(4),
+        .setResolution(8),
     );
 
     this.toast = crisp(
@@ -192,7 +192,7 @@ export class UiScene extends Phaser.Scene {
         .setOrigin(0.5, 0)
         .setDepth(70)
         .setAlpha(0)
-        .setResolution(4),
+        .setResolution(8),
     );
   }
 
@@ -283,7 +283,7 @@ export class UiScene extends Phaser.Scene {
         .setOrigin(0.5, 0)
         .setShadow(2, 2, '#000000', 4, true, true)
         .setDepth(-3)
-        .setResolution(4),
+        .setResolution(8),
     );
 
     // no repite "Jornada N." (eso ya lo dice el título de arriba): adelanta de
@@ -420,7 +420,7 @@ export class UiScene extends Phaser.Scene {
           fontSize: '11px',
           color: '#D9A845',
         })
-        .setResolution(4),
+        .setResolution(8),
     );
     const rule = this.add.rectangle(16, top + 42, VIEW.width - 32, 1, PAL.seaPale, 0.35).setOrigin(0, 0);
     const bodyT = crisp(
@@ -432,7 +432,7 @@ export class UiScene extends Phaser.Scene {
           wordWrap: { width: VIEW.width - 32 },
           lineSpacing: 4,
         })
-        .setResolution(4),
+        .setResolution(8),
     );
 
     const items: Phaser.GameObjects.GameObject[] = [bg, titleT, rule, bodyT];
@@ -449,7 +449,7 @@ export class UiScene extends Phaser.Scene {
             color: '#BFD3D8',
             wordWrap: { width: VIEW.width - 72 },
           })
-          .setResolution(4),
+          .setResolution(8),
       );
       const boxH = label.height + 16;
       const box = this.add
@@ -482,7 +482,7 @@ export class UiScene extends Phaser.Scene {
             wordWrap: { width: VIEW.width - 32 },
             lineSpacing: 3,
           })
-          .setResolution(4),
+          .setResolution(8),
       );
       // anclado abajo del todo salvo que las opciones ya lleguen tan abajo que se
       // pisarían — en ese caso, se corre justo debajo de la última opción.

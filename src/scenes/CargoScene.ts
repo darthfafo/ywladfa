@@ -63,7 +63,7 @@ export class CargoScene extends Phaser.Scene {
     crisp(
       this.add
         .text(8, 6, 'La carga', { fontFamily: RETRO_FONT, fontSize: FONT.title, color: '#D9A845' })
-        .setResolution(4),
+        .setResolution(8),
     );
     crisp(
       this.add
@@ -73,13 +73,13 @@ export class CargoScene extends Phaser.Scene {
           color: '#9BAEB4',
           wordWrap: { width: VIEW.width - 16 },
         })
-        .setResolution(4),
+        .setResolution(8),
     );
     this.counterText = crisp(
       this.add
         .text(VIEW.width - 8, 6, '', { fontFamily: RETRO_FONT, fontSize: FONT.body, color: '#EAE8E0' })
         .setOrigin(1, 0)
-        .setResolution(4),
+        .setResolution(8),
     );
     // línea divisoria sutil entre el encabezado y la grilla — mismo criterio que ya
     // separa el HUD del mundo (VIEW.hud) y la bandeja del mundo (VIEW.tray).
@@ -129,7 +129,7 @@ export class CargoScene extends Phaser.Scene {
         })
         .setOrigin(icon ? 0.5 : 0, 0)
         .setX(icon ? x + CARD_W / 2 : x + 8)
-        .setResolution(4),
+        .setResolution(8),
     );
     const kg = crisp(
       this.add
@@ -138,7 +138,7 @@ export class CargoScene extends Phaser.Scene {
           fontSize: FONT.tiny,
           color: '#6B6A5E',
         })
-        .setResolution(4),
+        .setResolution(8),
     );
 
     const card: Card = { bulto: b, bg, label, kg, taken: false };
