@@ -136,23 +136,23 @@ export class BootScene extends Phaser.Scene {
     // contexto narrativo en la bandeja, como cualquier línea de narrador. La fecha
     // en dorado (mismo tono que el resto de los acentos del juego, #D9A845) para
     // que se distinga del resto sin perder contraste contra el fondo oscuro.
-    // RETRO_FONT (default de renderDomText), como todo el resto del juego. Un solo
-    // salto manual (la fecha en su propia línea, a propósito); el resto fluye solo
-    // con el ancho — forzar otro salto después de "fundar" quedaba como un corte al
-    // azar en cuanto el texto entraba más ancho. size 7: a 8, "Liverpool, 28 de
-    // mayo de 1865." mide 240px reales contra 238 disponibles — se pasaba por 2px,
-    // justo lo bastante para que redondeos de subpíxel distintos entre navegadores
-    // lo hicieran partir en dos líneas ("1865." solo, huérfano) en algunos casos y
-    // no en otros. A 7 mide 210, con margen real.
+    // size 9, igual que DialogueBox.bodyText: es el mismo tipo de texto (narrado,
+    // en la misma bandeja) y quedaba más chico que el resto del juego sin motivo.
+    // "Liverpool, 28 de mayo de 1865." no entra entera en una línea a 9px (mide
+    // 270px contra 238 disponibles) — el salto sin controlar dejaba "1865." solo,
+    // huérfano; el corte manual después de "mayo" reparte las dos líneas parejo.
+    // Después, un salto más (la fecha aparte del resto) y "fundar" separado de
+    // "Y Wladfa" por la misma razón — medido que las 4 líneas entran con margen
+    // real en la bandeja (81px de 86 disponibles).
     this.track(
       this.renderDomText(16, TRAY_Y + 10, '', {
-        size: 7,
+        size: 9,
         color: '#EAE8E0',
         width: VIEW.width - 32,
         retro: true,
         lineHeight: 1.5,
         html:
-          '<span style="color:#D9A845">Liverpool, 28 de mayo de 1865.</span><br>El Mimosa lleva colonos galeses ' +
+          '<span style="color:#D9A845">Liverpool, 28 de mayo<br>de 1865.</span><br>El Mimosa lleva colonos galeses ' +
           'rumbo a Sudamérica: van a fundar<br>Y Wladfa, la Colonia.',
       }),
     );
@@ -293,7 +293,7 @@ export class BootScene extends Phaser.Scene {
     // está pasando.
     this.track(
       this.renderDomText(16, TRAY_Y + 10, 'Vas a enlistarte para viajar en el Mimosa junto a tu madre.', {
-        size: 7,
+        size: 9,
         color: '#EAE8E0',
         width: VIEW.width - 32,
         retro: true,

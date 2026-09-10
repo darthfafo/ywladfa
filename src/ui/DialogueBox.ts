@@ -339,13 +339,15 @@ export class DialogueBox {
       this.show(this.sys.choose(line.choices[i]!.id));
     };
 
+    const BTN_BASE_SIZE = 9;
+    const BTN_MIN_SIZE = 7;
     const buttons: HTMLButtonElement[] = line.choices.map((c) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.style.cssText =
         'display:block; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
         `text-align:left; color:#BFD3D8; font-family: ${RETRO_FONT}; ` +
-        'font-size:11px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;';
+        `font-size:${BTN_BASE_SIZE}px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;`;
       btn.textContent = c.text; // contenido real puesto ya, para medir el wrap de verdad
       container.appendChild(btn);
       return btn;
@@ -355,12 +357,16 @@ export class DialogueBox {
     // los botones pueden llegar a ocupar toda la altura disponible de la bandeja sin
     // dejar ningún resquicio tocable fuera de ellos — ahí no había forma de pasar de
     // página. Este botón vive en el mismo lugar tocable que el resto de las opciones.
+    // También es la ÚNICA forma de volver a ver una opción anterior en un celular
+    // (no hay flechas de teclado ahí) — si 3 opciones cortas ya llenan la página,
+    // page 1 nunca se vuelve a ver. Por eso el paginado de abajo evita reservarle
+    // lugar salvo que de verdad haga falta.
     const moreBtn = document.createElement('button');
     moreBtn.type = 'button';
     moreBtn.style.cssText =
       'display:none; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
       `text-align:left; color:#7FB0B8; font-family: ${RETRO_FONT}; ` +
-      'font-size:11px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;';
+      `font-size:${BTN_BASE_SIZE}px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;`;
     moreBtn.textContent = '▼ más';
     container.appendChild(moreBtn);
 
@@ -370,34 +376,51 @@ export class DialogueBox {
     const maxH = TRAY.h - 26 - 6;
     const GAP = 3;
 
-    // mide moreBtn con display real (display:none mide 0, mismo problema que ya se
-    // resolvió en TouchControls) y le reserva ese lugar a TODAS las páginas, no solo
-    // a la que lo termina mostrando: no se sabe cuál es la última hasta armarlas todas.
-    moreBtn.style.display = 'block';
-    const moreH = moreBtn.offsetHeight + GAP;
-    moreBtn.style.display = 'none';
-    const packH = maxH - moreH;
+    const sumH = (): number => buttons.reduce((acc, b, i) => acc + b.offsetHeight + (i > 0 ? GAP : 0), 0);
 
-    // una sola opción larga puede no entrar aunque esté SOLA en su página (el
-    // paginado de abajo solo separa ENTRE opciones) — para esa achica la letra en
-    // pasos hasta que entra, en vez de dejarla salirse del canvas sin que se note.
-    for (const b of buttons) {
-      let size = 11;
-      while (b.offsetHeight > packH && size > 8) {
-        size -= 1;
-        b.style.fontSize = `${size}px`;
-      }
+    // primero se prueba TODO junto en una sola página, sin reservarle nada al
+    // botón "más" — la mayoría de las decisiones del juego son 2-3 opciones
+    // cortas que entran perfectamente achicando la letra un par de puntos, y
+    // reservar ese lugar de entrada (como se hacía antes) las mandaba a paginar
+    // sin necesidad. Un tamaño parejo para las tres, no una achicada individual:
+    // que se vean como un mismo grupo, no una más chica que las otras al azar.
+    let size = BTN_BASE_SIZE;
+    while (sumH() > maxH && size > BTN_MIN_SIZE) {
+      size -= 1;
+      for (const b of buttons) b.style.fontSize = `${size}px`;
+      moreBtn.style.fontSize = `${size}px`;
     }
-    const pageStart = [0];
-    let acc = 0;
-    buttons.forEach((b, i) => {
-      const h = b.offsetHeight + (i > pageStart[pageStart.length - 1]! ? GAP : 0);
-      if (acc + h > packH && i > pageStart[pageStart.length - 1]!) {
-        pageStart.push(i);
-        acc = 0;
+
+    let pageStart = [0];
+    if (sumH() > maxH) {
+      // no entra igual (4+ opciones, o alguna larguísima): recién ahí se reserva
+      // el lugar del botón "más" y se separa en páginas.
+      moreBtn.style.display = 'block';
+      const moreH = moreBtn.offsetHeight + GAP;
+      moreBtn.style.display = 'none';
+      const packH = maxH - moreH;
+
+      // una sola opción larga puede no entrar aunque esté SOLA en su página (el
+      // paginado de abajo solo separa ENTRE opciones) — para esa achica la letra
+      // en pasos hasta que entra, en vez de dejarla salirse del canvas sin que se
+      // note.
+      for (const b of buttons) {
+        let bSize = size;
+        while (b.offsetHeight > packH && bSize > BTN_MIN_SIZE) {
+          bSize -= 1;
+          b.style.fontSize = `${bSize}px`;
+        }
       }
-      acc += h;
-    });
+      let acc = 0;
+      buttons.forEach((b, i) => {
+        const h = b.offsetHeight + (i > pageStart[pageStart.length - 1]! ? GAP : 0);
+        if (acc + h > packH && i > pageStart[pageStart.length - 1]!) {
+          pageStart.push(i);
+          acc = 0;
+        }
+        acc += h;
+      });
+    }
 
     let page = 0;
     let focused = 0;
