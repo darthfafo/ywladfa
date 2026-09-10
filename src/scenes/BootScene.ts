@@ -12,9 +12,13 @@ import { RETRO_FONT } from '@/util/text';
 type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
 
-// "Press Start 2P" (Google Fonts, index.html) es bien ancha por carácter, así que se
-// usa a tamaños chicos y con fallback al monoespaciado de siempre si no llegó a
-// cargar (o no hay internet).
+// fallback de RETRO_FONT (renderDomText/renderDomButton) si Google Fonts no llegó a
+// cargar (o no hay internet) — ver util/text.ts. `retro: false` explícito es la
+// única forma de pedir este monoespaciado; todo el resto del arranque usa la
+// fuente retro por default, para no mezclar dos estilos de letra en la misma
+// pantalla (antes pasaba con el campo "¿Cómo te llamás?" y el aviso de "se pierde
+// la partida guardada", los únicos dos textos que quedaban en este monoespaciado
+// junto a botones y títulos ya en fuente retro).
 const UI_FONT = 'ui-monospace, "SF Mono", Menlo, monospace';
 
 // tres franjas fijas durante todo el arranque, igual de espíritu que HUD/mundo/bandeja
@@ -89,7 +93,7 @@ export class BootScene extends Phaser.Scene {
     // chica, no compite con el título ni el subtítulo.
     this.renderDomText(cx, 42, 'La colonia galesa en Chubut', { size: 9, color: '#D9A845', align: 'center', retro: true });
     this.renderDomText(cx, 58, 'JUEGO CON RIGOR HISTÓRICO, ASÍ SUCEDIÓ', {
-      size: 6,
+      size: 11,
       color: '#EAE8E0',
       align: 'center',
       retro: true,
@@ -132,11 +136,11 @@ export class BootScene extends Phaser.Scene {
     // que se distinga del resto sin perder contraste contra el fondo oscuro.
     this.track(
       this.renderDomText(16, TRAY_Y + 10, '', {
-        size: 7,
+        size: 11,
         color: '#9BAEB4',
         width: VIEW.width - 32,
         retro: true,
-        lineHeight: 1.9,
+        lineHeight: 1.6,
         html:
           '<span style="color:#D9A845">Liverpool, 28 de mayo de 1865.</span><br>El Mimosa lleva colonos galeses ' +
           'rumbo a Sudamérica: van a fundar<br>Y Wladfa, la Colonia.',
@@ -493,7 +497,7 @@ export class BootScene extends Phaser.Scene {
     },
   ): Phaser.GameObjects.DOMElement {
     const style =
-      `color:${opts.color}; font-family: ${opts.retro ? RETRO_FONT : UI_FONT}; font-size:${opts.size}px; ` +
+      `color:${opts.color}; font-family: ${opts.retro === false ? UI_FONT : RETRO_FONT}; font-size:${opts.size}px; ` +
       `font-weight:${opts.weight ?? 'normal'}; text-align:${opts.align ?? 'left'}; line-height:${opts.lineHeight ?? 1.5}; ` +
       (opts.width ? `width:${opts.width}px;` : 'white-space:nowrap;');
     const originX = opts.align === 'center' ? 0.5 : opts.align === 'right' ? 1 : 0;

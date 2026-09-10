@@ -6,7 +6,7 @@ import { registry } from '@/core/Registry';
 import { DialogueSystem, type RenderedLine } from '@/systems/DialogueSystem';
 import { portraitIdForSpeaker, portraitTextureKey } from '@/util/assets';
 import { input } from '@/util/input';
-import { crisp, FONT, NARRATIVE_FONT, RETRO_FONT } from '@/util/text';
+import { crisp, FONT, RETRO_FONT } from '@/util/text';
 
 const TRAY = VIEW.tray;
 
@@ -66,25 +66,22 @@ export class DialogueBox {
     // fuente retro (pixel real, no un monospace de sistema forzado a NEAREST/LINEAR)
     // en todo el texto de diálogo: el monospace del sistema, escalado al tamaño
     // final del juego, se leía distorsionado — la retro está diseñada para esto.
+    // FONT.body (11px), no FONT.tiny: a 9px se leía demasiado chica y fina en un
+    // celular real — confirmado en dispositivo.
     this.nameText = crisp(
       scene.add
         .text(70, 12, '', {
           fontFamily: RETRO_FONT,
-          fontSize: FONT.tiny,
+          fontSize: FONT.body,
           color: '#D9A845',
           wordWrap: { width: TRAY.w - 78 },
         })
         .setResolution(4),
     );
-    // NARRATIVE_FONT, no RETRO_FONT: Press Start 2P es bien ancha por carácter y la
-    // mayoría de las líneas del juego pasaban a una segunda página por una sola
-    // palabra de sobra — acá, y solo acá, se prioriza que entre más texto por página.
-    // FONT.body (11px), no FONT.tiny: a 9px Jersey 10 se leía demasiado chica y
-    // fina en un celular real — confirmado en dispositivo.
     this.bodyText = crisp(
       scene.add
         .text(70, 26, '', {
-          fontFamily: NARRATIVE_FONT,
+          fontFamily: RETRO_FONT,
           fontSize: FONT.body,
           color: '#EAE8E0',
           wordWrap: { width: TRAY.w - 80 },
@@ -94,7 +91,7 @@ export class DialogueBox {
     );
     this.hint = crisp(
       scene.add
-        .text(TRAY.w - 8, TRAY.h - 13, '▼', { fontFamily: RETRO_FONT, fontSize: FONT.tiny, color: '#7FB0B8' })
+        .text(TRAY.w - 8, TRAY.h - 13, '▼', { fontFamily: RETRO_FONT, fontSize: FONT.body, color: '#7FB0B8' })
         .setOrigin(1, 0)
         .setResolution(4),
     );
@@ -339,7 +336,7 @@ export class DialogueBox {
       btn.style.cssText =
         'display:block; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
         `text-align:left; color:#BFD3D8; font-family: ${RETRO_FONT}; ` +
-        'font-size:9px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;';
+        'font-size:11px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;';
       btn.textContent = c.text; // contenido real puesto ya, para medir el wrap de verdad
       container.appendChild(btn);
       return btn;
@@ -354,7 +351,7 @@ export class DialogueBox {
     moreBtn.style.cssText =
       'display:none; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
       `text-align:left; color:#7FB0B8; font-family: ${RETRO_FONT}; ` +
-      'font-size:9px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;';
+      'font-size:11px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;';
     moreBtn.textContent = '▼ más';
     container.appendChild(moreBtn);
 
@@ -376,8 +373,8 @@ export class DialogueBox {
     // paginado de abajo solo separa ENTRE opciones) — para esa achica la letra en
     // pasos hasta que entra, en vez de dejarla salirse del canvas sin que se note.
     for (const b of buttons) {
-      let size = 9;
-      while (b.offsetHeight > packH && size > 7) {
+      let size = 11;
+      while (b.offsetHeight > packH && size > 8) {
         size -= 1;
         b.style.fontSize = `${size}px`;
       }

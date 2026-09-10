@@ -3,16 +3,17 @@ import Phaser from 'phaser';
 /** Fuente y tamaños de todo el texto del juego. Un solo lugar, nada de strings sueltos por escena. */
 export const FONT_FAMILY = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 
-/** Fuente retro (index.html la carga desde Google Fonts) para títulos, nombres de
- * diálogo y botones de acción. */
-export const RETRO_FONT = '"Press Start 2P", ui-monospace, "SF Mono", Menlo, monospace';
-
-/** Solo para el cuerpo narrado de los diálogos (DialogueBox.bodyText): Press Start
- * 2P es bien ancha por carácter y la mayoría de las líneas del juego terminaban
- * pasando a una segunda página por una sola palabra de sobra. Jersey 10 (index.html)
- * es más angosta a la misma altura de línea — mismo espíritu pixel/retro, entra
- * más texto por página. */
-export const NARRATIVE_FONT = '"Jersey 10", ui-monospace, "SF Mono", Menlo, monospace';
+/** Fuente retro (index.html la carga desde Google Fonts), la única fuente "de juego"
+ * — títulos, HUD, nombres y cuerpo de diálogo, botones de acción, opciones. Un solo
+ * font-family en todos lados: mezclar esta con Press Start 2P (como se hizo un rato
+ * en esta misma sesión) se leía inconsistente, dos estilos de letra distintos en la
+ * misma pantalla. No es Press Start 2P: a esa fuente le faltan los glifos de
+ * mayúsculas acentuadas del español (Á/É/Í/Ó/Ú se dibujan como su minúscula — un
+ * "SUCEDIÓ" se leía "SUCEDIó"), inaceptable para un juego en español (CLAUDE.md R6).
+ * Jersey 10 tiene el alfabeto español completo y es bastante más angosta por
+ * carácter — a igual tamaño en px entra más texto y hay menos riesgo de que una
+ * palabra se vaya sola a la página siguiente. */
+export const RETRO_FONT = '"Jersey 10", ui-monospace, "SF Mono", Menlo, monospace';
 
 export const FONT = {
   tiny: '9px', // pie de portada, "carga"

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { PAL, VIEW } from '@/config';
 import { saveSystem } from '@/systems/SaveSystem';
-import { crisp, FONT_FAMILY, RETRO_FONT } from '@/util/text';
+import { crisp, RETRO_FONT } from '@/util/text';
 
 interface TransitionData {
   /** id del nivel que sigue (`data/levels/*.json` → `next`). Todavía no existe
@@ -44,7 +44,7 @@ export class TransitionScene extends Phaser.Scene {
   private renderButton(cx: number, y: number, label: string, onPick: () => void): void {
     const text = crisp(
       this.add
-        .text(cx, y, label, { fontFamily: FONT_FAMILY, fontSize: '12px', color: '#BFD3D8' })
+        .text(cx, y, label, { fontFamily: RETRO_FONT, fontSize: '12px', color: '#BFD3D8' })
         .setOrigin(0.5, 0.5)
         .setResolution(4),
     );

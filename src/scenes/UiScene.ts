@@ -10,7 +10,7 @@ import { DialogueBox } from '@/ui/DialogueBox';
 import { TouchControls } from '@/ui/TouchControls';
 import { input } from '@/util/input';
 import { SelectList } from '@/util/selectList';
-import { crisp, FONT, FONT_FAMILY, RETRO_FONT } from '@/util/text';
+import { crisp, FONT, RETRO_FONT } from '@/util/text';
 
 /** Recursos que se muestran en el HUD del Nivel 1. El resto vive en el panel de jornada. */
 const HUD_RESOURCES: ResourceId[] = ['agua', 'comida', 'lena'];
@@ -173,7 +173,7 @@ export class UiScene extends Phaser.Scene {
 
     this.zoneLabel = crisp(
       this.add
-        .text(VIEW.width / 2, VIEW.world.y + 8, '', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#EAE8E0' })
+        .text(VIEW.width / 2, VIEW.world.y + 8, '', { fontFamily: RETRO_FONT, fontSize: FONT.body, color: '#EAE8E0' })
         .setOrigin(0.5, 0)
         .setDepth(70)
         .setAlpha(0)
@@ -183,7 +183,7 @@ export class UiScene extends Phaser.Scene {
     this.toast = crisp(
       this.add
         .text(VIEW.width / 2, VIEW.tray.y - 18, '', {
-          fontFamily: FONT_FAMILY,
+          fontFamily: RETRO_FONT,
           fontSize: FONT.body,
           color: '#D9A845',
           backgroundColor: '#18262A',
@@ -363,7 +363,7 @@ export class UiScene extends Phaser.Scene {
   private openTutorial(id: string): void {
     const t = registry.tutorial(id);
     if (!t) return;
-    this.openOverlay(t.title, t.text, [{ label: 'Entendido', onPick: () => this.closeOverlay() }], true, t.hint);
+    this.openOverlay(t.title, t.text, [{ label: 'Entendido', onPick: () => this.closeOverlay() }], t.hint);
   }
 
   private openChoice(id: string): void {
@@ -378,7 +378,6 @@ export class UiScene extends Phaser.Scene {
           this.closeOverlay();
         },
       })),
-      false,
       c.hint,
     );
   }
@@ -389,10 +388,11 @@ export class UiScene extends Phaser.Scene {
    * que evita GDD §8: esto sigue siendo un panel fijo, solo que del tamaño de la
    * franja que le corresponde en las tres bandas del layout (docs/00-GDD.md §8),
    * con el mismo marco con borde que las cajas del arranque (BootScene.renderMenu).
-   * `retro` es para las OPCIONES de los tutoriales (título + único botón, siempre cortos) — las
-   * pantallas de decisión tienen oraciones largas de datos y en Press Start 2P
-   * (mucho más ancha por carácter) arriesgan un wrap de demasiadas líneas. El título sí va
-   * siempre en fuente retro: es corto en todos los casos ("Carga", "Decisión", etc).
+   * Todo el panel (título, cuerpo, opciones) va en RETRO_FONT — antes las opciones
+   * largas de las pantallas de decisión caían al monoespaciado de sistema para
+   * evitar un wrap de demasiadas líneas (Press Start 2P era bien ancha por
+   * carácter), pero eso mezclaba dos estilos de letra en el mismo panel. RETRO_FONT
+   * ya no tiene ese riesgo de ancho (ver util/text.ts).
    * `footer` (opcional) es la aclaración técnica o el consejo de juego de
    * `hint` en los datos (choices/tutoriales) — va anclado abajo del todo del
    * panel, separado por su propia línea, para no dejar vacío el resto de la
@@ -401,7 +401,6 @@ export class UiScene extends Phaser.Scene {
     title: string,
     body: string,
     options: Array<{ label: string; onPick: () => void }>,
-    retro = false,
     footer?: string,
   ): void {
     this.closeOverlay();
@@ -427,7 +426,7 @@ export class UiScene extends Phaser.Scene {
     const bodyT = crisp(
       this.add
         .text(16, top + 48, body, {
-          fontFamily: FONT_FAMILY,
+          fontFamily: RETRO_FONT,
           fontSize: FONT.body,
           color: '#EAE8E0',
           wordWrap: { width: VIEW.width - 32 },
@@ -445,8 +444,8 @@ export class UiScene extends Phaser.Scene {
       const label = crisp(
         this.add
           .text(28, y + 8, o.label, {
-            fontFamily: retro ? RETRO_FONT : FONT_FAMILY,
-            fontSize: retro ? '9px' : FONT.body,
+            fontFamily: RETRO_FONT,
+            fontSize: FONT.body,
             color: '#BFD3D8',
             wordWrap: { width: VIEW.width - 72 },
           })
@@ -477,7 +476,7 @@ export class UiScene extends Phaser.Scene {
       const footerT = crisp(
         this.add
           .text(16, 0, footer, {
-            fontFamily: FONT_FAMILY,
+            fontFamily: RETRO_FONT,
             fontSize: FONT.small,
             color: '#7FB0B8',
             wordWrap: { width: VIEW.width - 32 },

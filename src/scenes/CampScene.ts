@@ -6,7 +6,7 @@ import type { UiScene } from '@/scenes/UiScene';
 import type { WorldScene } from '@/scenes/WorldScene';
 import { addSceneBackground } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
-import { crisp, FONT, FONT_FAMILY } from '@/util/text';
+import { crisp, FONT, RETRO_FONT } from '@/util/text';
 
 interface CampData {
   dialogueId: string;
@@ -55,7 +55,7 @@ export class CampScene extends Phaser.Scene {
     crisp(
       this.add
         .text(6, 4, `Jornada ${game.state.progress.day} · Noche`, {
-          fontFamily: FONT_FAMILY,
+          fontFamily: RETRO_FONT,
           fontSize: FONT.small,
           color: '#D9A845',
         })

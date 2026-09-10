@@ -6,7 +6,7 @@ import { registry } from '@/core/Registry';
 import type { BultoDef, ResourceId } from '@/core/types';
 import type { WorldScene } from '@/scenes/WorldScene';
 import { addIconImage, addSceneBackground } from '@/util/assets';
-import { crisp, FONT, FONT_FAMILY, RETRO_FONT } from '@/util/text';
+import { crisp, FONT, RETRO_FONT } from '@/util/text';
 
 interface Card {
   bulto: BultoDef;
@@ -68,7 +68,7 @@ export class CargoScene extends Phaser.Scene {
     crisp(
       this.add
         .text(8, 26, 'Los carros llevan 5 bultos. Hay 8. Sin vuelta atrás.', {
-          fontFamily: FONT_FAMILY,
+          fontFamily: RETRO_FONT,
           fontSize: FONT.tiny,
           color: '#9BAEB4',
           wordWrap: { width: VIEW.width - 16 },
@@ -77,7 +77,7 @@ export class CargoScene extends Phaser.Scene {
     );
     this.counterText = crisp(
       this.add
-        .text(VIEW.width - 8, 6, '', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#EAE8E0' })
+        .text(VIEW.width - 8, 6, '', { fontFamily: RETRO_FONT, fontSize: FONT.body, color: '#EAE8E0' })
         .setOrigin(1, 0)
         .setResolution(4),
     );
@@ -120,7 +120,7 @@ export class CargoScene extends Phaser.Scene {
     const label = crisp(
       this.add
         .text(x + 8, labelY, b.label, {
-          fontFamily: FONT_FAMILY,
+          fontFamily: RETRO_FONT,
           fontSize: FONT.small,
           color: '#EAE8E0',
           wordWrap: { width: CARD_W - 16 },
@@ -134,7 +134,7 @@ export class CargoScene extends Phaser.Scene {
     const kg = crisp(
       this.add
         .text(x + 8, y + CARD_H - 18, `${b.kg} kg`, {
-          fontFamily: FONT_FAMILY,
+          fontFamily: RETRO_FONT,
           fontSize: FONT.tiny,
           color: '#6B6A5E',
         })
