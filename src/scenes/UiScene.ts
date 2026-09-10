@@ -419,11 +419,16 @@ export class UiScene extends Phaser.Scene {
         .setResolution(8),
     );
     const rule = this.add.rectangle(16, top + 42, VIEW.width - 32, 1, PAL.seaPale, 0.35).setOrigin(0, 0);
+    // FONT.tiny (9px), no FONT.body: este panel tiene alto FIJO, sin paginado ni
+    // scroll (a diferencia de DialogueBox) — a 11px el cuerpo + opciones + footer de
+    // "Carga" o "¿Qué elegís primero?" se salían del panel por abajo, superpuestos
+    // con el mundo. Medido con las 6 pantallas reales del juego (4 tutoriales, 2
+    // decisiones) contra el alto real disponible: a 9px todas entran con margen.
     const bodyT = crisp(
       this.add
         .text(16, top + 48, body, {
           fontFamily: RETRO_FONT,
-          fontSize: FONT.body,
+          fontSize: FONT.tiny,
           color: '#EAE8E0',
           wordWrap: { width: VIEW.width - 32 },
           lineSpacing: 4,
@@ -441,7 +446,7 @@ export class UiScene extends Phaser.Scene {
         this.add
           .text(28, y + 8, o.label, {
             fontFamily: RETRO_FONT,
-            fontSize: FONT.body,
+            fontSize: FONT.tiny,
             color: '#BFD3D8',
             wordWrap: { width: VIEW.width - 72 },
           })
@@ -473,7 +478,7 @@ export class UiScene extends Phaser.Scene {
         this.add
           .text(16, 0, footer, {
             fontFamily: RETRO_FONT,
-            fontSize: FONT.small,
+            fontSize: FONT.tiny,
             color: '#7FB0B8',
             wordWrap: { width: VIEW.width - 32 },
             lineSpacing: 3,
