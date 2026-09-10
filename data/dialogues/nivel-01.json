@@ -737,13 +737,6 @@
               }
             }
           ],
-          "next": "r3"
-        },
-        "r3": {
-          "speaker": "npc_mari",
-          "portrait": "neutral",
-          "condition": "!(flags.n1_carga includes 'abrigo')",
-          "text": "No hace tanto frío. (se cierra el chal)",
           "next": "r4"
         },
         "r4": {
@@ -1069,7 +1062,7 @@
           "speaker": "npc_edwyn",
           "portrait": "neutral",
           "condition": "progress.day == 3",
-          "text": "Lo que llevemos de acá, que alcance. No prometo nada más.",
+          "text": "Bajé a mirar la playa una vez más antes de irnos. No queda nada mío acá tampoco, ya está.",
           "end": true
         },
         "ef_default": {

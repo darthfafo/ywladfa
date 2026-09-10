@@ -98,6 +98,16 @@ export class WorldScene extends Phaser.Scene {
       this.updateGates();
       this.updateNpcVisibility();
     });
+    // los triggers sin `zone`/`rect` (ej. trig_pantalla_carga, trig_reacciones_carga)
+    // no dependen de dónde estás parado — solo de un flag — pero checkTriggers()
+    // hoy solo corre desde trackTile(), en cada cambio de tile. Sin esto, uno de
+    // estos triggers quedaba esperando a que el jugador diera UN paso cualquiera
+    // después de que su condición ya era cierta, una demora artificial que no
+    // tiene nada que ver con moverse. delayedCall(0): 'dialogue:end' sale ANTES
+    // de que DialogueBox termine de poner input.locked en false, así que
+    // checkTriggers() en el mismo instante se encontraba con el juego todavía
+    // "bloqueado" y no hacía nada — un tick después ya está desbloqueado.
+    bus.on('dialogue:end', () => this.time.delayedCall(0, () => this.checkTriggers()));
 
     this.setupKeyboard();
     this.scene.launch('Ui');
@@ -356,9 +366,12 @@ export class WorldScene extends Phaser.Scene {
       const visible = dayOk && flagOk && !hidden;
       it.sprite.setVisible(visible).setActive(visible);
 
-      const m = n.movesTo;
-      const moved = m && (day > m.day || (day === m.day && turnIdx >= TURNS.indexOf(m.turn)));
-      const pos = moved ? m! : n;
+      // movesTo puede ser una sola parada o una lista de mudanzas (ej. Edwyn:
+      // playa → barranca en J2 → playa de vuelta en J3) — de las que ya pasaron
+      // su umbral, la última declarada gana.
+      const stops = n.movesTo ? (Array.isArray(n.movesTo) ? n.movesTo : [n.movesTo]) : [];
+      const reached = stops.filter((m) => day > m.day || (day === m.day && turnIdx >= TURNS.indexOf(m.turn)));
+      const pos = reached.length ? reached[reached.length - 1]! : n;
       it.sprite.setPosition(tileCenter(pos.x), tileCenter(pos.y));
     }
   }
@@ -619,6 +632,14 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     if (open) bus.emit('ui:toast', { text: 'Se abrió el paso.' });
+  }
+
+  /** Para escenas que cierran sin pasar por DialogueBox (CargoScene: fija
+   * `n1_carga` y se cierra sola) — mismo motivo que el listener de 'dialogue:end'
+   * más arriba: un trigger sin `zone` no tiene por qué esperar a que el jugador
+   * dé un paso para que se note que su condición ya se cumplió. */
+  recheckTriggers(): void {
+    this.checkTriggers();
   }
 
   private checkTriggers(): void {

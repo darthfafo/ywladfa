@@ -189,12 +189,20 @@
           2,
           3
         ],
-        "movesTo": {
-          "day": 2,
-          "turn": "amanecer",
-          "x": 30,
-          "y": 52
-        }
+        "movesTo": [
+          {
+            "day": 2,
+            "turn": "amanecer",
+            "x": 30,
+            "y": 52
+          },
+          {
+            "day": 3,
+            "turn": "amanecer",
+            "x": 20,
+            "y": 100
+          }
+        ]
       },
       {
         "id": "npc_lewis",
@@ -212,13 +220,25 @@
         "id": "npc_berwyn",
         "x": 37,
         "y": 50,
-        "day": "*"
+        "day": "*",
+        "movesTo": {
+          "day": 3,
+          "turn": "manana",
+          "x": 54,
+          "y": 84
+        }
       },
       {
         "id": "npc_mari",
         "x": 34,
         "y": 47,
-        "day": "*"
+        "day": "*",
+        "movesTo": {
+          "day": 3,
+          "turn": "amanecer",
+          "x": 58,
+          "y": 72
+        }
       },
       {
         "id": "npc_dafydd",
@@ -785,6 +805,13 @@
       "id": "trig_punta_final",
       "type": "cutscene",
       "zone": "z6_punta",
+      "rect": [
+        56,
+        70,
+        7,
+        6
+      ],
+      "note": "el extremo noreste de la punta, no la zona entera: entrando por p_playa_punta (al sur) disparaba esto apenas se cruzaba el borde, sin dejar ver nada del espacio — ahí es donde se queda Mari (ver npc_mari movesTo), así que llegar hasta ella ES llegar al final.",
       "requires": "progress.day == 3 && flags.n1_carga != null",
       "once": true,
       "turnCost": 1,

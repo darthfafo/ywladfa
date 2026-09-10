@@ -35,6 +35,11 @@ export class TouchControls {
   private origin = new Phaser.Math.Vector2();
   private pointerId: number | null = null;
   private enabled = true;
+  /** Si hay algo cerca para hacer (label != null) — el botón, HTML aparte del
+   * canvas, solo se muestra cuando de verdad hay una acción. Antes se quedaba
+   * siempre visible como un punto "·" sin función, un círculo sin nada que
+   * explique qué es cuando no hay nada cerca. */
+  private contextLabel: string | null = null;
 
   constructor(scene: Phaser.Scene) {
     const by = VIEW.tray.y - CFG.btnAboveTray;
@@ -68,7 +73,9 @@ export class TouchControls {
     // setText(), no node.textContent directo: el origen (1, 0.5) necesita que Phaser
     // sepa el ancho ACTUAL del botón para calcular el offset del borde derecho, y solo
     // lo recalcula (updateSize()) cuando el texto cambia a través de su propio método.
-    this.button.setText('·').setDepth(52).setAlpha(0.5);
+    // Arranca oculto (setContext(null) al final del constructor lo confirma): sin
+    // nada cerca no hay botón que mostrar, no un punto "·" sin función.
+    this.button.setText('·').setDepth(52).setVisible(false);
 
     // el joystick arranca invisible: sin toque activo no hay nada que mostrar —
     // recién se posiciona y se muestra en el pointerdown, ver más abajo.
@@ -135,21 +142,27 @@ export class TouchControls {
     else input.setVector(dx / CFG.baseRadius, dy / CFG.baseRadius);
   }
 
-  /** El botón cambia de icono según lo que haya cerca: hablar / levantar / cavar / entrar. */
+  /** El botón cambia de texto según lo que haya cerca: hablar / levantar / cavar /
+   * entrar — y solo se muestra cuando hay algo que hacer, ver refreshButton(). */
   setContext(label: string | null): void {
-    this.button.setText(label ? label.toUpperCase() : '·');
-    this.button.setAlpha(label ? 1 : 0.45);
+    this.contextLabel = label;
+    if (label) this.button.setText(label.toUpperCase());
+    this.refreshButton();
+  }
+
+  private refreshButton(): void {
+    this.button.setVisible(this.enabled && this.contextLabel !== null);
   }
 
   /** Diálogos, cutscenes y overlays de pantalla completa se dibujan en el canvas y
    * pueden quedar "debajo" de cualquier profundidad — pero el botón es un elemento
    * HTML aparte, SIEMPRE por encima del canvas sin importar el depth de Phaser. Sin
    * ocultarlo a mano acá, quedaba flotando arriba de cualquier pantalla modal.
-   * `enabled` en false además de ocultar el botón, apaga el joystick: no arranca
-   * uno nuevo con un toque perdido mientras hay un diálogo bloqueando el juego. */
+   * `enabled` en false además apaga el joystick: no arranca uno nuevo con un
+   * toque perdido mientras hay un diálogo bloqueando el juego. */
   setVisible(visible: boolean): void {
     this.enabled = visible;
-    this.button.setVisible(visible);
+    this.refreshButton();
     if (!visible) {
       this.base.setVisible(false);
       this.thumb.setVisible(false);

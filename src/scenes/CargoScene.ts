@@ -4,6 +4,7 @@ import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
 import type { BultoDef, ResourceId } from '@/core/types';
+import type { WorldScene } from '@/scenes/WorldScene';
 import { addIconImage, addSceneBackground } from '@/util/assets';
 import { crisp, FONT, FONT_FAMILY, RETRO_FONT } from '@/util/text';
 
@@ -91,6 +92,9 @@ export class CargoScene extends Phaser.Scene {
       this.scene.resume('World');
       this.scene.resume('Ui');
       bus.emit('ui:hud-visible', { visible: true });
+      // trig_reacciones_carga no tiene zona — no hace falta esperar a que el
+      // jugador dé un paso para que se note que n1_carga ya está puesto.
+      (this.scene.get('World') as WorldScene).recheckTriggers();
     });
   }
 

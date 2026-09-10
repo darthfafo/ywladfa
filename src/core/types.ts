@@ -155,8 +155,10 @@ export interface LevelDef {
       y: number;
       day: number | number[] | '*';
       afterFlag?: string;
-      /** Una reubicación programada: a partir de este día/turno, aparece en x,y en vez de la posición base. */
-      movesTo?: { day: number; turn: TurnId; x: number; y: number };
+      /** Una reubicación programada: a partir de este día/turno, aparece en x,y en vez
+       * de la posición base. Puede ser una sola parada o una lista (varias mudanzas a
+       * lo largo del nivel) — se usa la última cuyo umbral ya pasó. */
+      movesTo?: { day: number; turn: TurnId; x: number; y: number } | Array<{ day: number; turn: TurnId; x: number; y: number }>;
       /** Una vez que este flag está, el NPC deja de mostrarse en el mapa (ya se despidió y se fue). */
       hiddenAfterFlag?: string;
     }>;
