@@ -3,21 +3,19 @@ import Phaser from 'phaser';
 /** Fuente y tamaños de todo el texto del juego. Un solo lugar, nada de strings sueltos por escena. */
 export const FONT_FAMILY = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 
-/** Fuente retro clásica (index.html la carga desde Google Fonts) para todo lo que es
- * "cromado" del juego, no texto narrado: títulos, HUD, nombres de diálogo y
- * botones/opciones. A las mayúsculas acentuadas del español (Á/É/Í/Ó/Ú) les falta el
- * glifo propio y caen en el de su minúscula (un "SUCEDIÓ" en un título se lee
- * "SUCEDIó") — un costo conocido y aceptado a cambio de mantener el aspecto pixel
- * clásico en títulos y botones, que es lo que se pidió. */
+/** Fuente retro clásica (index.html la carga desde Google Fonts), la única fuente
+ * "de juego" en todos lados — títulos, HUD, nombres y cuerpo de diálogo, botones y
+ * opciones, párrafos narrados. Se probó separarla en dos fuentes (esta para
+ * cromado, Jersey 10 para texto narrado) para que una línea larga no pasara de
+ * página por una palabra de sobra, pero Jersey 10 a un tamaño en px comparable se
+ * ve mucho más chica/fina que esta — el mismo número de px no es el mismo tamaño
+ * visual en dos fuentes distintas, así que "diálogos" y "nombres" quedaban
+ * desparejos entre sí en vez de parte de la misma UI. Con una sola fuente en todos
+ * lados eso no puede pasar. A las mayúsculas acentuadas del español (Á/É/Í/Ó/Ú) les
+ * falta el glifo propio y caen en el de su minúscula (un "SUCEDIÓ" en un título se
+ * lee "SUCEDIó") — un costo conocido y aceptado a cambio del aspecto pixel clásico
+ * en todo el juego, que es lo que se pidió. */
 export const RETRO_FONT = '"Press Start 2P", ui-monospace, "SF Mono", Menlo, monospace';
-
-/** Solo para texto narrado/leído (DialogueBox.bodyText, párrafos largos): Press
- * Start 2P es bien ancha por carácter a estos tamaños y hace que una línea entera
- * necesite una página extra por una sola palabra de sobra. Jersey 10 es bastante
- * más angosta y tiene el alfabeto español completo (sin el problema de arriba) —
- * mejor para leer un párrafo, aunque no combine con el pixel duro de RETRO_FONT en
- * títulos/botones (es la fuente que se lee, no la que se mira). */
-export const NARRATIVE_FONT = '"Jersey 10", ui-monospace, "SF Mono", Menlo, monospace';
 
 export const FONT = {
   tiny: '9px', // pie de portada, "carga"

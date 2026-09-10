@@ -6,7 +6,7 @@ import { registry } from '@/core/Registry';
 import { DialogueSystem, type RenderedLine } from '@/systems/DialogueSystem';
 import { portraitIdForSpeaker, portraitTextureKey } from '@/util/assets';
 import { input } from '@/util/input';
-import { crisp, FONT, NARRATIVE_FONT, RETRO_FONT } from '@/util/text';
+import { crisp, FONT, RETRO_FONT } from '@/util/text';
 
 const TRAY = VIEW.tray;
 
@@ -63,12 +63,10 @@ export class DialogueBox {
     // wordWrap por si el título de decisión (ver show()) no entra en una sola
     // línea junto al retrato — un nombre normal nunca lo necesita, pero no
     // cuesta nada tenerlo por si acaso.
-    // RETRO_FONT (Press Start 2P) para el nombre: es "cromado" de la UI, no texto
-    // narrado — mismo criterio que títulos y botones en todo el juego. FONT.tiny
-    // (9px), no FONT.body: a 11px un nombre largo ("Cap. George Pepperell") no
-    // entra en una línea contra el retrato y pasaba a una segunda, pisando el
-    // cuerpo de abajo (que vive en una y fija) — medido con el ancho real
-    // renderizado, a 9px el más largo de todos entra justo.
+    // FONT.tiny (9px): a 11px un nombre largo ("Cap. George Pepperell") no entra en
+    // una línea contra el retrato y pasaba a una segunda, pisando el cuerpo de abajo
+    // (que vive en una y fija) — medido con el ancho real renderizado, a 9px el más
+    // largo de todos entra justo.
     this.nameText = crisp(
       scene.add
         .text(70, 12, '', {
@@ -79,13 +77,16 @@ export class DialogueBox {
         })
         .setResolution(8),
     );
-    // NARRATIVE_FONT (Jersey 10) para el cuerpo: es lo que el jugador realmente LEE
-    // línea a línea — Press Start 2P ahí es tan ancha que una sola palabra de sobra
-    // manda a la línea siguiente/página siguiente todo el tiempo.
+    // mismo RETRO_FONT que el nombre y todo lo demás — separarlo en una fuente propia
+    // más angosta (Jersey 10) para leer mejor un párrafo largo sonaba bien, pero a un
+    // tamaño en px comparable esa fuente se ve mucho más chica/fina que esta: el
+    // cuerpo quedaba "diminuto" al lado de un nombre "enorme" en vez de leerse como
+    // parte de la misma UI. FONT.body (11px, más grande que el nombre): es lo
+    // principal que se lee en esta bandeja.
     this.bodyText = crisp(
       scene.add
         .text(70, 26, '', {
-          fontFamily: NARRATIVE_FONT,
+          fontFamily: RETRO_FONT,
           fontSize: FONT.body,
           color: '#EAE8E0',
           wordWrap: { width: TRAY.w - 80 },
