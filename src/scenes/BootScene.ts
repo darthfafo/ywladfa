@@ -62,6 +62,9 @@ export class BootScene extends Phaser.Scene {
     // corre acá una vez que preload() terminó de bajar todo, así que el juego ya
     // tiene algo real para mostrar.
     document.getElementById('boot-loading')?.remove();
+    // ver util/scale.ts: el momento real en que el juego se hace visible (no un
+    // tiempo adivinado) es el que tiene que disparar el reencuadre en frío.
+    window.dispatchEvent(new Event('wladfa:ready-to-show'));
 
     const cx = VIEW.width / 2;
     makeProps(this); // trae 'prop_mimosa': WorldScene todavía no corrió, no existe todavía

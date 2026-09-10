@@ -60,8 +60,16 @@ export function applyIntegerScale(game: Phaser.Game): void {
       parent.style.width = `${w}px`;
       parent.style.height = `${h}px`;
     } else {
+      // Antes esto entraba solo en múltiplos enteros de 270×480 (×1/×2/×3...) para
+      // que cada píxel del mundo cayera parejo — pero el canvas ya se muestra con
+      // image-rendering:auto (bilinear, ver index.html) desde que el texto pasó a
+      // vivir ahí: ya no hay píxeles "parejos" que proteger, y de paso el celular ya
+      // escala con el factor fraccionario que entre (rama de arriba). El único
+      // efecto real del entero era, en una ventana de escritorio común (alto bien
+      // por debajo de 960px), quedar pegado a ×1 (270×480) en medio de una ventana
+      // mucho más grande — se veía "achicado" sin necesidad.
       const raw = Math.min(w / VIEW.width, h / VIEW.height);
-      const zoom = Math.max(1, Math.floor(raw));
+      const zoom = Math.max(1, raw);
       parent.style.width = `${VIEW.width * zoom}px`;
       parent.style.height = `${VIEW.height * zoom}px`;
     }
@@ -85,6 +93,17 @@ export function applyIntegerScale(game: Phaser.Game): void {
   window.addEventListener('orientationchange', fitWithRetries);
   window.visualViewport?.addEventListener('resize', fitWithRetries);
   window.visualViewport?.addEventListener('scroll', fitWithRetries);
+
+  // En frío, `preload()` de BootScene puede tardar bastante más que el último
+  // reintento de arriba (1000ms) — varios MB sin caché en una conexión de celular
+  // lenta. La barra de Safari sigue animándose/asentándose durante esa espera (la
+  // pantalla de carga de index.html la tapa), así que para cuando el juego se
+  // muestra de verdad (acá) la medida de hace un segundo ya quedó vieja: el
+  // contenedor se armaba con un alto de sobra y, centrado por el body, se comía
+  // la franja de arriba (título) contra el borde superior real de la pantalla.
+  // Re-ajustar justo en este momento — el que de verdad importa, no uno adivinado
+  // por tiempo — lo agarra siempre, sea cual sea cuánto tardó la descarga.
+  window.addEventListener('wladfa:ready-to-show', fitWithRetries);
 
   // remedio de última instancia: si el resize de arriba no llegó a tiempo o con la
   // medida correcta, cada toque en la pantalla reajusta el tamaño ANTES de que Phaser
