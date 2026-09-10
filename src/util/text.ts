@@ -3,10 +3,13 @@ import Phaser from 'phaser';
 /** Fuente y tamaños de todo el texto del juego. Un solo lugar, nada de strings sueltos por escena. */
 export const FONT_FAMILY = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 
-/** Fuente retro (index.html la carga desde Google Fonts) para títulos y botones de
- * acción — arrancó en BootScene y se va extendiendo al resto del juego a medida que
- * se confirma que no rompe el wrap en cada pantalla nueva donde se prueba. */
-export const RETRO_FONT = '"Press Start 2P", ui-monospace, "SF Mono", Menlo, monospace';
+/** Fuente retro (index.html la carga desde Google Fonts) para títulos, diálogos y
+ * botones de acción. No es Press Start 2P: a esa fuente le faltan los glifos de
+ * mayúsculas acentuadas del español (Á/É/Í/Ó/Ú se dibujan como su minúscula — un
+ * "SUCEDIÓ" en el título se leía "SUCEDIó"), inaceptable para un juego en español
+ * (CLAUDE.md R6). Jersey 10 tiene el mismo espíritu pixel/retro con el alfabeto
+ * español completo, mayúsculas incluidas. */
+export const RETRO_FONT = '"Jersey 10", ui-monospace, "SF Mono", Menlo, monospace';
 
 export const FONT = {
   tiny: '9px', // pie de portada, "carga"
