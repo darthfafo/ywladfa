@@ -79,14 +79,16 @@ export class DialogueBox {
     // NARRATIVE_FONT, no RETRO_FONT: Press Start 2P es bien ancha por carácter y la
     // mayoría de las líneas del juego pasaban a una segunda página por una sola
     // palabra de sobra — acá, y solo acá, se prioriza que entre más texto por página.
+    // FONT.body (11px), no FONT.tiny: a 9px Jersey 10 se leía demasiado chica y
+    // fina en un celular real — confirmado en dispositivo.
     this.bodyText = crisp(
       scene.add
         .text(70, 26, '', {
           fontFamily: NARRATIVE_FONT,
-          fontSize: FONT.tiny,
+          fontSize: FONT.body,
           color: '#EAE8E0',
           wordWrap: { width: TRAY.w - 80 },
-          lineSpacing: 5,
+          lineSpacing: 6,
         })
         .setResolution(4),
     );
