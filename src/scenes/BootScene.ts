@@ -250,10 +250,7 @@ export class BootScene extends Phaser.Scene {
     // pantalla para abajo — si viviera en la bandeja, quedaría inaccesible al escribir.
     // Una sola franja bajita (campo + botón lado a lado), no un cuadro grande.
     const rowY = TOP_H + 44;
-    // backing más alta que antes: le hace lugar a la línea narrativa de abajo, que
-    // antes esta pantalla no tenía — era el único paso del arranque sin ningún
-    // contexto de qué estás haciendo, solo el campo suelto.
-    this.renderTextBacking(TOP_H, TOP_H + 108);
+    this.renderTextBacking(TOP_H, TOP_H + 72);
     this.track(this.renderDomText(cx, TOP_H + 8, '¿Cómo te llamás?', { size: 13, color: '#D9A845', align: 'center' }));
 
     const defaultName = DEFAULT_NAME[this.playerGender];
@@ -290,14 +287,16 @@ export class BootScene extends Phaser.Scene {
     // botón compacto al lado del campo, no una opción de lista aparte más abajo.
     this.track(this.renderDomButton(cx + 68, rowY, 'Ir ›', () => this.confirmName(), 62, 24));
 
-    // contexto narrativo debajo del campo — antes este paso era el único del
-    // arranque sin ninguna línea de qué está pasando, solo el campo suelto.
+    // contexto narrativo en la bandeja de abajo — la misma caja que usa TODO el
+    // texto narrado del juego (ver renderTitle), no un texto suelto sobre la
+    // imagen: antes este paso era el único del arranque sin ninguna línea de qué
+    // está pasando.
     this.track(
-      this.renderDomText(cx, rowY + 26, 'Vas a enlistarte para viajar en el Mimosa junto a tu madre.', {
-        size: 9,
-        color: '#9BAEB4',
-        align: 'center',
+      this.renderDomText(16, TRAY_Y + 10, 'Vas a enlistarte para viajar en el Mimosa junto a tu madre.', {
+        size: 7,
+        color: '#EAE8E0',
         width: VIEW.width - 32,
+        retro: true,
         lineHeight: 1.5,
       }),
     );
