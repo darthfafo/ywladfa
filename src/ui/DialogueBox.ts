@@ -6,7 +6,7 @@ import { registry } from '@/core/Registry';
 import { DialogueSystem, type RenderedLine } from '@/systems/DialogueSystem';
 import { portraitIdForSpeaker, portraitTextureKey } from '@/util/assets';
 import { input } from '@/util/input';
-import { crisp, FONT, FONT_FAMILY } from '@/util/text';
+import { crisp, FONT, RETRO_FONT } from '@/util/text';
 
 const TRAY = VIEW.tray;
 
@@ -63,11 +63,14 @@ export class DialogueBox {
     // wordWrap por si el título de decisión (ver show()) no entra en una sola
     // línea junto al retrato — un nombre normal nunca lo necesita, pero no
     // cuesta nada tenerlo por si acaso.
+    // fuente retro (pixel real, no un monospace de sistema forzado a NEAREST/LINEAR)
+    // en todo el texto de diálogo: el monospace del sistema, escalado al tamaño
+    // final del juego, se leía distorsionado — la retro está diseñada para esto.
     this.nameText = crisp(
       scene.add
         .text(70, 12, '', {
-          fontFamily: FONT_FAMILY,
-          fontSize: FONT.body,
+          fontFamily: RETRO_FONT,
+          fontSize: FONT.tiny,
           color: '#D9A845',
           wordWrap: { width: TRAY.w - 78 },
         })
@@ -76,17 +79,17 @@ export class DialogueBox {
     this.bodyText = crisp(
       scene.add
         .text(70, 26, '', {
-          fontFamily: FONT_FAMILY,
-          fontSize: FONT.body,
+          fontFamily: RETRO_FONT,
+          fontSize: FONT.tiny,
           color: '#EAE8E0',
           wordWrap: { width: TRAY.w - 80 },
-          lineSpacing: 4,
+          lineSpacing: 5,
         })
         .setResolution(4),
     );
     this.hint = crisp(
       scene.add
-        .text(TRAY.w - 8, TRAY.h - 13, '▼', { fontFamily: FONT_FAMILY, fontSize: FONT.body, color: '#7FB0B8' })
+        .text(TRAY.w - 8, TRAY.h - 13, '▼', { fontFamily: RETRO_FONT, fontSize: FONT.tiny, color: '#7FB0B8' })
         .setOrigin(1, 0)
         .setResolution(4),
     );
@@ -330,8 +333,8 @@ export class DialogueBox {
       btn.type = 'button';
       btn.style.cssText =
         'display:block; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
-        'text-align:left; color:#BFD3D8; font-family: ui-monospace, "SF Mono", Menlo, monospace; ' +
-        'font-size:11px; line-height:1.15; cursor:pointer; -webkit-tap-highlight-color:transparent;';
+        `text-align:left; color:#BFD3D8; font-family: ${RETRO_FONT}; ` +
+        'font-size:9px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;';
       btn.textContent = c.text; // contenido real puesto ya, para medir el wrap de verdad
       container.appendChild(btn);
       return btn;
@@ -347,8 +350,8 @@ export class DialogueBox {
     // paginado de abajo solo separa ENTRE opciones) — para esa achica la letra en
     // pasos hasta que entra, en vez de dejarla salirse del canvas sin que se note.
     for (const b of buttons) {
-      let size = 11;
-      while (b.offsetHeight > maxH && size > 8) {
+      let size = 9;
+      while (b.offsetHeight > maxH && size > 7) {
         size -= 1;
         b.style.fontSize = `${size}px`;
       }
