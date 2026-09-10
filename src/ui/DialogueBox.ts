@@ -6,7 +6,7 @@ import { registry } from '@/core/Registry';
 import { DialogueSystem, type RenderedLine } from '@/systems/DialogueSystem';
 import { portraitIdForSpeaker, portraitTextureKey } from '@/util/assets';
 import { input } from '@/util/input';
-import { crisp, FONT, RETRO_FONT } from '@/util/text';
+import { crisp, FONT, NARRATIVE_FONT, RETRO_FONT } from '@/util/text';
 
 const TRAY = VIEW.tray;
 
@@ -63,25 +63,29 @@ export class DialogueBox {
     // wordWrap por si el título de decisión (ver show()) no entra en una sola
     // línea junto al retrato — un nombre normal nunca lo necesita, pero no
     // cuesta nada tenerlo por si acaso.
-    // fuente retro (pixel real, no un monospace de sistema forzado a NEAREST/LINEAR)
-    // en todo el texto de diálogo: el monospace del sistema, escalado al tamaño
-    // final del juego, se leía distorsionado — la retro está diseñada para esto.
-    // FONT.body (11px), no FONT.tiny: a 9px se leía demasiado chica y fina en un
-    // celular real — confirmado en dispositivo.
+    // RETRO_FONT (Press Start 2P) para el nombre: es "cromado" de la UI, no texto
+    // narrado — mismo criterio que títulos y botones en todo el juego. FONT.tiny
+    // (9px), no FONT.body: a 11px un nombre largo ("Cap. George Pepperell") no
+    // entra en una línea contra el retrato y pasaba a una segunda, pisando el
+    // cuerpo de abajo (que vive en una y fija) — medido con el ancho real
+    // renderizado, a 9px el más largo de todos entra justo.
     this.nameText = crisp(
       scene.add
         .text(70, 12, '', {
           fontFamily: RETRO_FONT,
-          fontSize: FONT.body,
+          fontSize: FONT.tiny,
           color: '#D9A845',
           wordWrap: { width: TRAY.w - 78 },
         })
         .setResolution(8),
     );
+    // NARRATIVE_FONT (Jersey 10) para el cuerpo: es lo que el jugador realmente LEE
+    // línea a línea — Press Start 2P ahí es tan ancha que una sola palabra de sobra
+    // manda a la línea siguiente/página siguiente todo el tiempo.
     this.bodyText = crisp(
       scene.add
         .text(70, 26, '', {
-          fontFamily: RETRO_FONT,
+          fontFamily: NARRATIVE_FONT,
           fontSize: FONT.body,
           color: '#EAE8E0',
           wordWrap: { width: TRAY.w - 80 },
@@ -91,7 +95,7 @@ export class DialogueBox {
     );
     this.hint = crisp(
       scene.add
-        .text(TRAY.w - 8, TRAY.h - 13, '▼', { fontFamily: RETRO_FONT, fontSize: FONT.body, color: '#7FB0B8' })
+        .text(TRAY.w - 8, TRAY.h - 13, '▼', { fontFamily: RETRO_FONT, fontSize: FONT.tiny, color: '#7FB0B8' })
         .setOrigin(1, 0)
         .setResolution(8),
     );

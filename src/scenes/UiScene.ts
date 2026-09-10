@@ -10,7 +10,7 @@ import { DialogueBox } from '@/ui/DialogueBox';
 import { TouchControls } from '@/ui/TouchControls';
 import { input } from '@/util/input';
 import { SelectList } from '@/util/selectList';
-import { crisp, FONT, RETRO_FONT } from '@/util/text';
+import { crisp, FONT, NARRATIVE_FONT, RETRO_FONT } from '@/util/text';
 
 /** Recursos que se muestran en el HUD del Nivel 1. El resto vive en el panel de jornada. */
 const HUD_RESOURCES: ResourceId[] = ['agua', 'comida', 'lena'];
@@ -388,11 +388,10 @@ export class UiScene extends Phaser.Scene {
    * que evita GDD §8: esto sigue siendo un panel fijo, solo que del tamaño de la
    * franja que le corresponde en las tres bandas del layout (docs/00-GDD.md §8),
    * con el mismo marco con borde que las cajas del arranque (BootScene.renderMenu).
-   * Todo el panel (título, cuerpo, opciones) va en RETRO_FONT — antes las opciones
-   * largas de las pantallas de decisión caían al monoespaciado de sistema para
-   * evitar un wrap de demasiadas líneas (Press Start 2P era bien ancha por
-   * carácter), pero eso mezclaba dos estilos de letra en el mismo panel. RETRO_FONT
-   * ya no tiene ese riesgo de ancho (ver util/text.ts).
+   * Título y opciones (son botones) van en RETRO_FONT; cuerpo y footer, que son
+   * texto narrado/explicativo y no "cromado" de la UI, van en NARRATIVE_FONT — más
+   * angosta, para que una oración larga de una pantalla de decisión no arriesgue un
+   * wrap de demasiadas líneas (ver util/text.ts).
    * `footer` (opcional) es la aclaración técnica o el consejo de juego de
    * `hint` en los datos (choices/tutoriales) — va anclado abajo del todo del
    * panel, separado por su propia línea, para no dejar vacío el resto de la
@@ -426,7 +425,7 @@ export class UiScene extends Phaser.Scene {
     const bodyT = crisp(
       this.add
         .text(16, top + 48, body, {
-          fontFamily: RETRO_FONT,
+          fontFamily: NARRATIVE_FONT,
           fontSize: FONT.body,
           color: '#EAE8E0',
           wordWrap: { width: VIEW.width - 32 },
@@ -476,7 +475,7 @@ export class UiScene extends Phaser.Scene {
       const footerT = crisp(
         this.add
           .text(16, 0, footer, {
-            fontFamily: RETRO_FONT,
+            fontFamily: NARRATIVE_FONT,
             fontSize: FONT.small,
             color: '#7FB0B8',
             wordWrap: { width: VIEW.width - 32 },

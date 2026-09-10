@@ -7,7 +7,7 @@ import { saveSystem } from '@/systems/SaveSystem';
 import { addSceneBackground, preloadArt } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
-import { RETRO_FONT } from '@/util/text';
+import { NARRATIVE_FONT, RETRO_FONT } from '@/util/text';
 
 type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
@@ -93,7 +93,7 @@ export class BootScene extends Phaser.Scene {
     // chica, no compite con el título ni el subtítulo.
     this.renderDomText(cx, 42, 'La colonia galesa en Chubut', { size: 9, color: '#D9A845', align: 'center', retro: true });
     this.renderDomText(cx, 58, 'JUEGO CON RIGOR HISTÓRICO, ASÍ SUCEDIÓ', {
-      size: 11,
+      size: 6,
       color: '#EAE8E0',
       align: 'center',
       retro: true,
@@ -134,16 +134,21 @@ export class BootScene extends Phaser.Scene {
     // contexto narrativo en la bandeja, como cualquier línea de narrador. La fecha
     // en dorado (mismo tono que el resto de los acentos del juego, #D9A845) para
     // que se distinga del resto sin perder contraste contra el fondo oscuro.
+    // NARRATIVE_FONT (Jersey 10), no RETRO_FONT: es texto narrado, no título — y
+    // Press Start 2P es tan ancha que este párrafo no entraba ni cerca sin quedar
+    // diminuto. Un solo salto manual (la fecha en su propia línea, a propósito);
+    // el resto fluye solo con el ancho — forzar otro salto después de "fundar"
+    // quedaba como un corte al azar en cuanto el texto entraba más ancho.
     this.track(
       this.renderDomText(16, TRAY_Y + 10, '', {
-        size: 11,
+        size: 12,
         color: '#9BAEB4',
         width: VIEW.width - 32,
-        retro: true,
+        font: NARRATIVE_FONT,
         lineHeight: 1.6,
         html:
           '<span style="color:#D9A845">Liverpool, 28 de mayo de 1865.</span><br>El Mimosa lleva colonos galeses ' +
-          'rumbo a Sudamérica: van a fundar<br>Y Wladfa, la Colonia.',
+          'rumbo a Sudamérica: van a fundar Y Wladfa, la Colonia.',
       }),
     );
 
@@ -492,12 +497,15 @@ export class BootScene extends Phaser.Scene {
       width?: number;
       weight?: string;
       retro?: boolean;
+      /** Pisa por completo la familia (RETRO_FONT/UI_FONT) — para el párrafo narrado
+       * del arranque, que usa NARRATIVE_FONT (ver renderTitle). */
+      font?: string;
       html?: string;
       lineHeight?: number;
     },
   ): Phaser.GameObjects.DOMElement {
     const style =
-      `color:${opts.color}; font-family: ${opts.retro === false ? UI_FONT : RETRO_FONT}; font-size:${opts.size}px; ` +
+      `color:${opts.color}; font-family: ${opts.font ?? (opts.retro === false ? UI_FONT : RETRO_FONT)}; font-size:${opts.size}px; ` +
       `font-weight:${opts.weight ?? 'normal'}; text-align:${opts.align ?? 'left'}; line-height:${opts.lineHeight ?? 1.5}; ` +
       (opts.width ? `width:${opts.width}px;` : 'white-space:nowrap;');
     const originX = opts.align === 'center' ? 0.5 : opts.align === 'right' ? 1 : 0;

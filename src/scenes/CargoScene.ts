@@ -6,7 +6,7 @@ import { registry } from '@/core/Registry';
 import type { BultoDef, ResourceId } from '@/core/types';
 import type { WorldScene } from '@/scenes/WorldScene';
 import { addIconImage, addSceneBackground } from '@/util/assets';
-import { crisp, FONT, RETRO_FONT } from '@/util/text';
+import { crisp, FONT, NARRATIVE_FONT, RETRO_FONT } from '@/util/text';
 
 interface Card {
   bulto: BultoDef;
@@ -68,7 +68,7 @@ export class CargoScene extends Phaser.Scene {
     crisp(
       this.add
         .text(8, 26, 'Los carros llevan 5 bultos. Hay 8. Sin vuelta atrás.', {
-          fontFamily: RETRO_FONT,
+          fontFamily: NARRATIVE_FONT,
           fontSize: FONT.tiny,
           color: '#9BAEB4',
           wordWrap: { width: VIEW.width - 16 },
