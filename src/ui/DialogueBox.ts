@@ -81,13 +81,15 @@ export class DialogueBox {
     // más angosta (Jersey 10) para leer mejor un párrafo largo sonaba bien, pero a un
     // tamaño en px comparable esa fuente se ve mucho más chica/fina que esta: el
     // cuerpo quedaba "diminuto" al lado de un nombre "enorme" en vez de leerse como
-    // parte de la misma UI. FONT.body (11px, más grande que el nombre): es lo
-    // principal que se lee en esta bandeja.
+    // parte de la misma UI. 10px, no FONT.body (11px): a 11 quedaban demasiadas
+    // palabras solas colgando en una página aparte — este es EL box que lleva todo
+    // el texto narrado del juego, del cold open al último diálogo, así que este
+    // tamaño rige en todos lados por igual, un solo lugar.
     this.bodyText = crisp(
       scene.add
         .text(70, 26, '', {
           fontFamily: RETRO_FONT,
-          fontSize: FONT.body,
+          fontSize: '10px',
           color: '#EAE8E0',
           wordWrap: { width: TRAY.w - 80 },
           lineSpacing: 6,
