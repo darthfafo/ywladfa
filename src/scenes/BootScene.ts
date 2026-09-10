@@ -138,12 +138,14 @@ export class BootScene extends Phaser.Scene {
     // que se distinga del resto sin perder contraste contra el fondo oscuro.
     // size 9, igual que DialogueBox.bodyText: es el mismo tipo de texto (narrado,
     // en la misma bandeja) y quedaba más chico que el resto del juego sin motivo.
-    // "Liverpool, 28 de mayo de 1865." no entra entera en una línea a 9px (mide
-    // 270px contra 238 disponibles) — el salto sin controlar dejaba "1865." solo,
-    // huérfano; el corte manual después de "mayo" reparte las dos líneas parejo.
-    // Después, un salto más (la fecha aparte del resto) y "fundar" separado de
-    // "Y Wladfa" por la misma razón — medido que las 4 líneas entran con margen
-    // real en la bandeja (81px de 86 disponibles).
+    // El resto del párrafo queda en size 9 (igual que DialogueBox.bodyText, es el
+    // mismo tipo de texto narrado en la misma bandeja). La fecha sola, un punto más
+    // chico (8px) TAMPOCO entra en una línea (mide 240px contra 238 disponibles,
+    // literalmente al límite, no un margen ajustado) — a 7px mide 210px, con margen
+    // real, así que queda en 7 para que "Liverpool, 28 de mayo de 1865." entre
+    // siempre en una sola línea sin salto interno. "fundar" separado de "Y Wladfa"
+    // por la misma razón que el resto — medido que las líneas entran con margen
+    // real en la bandeja.
     this.track(
       this.renderDomText(16, TRAY_Y + 10, '', {
         size: 9,
@@ -152,7 +154,7 @@ export class BootScene extends Phaser.Scene {
         retro: true,
         lineHeight: 1.5,
         html:
-          '<span style="color:#D9A845">Liverpool, 28 de mayo<br>de 1865.</span><br>El Mimosa lleva colonos galeses ' +
+          '<span style="color:#D9A845; font-size:7px;">Liverpool, 28 de mayo de 1865.</span><br>El Mimosa lleva colonos galeses ' +
           'rumbo a Sudamérica: van a fundar<br>Y Wladfa, la Colonia.',
       }),
     );
