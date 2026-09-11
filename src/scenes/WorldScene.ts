@@ -34,6 +34,13 @@ export class WorldScene extends Phaser.Scene {
   private lastTile = { x: -1, y: -1 };
   private facing: keyof typeof FACING_FRAME = 'north';
   private nearest: Interactable | null = null;
+  /** Rebote de caminata: con un solo frame estático por dirección (sin ciclo de
+   * piernas todavía, ver docs/06-prompts-sprites.txt) el personaje deslizaba sin
+   * ningún indicio visual de que se está moviendo — R4 prohíbe escalas/rotaciones
+   * no enteras en el mundo, así que el "paso" es un offset vertical de 1px entero,
+   * no un squash/stretch. Ver el final de update(). */
+  private walkBobTimer = 0;
+  private walkBobUp = false;
   private carriedCajones = 0;
   private carriedLena = 0;
   private gateOpen = new Map<string, boolean>();
@@ -497,6 +504,23 @@ export class WorldScene extends Phaser.Scene {
       this.facing = Math.abs(vx) > Math.abs(vy) ? (vx > 0 ? 'east' : 'west') : vy > 0 ? 'south' : 'north';
       this.player.setFrame(FACING_FRAME[this.facing]!);
     }
+
+    // rebote de caminata (ver el campo walkBobTimer): alterna 1px cada 180ms
+    // mientras se mueve, nunca en reposo. Se aplica DESPUÉS de que Arcade
+    // Physics ya sincronizó player.y con el body en este frame, así que no
+    // hace falta deshacerlo — el próximo frame arranca de nuevo desde la
+    // posición real del body antes de sumar el offset.
+    if (vx !== 0 || vy !== 0) {
+      this.walkBobTimer += delta;
+      if (this.walkBobTimer >= 180) {
+        this.walkBobTimer = 0;
+        this.walkBobUp = !this.walkBobUp;
+      }
+    } else {
+      this.walkBobTimer = 0;
+      this.walkBobUp = false;
+    }
+    if (this.walkBobUp) this.player.y -= 1;
 
     this.updateNearest();
     if (input.takeAction()) this.interact();

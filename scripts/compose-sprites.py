@@ -6,6 +6,7 @@ OUT = '/Users/fede/wladfa/src/assets/sprites'
 
 MARGIN = 1
 DEFAULT_FRAME = (24, 32)
+PALETTE_COLORS = 16
 
 def load_view(char_raw_key, view, aliases=None):
     aliases = aliases or [f"{char_raw_key}_{view}.png"]
@@ -15,6 +16,20 @@ def load_view(char_raw_key, view, aliases=None):
             return Image.open(p).convert('RGBA')
     raise FileNotFoundError(aliases)
 
+def flatten_colors(im, colors=PALETTE_COLORS):
+    """Funde los degradés de 1px del recorte/resize en bloques planos de
+    verdad — sin esto cada pixel del PNG final tiene un tono ligeramente
+    distinto al de al lado (un mini-thumbnail suavizado, no pixel art real),
+    y ESE es el motivo de que se vea "sucio" sin importar el filtro
+    (NEAREST/LINEAR) que use el motor después: el problema está en los datos
+    del archivo, no en cómo se escala en el juego."""
+    alpha = im.split()[3]
+    rgb = im.convert('RGB')
+    quantized = rgb.quantize(colors=colors, method=Image.MEDIANCUT, dither=Image.NONE).convert('RGB')
+    result = quantized.convert('RGBA')
+    result.putalpha(alpha)
+    return result
+
 def fit_frame(im, frame_w, frame_h):
     bbox = im.getbbox()
     cropped = im.crop(bbox)
@@ -23,10 +38,11 @@ def fit_frame(im, frame_w, frame_h):
     scale = min(max_w / w, max_h / h)
     new_w, new_h = max(1, round(w * scale)), max(1, round(h * scale))
     resized = cropped.resize((new_w, new_h), Image.LANCZOS)
+    flat = flatten_colors(resized)
     canvas = Image.new('RGBA', (frame_w, frame_h), (0, 0, 0, 0))
     x = (frame_w - new_w) // 2
     y = frame_h - MARGIN - new_h
-    canvas.paste(resized, (x, y), resized)
+    canvas.paste(flat, (x, y), flat)
     return canvas
 
 def build_character(out_key, char_raw_key, aliases_by_view=None, frame=DEFAULT_FRAME):
