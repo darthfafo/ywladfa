@@ -403,8 +403,20 @@ export class WorldScene extends Phaser.Scene {
       if (k.W?.isDown || k.UP?.isDown) ky -= 1;
       if (k.S?.isDown || k.DOWN?.isDown) ky += 1;
     }
-    const vx = kx !== 0 || ky !== 0 ? kx : input.x;
-    const vy = kx !== 0 || ky !== 0 ? ky : input.y;
+    let vx = kx !== 0 || ky !== 0 ? kx : input.x;
+    let vy = kx !== 0 || ky !== 0 ? ky : input.y;
+    // solo las 4 direcciones cardinales, nunca diagonal — mismo criterio que el
+    // sprite (4 frames, uno por dirección) y el resto de la estética "RPG viejo".
+    // De paso saca un bug real: con teclado, sostener dos direcciones a la vez
+    // sumaba un vector (±1,±1) sin normalizar — el personaje caminaba más rápido
+    // en diagonal que en línea recta (el joystick táctil ya normalizaba bien esto
+    // solo, ver InputState.setVector; el teclado no pasa por ahí). Mismo desempate
+    // que ya usa el cálculo de facing más abajo (empate → vertical), así el eje que
+    // se recorta siempre coincide con hacia dónde termina mirando el personaje.
+    if (vx !== 0 || vy !== 0) {
+      if (Math.abs(vx) > Math.abs(vy)) vy = 0;
+      else vx = 0;
+    }
 
     const speed = this.currentSpeed();
     body.setVelocity(vx * speed, vy * speed);
