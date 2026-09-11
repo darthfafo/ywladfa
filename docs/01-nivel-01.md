@@ -164,7 +164,7 @@ props:
 
 | Turno | Beat | Sistema | Duración |
 |---|---|---|---|
-| **T1 Amanecer** | Lewis anuncia la marcha al sur, 65 km a pie. Pepperell: **los carros llevan 5 bultos. Hay 8.** | Set-up | 2 min |
+| **T1 Amanecer** | Lewis anuncia la marcha al sur, 65 km a pie. Edwyn: **los carros llevan 5 bultos. Hay 8.** (Pepperell ya no está: el *Mimosa* zarpó en J2) | Set-up | 2 min |
 | **T1** | **LA DECISIÓN.** Pantalla dedicada. Elegís 5 de 8. Sin deshacer, sin confirmación doble, sin volver | **Núcleo del nivel** | 5 min |
 | **T2 Mañana** | Se arma la caravana. Cada NPC comenta lo que dejaste. Nadie te felicita | Reacción | 2 min |
 | **T3 Tarde** | Última subida a la punta (Z6). Mirás las cuevas vacías desde arriba. El *Mimosa* ya no está | Cierre | 2 min |
@@ -307,10 +307,13 @@ y desbloquea que Edwyn te avise de la aguada en el Nivel 2.)*
 
 ### 9.3 El reparto (J3 T1)
 
-> **LEWIS.** Cinco bultos por carro. Hay ocho.
+> El *Mimosa* ya zarpó en J2 (§4, J2 T2) — Pepperell se fue con el barco. La escena es solo el grupo, en el campamento.
+
+> **LEWIS.** Sesenta y cinco kilómetros hasta el río. Tres días si el viento afloja, cuatro si no.
+> **EDWYN.** Carros llevan cinco bultos. Cinco. Hay ocho en la playa.
 > **MATTHEWS.** El órgano pesa lo que pesan cuatro personas.
 > **BERWYN.** La imprenta también. Y sin ella en un año nadie se acuerda de por qué vinimos.
-> **PEPPERELL.** Yo vuelvo a Liverpool con lo que dejen. Si quieren, se los guardo. *(no lo va a guardar)*
+> **LEWIS.** Lo que dejan, alguien vuelve a buscarlo. *(no vuelve nadie)*
 > **LEWIS.** *(al PC)* Elegí vos. Yo ya elegí bastante y miren dónde estamos.
 
 ---

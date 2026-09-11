@@ -774,7 +774,7 @@
       "type": "scene",
       "zone": "z2_barranca",
       "requires": "progress.day == 3 && progress.turn == 'amanecer'",
-      "note": "espera a que estés en el campamento — habla Lewis (y Matthews, Berwyn, Pepperell), todos ahí (docs/01-nivel-01.md §9.3).",
+      "note": "espera a que estés en el campamento — habla Lewis (y Matthews, Berwyn, Edwyn), todos ahí (docs/01-nivel-01.md §9.3). Pepperell NO aparece: el Mimosa ya zarpó en J2 (ver trig_vigia_mimosa/trig_lewis_j2_manana) y el capitán se va con el barco.",
       "once": true,
       "turnCost": 0,
       "action": {

@@ -114,6 +114,23 @@ export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => bool
     }
   }
 
+  // borde norte de la meseta: el vigía (trig_vigia_mimosa) mira al golfo desde ahí,
+  // pero sin esto el borde norte era la misma roca genérica de relleno que cualquier
+  // otro límite del mapa — no había nada que leer como "acá se ve el mar". Dos filas
+  // de acantilado en el borde de la zona (mismo lenguaje visual que ya usa la pared
+  // de la barranca) y mar más allá, ya visible en cámara aunque no sea pisable. Solo
+  // en el rango de X de z4_meseta — z5_canadon linda con el mismo borde más al oeste
+  // y se queda sin vista a propósito, no está señalizado en el diseño.
+  const mesetaZone = level.zones.find((z) => z.id === 'z4_meseta');
+  if (mesetaZone) {
+    const [mx, , mw] = mesetaZone.rect;
+    for (let i = mx; i < mx + mw && i < W; i++) {
+      for (let j = 0; j < 4; j++) {
+        g[j]![i] = j < 2 ? TERRAIN.SEA : TERRAIN.CLIFF;
+      }
+    }
+  }
+
   // pasajes entre zonas: corredores de sendero, o bloqueo temporal si todavía están cerrados
   for (const p of level.spawns.pasajes) {
     const open = !p.requires || isOpen(p.id);

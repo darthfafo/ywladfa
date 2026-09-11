@@ -658,9 +658,8 @@
           "next": "am2"
         },
         "am2": {
-          "speaker": "npc_pepperell",
-          "portrait": "neutral",
-          "broken": true,
+          "speaker": "npc_edwyn",
+          "portrait": "tenso",
           "text": "Carros llevan cinco bultos. Cinco. Hay ocho en la playa.",
           "next": "am3"
         },
@@ -677,15 +676,14 @@
           "next": "am5"
         },
         "am5": {
-          "speaker": "npc_pepperell",
+          "speaker": "npc_lewis",
           "portrait": "neutral",
-          "broken": true,
-          "text": "Lo que dejan, yo se los guardo.",
+          "text": "Lo que dejan, alguien vuelve a buscarlo.",
           "next": "am6"
         },
         "am6": {
           "speaker": "narrator",
-          "text": "(No se los va a guardar.)",
+          "text": "(No vuelve nadie.)",
           "next": "am7"
         },
         "am7": {
