@@ -742,7 +742,7 @@
         "r4": {
           "speaker": "npc_lewis",
           "portrait": "neutral",
-          "text": "Listo. Cargamos y salimos al mediodía.",
+          "text": "Listo. Buscá a tu madre mientras nosotros cargamos las cosas para irnos.",
           "effects": [
             {
               "setFlag": {
