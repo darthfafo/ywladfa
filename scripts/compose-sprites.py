@@ -13,7 +13,7 @@ MARGIN = 2
 # resguarda resolución de sobra y NINGÚN procesamiento de color: un resize
 # limpio nada más. CHAR_SCALE en WorldScene.ts queda en 1 — el motor no
 # reinterpola nada, así que no hay ningún filtro que pueda "romper" esto.
-DEFAULT_FRAME = (64, 86)
+DEFAULT_FRAME = (50, 67)
 
 def load_view(char_raw_key, view, aliases=None):
     aliases = aliases or [f"{char_raw_key}_{view}.png"]
@@ -58,6 +58,6 @@ build_character('pc_m', 'pc_m')
 build_character('pc_f', 'pc_f')
 build_character('npc_lewis', 'lewis', aliases_by_view={'norte': ['lewis_norte.png', 'lewsi_norte.png']})
 build_character('npc_edwyn', 'edwin')
-# 54x72: misma proporción 5:6 que usaban los otros (20x26 sobre 24x32) — más
-# chico que el resto a propósito, Dafydd tiene 9 años.
-build_character('npc_dafydd', 'dafydd', frame=(54, 72))
+# 42x56: misma proporción que el resto (54x72 sobre 64x86) — más chico que
+# los demás a propósito, Dafydd tiene 9 años.
+build_character('npc_dafydd', 'dafydd', frame=(42, 56))

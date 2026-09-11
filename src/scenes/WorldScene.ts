@@ -19,7 +19,7 @@ interface Interactable {
   label: string;
 }
 
-// El arte real de personaje ya se compone a su tamaño final (64×86, ver
+// El arte real de personaje ya se compone a su tamaño final (50×67, ver
 // scripts/compose-sprites.py) — escala 1, el motor no reinterpola nada, así
 // no hay filtro que pueda "romperlo". El placeholder de código sigue siendo
 // chico (16×24) y necesita su propio multiplicador para no perderse contra
@@ -36,13 +36,6 @@ export class WorldScene extends Phaser.Scene {
   private lastTile = { x: -1, y: -1 };
   private facing: keyof typeof FACING_FRAME = 'north';
   private nearest: Interactable | null = null;
-  /** Rebote de caminata: con un solo frame estático por dirección (sin ciclo de
-   * piernas todavía, ver docs/06-prompts-sprites.txt) el personaje deslizaba sin
-   * ningún indicio visual de que se está moviendo — R4 prohíbe escalas/rotaciones
-   * no enteras en el mundo, así que el "paso" es un offset vertical de 1px entero,
-   * no un squash/stretch. Ver el final de update(). */
-  private walkBobTimer = 0;
-  private walkBobUp = false;
   private carriedCajones = 0;
   private carriedLena = 0;
   private gateOpen = new Map<string, boolean>();
@@ -100,7 +93,7 @@ export class WorldScene extends Phaser.Scene {
     this.player.setScale(pcScale);
     // caja de colisión como proporción del cuadro real (60% ancho, 33% alto,
     // centrada, pegada abajo menos 1px): así sigue calzando con los pies sin
-    // importar el tamaño nativo del frame (16×24 el placeholder, 64×86 el arte
+    // importar el tamaño nativo del frame (16×24 el placeholder, 50×67 el arte
     // real) sin mantener números hardcodeados por separado — esta fórmula
     // reproduce EXACTO los valores viejos (10×8, offset 3,15) para 16×24.
     const pcFrame = this.textures.get(pcTextureKey).get(0);
@@ -515,25 +508,9 @@ export class WorldScene extends Phaser.Scene {
       this.player.setFrame(FACING_FRAME[this.facing]!);
     }
 
-    // rebote de caminata (ver el campo walkBobTimer): alterna 1px cada 260ms
-    // mientras se mueve, nunca en reposo. 180ms se sentía como un tic nervioso,
-    // no un paso — 260ms (~2.3 pasos/seg) es más parecido al ritmo real de
-    // caminar. Se aplica DESPUÉS de que Arcade Physics ya sincronizó player.y
-    // con el body en este frame, así que no hace falta deshacerlo — el próximo
-    // frame arranca de nuevo desde la posición real del body antes de sumar
-    // el offset.
-    if (vx !== 0 || vy !== 0) {
-      this.walkBobTimer += delta;
-      if (this.walkBobTimer >= 260) {
-        this.walkBobTimer = 0;
-        this.walkBobUp = !this.walkBobUp;
-      }
-    } else {
-      this.walkBobTimer = 0;
-      this.walkBobUp = false;
-    }
-    if (this.walkBobUp) this.player.y -= 1;
-
+    // sin rebote de caminata: el intento con un offset de 1px no convenció.
+    // Sprite fijo por ahora — un ciclo de caminata de verdad (2+ frames por
+    // dirección) es la próxima vuelta de arte, no algo para simular por código.
     this.updateNearest();
     if (input.takeAction()) this.interact();
     this.updateDafyddFollow(delta);
