@@ -149,15 +149,16 @@ export class WorldScene extends Phaser.Scene {
   private spawnProps(level: typeof game.level): void {
     // el Mimosa, anclado frente a la costa hasta que zarpa (trig_vigia_mimosa) —
     // arte real si ya existe (src/assets/props/mimosa.png), si no el placeholder
-    // de siempre (util/textures.ts). Tamaño grande (130, contra 72 antes): el mar
-    // se hizo más profundo a propósito (mapgen.ts, heightTiles 112→118, más filas
-    // de mar al sur de la playa, ninguna zona jugable existente se movió) para que
-    // entrara sin pisar la arena húmeda ni los cajones — fila 113 queda centrado en
-    // esa franja nueva.
+    // de siempre (util/textures.ts). 140px (contra 72 original): el mar se hizo
+    // más profundo a propósito (mapgen.ts, heightTiles 112→121, más filas de mar
+    // al sur de la playa, ninguna zona jugable existente se movió) para que entrara
+    // con margen de sobra contra la arena húmeda/cajones arriba Y contra el borde
+    // del mapa abajo — fila 115 deja ~60px arriba y ~44px abajo, no los ~31px
+    // ajustados de antes.
     if (!game.flags.is('n1_vio_zarpar')) {
       this.mimosa =
-        addPropImage(this, 'mimosa', tileCenter(27), tileCenter(113), 130) ??
-        this.add.image(tileCenter(27), tileCenter(113), 'prop_mimosa');
+        addPropImage(this, 'mimosa', tileCenter(27), tileCenter(115), 140) ??
+        this.add.image(tileCenter(27), tileCenter(115), 'prop_mimosa');
       this.mimosa.setDepth(7);
     }
     // cajones a bajar — si ya se entregaron los 8 (ej. se retomó una partida guardada
