@@ -539,7 +539,13 @@ export class BootScene extends Phaser.Scene {
     // el elemento puede haberse destruido (cambió de paso) para cuando la fuente
     // esté lista — `document.body.contains` es más confiable acá que `.active`
     // (Phaser no siempre lo pone en false al destruir un DOMElement).
-    if (opts.retro) {
+    // === opts.retro, no opts.retro === true: el estilo de arriba ya usa RETRO_FONT
+    // por default (solo cae a UI_FONT con retro:false explícito) — si esta condición
+    // no calzara con esa misma regla, cualquier llamado que omitiera el flag (ej. el
+    // título "¿Cómo te llamás?" en renderName, que SÍ se dibuja en RETRO_FONT) nunca
+    // se re-centraba al terminar de cargar la fuente. Mismo bug que ya se encontró y
+    // arregló en UiScene (el header de jornada), acá por una condición desalineada.
+    if (opts.retro !== false) {
       this.retroRefreshers.push(() => {
         if (!document.body.contains(el.node)) return;
         if (opts.html) el.setHTML(opts.html!);
