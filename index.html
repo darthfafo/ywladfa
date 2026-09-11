@@ -63,6 +63,12 @@
     #boot-loading .bl-text { font-size: 11px; color: #9BAEB4; }
     @keyframes bl-spin { to { transform: rotate(360deg); } }
 
+    /* cursor "›" de las opciones de diálogo (ver DialogueBox.renderChoices): titila
+       para que se note que es un selector y no parte del texto — con animation:
+       step-end (no la duración entera) el salto es instantáneo, sin fundido, mismo
+       criterio pixel-art que el resto del juego. */
+    @keyframes dlg-cursor-blink { 50% { opacity: 0; } }
+
     /* El juego es 9:16 fijo (GDD §2): en horizontal se tapa todo con este aviso. */
     #rotate-guard {
       display: none;

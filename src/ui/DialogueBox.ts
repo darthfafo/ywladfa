@@ -433,7 +433,18 @@ export class DialogueBox {
         b.style.display = i >= from && i <= to ? 'block' : 'none';
         const on = i === focused;
         b.style.color = on ? '#D9A845' : '#BFD3D8';
-        b.textContent = (on ? '› ' : '  ') + line.choices[i]!.text;
+        // reconstruido con nodos, no un textContent con "› "/"  " al frente: así el
+        // cursor puede titilar solo (CSS, dlg-cursor-blink en index.html) sin animar
+        // el texto de la opción — un cursor fijo se perdía contra el resto de la UI,
+        // nada avisaba que ahí hay algo para elegir y no solo texto.
+        b.replaceChildren();
+        const cursor = document.createElement('span');
+        cursor.textContent = '›';
+        cursor.style.cssText = on
+          ? 'display:inline-block; width:10px; animation: dlg-cursor-blink 0.9s step-end infinite;'
+          : 'display:inline-block; width:10px; visibility:hidden;';
+        b.appendChild(cursor);
+        b.appendChild(document.createTextNode(line.choices[i]!.text));
       });
       moreBtn.style.display = hasMore ? 'block' : 'none';
       this.hint.setVisible(hasMore);
