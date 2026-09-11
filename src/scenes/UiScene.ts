@@ -96,6 +96,17 @@ export class UiScene extends Phaser.Scene {
     this.refreshResources();
     this.refreshTime();
     this.refreshLoad();
+
+    // mismo problema que ya resolvió BootScene (document.fonts.ready): si esta escena
+    // arranca ANTES de que "Press Start 2P" termine de bajar de Google Fonts (ej. al
+    // entrar directo a una jornada avanzada, con el preload de imágenes compitiendo
+    // por ancho de banda), setHTML() mide el div con la fuente de sistema de reserva
+    // — más angosta — y Phaser centra el texto con ESE ancho. Cuando la fuente real
+    // carga un instante después el texto se redibuja más ancho pero nadie recalcula
+    // el centrado: "Jornada 3 · Tarde" quedaba corrido a la derecha, cortado por el
+    // borde de pantalla. Repetir refreshTime() una vez que la fuente está lista
+    // corrige el centrado con el ancho real.
+    document.fonts?.ready.then(() => this.refreshTime());
   }
 
   /* ---------------- HUD (franja superior, 32 px) ---------------- */
