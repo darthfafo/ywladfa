@@ -37,6 +37,17 @@ const iconFiles = import.meta.glob('../assets/icons/*.png', {
   import: 'default',
 }) as Record<string, string>;
 
+// sprites de personaje: hoja de 4 direcciones (sur·norte·este·oeste, en ese
+// orden — mismo layout que makeCharacter() en textures.ts, así FACING_FRAME
+// sirve para las dos fuentes sin cambios) armada a partir de lo que se genera
+// a partir de los retratos (ver docs/06-prompts-sprites.txt). Carpeta separada
+// de props: a diferencia de esos, tienen 4 frames fijos, no una imagen sola.
+const spriteFiles = import.meta.glob('../assets/sprites/*.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+
 function baseName(path: string): string {
   return path.split('/').pop()!.replace(/\.png$/, '');
 }
@@ -45,6 +56,7 @@ const portraitUrls = new Map(Object.entries(portraitFiles).map(([path, url]) => 
 const sceneUrls = new Map(Object.entries(sceneFiles).map(([path, url]) => [baseName(path), url]));
 const propUrls = new Map(Object.entries(propFiles).map(([path, url]) => [baseName(path), url]));
 const iconUrls = new Map(Object.entries(iconFiles).map(([path, url]) => [baseName(path), url]));
+const spriteUrls = new Map(Object.entries(spriteFiles).map(([path, url]) => [baseName(path), url]));
 
 /** Props que son hoja de sprites (varios frames cuadrados, uno al lado del otro,
  * en un mismo PNG) en vez de una imagen sola — frameSize es el lado de cada
@@ -53,6 +65,23 @@ const iconUrls = new Map(Object.entries(iconFiles).map(([path, url]) => [baseNam
 const PROP_SPRITESHEETS: Record<string, { frames: number; frameSize: number }> = {
   gaviotas: { frames: 3, frameSize: 64 },
 };
+
+/** Tamaño de cuadro por personaje en su hoja de 4 direcciones — 24×32 por
+ * default (docs/06-prompts-sprites.txt), salvo Dafydd (9 años, más chico a
+ * propósito). Si un PNG no tiene entrada acá usa el default. */
+const SPRITE_FRAME_SIZE: Record<string, { w: number; h: number }> = {
+  npc_dafydd: { w: 20, h: 26 },
+};
+const DEFAULT_SPRITE_FRAME = { w: 24, h: 32 };
+
+export function spriteTextureKey(id: string): string {
+  return `sprite_art_${id}`;
+}
+
+/** true si YA hay hoja de 4 direcciones real para ese personaje (pc_m, pc_f, npc_lewis, ...). */
+export function hasSpriteArt(id: string): boolean {
+  return spriteUrls.has(id);
+}
 
 export type Mood = 'neutral' | 'tenso' | 'calido';
 
@@ -112,11 +141,10 @@ export function hasPropArt(id: string): boolean {
 
 /**
  * Prop suelto (no de pantalla completa) si ya existe el PNG: lo escala a `size`
- * píxeles de lado mayor mantenendo proporción. A diferencia de las escenas
- * cinemáticas (pintadas), estos son elementos de mapa en el mismo estilo pixel
- * art que el resto del juego — nada de filtro lineal, que a estos tamaños tan
- * chicos los emborronaba en vez de suavizarlos. Se apoya en el NEAREST que ya
- * es default de todo el juego (`pixelArt: true`, config.ts).
+ * píxeles de lado mayor mantenendo proporción. Filtro LINEAR (preloadArt, más
+ * abajo) — son ilustraciones pintadas, no bloques de pixel art duro como el
+ * tileset; a un tamaño de destino que casi nunca es múltiplo entero del
+ * original, NEAREST las dejaba con bordes deformados en vez de nítidos.
  * Devuelve null si el PNG no existe todavía — el llamador decide qué hacer
  * (nada, o el placeholder de código).
  */
@@ -144,9 +172,9 @@ export function hasIconArt(id: string): boolean {
   return iconUrls.has(id);
 }
 
-/** Ícono chico si ya existe el PNG: mismo criterio que addPropImage (pixel art,
- * NEAREST, sin filtro lineal) — se escala a `size` píxeles de lado mayor. Devuelve
- * null si el PNG no existe todavía. */
+/** Ícono chico si ya existe el PNG: mismo criterio que addPropImage (ilustración
+ * pintada, filtro LINEAR vía preloadArt) — se escala a `size` píxeles de lado
+ * mayor. Devuelve null si el PNG no existe todavía. */
 export function addIconImage(
   scene: Phaser.Scene,
   id: string,
@@ -190,6 +218,12 @@ export function preloadArt(scene: Phaser.Scene): void {
     } else {
       scene.load.image(key, url);
     }
+    realArtKeys.push(key);
+  }
+  for (const [id, url] of spriteUrls) {
+    const size = SPRITE_FRAME_SIZE[id] ?? DEFAULT_SPRITE_FRAME;
+    const key = spriteTextureKey(id);
+    scene.load.spritesheet(key, url, { frameWidth: size.w, frameHeight: size.h });
     realArtKeys.push(key);
   }
 

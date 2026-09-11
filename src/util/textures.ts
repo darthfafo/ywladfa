@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { PAL } from '@/config';
+import { hasSpriteArt, spriteTextureKey } from './assets';
 import { TERRAIN } from './mapgen';
 
 /**
@@ -115,6 +116,22 @@ export function makeTileset(scene: Phaser.Scene, key = 'tiles'): void {
 
 export type HatStyle = 'copa' | 'boina';
 
+/** Arte real (hoja de 4 direcciones, docs/06-prompts-sprites.txt) si ya existe
+ * para este personaje; si no, genera y devuelve el placeholder de siempre —
+ * mismo layout de frames (sur·norte·este·oeste) en los dos casos, así el resto
+ * del código (FACING_FRAME) no distingue cuál está usando. */
+export function resolveCharacterTexture(
+  scene: Phaser.Scene,
+  key: string,
+  body: number,
+  hat: number,
+  hatStyle: HatStyle = 'boina',
+): string {
+  if (hasSpriteArt(key)) return spriteTextureKey(key);
+  makeCharacter(scene, key, body, hat, hatStyle);
+  return key;
+}
+
 /** Personaje 16×24, cuatro direcciones. Silueta reconocible por el sombrero (docs/03-assets.md §3). */
 export function makeCharacter(
   scene: Phaser.Scene,
@@ -188,7 +205,7 @@ export const NPC_COLORS: Record<string, [number, number, HatStyle]> = {
   npc_dafydd: [PAL.soil2, PAL.coiron, 'boina'],
 };
 
-const PC_COLORS: Record<string, [number, number, HatStyle]> = {
+export const PC_COLORS: Record<string, [number, number, HatStyle]> = {
   pc_m: [PAL.clay, PAL.ink, 'boina'],
   pc_f: [PAL.clayDark, PAL.wheat, 'boina'],
 };

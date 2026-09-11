@@ -10,7 +10,7 @@ import { addPropImage, hasPropArt, propTextureKey } from '@/util/assets';
 import { tileCenter, toTile } from '@/util/grid';
 import { input } from '@/util/input';
 import { baseTerrain, buildTerrain, cellVariant, COLLIDES, TERRAIN, TERRAIN_SPEED, tileIndex, zoneAt } from '@/util/mapgen';
-import { FACING_FRAME, makeCharacter, makeProps, makeTileset, NPC_COLORS } from '@/util/textures';
+import { FACING_FRAME, makeProps, makeTileset, NPC_COLORS, PC_COLORS, resolveCharacterTexture } from '@/util/textures';
 
 interface Interactable {
   sprite: Phaser.GameObjects.Image;
@@ -44,6 +44,8 @@ export class WorldScene extends Phaser.Scene {
    * sendDafyddHome() y el bloque de seguimiento en update(). */
   private dafyddFollow: Phaser.GameObjects.Image | null = null;
   private playerTrail: { x: number; y: number }[] = [];
+  /** id de NPC → texture key resuelta (arte real o placeholder) — ver create(). */
+  private npcTextureKeys = new Map<string, string>();
 
   constructor() {
     super('World');
@@ -53,8 +55,16 @@ export class WorldScene extends Phaser.Scene {
     const level = game.level;
     makeTileset(this);
     makeProps(this);
-    makeCharacter(this, 'pc', PAL.clay, PAL.ink, 'boina');
-    for (const [id, [body, hat, style]] of Object.entries(NPC_COLORS)) makeCharacter(this, id, body, hat, style);
+    // arte real (hoja de 4 direcciones) si ya existe para ese personaje, si no el
+    // placeholder de siempre — ver docs/06-prompts-sprites.txt. 'pc' no es un id
+    // fijo: depende del género elegido (antes SIEMPRE usaba los colores de pc_m,
+    // sin importar qué se hubiera elegido — bug real, separado del arte nuevo).
+    const pcId = `pc_${game.state.player.gender}`;
+    const [pcBody, pcHat, pcHatStyle] = PC_COLORS[pcId]!;
+    const pcTextureKey = resolveCharacterTexture(this, pcId, pcBody, pcHat, pcHatStyle);
+    this.npcTextureKeys = new Map(
+      Object.entries(NPC_COLORS).map(([id, [body, hat, style]]) => [id, resolveCharacterTexture(this, id, body, hat, style)]),
+    );
 
     // ---- mapa (los pasajes con `requires` sin cumplir arrancan cerrados, como acantilado)
     for (const p of level.spawns.pasajes) {
@@ -68,14 +78,26 @@ export class WorldScene extends Phaser.Scene {
 
     // ---- jugador: la playa solo en la primera jornada — después el campamento es la base
     const sp = game.state.progress.day > 1 ? level.spawns.fogon : level.spawns.player;
-    this.player = this.physics.add.sprite(tileCenter(sp.x), tileCenter(sp.y), 'pc', FACING_FRAME.north);
+    this.player = this.physics.add.sprite(tileCenter(sp.x), tileCenter(sp.y), pcTextureKey, FACING_FRAME.north);
     this.player.setDepth(20);
-    // 1.5×: a 16×24 nativos el personaje se perdía contra el mapa (270px de ancho
-    // de pantalla). El cuerpo de colisión se define en píxeles SIN escalar — Arcade
-    // Physics multiplica por scale solo, no hace falta tocar los números.
+    // 1.5×: a tamaño nativo (16×24 el placeholder, 24×32 el arte real) el
+    // personaje se perdía contra el mapa (270px de ancho de pantalla). El cuerpo
+    // de colisión se define en píxeles SIN escalar — Arcade Physics multiplica
+    // por scale solo, no hace falta tocar los números.
     this.player.setScale(CHAR_SCALE);
-    this.player.body!.setSize(10, 8);
-    (this.player.body as Phaser.Physics.Arcade.Body).setOffset(3, 15);
+    // caja de colisión como proporción del cuadro real (60% ancho, 33% alto,
+    // centrada, pegada abajo menos 1px): así sigue calzando con los pies tanto
+    // si el frame es el placeholder (16×24) como el arte real (24×32, más
+    // cabeza) sin mantener dos números hardcodeados por separado — esta fórmula
+    // reproduce EXACTO los valores viejos (10×8, offset 3,15) para 16×24.
+    const pcFrame = this.textures.get(pcTextureKey).get(0);
+    const boxW = Math.round(pcFrame.width * 0.6);
+    const boxH = Math.round(pcFrame.height / 3);
+    this.player.body!.setSize(boxW, boxH);
+    (this.player.body as Phaser.Physics.Arcade.Body).setOffset(
+      Math.round((pcFrame.width - boxW) / 2),
+      pcFrame.height - boxH - 1,
+    );
     this.physics.add.collider(this.player, this.layer);
 
     this.spawnProps(level);
@@ -210,7 +232,7 @@ export class WorldScene extends Phaser.Scene {
     // NPCs
     for (const n of level.spawns.npcs) {
       const s = this.add
-        .image(tileCenter(n.x), tileCenter(n.y), n.id, FACING_FRAME.south)
+        .image(tileCenter(n.x), tileCenter(n.y), this.npcTextureKeys.get(n.id) ?? n.id, FACING_FRAME.south)
         .setDepth(15)
         .setScale(CHAR_SCALE);
       this.interactables.push({ sprite: s, kind: 'npc', id: n.id, label: 'Hablar' });
