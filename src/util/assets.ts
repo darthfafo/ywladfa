@@ -63,7 +63,7 @@ const spriteUrls = new Map(Object.entries(spriteFiles).map(([path, url]) => [bas
  * cuadro, no el total. Si se regenera el PNG a otra resolución, actualizar acá.
  * El resto de los props de `src/assets/props/` son imagen única. */
 const PROP_SPRITESHEETS: Record<string, { frames: number; frameSize: number }> = {
-  gaviotas: { frames: 3, frameSize: 64 },
+  gaviotas: { frames: 3, frameSize: 22 },
 };
 
 /** Tamaño de cuadro por personaje en su hoja de 4 direcciones — 50×67 por

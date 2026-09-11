@@ -43,9 +43,14 @@ for name in os.listdir(os.path.join(ROOT, 'icons-raw')):
     if name.endswith('.png'):
         resize_to(os.path.join(ROOT, 'icons-raw', name), os.path.join(ROOT, 'icons', name), ICON_SIZE)
 
-# gaviotas.png es una hoja de 3 cuadros de 64x64 (PROP_SPRITESHEETS en
-# assets.ts) mostrados a 22x22 (setDisplaySize en WorldScene.ts) — se achica
-# cuadro por cuadro para no romper el recorte de frames del spritesheet.
+# gaviotas.png es una hoja de 3 cuadros — se achica cuadro por cuadro para no
+# romper el recorte del spritesheet. OJO: GAVIOTA_TARGET tiene que coincidir
+# SIEMPRE con PROP_SPRITESHEETS.gaviotas.frameSize en src/util/assets.ts — ya
+# se rompió una vez por cambiar acá sin actualizar allá (Phaser corta el PNG
+# en cuadrados de ESE tamaño a ciegas; si no coincide con el archivo real,
+# .play() tira "Cannot read properties of undefined (reading 'duration')"
+# apenas alguna escena intenta animar las gaviotas — un crash silencioso en
+# WorldScene.create(), no acá).
 GAVIOTA_FRAME = 64
 GAVIOTA_TARGET = 22
 src = Image.open(os.path.join(ROOT, 'props-raw', 'gaviotas.png')).convert('RGBA')
