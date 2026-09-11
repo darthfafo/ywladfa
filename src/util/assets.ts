@@ -141,27 +141,21 @@ export function hasPropArt(id: string): boolean {
 }
 
 /**
- * Prop suelto (no de pantalla completa) si ya existe el PNG: lo escala a `size`
- * píxeles de lado mayor mantenendo proporción. Filtro LINEAR (preloadArt, más
- * abajo) — son ilustraciones pintadas, no bloques de pixel art duro como el
- * tileset; a un tamaño de destino que casi nunca es múltiplo entero del
- * original, NEAREST las dejaba con bordes deformados en vez de nítidos.
+ * Prop suelto (no de pantalla completa) si ya existe el PNG — a su tamaño
+ * NATIVO, escala 1, sin reescalar. Ya son pixel art hecho a mano a la
+ * resolución final (ver scripts/resize-assets.py, que las deja del lado
+ * derecho de src/assets/props/ ya en su tamaño de juego); reescalarlas acá
+ * —con cualquier filtro, NEAREST o LINEAR— a un factor no entero les
+ * deformaba los bordes, mismo problema que ya se encontró y resolvió para
+ * los sprites de personaje. Si hay que agrandar/achicar un prop, se
+ * regenera con ese script a un tamaño nuevo, no se escala en el juego.
  * Devuelve null si el PNG no existe todavía — el llamador decide qué hacer
  * (nada, o el placeholder de código).
  */
-export function addPropImage(
-  scene: Phaser.Scene,
-  id: string,
-  x: number,
-  y: number,
-  size: number,
-): Phaser.GameObjects.Image | null {
+export function addPropImage(scene: Phaser.Scene, id: string, x: number, y: number): Phaser.GameObjects.Image | null {
   const key = propTextureKey(id);
   if (!scene.textures.exists(key)) return null;
-  const img = scene.add.image(x, y, key);
-  const scale = size / Math.max(img.width, img.height);
-  img.setScale(scale);
-  return img;
+  return scene.add.image(x, y, key);
 }
 
 export function iconTextureKey(id: string): string {
@@ -173,22 +167,13 @@ export function hasIconArt(id: string): boolean {
   return iconUrls.has(id);
 }
 
-/** Ícono chico si ya existe el PNG: mismo criterio que addPropImage (ilustración
- * pintada, filtro LINEAR vía preloadArt) — se escala a `size` píxeles de lado
- * mayor. Devuelve null si el PNG no existe todavía. */
-export function addIconImage(
-  scene: Phaser.Scene,
-  id: string,
-  x: number,
-  y: number,
-  size: number,
-): Phaser.GameObjects.Image | null {
+/** Ícono chico si ya existe el PNG: mismo criterio que addPropImage — tamaño
+ * nativo, escala 1, sin reescalar (ver scripts/resize-assets.py). Devuelve
+ * null si el PNG no existe todavía. */
+export function addIconImage(scene: Phaser.Scene, id: string, x: number, y: number): Phaser.GameObjects.Image | null {
   const key = iconTextureKey(id);
   if (!scene.textures.exists(key)) return null;
-  const img = scene.add.image(x, y, key);
-  const scale = size / Math.max(img.width, img.height);
-  img.setScale(scale);
-  return img;
+  return scene.add.image(x, y, key);
 }
 
 /** Registra en el loader de la escena todo el arte real que exista bajo src/assets/. */

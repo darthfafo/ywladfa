@@ -113,7 +113,7 @@ export class CargoScene extends Phaser.Scene {
     // ícono si ya existe el PNG (b.icon, ej. "bulto_harina") — centrado arriba de
     // la tarjeta. Si no existe todavía cae en el mismo layout de siempre, solo
     // texto, sin dejar un hueco vacío donde iría el ícono.
-    const icon = b.icon ? addIconImage(this, b.icon, x + CARD_W / 2, y + 8, 28) : null;
+    const icon = b.icon ? addIconImage(this, b.icon, x + CARD_W / 2, y + 8) : null;
     icon?.setOrigin(0.5, 0).setDepth(1);
     const labelY = icon ? y + 40 : y + 8;
 

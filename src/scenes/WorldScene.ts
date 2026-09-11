@@ -198,7 +198,7 @@ export class WorldScene extends Phaser.Scene {
     // cam.centerOn() a mano.
     if (!game.flags.is('n1_vio_zarpar')) {
       this.mimosa =
-        addPropImage(this, 'mimosa', tileCenter(27), tileCenter(112), 110) ??
+        addPropImage(this, 'mimosa', tileCenter(27), tileCenter(112)) ??
         this.add.image(tileCenter(27), tileCenter(112), 'prop_mimosa');
       this.mimosa.setDepth(7);
     }
@@ -211,7 +211,7 @@ export class WorldScene extends Phaser.Scene {
         // arte real si ya existe (src/assets/props/cajon.png), si no el placeholder
         // de siempre — mismo criterio que mimosa más arriba.
         const s =
-          addPropImage(this, 'cajon', tileCenter(c.x), tileCenter(c.y), 14) ??
+          addPropImage(this, 'cajon', tileCenter(c.x), tileCenter(c.y)) ??
           this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cajon');
         s.setDepth(10);
         this.interactables.push({ sprite: s, kind: 'cajon', id: `cajon_${i}`, label: 'Levantar' });
@@ -229,7 +229,7 @@ export class WorldScene extends Phaser.Scene {
     for (const n of level.spawns.gatherNodes) {
       if (n.type !== 'lena') continue;
       const s =
-        addPropImage(this, 'jarilla', tileCenter(n.x), tileCenter(n.y), 14) ??
+        addPropImage(this, 'jarilla', tileCenter(n.x), tileCenter(n.y)) ??
         this.add.image(tileCenter(n.x), tileCenter(n.y), 'prop_jarilla');
       s.setDepth(10);
       this.interactables.push({ sprite: s, kind: 'jarilla', id: n.id, label: 'Cortar' });
@@ -237,13 +237,13 @@ export class WorldScene extends Phaser.Scene {
     // fogón y cuevas — arte real si ya existe (src/assets/props/fogon.png, cueva.png)
     const f = level.spawns.fogon;
     const fs =
-      addPropImage(this, 'fogon', tileCenter(f.x), tileCenter(f.y), 16) ??
+      addPropImage(this, 'fogon', tileCenter(f.x), tileCenter(f.y)) ??
       this.add.image(tileCenter(f.x), tileCenter(f.y), 'prop_fogon');
     fs.setDepth(10);
     this.interactables.push({ sprite: fs, kind: 'fogon', id: 'fogon', label: 'Fogón' });
     for (const c of level.spawns.cuevas) {
       const s =
-        addPropImage(this, 'cueva', tileCenter(c.x), tileCenter(c.y), 21) ??
+        addPropImage(this, 'cueva', tileCenter(c.x), tileCenter(c.y)) ??
         this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cueva');
       s.setDepth(8);
       this.interactables.push({ sprite: s, kind: 'cueva', id: c.id, label: 'Entrar' });
@@ -274,7 +274,7 @@ export class WorldScene extends Phaser.Scene {
     // 42, no 28: a 28 no se distinguía la silueta. Interactuable con una línea de
     // sabor nada más (no da ni pide nada) — que el jugador se acerque a mirarlo
     // tiene que valer la pena con algo, aunque sea un chiste.
-    const guanaco = addPropImage(this, 'guanaco', tileCenter(9), tileCenter(59), 50)?.setDepth(6);
+    const guanaco = addPropImage(this, 'guanaco', tileCenter(9), tileCenter(59))?.setDepth(6);
     if (guanaco) this.interactables.push({ sprite: guanaco, kind: 'guanaco', id: 'guanaco', label: 'Mirar' });
 
     // coirón disperso por el monte — decoración de terreno, no interactuable
@@ -284,13 +284,13 @@ export class WorldScene extends Phaser.Scene {
       [20, 51],
       [12, 73],
     ] as const) {
-      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty), 38)?.setDepth(6);
+      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty))?.setDepth(6);
     }
 
     // restos de costa, algas varadas y botes menores — la playa se siente usada,
     // no vacía. Lejos de los cajones y la pila para no confundir qué se puede
     // levantar.
-    addPropImage(this, 'restos_costa', tileCenter(10), tileCenter(103), 34)?.setDepth(6);
+    addPropImage(this, 'restos_costa', tileCenter(10), tileCenter(103))?.setDepth(6);
 
     // algas: varios ovillos esparcidos por la arena húmeda (donde de verdad las
     // deja la marea, no en la seca) — cada uno interactuable, mismo criterio que
@@ -304,7 +304,7 @@ export class WorldScene extends Phaser.Scene {
       [48, 106],
     ] as const).forEach(([ax, ay], i) => {
       const s =
-        addPropImage(this, 'algas', tileCenter(ax), tileCenter(ay), 18) ??
+        addPropImage(this, 'algas', tileCenter(ax), tileCenter(ay)) ??
         this.add.image(tileCenter(ax), tileCenter(ay), 'prop_algas');
       s.setDepth(6);
       this.interactables.push({ sprite: s, kind: 'algas', id: `algas_${i}`, label: 'Mirar' });
@@ -319,7 +319,7 @@ export class WorldScene extends Phaser.Scene {
       [40, 105],
       [22, 102],
     ] as const).forEach(([bx, by], i) => {
-      const s = addPropImage(this, 'bote_menor', tileCenter(bx), tileCenter(by), 60)?.setDepth(6);
+      const s = addPropImage(this, 'bote_menor', tileCenter(bx), tileCenter(by))?.setDepth(6);
       if (s) this.interactables.push({ sprite: s, kind: 'bote', id: `bote_${i}`, label: 'Mirar' });
     });
 
@@ -327,7 +327,7 @@ export class WorldScene extends Phaser.Scene {
     // vacío de vida — mismo guanaco que ya se usa en el monte (roamea Patagonia
     // entera, no es exclusivo de una zona) y un par de matas de coirón, lejos de
     // los afloramientos de roca nuevos y del propio manantial.
-    const guanacoCanadon = addPropImage(this, 'guanaco', tileCenter(21), tileCenter(30), 48)?.setDepth(6);
+    const guanacoCanadon = addPropImage(this, 'guanaco', tileCenter(21), tileCenter(30))?.setDepth(6);
     if (guanacoCanadon) {
       this.interactables.push({ sprite: guanacoCanadon, kind: 'guanaco', id: 'guanaco_canadon', label: 'Mirar' });
     }
@@ -335,7 +335,7 @@ export class WorldScene extends Phaser.Scene {
       [6, 11],
       [23, 36],
     ] as const) {
-      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty), 36)?.setDepth(6);
+      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty))?.setDepth(6);
     }
 
     // la meseta: pasto y agua en algún lado (por algo baja Lewis a buscarla ahí) —
@@ -364,7 +364,7 @@ export class WorldScene extends Phaser.Scene {
     ];
     for (const group of mesetaGroups) {
       group.spots.forEach(([gx, gy], i) => {
-        const s = addPropImage(this, 'guanaco', tileCenter(gx), tileCenter(gy), 46)?.setDepth(6);
+        const s = addPropImage(this, 'guanaco', tileCenter(gx), tileCenter(gy))?.setDepth(6);
         if (s && i === 0) this.interactables.push({ sprite: s, kind: 'guanaco', id: group.id, label: 'Mirar' });
       });
     }
@@ -376,7 +376,7 @@ export class WorldScene extends Phaser.Scene {
       [52, 30],
       [44, 21],
     ] as const) {
-      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty), 38)?.setDepth(6);
+      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty))?.setDepth(6);
     }
 
     // el manantial: centrado en el mismo bloque de tiles que ya pinta buildTerrain()
@@ -385,7 +385,7 @@ export class WorldScene extends Phaser.Scene {
     // (no es un cuadrado sólido), así que se pone bien más grande (96) que ese
     // bloque — el borde de piedras del dibujo lo tapa entero contra el terreno del
     // cañadón alrededor, que combina mejor que un cuadrado de agua lisa asomando.
-    addPropImage(this, 'manantial', tileCenter(9.5), tileCenter(7.5), 108)?.setDepth(5);
+    addPropImage(this, 'manantial', tileCenter(9.5), tileCenter(7.5))?.setDepth(5);
 
     // gaviotas: 2-3 frames animados (ver util/assets.ts PROP_SPRITESHEETS), planeando
     // de izquierda a derecha sobre la playa. No van con un tween de coordenadas fijas
@@ -410,9 +410,10 @@ export class WorldScene extends Phaser.Scene {
         [96, 0, 16],
         [94, 90, 12],
       ] as const) {
+        // sin setDisplaySize: gaviotas.png ya viene a 22×22 por cuadro (ver
+        // scripts/resize-assets.py) — escala 1, nada que reinterpolar.
         const sprite = this.add
           .sprite(viewLeft - 24 - offset, tileCenter(ty), key)
-          .setDisplaySize(22, 22)
           .setDepth(11)
           .play('gaviota_vuelo');
         this.gaviotas.push({ sprite, speedPxPerSec });
