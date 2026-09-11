@@ -614,7 +614,10 @@ export class WorldScene extends Phaser.Scene {
         bus.emit('ui:toast', { text: 'Hay muchas algas en la costa.' });
         break;
       case 'bote':
-        bus.emit('ui:toast', { text: 'Un bote de pesca, varado hace tiempo.' });
+        // no son botes de pesca cualquiera: son los que bajaron a los 150
+        // colonos del Mimosa a remo, como el del cold open ("El bote toca la
+        // playa y nadie baja primero") — varios viajes, no cupo todos de una.
+        bus.emit('ui:toast', { text: 'Uno de los botes que bajó a la gente del Mimosa.' });
         break;
     }
   }
