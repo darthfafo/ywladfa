@@ -19,11 +19,13 @@ interface Interactable {
   label: string;
 }
 
-/** Personajes (PC + NPCs): 3× para que el arte chibi real (24×32) se aprecie —
- * a 1.5× quedaba chico y el detalle del sprite se perdía. pixelArt:true +
- * NEAREST los mantiene nítidos (ver preloadArt: los sprites de personaje NO
- * llevan el filtro LINEAR que sí usan props/retratos pintados). */
-const CHAR_SCALE = 3;
+// El arte real de personaje ya se compone a su tamaño final (64×86, ver
+// scripts/compose-sprites.py) — escala 1, el motor no reinterpola nada, así
+// no hay filtro que pueda "romperlo". El placeholder de código sigue siendo
+// chico (16×24) y necesita su propio multiplicador para no perderse contra
+// el mapa (270px de ancho de pantalla).
+const REAL_ART_SCALE = 1;
+const PLACEHOLDER_SCALE = 1.5;
 
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -52,8 +54,8 @@ export class WorldScene extends Phaser.Scene {
    * sendDafyddHome() y el bloque de seguimiento en update(). */
   private dafyddFollow: Phaser.GameObjects.Image | null = null;
   private playerTrail: { x: number; y: number }[] = [];
-  /** id de NPC → texture key resuelta (arte real o placeholder) — ver create(). */
-  private npcTextureKeys = new Map<string, string>();
+  /** id de NPC → texture key + escala resueltas (arte real o placeholder) — ver create(). */
+  private npcTextures = new Map<string, { key: string; scale: number }>();
 
   constructor() {
     super('World');
@@ -69,9 +71,14 @@ export class WorldScene extends Phaser.Scene {
     // sin importar qué se hubiera elegido — bug real, separado del arte nuevo).
     const pcId = `pc_${game.state.player.gender}`;
     const [pcBody, pcHat, pcHatStyle] = PC_COLORS[pcId]!;
-    const pcTextureKey = resolveCharacterTexture(this, pcId, pcBody, pcHat, pcHatStyle);
-    this.npcTextureKeys = new Map(
-      Object.entries(NPC_COLORS).map(([id, [body, hat, style]]) => [id, resolveCharacterTexture(this, id, body, hat, style)]),
+    const pcResolved = resolveCharacterTexture(this, pcId, pcBody, pcHat, pcHatStyle);
+    const pcTextureKey = pcResolved.key;
+    const pcScale = pcResolved.isRealArt ? REAL_ART_SCALE : PLACEHOLDER_SCALE;
+    this.npcTextures = new Map(
+      Object.entries(NPC_COLORS).map(([id, [body, hat, style]]) => {
+        const r = resolveCharacterTexture(this, id, body, hat, style);
+        return [id, { key: r.key, scale: r.isRealArt ? REAL_ART_SCALE : PLACEHOLDER_SCALE }];
+      }),
     );
 
     // ---- mapa (los pasajes con `requires` sin cumplir arrancan cerrados, como acantilado)
@@ -88,15 +95,13 @@ export class WorldScene extends Phaser.Scene {
     const sp = game.state.progress.day > 1 ? level.spawns.fogon : level.spawns.player;
     this.player = this.physics.add.sprite(tileCenter(sp.x), tileCenter(sp.y), pcTextureKey, FACING_FRAME.north);
     this.player.setDepth(20);
-    // 1.5×: a tamaño nativo (16×24 el placeholder, 24×32 el arte real) el
-    // personaje se perdía contra el mapa (270px de ancho de pantalla). El cuerpo
-    // de colisión se define en píxeles SIN escalar — Arcade Physics multiplica
-    // por scale solo, no hace falta tocar los números.
-    this.player.setScale(CHAR_SCALE);
+    // El cuerpo de colisión se define en píxeles SIN escalar — Arcade Physics
+    // multiplica por scale solo, no hace falta tocar los números.
+    this.player.setScale(pcScale);
     // caja de colisión como proporción del cuadro real (60% ancho, 33% alto,
-    // centrada, pegada abajo menos 1px): así sigue calzando con los pies tanto
-    // si el frame es el placeholder (16×24) como el arte real (24×32, más
-    // cabeza) sin mantener dos números hardcodeados por separado — esta fórmula
+    // centrada, pegada abajo menos 1px): así sigue calzando con los pies sin
+    // importar el tamaño nativo del frame (16×24 el placeholder, 64×86 el arte
+    // real) sin mantener números hardcodeados por separado — esta fórmula
     // reproduce EXACTO los valores viejos (10×8, offset 3,15) para 16×24.
     const pcFrame = this.textures.get(pcTextureKey).get(0);
     const boxW = Math.round(pcFrame.width * 0.6);
@@ -245,10 +250,11 @@ export class WorldScene extends Phaser.Scene {
     }
     // NPCs
     for (const n of level.spawns.npcs) {
+      const resolved = this.npcTextures.get(n.id);
       const s = this.add
-        .image(tileCenter(n.x), tileCenter(n.y), this.npcTextureKeys.get(n.id) ?? n.id, FACING_FRAME.south)
+        .image(tileCenter(n.x), tileCenter(n.y), resolved?.key ?? n.id, FACING_FRAME.south)
         .setDepth(15)
-        .setScale(CHAR_SCALE);
+        .setScale(resolved?.scale ?? PLACEHOLDER_SCALE);
       this.interactables.push({ sprite: s, kind: 'npc', id: n.id, label: 'Hablar' });
     }
     this.updateNpcVisibility();
@@ -289,9 +295,12 @@ export class WorldScene extends Phaser.Scene {
     // algas: varios ovillos esparcidos por la arena húmeda (donde de verdad las
     // deja la marea, no en la seca) — cada uno interactuable, mismo criterio que
     // el guanaco (una línea de sabor, no da ni pide nada).
+    // (42,107), no (33,107): ahí quedaba a ~35px de dos cajones a la vez y
+    // competía por el "más cercano" con ellos — no se podía interactuar con el
+    // cajón sin que el alga se lo robara. 40px+ de cualquier otro interactuable.
     ([
       [7, 106],
-      [33, 107],
+      [42, 107],
       [48, 106],
     ] as const).forEach(([ax, ay], i) => {
       const s =
@@ -505,14 +514,16 @@ export class WorldScene extends Phaser.Scene {
       this.player.setFrame(FACING_FRAME[this.facing]!);
     }
 
-    // rebote de caminata (ver el campo walkBobTimer): alterna 1px cada 180ms
-    // mientras se mueve, nunca en reposo. Se aplica DESPUÉS de que Arcade
-    // Physics ya sincronizó player.y con el body en este frame, así que no
-    // hace falta deshacerlo — el próximo frame arranca de nuevo desde la
-    // posición real del body antes de sumar el offset.
+    // rebote de caminata (ver el campo walkBobTimer): alterna 1px cada 260ms
+    // mientras se mueve, nunca en reposo. 180ms se sentía como un tic nervioso,
+    // no un paso — 260ms (~2.3 pasos/seg) es más parecido al ritmo real de
+    // caminar. Se aplica DESPUÉS de que Arcade Physics ya sincronizó player.y
+    // con el body en este frame, así que no hace falta deshacerlo — el próximo
+    // frame arranca de nuevo desde la posición real del body antes de sumar
+    // el offset.
     if (vx !== 0 || vy !== 0) {
       this.walkBobTimer += delta;
-      if (this.walkBobTimer >= 180) {
+      if (this.walkBobTimer >= 260) {
         this.walkBobTimer = 0;
         this.walkBobUp = !this.walkBobUp;
       }

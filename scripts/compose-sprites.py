@@ -4,9 +4,16 @@ from PIL import Image
 RAW = '/Users/fede/wladfa/src/assets/sprites-raw'
 OUT = '/Users/fede/wladfa/src/assets/sprites'
 
-MARGIN = 1
-DEFAULT_FRAME = (24, 32)
-PALETTE_COLORS = 16
+MARGIN = 2
+# El error de las dos vueltas anteriores fue el mismo en el fondo: achicar
+# demasiado (24x32) un arte que YA es buen pixel art a alta resolución nativa,
+# y encima forzarlo con cuantización de color — eso es lo que lo "rompía", no
+# el filtro NEAREST/LINEAR del motor (que ya se había probado en los dos
+# sentidos sin arreglar nada, porque el problema nunca estuvo ahí). Ahora se
+# resguarda resolución de sobra y NINGÚN procesamiento de color: un resize
+# limpio nada más. CHAR_SCALE en WorldScene.ts queda en 1 — el motor no
+# reinterpola nada, así que no hay ningún filtro que pueda "romper" esto.
+DEFAULT_FRAME = (64, 86)
 
 def load_view(char_raw_key, view, aliases=None):
     aliases = aliases or [f"{char_raw_key}_{view}.png"]
@@ -16,20 +23,6 @@ def load_view(char_raw_key, view, aliases=None):
             return Image.open(p).convert('RGBA')
     raise FileNotFoundError(aliases)
 
-def flatten_colors(im, colors=PALETTE_COLORS):
-    """Funde los degradés de 1px del recorte/resize en bloques planos de
-    verdad — sin esto cada pixel del PNG final tiene un tono ligeramente
-    distinto al de al lado (un mini-thumbnail suavizado, no pixel art real),
-    y ESE es el motivo de que se vea "sucio" sin importar el filtro
-    (NEAREST/LINEAR) que use el motor después: el problema está en los datos
-    del archivo, no en cómo se escala en el juego."""
-    alpha = im.split()[3]
-    rgb = im.convert('RGB')
-    quantized = rgb.quantize(colors=colors, method=Image.MEDIANCUT, dither=Image.NONE).convert('RGB')
-    result = quantized.convert('RGBA')
-    result.putalpha(alpha)
-    return result
-
 def fit_frame(im, frame_w, frame_h):
     bbox = im.getbbox()
     cropped = im.crop(bbox)
@@ -38,11 +31,10 @@ def fit_frame(im, frame_w, frame_h):
     scale = min(max_w / w, max_h / h)
     new_w, new_h = max(1, round(w * scale)), max(1, round(h * scale))
     resized = cropped.resize((new_w, new_h), Image.LANCZOS)
-    flat = flatten_colors(resized)
     canvas = Image.new('RGBA', (frame_w, frame_h), (0, 0, 0, 0))
     x = (frame_w - new_w) // 2
     y = frame_h - MARGIN - new_h
-    canvas.paste(flat, (x, y), flat)
+    canvas.paste(resized, (x, y), resized)
     return canvas
 
 def build_character(out_key, char_raw_key, aliases_by_view=None, frame=DEFAULT_FRAME):
@@ -66,4 +58,6 @@ build_character('pc_m', 'pc_m')
 build_character('pc_f', 'pc_f')
 build_character('npc_lewis', 'lewis', aliases_by_view={'norte': ['lewis_norte.png', 'lewsi_norte.png']})
 build_character('npc_edwyn', 'edwin')
-build_character('npc_dafydd', 'dafydd', frame=(20, 26))
+# 54x72: misma proporción 5:6 que usaban los otros (20x26 sobre 24x32) — más
+# chico que el resto a propósito, Dafydd tiene 9 años.
+build_character('npc_dafydd', 'dafydd', frame=(54, 72))

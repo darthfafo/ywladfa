@@ -126,10 +126,10 @@ export function resolveCharacterTexture(
   body: number,
   hat: number,
   hatStyle: HatStyle = 'boina',
-): string {
-  if (hasSpriteArt(key)) return spriteTextureKey(key);
+): { key: string; isRealArt: boolean } {
+  if (hasSpriteArt(key)) return { key: spriteTextureKey(key), isRealArt: true };
   makeCharacter(scene, key, body, hat, hatStyle);
-  return key;
+  return { key, isRealArt: false };
 }
 
 /** Personaje 16×24, cuatro direcciones. Silueta reconocible por el sombrero (docs/03-assets.md §3). */

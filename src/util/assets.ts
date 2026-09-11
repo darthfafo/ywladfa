@@ -66,13 +66,14 @@ const PROP_SPRITESHEETS: Record<string, { frames: number; frameSize: number }> =
   gaviotas: { frames: 3, frameSize: 64 },
 };
 
-/** Tamaño de cuadro por personaje en su hoja de 4 direcciones — 24×32 por
- * default (docs/06-prompts-sprites.txt), salvo Dafydd (9 años, más chico a
- * propósito). Si un PNG no tiene entrada acá usa el default. */
+/** Tamaño de cuadro por personaje en su hoja de 4 direcciones — 64×86 por
+ * default (ver scripts/compose-sprites.py), salvo Dafydd (9 años, más chico a
+ * propósito, misma proporción 5:6). Si un PNG no tiene entrada acá usa el
+ * default. Si se regenera algún PNG a otro tamaño, actualizar acá también. */
 const SPRITE_FRAME_SIZE: Record<string, { w: number; h: number }> = {
-  npc_dafydd: { w: 20, h: 26 },
+  npc_dafydd: { w: 54, h: 72 },
 };
-const DEFAULT_SPRITE_FRAME = { w: 24, h: 32 };
+const DEFAULT_SPRITE_FRAME = { w: 64, h: 86 };
 
 export function spriteTextureKey(id: string): string {
   return `sprite_art_${id}`;
