@@ -350,7 +350,15 @@ export class BootScene extends Phaser.Scene {
     // salto al mundo real no puede quedar sin programarse — significaría que el
     // juego se queda trabado en esta pantalla para siempre, sin ningún control
     // para salir. Mejor una cinemática con algún detalle roto que un dead end.
-    this.time.delayedCall(6000, () => this.scene.start('World'));
+    const goToWorld = (): void => {
+      if (this.scene.isActive()) this.scene.start('World');
+    };
+    this.time.delayedCall(6000, goToWorld);
+    // respaldo con setTimeout nativo, no de Phaser: si algo deja trabado el
+    // propio loop de Phaser (this.time depende de que el juego siga actualizando
+    // cuadro a cuadro; un timer del navegador no) esto igual dispara el salto.
+    // isActive() en los dos evita el doble disparo si el de arriba sí llegó a andar.
+    window.setTimeout(goToWorld, 7000);
 
     const bg = this.renderImage('travesia');
 
