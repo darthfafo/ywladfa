@@ -162,7 +162,12 @@ export class WorldScene extends Phaser.Scene {
     const cajonesFaltan = Number(game.flags.get('n1_cajones_bajados') ?? 0) < level.spawns.cajones.length;
     if (cajonesFaltan) {
       for (const [i, c] of level.spawns.cajones.entries()) {
-        const s = this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cajon').setDepth(10);
+        // arte real si ya existe (src/assets/props/cajon.png), si no el placeholder
+        // de siempre — mismo criterio que mimosa más arriba.
+        const s =
+          addPropImage(this, 'cajon', tileCenter(c.x), tileCenter(c.y), 12) ??
+          this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cajon');
+        s.setDepth(10);
         this.interactables.push({ sprite: s, kind: 'cajon', id: `cajon_${i}`, label: 'Levantar' });
       }
     }
@@ -174,18 +179,27 @@ export class WorldScene extends Phaser.Scene {
       .setDepth(9);
     this.interactables.push({ sprite: pila as unknown as Phaser.GameObjects.Image, kind: 'pila', id: 'pila', label: 'Dejar' });
 
-    // jarilla
+    // jarilla — arte real si ya existe (src/assets/props/jarilla.png)
     for (const n of level.spawns.gatherNodes) {
       if (n.type !== 'lena') continue;
-      const s = this.add.image(tileCenter(n.x), tileCenter(n.y), 'prop_jarilla').setDepth(10);
+      const s =
+        addPropImage(this, 'jarilla', tileCenter(n.x), tileCenter(n.y), 12) ??
+        this.add.image(tileCenter(n.x), tileCenter(n.y), 'prop_jarilla');
+      s.setDepth(10);
       this.interactables.push({ sprite: s, kind: 'jarilla', id: n.id, label: 'Cortar' });
     }
-    // fogón y cuevas
+    // fogón y cuevas — arte real si ya existe (src/assets/props/fogon.png, cueva.png)
     const f = level.spawns.fogon;
-    const fs = this.add.image(tileCenter(f.x), tileCenter(f.y), 'prop_fogon').setDepth(10);
+    const fs =
+      addPropImage(this, 'fogon', tileCenter(f.x), tileCenter(f.y), 14) ??
+      this.add.image(tileCenter(f.x), tileCenter(f.y), 'prop_fogon');
+    fs.setDepth(10);
     this.interactables.push({ sprite: fs, kind: 'fogon', id: 'fogon', label: 'Fogón' });
     for (const c of level.spawns.cuevas) {
-      const s = this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cueva').setDepth(8);
+      const s =
+        addPropImage(this, 'cueva', tileCenter(c.x), tileCenter(c.y), 18) ??
+        this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cueva');
+      s.setDepth(8);
       this.interactables.push({ sprite: s, kind: 'cueva', id: c.id, label: 'Entrar' });
     }
     // NPCs

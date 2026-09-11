@@ -1,0 +1,83 @@
+PROMPTS PARA PROPS DEL MUNDO QUE FALTAN (cajón, fogón, cueva, jarilla)
+================================================================================
+
+Estilo de referencia
+---------------------
+Estos NO van en el estilo funko/pixel de los personajes (docs/06-prompts-sprites.txt).
+Van en el mismo estilo que ya tienen los props reales que existen hoy en
+src/assets/props/ (guanaco.png, coiron.png, manantial.png, restos_costa.png,
+bote_menor.png): ilustración pintada en miniatura, vista 3/4 top-down, sombreado
+suave, paleta apagada/histórica (tierra, óxido, gris piedra — nada saturado),
+sin líneas de contorno duras tipo cómic, objeto aislado sobre fondo transparente.
+
+Cada uno es UN solo objeto estático (no hay direcciones ni poses — a diferencia
+de los personajes, estos no caminan). Resolución de trabajo generosa (el juego
+los reduce solo, como ya hace con el guanaco/manantial/etc.) — no hace falta
+pixel-perfect, con que el objeto quede bien aislado y centrado alcanza.
+
+Cómo usar: pegá el prompt del objeto, sin adjuntar ninguna referencia (no hay
+retrato para estos, a diferencia de los personajes). Guardá el resultado con el
+nombre de archivo indicado en cada uno y pasámelo — yo lo dejo en
+src/assets/props/ y el juego lo levanta solo (ya está cableado para usarlo en
+cuanto el archivo exista, no hace falta ningún otro paso de código).
+
+================================================================================
+1. CAJÓN — archivo: cajon.png
+================================================================================
+Small painted illustration of a single weathered wooden shipping crate, as
+carried off a 19th-century emigrant ship (1865). Rough-sawn wood planks,
+visible grain and weathering, simple rope or thin metal banding holding it
+together, a few nail heads. Viewed from a 3/4 top-down angle (like an object
+sitting on the ground, seen from slightly above). Soft painterly shading,
+muted earthy palette (weathered brown wood, faded rope tan) — no bright or
+saturated colors. Isolated object, transparent background, no cast shadow
+baked in (the game adds its own).
+
+================================================================================
+2. FOGÓN (marca de mapa, de día) — archivo: fogon.png
+================================================================================
+Small painted illustration of a simple campfire pit, prepared but NOT lit —
+daytime, cold fire: a ring of rough stones with a small stack of cut firewood
+arranged inside, ready to be lit at night. No flame, no smoke, no embers. Viewed
+from a 3/4 top-down angle (like an object sitting on the ground, seen from
+slightly above). Soft painterly shading, muted earthy palette (grey stone,
+weathered brown wood) — no bright or saturated colors. Isolated object,
+transparent background, no cast shadow baked in.
+Nota de contexto: esto es el marcador chico que se ve caminando de día por el
+mapa — la fogata GRANDE y encendida de noche ya existe como ilustración aparte
+(fogon_chico.png / fogon_grande.png, pantalla completa), no se confunde con
+esto.
+
+================================================================================
+3. CUEVA (boca de cueva) — archivo: cueva.png
+================================================================================
+Small painted illustration of a single cave entrance dug into a dry clay/earth
+embankment (NOT a natural rock cave — it's a shallow dwelling dug by hand into
+a soft clay cliff, Patagonian coastal badland). A rough, roughly arched opening,
+dark interior (can't see inside), eroded dirt/clay texture around the opening
+matching a dry riverbank or ravine wall. Viewed from a 3/4 top-down / slightly
+elevated angle, as if seen walking past it on a map. Soft painterly shading,
+muted earthy palette (ochre, dark clay, brown) — no bright or saturated colors.
+Isolated object, transparent background, no cast shadow baked in.
+Nota: un solo diseño alcanza — se reutiliza para las 3 cuevas del campamento
+(no hace falta una versión distinta por cueva).
+
+================================================================================
+4. JARILLA (arbusto de leña) — archivo: jarilla.png
+================================================================================
+Small painted illustration of a single "jarilla" bush (creosote bush) — a small,
+sparse, wiry Patagonian desert shrub: thin grey-green woody branches, small
+sparse leaves, low and scrubby, growing straight out of dry sandy/rocky ground.
+Not lush or leafy — dry, hardy, desert scrubland plant. Viewed from a 3/4
+top-down angle (like a plant sitting on the ground, seen from slightly above).
+Soft painterly shading, muted desaturated palette (grey-green, dusty olive) —
+no bright or saturated colors. Isolated object, transparent background, no
+cast shadow baked in.
+
+================================================================================
+BONUS (opcional, no lo pediste pero es el otro hueco real que encontré):
+Iconos de recurso del HUD (agua/comida/leña) — hoy son solo texto de color,
+sin ícono. Si en algún momento querés sumarlos, avisame y te armo esos 3
+prompts también (serían chiquitos, 8×8-ish, estilo ícono simple — no esta
+ilustración pintada).
+================================================================================
