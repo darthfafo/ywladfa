@@ -345,6 +345,13 @@ export class BootScene extends Phaser.Scene {
   private renderVoyage(): void {
     this.clearStep();
     const cx = VIEW.width / 2;
+    // programado ACÁ, antes de armar cualquier otra cosa: si algo de lo que sigue
+    // (retrato, texto, animación de puntos) llegara a tirar una excepción, el
+    // salto al mundo real no puede quedar sin programarse — significaría que el
+    // juego se queda trabado en esta pantalla para siempre, sin ningún control
+    // para salir. Mejor una cinemática con algún detalle roto que un dead end.
+    this.time.delayedCall(6000, () => this.scene.start('World'));
+
     const bg = this.renderImage('travesia');
 
     if (!bg) {
@@ -374,7 +381,7 @@ export class BootScene extends Phaser.Scene {
     });
     this.track(voyageText);
     // puntos suspensivos animados: sin esto la escena parece trabada durante los
-    // 9s fijos que dura (no hay nada más en pantalla que se mueva) y da la
+    // 6s fijos que dura (no hay nada más en pantalla que se mueva) y da la
     // sensación de que el juego colgó en vez de estar en una cinemática. Se anima
     // solo el <span> (no todo el bloque vía setHTML) para no reflowear las dos
     // líneas de arriba en cada tick.
@@ -392,8 +399,9 @@ export class BootScene extends Phaser.Scene {
     // sin forma de adelantarla: un toque de una pantalla anterior que todavía
     // estuviera "en vuelo" alcanzaba para saltear la cinemática antes de que se
     // llegara a ver un solo frame. Esta y cualquier cinemática futura corren su
-    // tiempo fijo completo, sin listener de toque/tecla que la pueda cortar.
-    this.time.delayedCall(9000, () => this.scene.start('World'));
+    // tiempo fijo completo, sin listener de toque/tecla que la pueda cortar — el
+    // delayedCall que hace el salto real ya se programó al principio de la
+    // función, ver el comentario ahí.
   }
 
   /* ---------------- arranque ---------------- */
