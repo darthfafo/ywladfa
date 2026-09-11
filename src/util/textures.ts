@@ -269,14 +269,17 @@ function makePortrait(
   tex!.refresh();
 }
 
-/** Props chicos: cajón, mata de jarilla, fogón, boca de cueva. */
+/** Props chicos: cajón, mata de jarilla, fogón, boca de cueva, algas. */
 export function makeProps(scene: Phaser.Scene): void {
   // oscuro con banda dorada: PAL.soil2 se perdía contra la arena (mismo tono)
-  makeRect(scene, 'prop_cajon', 12, 10, PAL.ink2, PAL.wheat);
-  makeRect(scene, 'prop_jarilla', 12, 12, PAL.scrubDark, PAL.moss);
-  makeRect(scene, 'prop_fogon', 14, 10, PAL.blood, PAL.wheat);
-  makeRect(scene, 'prop_cueva', 16, 18, PAL.ink, PAL.clayDark);
+  makeRect(scene, 'prop_cajon', 14, 12, PAL.ink2, PAL.wheat);
+  makeRect(scene, 'prop_jarilla', 14, 14, PAL.scrubDark, PAL.moss);
+  makeRect(scene, 'prop_fogon', 16, 12, PAL.blood, PAL.wheat);
+  makeRect(scene, 'prop_cueva', 19, 21, PAL.ink, PAL.clayDark);
   makeRect(scene, 'prop_agua', 14, 8, PAL.seaLight, PAL.seaPale);
+  // ovillo de algas varadas — mismo verde oscuro que la jarilla (es vegetación
+  // también), franja baja y ancha, no una mata parada.
+  makeRect(scene, 'prop_algas', 12, 6, PAL.scrubDark, PAL.scrub);
   makeShip(scene);
 }
 
