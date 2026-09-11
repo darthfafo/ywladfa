@@ -52,6 +52,7 @@ export class UiScene extends Phaser.Scene {
   private resEls = new Map<ResourceId, HTMLDivElement>();
   private loadBar!: Phaser.GameObjects.Rectangle;
   private toast!: Phaser.GameObjects.Text;
+  private toastHideTimer: Phaser.Time.TimerEvent | null = null;
   private zoneLabel!: Phaser.GameObjects.Text;
   private dialogue!: DialogueBox;
   private touch!: TouchControls;
@@ -273,6 +274,12 @@ export class UiScene extends Phaser.Scene {
     this.toast.setText(text.toUpperCase()).setAlpha(1);
     this.tweens.killTweensOf(this.toast);
     this.tweens.add({ targets: this.toast, alpha: 0, delay: 1800, duration: 400 });
+    // el botón de acción es HTML aparte del canvas y queda SIEMPRE por encima
+    // del toast (ver TouchControls) — un texto de 2 líneas cerca del botón
+    // (ej. "Mirar" un bote) quedaba tapado. Se oculta mientras el toast se ve.
+    this.toastHideTimer?.remove();
+    this.touch.setToastShowing(true);
+    this.toastHideTimer = this.time.delayedCall(2200, () => this.touch.setToastShowing(false));
   }
 
   private showZone(label: string): void {

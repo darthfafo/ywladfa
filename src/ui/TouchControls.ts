@@ -40,6 +40,12 @@ export class TouchControls {
    * siempre visible como un punto "·" sin función, un círculo sin nada que
    * explique qué es cuando no hay nada cerca. */
   private contextLabel: string | null = null;
+  /** El botón es HTML aparte del canvas — SIEMPRE queda por encima de cualquier
+   * texto dibujado ahí (ver setVisible), así que un toast de 2 líneas cerca del
+   * botón terminaba tapado por él en vez de al revés. Mientras hay un toast
+   * mostrándose (ver UiScene.showToast) el botón se oculta un momento — el
+   * joystick sigue andando, solo se apaga la acción de "Mirar"/etc. */
+  private toastShowing = false;
 
   constructor(scene: Phaser.Scene) {
     const by = VIEW.tray.y - CFG.btnAboveTray;
@@ -168,7 +174,13 @@ export class TouchControls {
   }
 
   private refreshButton(): void {
-    this.button.setVisible(this.enabled && this.contextLabel !== null);
+    this.button.setVisible(this.enabled && this.contextLabel !== null && !this.toastShowing);
+  }
+
+  /** Ver el comentario de `toastShowing` más arriba. */
+  setToastShowing(showing: boolean): void {
+    this.toastShowing = showing;
+    this.refreshButton();
   }
 
   /** Diálogos, cutscenes y overlays de pantalla completa se dibujan en el canvas y
