@@ -220,11 +220,16 @@ export function preloadArt(scene: Phaser.Scene): void {
     }
     realArtKeys.push(key);
   }
+  // sprites de personaje: NEAREST (el default global), no LINEAR como el resto
+  // del arte real de acá abajo. A diferencia de los props/retratos/escenas
+  // (ilustración pintada, sombreado suave), estos se pidieron explícitamente
+  // pixel art de bordes duros (docs/06-prompts-sprites.txt) — LINEAR les
+  // difumina justo el borde de píxel que es parte del estilo, se leen borrosos
+  // en vez de nítidos. No entran en realArtKeys a propósito.
   for (const [id, url] of spriteUrls) {
     const size = SPRITE_FRAME_SIZE[id] ?? DEFAULT_SPRITE_FRAME;
     const key = spriteTextureKey(id);
     scene.load.spritesheet(key, url, { frameWidth: size.w, frameHeight: size.h });
-    realArtKeys.push(key);
   }
 
   // el juego entero corre con pixelArt:true (GAME_CONFIG) — filtro NEAREST global,

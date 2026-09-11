@@ -19,10 +19,11 @@ interface Interactable {
   label: string;
 }
 
-/** Personajes (PC + NPCs) nativos a 16×24 se perdían contra el mapa (270px de
- * ancho de pantalla) — 1.5× los hace legibles sin que dejen de leerse como
- * personajes de un tile de ancho. pixelArt:true + NEAREST los mantiene nítidos. */
-const CHAR_SCALE = 1.5;
+/** Personajes (PC + NPCs): 3× para que el arte chibi real (24×32) se aprecie —
+ * a 1.5× quedaba chico y el detalle del sprite se perdía. pixelArt:true +
+ * NEAREST los mantiene nítidos (ver preloadArt: los sprites de personaje NO
+ * llevan el filtro LINEAR que sí usan props/retratos pintados). */
+const CHAR_SCALE = 3;
 
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
