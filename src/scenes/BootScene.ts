@@ -524,10 +524,23 @@ export class BootScene extends Phaser.Scene {
       lineHeight?: number;
     },
   ): Phaser.GameObjects.DOMElement {
+    // ancho SIEMPRE fijo cuando hay align center/right, aunque el llamado no haya
+    // pedido uno: sin esto Phaser mide el div por su contenido (nowrap) para poder
+    // aplicar el origen 0.5/1, y esa medida puede salir con la fuente de reserva
+    // del sistema si "Press Start 2P" todavía no bajó de Google Fonts — el texto
+    // quedaba centrado con un ancho que no era el real, corrido y cortado contra el
+    // borde, sin que nada lo recalculara después (mismo bug ya encontrado y resuelto
+    // así en UiScene, el header de jornada). Con ancho fijo por CSS, Phaser siempre
+    // mide lo mismo sin importar la fuente, y el centrado real queda 100% del lado
+    // de text-align, que el navegador sí recalcula solo apenas la fuente entra.
+    // Todo llamado centrado de este archivo usa x = VIEW.width/2 (columna completa);
+    // "right" no tiene ningún uso hoy, pero el default (ancho = x, caja de 0 a x)
+    // sigue la misma lógica por si alguno lo necesita más adelante.
+    const width = opts.width ?? (opts.align === 'center' ? VIEW.width : opts.align === 'right' ? x : undefined);
     const style =
       `color:${opts.color}; font-family: ${opts.retro === false ? UI_FONT : RETRO_FONT}; font-size:${opts.size}px; ` +
       `font-weight:${opts.weight ?? 'normal'}; text-align:${opts.align ?? 'left'}; line-height:${opts.lineHeight ?? 1.5}; ` +
-      (opts.width ? `width:${opts.width}px;` : 'white-space:nowrap;');
+      (width ? `width:${width}px;` : 'white-space:nowrap;');
     const originX = opts.align === 'center' ? 0.5 : opts.align === 'right' ? 1 : 0;
     const el = this.add.dom(x, y, 'div', style).setOrigin(originX, 0);
     // setText()/setHTML(), no node.textContent directo: el origen centrado necesita

@@ -96,17 +96,6 @@ export class UiScene extends Phaser.Scene {
     this.refreshResources();
     this.refreshTime();
     this.refreshLoad();
-
-    // mismo problema que ya resolvió BootScene (document.fonts.ready): si esta escena
-    // arranca ANTES de que "Press Start 2P" termine de bajar de Google Fonts (ej. al
-    // entrar directo a una jornada avanzada, con el preload de imágenes compitiendo
-    // por ancho de banda), setHTML() mide el div con la fuente de sistema de reserva
-    // — más angosta — y Phaser centra el texto con ESE ancho. Cuando la fuente real
-    // carga un instante después el texto se redibuja más ancho pero nadie recalcula
-    // el centrado: "Jornada 3 · Tarde" quedaba corrido a la derecha, cortado por el
-    // borde de pantalla. Repetir refreshTime() una vez que la fuente está lista
-    // corrige el centrado con el ancho real.
-    document.fonts?.ready.then(() => this.refreshTime());
   }
 
   /* ---------------- HUD (franja superior, 32 px) ---------------- */
@@ -144,9 +133,21 @@ export class UiScene extends Phaser.Scene {
     // Phaser renderiza una vez y el gap/centrado interno deja de aplicar aunque el
     // texto se vea bien. El flex real vive en un <div> HIJO, adentro, que Phaser no
     // toca — ver refreshTime().
+    //
+    // ancho FIJO (h.w) + origin (0,0), no origin (0.5,0) sobre un div de ancho
+    // automático: con ancho automático, Phaser necesita MEDIR el render real del
+    // contenido para calcular el offset del centrado, y esa medida puede tomarse
+    // con la fuente de reserva del sistema si "Press Start 2P" todavía no terminó
+    // de bajar de Google Fonts (compitiendo con el preload de imágenes) — el texto
+    // quedaba centrado con un ancho que no era el real, corrido y cortado contra el
+    // borde de pantalla, y nada lo recalculaba después (pasaba incluso en el primer
+    // "Jornada 1 · Amanecer" del arranque, antes de que corriera ningún otro turno).
+    // Con ancho fijo, Phaser siempre mide lo mismo (h.w), sin importar la fuente —
+    // el centrado real queda 100% del lado de justify-content en el <div> hijo, que
+    // el navegador sí recalcula solo apenas la fuente entra, sin ayuda de JS.
     this.dayEl = this.add
-      .dom(h.w / 2, 5, 'div', `pointer-events:none; font-family: ${RETRO_FONT}; font-size:${FONT.tiny};`)
-      .setOrigin(0.5, 0);
+      .dom(h.x, 5, 'div', `pointer-events:none; font-family: ${RETRO_FONT}; font-size:${FONT.tiny}; width:${h.w}px;`)
+      .setOrigin(0, 0);
     track(this.dayEl);
 
     // fila 2: recursos con nombre completo y barra de carga, en columnas fijas.
