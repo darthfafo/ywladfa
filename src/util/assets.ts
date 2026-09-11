@@ -164,26 +164,47 @@ export function addIconImage(
 
 /** Registra en el loader de la escena todo el arte real que exista bajo src/assets/. */
 export function preloadArt(scene: Phaser.Scene): void {
+  const realArtKeys: string[] = [];
   for (const [name, url] of portraitUrls) {
     const match = /^(.+)_(neutral|tenso|calido)$/.exec(name);
     if (!match) continue;
-    scene.load.image(portraitTextureKey(match[1]!, match[2] as Mood), url);
+    const key = portraitTextureKey(match[1]!, match[2] as Mood);
+    scene.load.image(key, url);
+    realArtKeys.push(key);
   }
   for (const [id, url] of sceneUrls) {
-    scene.load.image(sceneTextureKey(id), url);
+    const key = sceneTextureKey(id);
+    scene.load.image(key, url);
+    realArtKeys.push(key);
   }
   for (const [id, url] of iconUrls) {
-    scene.load.image(iconTextureKey(id), url);
+    const key = iconTextureKey(id);
+    scene.load.image(key, url);
+    realArtKeys.push(key);
   }
   for (const [id, url] of propUrls) {
     const sheet = PROP_SPRITESHEETS[id];
+    const key = propTextureKey(id);
     if (sheet) {
-      scene.load.spritesheet(propTextureKey(id), url, {
-        frameWidth: sheet.frameSize,
-        frameHeight: sheet.frameSize,
-      });
+      scene.load.spritesheet(key, url, { frameWidth: sheet.frameSize, frameHeight: sheet.frameSize });
     } else {
-      scene.load.image(propTextureKey(id), url);
+      scene.load.image(key, url);
     }
+    realArtKeys.push(key);
   }
+
+  // el juego entero corre con pixelArt:true (GAME_CONFIG) — filtro NEAREST global,
+  // lo que hace falta para que el tileset/personajes procedurales (bloques de color
+  // a propósito) se vean nítidos. Pero este arte real es ilustración pintada, no
+  // bloques de píxel: escalada con NEAREST a un tamaño que casi nunca es un
+  // múltiplo entero del original (ver addPropImage/addIconImage, `size` es un
+  // ancho en px de destino, no un factor 1x/2x/3x), el resultado son bordes
+  // deformados/con flecos, no "más pixelado" en el sentido prolijo sino distorsionado.
+  // LINEAR (suavizado) para ESTAS texturas puntuales, sin tocar el default global,
+  // arregla el escalado sin afectar nada de lo procedural.
+  scene.load.once(Phaser.Loader.Events.COMPLETE, () => {
+    for (const key of realArtKeys) {
+      scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR);
+    }
+  });
 }

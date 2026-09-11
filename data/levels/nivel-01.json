@@ -8,7 +8,7 @@
   "map": {
     "file": "maps/nivel-01.tmj",
     "widthTiles": 64,
-    "heightTiles": 112,
+    "heightTiles": 118,
     "tileSize": 16,
     "orientationNote": "Mapa vertical para pantalla 9:16. El nivel se sube: playa abajo (y~100), cañadón arriba (y~10). La cámara ve ~17×22 tiles.",
     "tilesets": [
