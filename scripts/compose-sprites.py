@@ -58,6 +58,10 @@ build_character('pc_m', 'pc_m')
 build_character('pc_f', 'pc_f')
 build_character('npc_lewis', 'lewis', aliases_by_view={'norte': ['lewis_norte.png', 'lewsi_norte.png']})
 build_character('npc_edwyn', 'edwin')
+build_character('npc_matthews', 'matthews')
+build_character('npc_berwyn', 'berwyn')
+build_character('npc_pepperell', 'pepperell')
+build_character('npc_mari', 'mari')
 # 42x56: misma proporción que el resto (54x72 sobre 64x86) — más chico que
 # los demás a propósito, Dafydd tiene 9 años.
 build_character('npc_dafydd', 'dafydd', frame=(42, 56))
