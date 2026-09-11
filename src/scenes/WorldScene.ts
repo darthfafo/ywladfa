@@ -88,21 +88,26 @@ export class WorldScene extends Phaser.Scene {
     const sp = game.state.progress.day > 1 ? level.spawns.fogon : level.spawns.player;
     this.player = this.physics.add.sprite(tileCenter(sp.x), tileCenter(sp.y), pcTextureKey, FACING_FRAME.north);
     this.player.setDepth(20);
-    // El cuerpo de colisión se define en píxeles SIN escalar — Arcade Physics
-    // multiplica por scale solo, no hace falta tocar los números.
     this.player.setScale(pcScale);
-    // caja de colisión como proporción del cuadro real (60% ancho, 33% alto,
-    // centrada, pegada abajo menos 1px): así sigue calzando con los pies sin
-    // importar el tamaño nativo del frame (16×24 el placeholder, 50×67 el arte
-    // real) sin mantener números hardcodeados por separado — esta fórmula
-    // reproduce EXACTO los valores viejos (10×8, offset 3,15) para 16×24.
+    // caja de colisión de tamaño FIJO en px de mundo (15×12), no proporcional al
+    // sprite visual — ese fue el bug real: como proporción del cuadro, el arte
+    // real (50×67, mucho más grande que el placeholder de 16×24) heredaba una
+    // caja bastante más ancha, y el personaje dejaba de entrar por pasos que el
+    // mapa ya daba por transitables. 15×12 es el tamaño con el que el mapa se
+    // diseñó y probó (mismo valor efectivo que el placeholder original a 1.5×:
+    // 10×8 × 1.5 = 15×12) — el sprite puede verse más grande sin que la
+    // colisión lo acompañe, como en cualquier RPG top-down (el sombrero/cabeza
+    // no choca, solo los pies). El cuerpo se define en píxeles SIN escalar —
+    // Arcade Physics multiplica por scale solo, por eso se divide acá.
+    const WORLD_BOX_W = 15;
+    const WORLD_BOX_H = 12;
     const pcFrame = this.textures.get(pcTextureKey).get(0);
-    const boxW = Math.round(pcFrame.width * 0.6);
-    const boxH = Math.round(pcFrame.height / 3);
+    const boxW = Math.round(WORLD_BOX_W / pcScale);
+    const boxH = Math.round(WORLD_BOX_H / pcScale);
     this.player.body!.setSize(boxW, boxH);
     (this.player.body as Phaser.Physics.Arcade.Body).setOffset(
       Math.round((pcFrame.width - boxW) / 2),
-      pcFrame.height - boxH - 1,
+      pcFrame.height - boxH - Math.round(1 / pcScale),
     );
     this.physics.add.collider(this.player, this.layer);
 
