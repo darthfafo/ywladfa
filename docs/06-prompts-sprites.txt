@@ -1,0 +1,463 @@
+PROMPTS PARA SPRITES DE PERSONAJE (estilo funko/chibi, a partir de los retratos)
+================================================================================
+
+Cómo usar este archivo
+-----------------------
+Cada bloque de abajo es un prompt completo, listo para pegar en el generador de
+imágenes. Antes de tirarlo, adjuntá el retrato indicado en cada bloque (ya están
+en src/assets/portraits/) como imagen de referencia — el prompt ya le pide a la
+IA que mantenga fiel el pelo, el sombrero/gorro y la ropa de esa referencia, pero
+la imagen de referencia es la que de verdad se lo garantiza.
+
+Por personaje hay 3 prompts (sur/frente, norte/espalda, este/perfil). El oeste
+NO hace falta generarlo: se obtiene espejando horizontalmente el de "este" en
+cualquier editor de imágenes — así queda idéntico en vez de que la IA dibuje una
+pose ligeramente distinta. Guardá los 3 (o 4, si preferís generar el oeste
+también) PNG sueltos por personaje con cualquier nombre — la hoja final (las 4
+vistas juntas en un solo PNG) se arma después, no hace falta que la compongas.
+
+Lienzo: 24×32 px para todos, EXCEPTO Dafydd que es 20×26 px (personaje más chico
+por diseño). Fondo transparente en los tres.
+
+================================================================================
+1. IDRIS VAUGHAN — pc_m.png (protagonista, varón) — P0
+================================================================================
+Retrato de referencia: src/assets/portraits/pc_m_neutral.png
+
+--- Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing the
+viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: boina gris oscura, campera
+marrón/oliva gastada, pelo oscuro, piel clara. Mismos colores exactos que el
+retrato, no los reinventes.
+
+--- Vista NORTE (de espaldas) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing away
+from the viewer, back of the head/hat visible (north/back).
+Mantené fiel a la imagen de referencia adjunta: boina gris oscura, campera
+marrón/oliva gastada, pelo oscuro, piel clara. Mismos colores exactos que el
+retrato, no los reinventes.
+
+--- Vista ESTE (perfil) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: side profile
+facing right (east).
+Mantené fiel a la imagen de referencia adjunta: boina gris oscura, campera
+marrón/oliva gastada, pelo oscuro, piel clara. Mismos colores exactos que el
+retrato, no los reinventes.
+
+================================================================================
+2. ELIN VAUGHAN — pc_f.png (protagonista, mujer) — P0
+================================================================================
+Retrato de referencia: src/assets/portraits/pc_f_neutral.png
+
+--- Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing the
+viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: pañuelo en la cabeza gris
+verdoso, chal marrón sobre blusa clara, pelo castaño, piel clara. Mismos
+colores exactos que el retrato, no los reinventes.
+
+--- Vista NORTE (de espaldas) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing away
+from the viewer, back of the head/hat visible (north/back).
+Mantené fiel a la imagen de referencia adjunta: pañuelo en la cabeza gris
+verdoso, chal marrón sobre blusa clara, pelo castaño, piel clara. Mismos
+colores exactos que el retrato, no los reinventes.
+
+--- Vista ESTE (perfil) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: side profile
+facing right (east).
+Mantené fiel a la imagen de referencia adjunta: pañuelo en la cabeza gris
+verdoso, chal marrón sobre blusa clara, pelo castaño, piel clara. Mismos
+colores exactos que el retrato, no los reinventes.
+
+================================================================================
+3. LEWIS JONES — npc_lewis.png — P0
+================================================================================
+Retrato de referencia: src/assets/portraits/lewis_neutral.png
+
+--- Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing the
+viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: galera negra (sombrero de
+copa), barba oscura, pañuelo/corbata bordó al cuello, saco marrón oscuro.
+Mismos colores exactos que el retrato, no los reinventes.
+
+--- Vista NORTE (de espaldas) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing away
+from the viewer, back of the head/hat visible (north/back).
+Mantené fiel a la imagen de referencia adjunta: galera negra (sombrero de
+copa), barba oscura, pañuelo/corbata bordó al cuello, saco marrón oscuro.
+Mismos colores exactos que el retrato, no los reinventes.
+
+--- Vista ESTE (perfil) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: side profile
+facing right (east).
+Mantené fiel a la imagen de referencia adjunta: galera negra (sombrero de
+copa), barba oscura, pañuelo/corbata bordó al cuello, saco marrón oscuro.
+Mismos colores exactos que el retrato, no los reinventes.
+
+================================================================================
+4. EDWYN ROBERTS — npc_edwyn.png — P0
+================================================================================
+Retrato de referencia: src/assets/portraits/edwyn_neutral.png
+
+--- Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs, slightly hunched/stooped posture. Classic 16-bit top-down RPG style
+(Pokémon overworld / old Zelda), flat colors, hard pixel edges, minimal
+shading (2-3 flat tones per surface), no gradients, no anti-aliasing, no
+outline glow. Viewed from a 3/4 top-down angle (as seen from slightly above,
+like a character walking on a map) — NOT a front portrait close-up.
+Transparent background. Canvas 24x32 px (exact pixel size, no padding).
+Static standing pose, no walk cycle needed. View: facing the viewer
+(south/front).
+Mantené fiel a la imagen de referencia adjunta: boina azul oscuro/negra, barba
+de candado, pañuelo naranja/óxido al cuello sobre camisa clara, abrigo largo
+marrón gastado, postura encorvada. Mismos colores exactos que el retrato, no
+los reinventes.
+
+--- Vista NORTE (de espaldas) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs, slightly hunched/stooped posture. Classic 16-bit top-down RPG style
+(Pokémon overworld / old Zelda), flat colors, hard pixel edges, minimal
+shading (2-3 flat tones per surface), no gradients, no anti-aliasing, no
+outline glow. Viewed from a 3/4 top-down angle (as seen from slightly above,
+like a character walking on a map) — NOT a front portrait close-up.
+Transparent background. Canvas 24x32 px (exact pixel size, no padding).
+Static standing pose, no walk cycle needed. View: facing away from the
+viewer, back of the head/hat visible (north/back).
+Mantené fiel a la imagen de referencia adjunta: boina azul oscuro/negra, barba
+de candado, pañuelo naranja/óxido al cuello sobre camisa clara, abrigo largo
+marrón gastado, postura encorvada. Mismos colores exactos que el retrato, no
+los reinventes.
+
+--- Vista ESTE (perfil) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs, slightly hunched/stooped posture. Classic 16-bit top-down RPG style
+(Pokémon overworld / old Zelda), flat colors, hard pixel edges, minimal
+shading (2-3 flat tones per surface), no gradients, no anti-aliasing, no
+outline glow. Viewed from a 3/4 top-down angle (as seen from slightly above,
+like a character walking on a map) — NOT a front portrait close-up.
+Transparent background. Canvas 24x32 px (exact pixel size, no padding).
+Static standing pose, no walk cycle needed. View: side profile facing right
+(east).
+Mantené fiel a la imagen de referencia adjunta: boina azul oscuro/negra, barba
+de candado, pañuelo naranja/óxido al cuello sobre camisa clara, abrigo largo
+marrón gastado, postura encorvada. Mismos colores exactos que el retrato, no
+los reinventes.
+
+================================================================================
+5. DAFYDD — npc_dafydd.png (9 años) — P0 — OJO: lienzo 20x26, no 24x32
+================================================================================
+Retrato de referencia: src/assets/portraits/dafydd_neutral.png
+
+--- Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. This is a 9-year-old child, noticeably smaller and slighter than an
+adult character. Classic 16-bit top-down RPG style (Pokémon overworld / old
+Zelda), flat colors, hard pixel edges, minimal shading (2-3 flat tones per
+surface), no gradients, no anti-aliasing, no outline glow. Viewed from a 3/4
+top-down angle (as seen from slightly above, like a character walking on a
+map) — NOT a front portrait close-up. Transparent background. Canvas 20x26 px
+(exact pixel size, no padding). Static standing pose, no walk cycle needed.
+View: facing the viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: gorra gris oscura tipo boina,
+pelo castaño, abrigo marrón grande y holgado (le queda grande), pañuelo óxido
+al cuello. Mismos colores exactos que el retrato, no los reinventes.
+
+--- Vista NORTE (de espaldas) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. This is a 9-year-old child, noticeably smaller and slighter than an
+adult character. Classic 16-bit top-down RPG style (Pokémon overworld / old
+Zelda), flat colors, hard pixel edges, minimal shading (2-3 flat tones per
+surface), no gradients, no anti-aliasing, no outline glow. Viewed from a 3/4
+top-down angle (as seen from slightly above, like a character walking on a
+map) — NOT a front portrait close-up. Transparent background. Canvas 20x26 px
+(exact pixel size, no padding). Static standing pose, no walk cycle needed.
+View: facing away from the viewer, back of the head/hat visible (north/back).
+Mantené fiel a la imagen de referencia adjunta: gorra gris oscura tipo boina,
+pelo castaño, abrigo marrón grande y holgado (le queda grande), pañuelo óxido
+al cuello. Mismos colores exactos que el retrato, no los reinventes.
+
+--- Vista ESTE (perfil) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. This is a 9-year-old child, noticeably smaller and slighter than an
+adult character. Classic 16-bit top-down RPG style (Pokémon overworld / old
+Zelda), flat colors, hard pixel edges, minimal shading (2-3 flat tones per
+surface), no gradients, no anti-aliasing, no outline glow. Viewed from a 3/4
+top-down angle (as seen from slightly above, like a character walking on a
+map) — NOT a front portrait close-up. Transparent background. Canvas 20x26 px
+(exact pixel size, no padding). Static standing pose, no walk cycle needed.
+View: side profile facing right (east).
+Mantené fiel a la imagen de referencia adjunta: gorra gris oscura tipo boina,
+pelo castaño, abrigo marrón grande y holgado (le queda grande), pañuelo óxido
+al cuello. Mismos colores exactos que el retrato, no los reinventes.
+
+================================================================================
+6. REV. MATTHEWS — npc_matthews.png — P1
+================================================================================
+Retrato de referencia: src/assets/portraits/matthews_neutral.png
+
+--- Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing the
+viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: sombrero negro de ala ancha
+(tipo clérigo), cuello clerical blanco, traje negro, barba completa. Mismos
+colores exactos que el retrato, no los reinventes.
+
+--- Vista NORTE (de espaldas) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing away
+from the viewer, back of the head/hat visible (north/back).
+Mantené fiel a la imagen de referencia adjunta: sombrero negro de ala ancha
+(tipo clérigo), cuello clerical blanco, traje negro, barba completa. Mismos
+colores exactos que el retrato, no los reinventes.
+
+--- Vista ESTE (perfil) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: side profile
+facing right (east).
+Mantené fiel a la imagen de referencia adjunta: sombrero negro de ala ancha
+(tipo clérigo), cuello clerical blanco, traje negro, barba completa. Mismos
+colores exactos que el retrato, no los reinventes.
+
+================================================================================
+7. RICHARD BERWYN — npc_berwyn.png — P1
+================================================================================
+Retrato de referencia: src/assets/portraits/berwyn_neutral.png
+
+--- Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs, holding a small notebook/journal tucked under one arm. Classic 16-bit
+top-down RPG style (Pokémon overworld / old Zelda), flat colors, hard pixel
+edges, minimal shading (2-3 flat tones per surface), no gradients, no
+anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle (as seen from
+slightly above, like a character walking on a map) — NOT a front portrait
+close-up. Transparent background. Canvas 24x32 px (exact pixel size, no
+padding). Static standing pose, no walk cycle needed. View: facing the viewer
+(south/front).
+Mantené fiel a la imagen de referencia adjunta: galera negra, anteojos
+redondos, moño/corbatín oscuro sobre camisa clara, saco marrón. Mismos
+colores exactos que el retrato, no los reinventes.
+
+--- Vista NORTE (de espaldas) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs, holding a small notebook/journal tucked under one arm. Classic 16-bit
+top-down RPG style (Pokémon overworld / old Zelda), flat colors, hard pixel
+edges, minimal shading (2-3 flat tones per surface), no gradients, no
+anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle (as seen from
+slightly above, like a character walking on a map) — NOT a front portrait
+close-up. Transparent background. Canvas 24x32 px (exact pixel size, no
+padding). Static standing pose, no walk cycle needed. View: facing away from
+the viewer, back of the head/hat visible (north/back).
+Mantené fiel a la imagen de referencia adjunta: galera negra, anteojos
+redondos, moño/corbatín oscuro sobre camisa clara, saco marrón. Mismos
+colores exactos que el retrato, no los reinventes.
+
+--- Vista ESTE (perfil) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs, holding a small notebook/journal tucked under one arm. Classic 16-bit
+top-down RPG style (Pokémon overworld / old Zelda), flat colors, hard pixel
+edges, minimal shading (2-3 flat tones per surface), no gradients, no
+anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle (as seen from
+slightly above, like a character walking on a map) — NOT a front portrait
+close-up. Transparent background. Canvas 24x32 px (exact pixel size, no
+padding). Static standing pose, no walk cycle needed. View: side profile
+facing right (east).
+Mantené fiel a la imagen de referencia adjunta: galera negra, anteojos
+redondos, moño/corbatín oscuro sobre camisa clara, saco marrón. Mismos
+colores exactos que el retrato, no los reinventes.
+
+================================================================================
+8. CAP. GEORGE PEPPERELL — npc_pepperell.png — P1
+================================================================================
+Retrato de referencia: src/assets/portraits/pepperell_neutral.png
+
+--- Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing the
+viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: gorra de marino azul marino
+con ancla, barba gris, sobretodo/abrigo azul marino con solapa. Mismos
+colores exactos que el retrato, no los reinventes.
+
+--- Vista NORTE (de espaldas) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing away
+from the viewer, back of the head/hat visible (north/back).
+Mantené fiel a la imagen de referencia adjunta: gorra de marino azul marino
+con ancla, barba gris, sobretodo/abrigo azul marino con solapa. Mismos
+colores exactos que el retrato, no los reinventes.
+
+--- Vista ESTE (perfil) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: side profile
+facing right (east).
+Mantené fiel a la imagen de referencia adjunta: gorra de marino azul marino
+con ancla, barba gris, sobretodo/abrigo azul marino con solapa. Mismos
+colores exactos que el retrato, no los reinventes.
+
+================================================================================
+9. MARI VAUGHAN — npc_mari.png — P1
+================================================================================
+Retrato de referencia: src/assets/portraits/mari_neutral.png
+
+--- Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. This is an older woman — frailer posture than the younger characters.
+Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing the
+viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: pañuelo gris oscuro en la
+cabeza, chal bordó/óxido sobre blusa clara, mujer mayor. Mismos colores
+exactos que el retrato, no los reinventes.
+
+--- Vista NORTE (de espaldas) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. This is an older woman — frailer posture than the younger characters.
+Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing away
+from the viewer, back of the head/hat visible (north/back).
+Mantené fiel a la imagen de referencia adjunta: pañuelo gris oscuro en la
+cabeza, chal bordó/óxido sobre blusa clara, mujer mayor. Mismos colores
+exactos que el retrato, no los reinventes.
+
+--- Vista ESTE (perfil) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. This is an older woman — frailer posture than the younger characters.
+Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: side profile
+facing right (east).
+Mantené fiel a la imagen de referencia adjunta: pañuelo gris oscuro en la
+cabeza, chal bordó/óxido sobre blusa clara, mujer mayor. Mismos colores
+exactos que el retrato, no los reinventes.
+
+================================================================================
+Orden sugerido: primero Idris o Lewis (P0), para probar cómo se planta el
+tamaño nuevo en el mundo antes de pedir los 7 restantes.
+================================================================================
