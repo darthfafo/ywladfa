@@ -13,6 +13,7 @@ interface Card {
   bg: Phaser.GameObjects.Rectangle;
   label: Phaser.GameObjects.Text;
   kg: Phaser.GameObjects.Text;
+  check: Phaser.GameObjects.Text;
   taken: boolean;
 }
 
@@ -148,8 +149,22 @@ export class CargoScene extends Phaser.Scene {
         })
         .setResolution(8),
     );
+    // "elegido" como una marca aparte, no pegada al texto de kg — pegarla ahí
+    // ("140 kg · llevado") se salía del ancho de la tarjeta y quedaba cortado a
+    // la mitad contra la tarjeta de al lado. Esquina propia, siempre entra.
+    const check = crisp(
+      this.add
+        .text(x + CARD_W - 8, y + 6, '✓', {
+          fontFamily: RETRO_FONT,
+          fontSize: FONT.small,
+          color: '#18262A',
+        })
+        .setOrigin(1, 0)
+        .setResolution(8)
+        .setVisible(false),
+    );
 
-    const card: Card = { bulto: b, bg, label, kg, taken: false };
+    const card: Card = { bulto: b, bg, label, kg, check, taken: false };
     bg.on('pointerover', () => {
       if (!card.taken) bg.setFillStyle(PAL.slate, 0.95);
     });
@@ -191,12 +206,14 @@ export class CargoScene extends Phaser.Scene {
       this.taken.add(card.bulto.id);
       card.bg.setFillStyle(PAL.moss, 0.9).setStrokeStyle(1, PAL.wheat);
       card.label.setColor('#0E1416');
-      card.kg.setColor('#18262A').setText(`${card.bulto.kg} kg · llevado`);
+      card.kg.setColor('#18262A');
+      card.check.setVisible(true);
     } else {
       this.taken.delete(card.bulto.id);
       card.bg.setFillStyle(PAL.ink2, 0.95).setStrokeStyle(1, PAL.slate);
       card.label.setColor('#EAE8E0');
-      card.kg.setColor('#6B6A5E').setText(`${card.bulto.kg} kg`);
+      card.kg.setColor('#6B6A5E');
+      card.check.setVisible(false);
     }
   }
 
