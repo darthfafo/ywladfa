@@ -67,10 +67,10 @@ export class CargoScene extends Phaser.Scene {
     );
     crisp(
       this.add
-        .text(8, 26, 'Los carros llevan 5 bultos. Hay 8. Sin vuelta atrás.', {
+        .text(8, 26, 'Elegí 5 de 8 bultos. Se puede corregir hasta cerrar.', {
           fontFamily: RETRO_FONT,
           fontSize: FONT.tiny,
-          color: '#9BAEB4',
+          color: '#7FB0B8',
           wordWrap: { width: VIEW.width - 16 },
         })
         .setResolution(8),
@@ -81,9 +81,17 @@ export class CargoScene extends Phaser.Scene {
         .setOrigin(1, 0)
         .setResolution(8),
     );
-    // línea divisoria sutil entre el encabezado y la grilla — mismo criterio que ya
-    // separa el HUD del mundo (VIEW.hud) y la bandeja del mundo (VIEW.tray).
-    this.add.rectangle(0, GRID_Y - 6, VIEW.width, 1, PAL.slate, 0.6).setOrigin(0, 0);
+    // línea divisoria sutil entre el encabezado y la grilla — mismo color/alpha que
+    // ya usa el borde y la regla de UiScene.openOverlay (PAL.seaPale), para que se
+    // lea como parte de la misma familia de pantallas importantes, no una aparte.
+    this.add.rectangle(0, GRID_Y - 6, VIEW.width, 1, PAL.seaPale, 0.35).setOrigin(0, 0);
+    // marco sutil en el borde de toda la pantalla — mismo lenguaje que las cajas
+    // del arranque y el panel de openOverlay (borde PAL.seaPale), para que esta
+    // pantalla completa no se sienta "pelada" al lado de esas.
+    this.add
+      .rectangle(2, 2, VIEW.width - 4, VIEW.height - 4, 0, 0)
+      .setOrigin(0, 0)
+      .setStrokeStyle(1, PAL.seaPale, 0.35);
 
     registry.bultos.forEach((b, i) => this.buildCard(b, i));
     this.refreshCounter();
@@ -153,22 +161,42 @@ export class CargoScene extends Phaser.Scene {
     this.cards.push(card);
   }
 
+  /** Tocar una tarjeta ya elegida la saca — por si alguien se equivoca de bulto,
+   * no hay por qué obligarlo a cerrar la pantalla para corregirse. Esto NO es lo
+   * mismo que "deshacer": la tarjeta sigue interactiva mientras se sigue eligiendo,
+   * pero apenas se completan las 5 (`closing`) nada vuelve a responder — ahí sí
+   * es la decisión final, sin vuelta atrás, como pide el diseño. */
   private pick(card: Card): void {
-    if (this.closing || card.taken || this.taken.size >= this.capacity) return;
+    if (this.closing) return;
+    if (card.taken) {
+      this.setCardTaken(card, false);
+      this.refreshCounter();
+      return;
+    }
+    if (this.taken.size >= this.capacity) return;
 
-    card.taken = true;
-    this.taken.add(card.bulto.id);
-    card.bg.disableInteractive();
-    card.bg.setFillStyle(PAL.moss, 0.9).setStrokeStyle(1, PAL.wheat);
-    card.label.setColor('#0E1416');
-    card.kg.setColor('#18262A').setText(`${card.kg.text} · llevado`);
-
+    this.setCardTaken(card, true);
     this.refreshCounter();
 
     if (this.taken.size >= this.capacity) {
       this.closing = true;
-      for (const c of this.cards) if (!c.taken) c.bg.disableInteractive();
+      for (const c of this.cards) c.bg.disableInteractive();
       this.time.delayedCall(700, () => this.finish());
+    }
+  }
+
+  private setCardTaken(card: Card, taken: boolean): void {
+    card.taken = taken;
+    if (taken) {
+      this.taken.add(card.bulto.id);
+      card.bg.setFillStyle(PAL.moss, 0.9).setStrokeStyle(1, PAL.wheat);
+      card.label.setColor('#0E1416');
+      card.kg.setColor('#18262A').setText(`${card.bulto.kg} kg · llevado`);
+    } else {
+      this.taken.delete(card.bulto.id);
+      card.bg.setFillStyle(PAL.ink2, 0.95).setStrokeStyle(1, PAL.slate);
+      card.label.setColor('#EAE8E0');
+      card.kg.setColor('#6B6A5E').setText(`${card.bulto.kg} kg`);
     }
   }
 

@@ -757,7 +757,9 @@
     {
       "id": "trig_berwyn_libreta",
       "type": "unlock",
-      "requires": "flags.n1_fogon_2 == true",
+      "zone": "z6_punta",
+      "requires": "flags.n1_fogon_2 == true && flags.n1_carga != null",
+      "note": "antes disparaba apenas se ponía n1_fogon_2, sin zona — eso lo hacía caer justo al lado de trig_anuncio_marcha/trig_pantalla_carga al despertar en J3 (mismo instante, mismo lugar), todo junto. Berwyn ya se reubica en la punta el día 3 (ver npcs.movesTo, x:54 y:84 — al sur de donde se queda Mari, x:58 y:72, ver trig_punta_final), así que atarlo a esa zona además de a n1_carga hace que solo pueda pasar después de la decisión de carga Y caminando hasta ahí — se lo cruza de camino a la punta, antes de llegar a su madre.",
       "once": true,
       "turnCost": 0,
       "action": {
