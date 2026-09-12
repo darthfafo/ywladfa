@@ -699,7 +699,7 @@
       "id": "trig_huellas_dafydd",
       "type": "trail",
       "zone": "z3_monte",
-      "requires": "flags.n1_dafydd_perdido == true",
+      "requires": "flags.n1_dafydd_perdido == true && flags.n1_encontro_manantial != true",
       "once": false,
       "turnCost": 0,
       "action": {

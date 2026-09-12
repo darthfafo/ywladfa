@@ -75,7 +75,7 @@ export class UiScene extends Phaser.Scene {
     const world = this.scene.get('World');
     world.events.on('request-dialogue', (p: { id: string; next?: string }) => this.openDialogue(p.id, p.next));
     world.events.on('request-choice', (id: string) => this.openChoice(id));
-    world.events.on('request-refusal', (npcId: string) => this.openRefusal(npcId));
+    world.events.on('request-refusal', (npcId: string, text?: string) => this.openRefusal(npcId, text));
 
     bus.on('resource:changed', () => this.refreshResources());
     // OJO: la cutscene de amanecer NO se dispara desde acá (ver showSunrise): este
@@ -410,9 +410,9 @@ export class UiScene extends Phaser.Scene {
 
   /** El NPC más cercano no tiene nada que decir todavía (requires sin cumplir, o ya
    * habló lo que tenía). Va por la misma bandeja que cualquier diálogo real. */
-  private openRefusal(npcId: string): void {
+  private openRefusal(npcId: string, text?: string): void {
     this.touch.setVisible(false);
-    this.dialogue.refuse(npcId, () => this.touch.setVisible(true));
+    this.dialogue.refuse(npcId, () => this.touch.setVisible(true), text);
   }
 
   private openTutorial(id: string): void {

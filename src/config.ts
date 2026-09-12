@@ -47,6 +47,20 @@ export const PAL = {
   grey: 0x6b6a5e,
 } as const;
 
+/**
+ * Tinte de luz por turno del día, sobre el mundo (WorldScene) — mismo criterio
+ * que PAL: reutiliza sus colores, no inventa hex nuevos para esto. `noche` casi
+ * nunca se ve en WorldScene (el fogón corre en su propia CampScene aparte), pero
+ * queda definido igual por si el jugador queda ahí un instante antes de que
+ * dispare esa escena. `manana` es luz llena: sin tinte.
+ */
+export const TURN_TINT: Record<string, { color: number; alpha: number }> = {
+  amanecer: { color: PAL.slate, alpha: 0.22 },
+  manana: { color: PAL.slate, alpha: 0 },
+  tarde: { color: PAL.wheat, alpha: 0.16 },
+  noche: { color: PAL.ink, alpha: 0.55 },
+};
+
 export const GAME_CONFIG: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game',

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PAL, VIEW } from '@/config';
+import { PAL, TURN_TINT, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
@@ -49,6 +49,7 @@ export class WorldScene extends Phaser.Scene {
   private playerTrail: { x: number; y: number }[] = [];
   /** id de NPC → texture key + escala resueltas (arte real o placeholder) — ver create(). */
   private npcTextures = new Map<string, { key: string; scale: number }>();
+  private lightOverlay!: Phaser.GameObjects.Rectangle;
 
   constructor() {
     super('World');
@@ -123,6 +124,20 @@ export class WorldScene extends Phaser.Scene {
     cam.setDeadzone(48, 96);
     cam.setBackgroundColor(PAL.void);
 
+    // ---- luz por turno: un rectángulo fijo a la cámara (scrollFactor 0), no al
+    // mundo — así cubre siempre el viewport entero sin importar hacia dónde
+    // scrollee. MULTIPLY para que tiña y oscurezca en vez de tapar con un color
+    // plano encima. Colores en TURN_TINT (config.ts), no acá — mismo criterio
+    // que PAL: nada de hex sueltos en una escena.
+    this.lightOverlay = this.add
+      .rectangle(0, 0, VIEW.world.w, VIEW.world.h, PAL.void, 0)
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setBlendMode(Phaser.BlendModes.MULTIPLY)
+      .setDepth(50);
+    this.applyTurnLight();
+    bus.on('time:turn-advanced', () => this.applyTurnLight());
+
     // ---- triggers
     this.triggers = new TriggerSystem(game, level.triggers as TriggerDef[]);
     bus.on('inventory:added', (p) => this.fireEventTriggers('inventory:added', p as never));
@@ -159,6 +174,13 @@ export class WorldScene extends Phaser.Scene {
     this.cameras.main.centerOn(tileCenter(sp.x), tileCenter(sp.y));
     this.lastTile = { x: -1, y: -1 };
     this.trackTile();
+  }
+
+  /** Tiñe el mundo según el turno actual (TURN_TINT, config.ts) — se llama al
+   * crear la escena y de nuevo en cada `time:turn-advanced`. */
+  private applyTurnLight(): void {
+    const tint = TURN_TINT[game.state.progress.turn] ?? TURN_TINT.manana!;
+    this.lightOverlay.setFillStyle(tint.color, tint.alpha);
   }
 
   /** Al cerrar d_n1_manantial (UiScene.openDialogue), Dafydd se despide y arranca a
@@ -525,16 +547,34 @@ export class WorldScene extends Phaser.Scene {
   /** Dafydd caminando detrás tuyo (ver sendDafyddHome): en vez de perseguir tu
    * posición ACTUAL (eso lo pegaba pegado al jugador, o lo hacía cortar camino
    * en diagonal atravesando paredes si vos doblabas una esquina), persigue un
-   * punto de tu propio rastro de pasos con un retraso fijo — así su camino es,
-   * literal, el mismo que el tuyo. */
+   * punto de tu propio rastro de pasos con un retraso — así su camino es,
+   * literal, el mismo que el tuyo. El retraso es de DISTANCIA real recorrida,
+   * no de cantidad de frames: contar frames (versión anterior) se comía el
+   * "colchón" cada vez que el jugador se quedaba parado un instante (leyendo
+   * un hint, hablando) — el rastro seguía grabando el mismo punto quieto,
+   * Dafydd lo alcanzaba del todo, y apenas el jugador volvía a caminar
+   * quedaban pegados, superpuestos. Contando distancia en vez de frames, un
+   * jugador parado no acorta el colchón — solo lo hace caminar. */
   private updateDafyddFollow(delta: number): void {
     if (!this.dafyddFollow) return;
-    const MAX_TRAIL = 90; // ~1.5s de rastro a 60fps, de sobra para el retraso de abajo
-    const LAG_STEPS = 20; // cuántas muestras atrás sigue — más cerca sin pisarte los talones
-    this.playerTrail.push({ x: this.player.x, y: this.player.y });
-    if (this.playerTrail.length > MAX_TRAIL) this.playerTrail.shift();
+    const MIN_GAP = 40; // separación mínima real, a lo largo del camino — casi un ancho de sprite
+    const SAMPLE_DIST = 6; // solo agrega un punto al rastro si te moviste esto; si no, no hay nada nuevo que perseguir
+    const MAX_TRAIL = 400;
 
-    const idx = Math.max(0, this.playerTrail.length - 1 - LAG_STEPS);
+    const last = this.playerTrail[this.playerTrail.length - 1];
+    if (!last || Math.hypot(this.player.x - last.x, this.player.y - last.y) >= SAMPLE_DIST) {
+      this.playerTrail.push({ x: this.player.x, y: this.player.y });
+      if (this.playerTrail.length > MAX_TRAIL) this.playerTrail.shift();
+    }
+
+    let acc = 0;
+    let idx = this.playerTrail.length - 1;
+    for (; idx > 0; idx--) {
+      const a = this.playerTrail[idx]!;
+      const b = this.playerTrail[idx - 1]!;
+      acc += Math.hypot(a.x - b.x, a.y - b.y);
+      if (acc >= MIN_GAP) break;
+    }
     const target = this.playerTrail[idx]!;
     const sprite = this.dafyddFollow;
     const dx = target.x - sprite.x;
@@ -667,6 +707,13 @@ export class WorldScene extends Phaser.Scene {
     // línea corta en la bandeja de diálogo, no un toast: es lo que dice el NPC,
     // tiene que leerse en el mismo lugar que cualquier otra línea suya, no flotando
     // en cualquier lado de la pantalla.
+    // Dafydd caminando de vuelta (ver sendDafyddHome) no tiene ningún trigger que
+    // hablarle porque ya dijo lo suyo en trig_manantial — pero "— Ahora no." no
+    // tiene sentido con él literalmente al lado tuyo, siguiéndote los pasos.
+    if (npcId === 'npc_dafydd' && this.dafyddFollow) {
+      this.events.emit('request-refusal', npcId, '— Volvamos al fogón.');
+      return;
+    }
     this.events.emit('request-refusal', npcId);
   }
 
