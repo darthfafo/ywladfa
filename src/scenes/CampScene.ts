@@ -62,11 +62,12 @@ export class CampScene extends Phaser.Scene {
     this.add.rectangle(h.x, h.y, h.w, h.h, PAL.ink, 0.96).setOrigin(0, 0);
     crisp(
       this.add
-        .text(6, 4, `Jornada ${this.night} · Noche`, {
+        .text(h.x + h.w / 2, 4, `Jornada ${this.night} · Noche`, {
           fontFamily: RETRO_FONT,
           fontSize: FONT.small,
           color: '#D9A845',
         })
+        .setOrigin(0.5, 0)
         .setResolution(8),
     );
 

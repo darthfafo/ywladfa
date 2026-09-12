@@ -310,7 +310,7 @@ y desbloquea que Edwyn te avise de la aguada en el Nivel 2.)*
 > El *Mimosa* ya zarpó en J2 (§4, J2 T2) — Pepperell se fue con el barco. La escena es solo el grupo, en el campamento.
 
 > **LEWIS.** Sesenta y cinco kilómetros hasta el río. Tres días si el viento afloja, cuatro si no.
-> **EDWYN.** Carros llevan cinco bultos. Cinco. Hay ocho en la playa.
+> **EDWYN.** Cinco bultos por carro. Hay ocho. Otra vez me toca a mí decir cuánto no entra.
 > **MATTHEWS.** El órgano pesa lo que pesan cuatro personas.
 > **BERWYN.** La imprenta también. Y sin ella en un año nadie se acuerda de por qué vinimos.
 > **LEWIS.** Lo que dejan, alguien vuelve a buscarlo. *(no vuelve nadie)*

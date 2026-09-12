@@ -660,7 +660,7 @@
         "am2": {
           "speaker": "npc_edwyn",
           "portrait": "tenso",
-          "text": "Carros llevan cinco bultos. Cinco. Hay ocho en la playa.",
+          "text": "Cinco bultos por carro. Hay ocho. Otra vez me toca a mí decir cuánto no entra.",
           "next": "am3"
         },
         "am3": {
