@@ -6,7 +6,7 @@ import { registry } from '@/core/Registry';
 import { DialogueSystem, type RenderedLine } from '@/systems/DialogueSystem';
 import { portraitIdForSpeaker, portraitTextureKey } from '@/util/assets';
 import { input } from '@/util/input';
-import { crisp, FONT, RETRO_FONT } from '@/util/text';
+import { crisp, FONT, FONT_FAMILY, RETRO_FONT } from '@/util/text';
 
 const TRAY = VIEW.tray;
 
@@ -358,14 +358,24 @@ export class DialogueBox {
       this.show(this.sys.choose(line.choices[i]!.id));
     };
 
-    const BTN_BASE_SIZE = 9;
-    const BTN_MIN_SIZE = 7;
+    // las opciones usan FONT_FAMILY (monoespaciada normal del sistema), no
+    // RETRO_FONT: Press Start 2P es muy ancha por glifo (pensada para
+    // títulos/HUD/nombres cortos) y una opción de una frase entera terminaba
+    // en un salto de línea feo, a veces con una sola palabra colgando en la
+    // segunda línea. Ya se había probado separar el cuerpo narrado en una
+    // fuente más angosta (ver util/text.ts) y se descartó porque a un tamaño
+    // en px comparable se veía más chica/fina que el resto de la UI — acá el
+    // tamaño sube (11 en vez de 9) para compensar eso, y como las opciones ya
+    // son un elemento aparte (botones, no prosa), que se lean con una fuente
+    // distinta no rompe nada visualmente.
+    const BTN_BASE_SIZE = 11;
+    const BTN_MIN_SIZE = 9;
     const buttons: HTMLButtonElement[] = line.choices.map((c) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.style.cssText =
         'display:block; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
-        `text-align:left; color:#BFD3D8; font-family: ${RETRO_FONT}; ` +
+        `text-align:left; color:#BFD3D8; font-family: ${FONT_FAMILY}; ` +
         `font-size:${BTN_BASE_SIZE}px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;`;
       btn.textContent = c.text; // contenido real puesto ya, para medir el wrap de verdad
       container.appendChild(btn);
@@ -384,7 +394,7 @@ export class DialogueBox {
     moreBtn.type = 'button';
     moreBtn.style.cssText =
       'display:none; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
-      `text-align:left; color:#7FB0B8; font-family: ${RETRO_FONT}; ` +
+      `text-align:left; color:#7FB0B8; font-family: ${FONT_FAMILY}; ` +
       `font-size:${BTN_BASE_SIZE}px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;`;
     moreBtn.textContent = '▼ más';
     container.appendChild(moreBtn);
