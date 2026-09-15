@@ -280,11 +280,12 @@
       "id": "d_n1_matthews_flavor",
       "lang": "cym",
       "start": "mtf1",
+      "note": "trig_matthews_flavor exige n1_llego_barranca, así que esto solo puede pasar en la tarde de J1 — no hace falta condition de turno.",
       "nodes": {
         "mtf1": {
           "speaker": "npc_matthews",
           "portrait": "calido",
-          "text": "No hace falta rezar para que esto tenga sentido. Alcanza con seguir cocinando la misma sopa todas las noches.",
+          "text": "Primera noche bajo tierra. Buen momento para no perder la costumbre de agradecer, aunque sea en voz baja. Vos apuntalá, que yo rezo.",
           "end": true
         }
       }
@@ -871,9 +872,16 @@
       "id": "d_n1_lewis_flavor",
       "npc": "npc_lewis",
       "lang": "cym",
-      "start": "lf_j1",
+      "start": "lf_j1_tarde",
       "note": "resguardo de trig_lewis_flavor: siempre hay una línea de Lewis según día/turno/flags, para no caer en 'Ahora no.' fuera de trig_lewis_j2_manana. Nodos en orden de más específico a más genérico (ver DialogueSystem.resolveCurrent).",
       "nodes": {
+        "lf_j1_tarde": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "condition": "progress.day == 1 && progress.turn == 'tarde'",
+          "text": "La cueva ya es de ustedes. Apuntalen antes de que oscurezca — la arcilla no perdona.",
+          "end": true
+        },
         "lf_j1": {
           "speaker": "npc_lewis",
           "portrait": "neutral",
@@ -993,9 +1001,16 @@
       "id": "d_n1_berwyn_flavor",
       "npc": "npc_berwyn",
       "lang": "cym",
-      "start": "bf_sin_libreta",
+      "start": "bf_j1_tarde",
       "note": "resguardo de trig_berwyn_flavor, ver d_n1_lewis_flavor. Antes de trig_berwyn_libreta explica por qué todavía no tiene nada para anotar; después, sostiene el hábito del diario.",
       "nodes": {
+        "bf_j1_tarde": {
+          "speaker": "npc_berwyn",
+          "portrait": "neutral",
+          "condition": "progress.day == 1 && progress.turn == 'tarde'",
+          "text": "Barro y piedra, nada más. Ya va a haber tiempo de escribir sobre esto — hoy toca apuntalar.",
+          "end": true
+        },
         "bf_sin_libreta": {
           "speaker": "npc_berwyn",
           "portrait": "neutral",

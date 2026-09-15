@@ -208,25 +208,67 @@
         "id": "npc_lewis",
         "x": 41,
         "y": 53,
-        "day": "*"
+        "day": "*",
+        "movesTo": [
+          {
+            "day": 1,
+            "turn": "tarde",
+            "x": 28,
+            "y": 46
+          },
+          {
+            "day": 1,
+            "turn": "noche",
+            "x": 41,
+            "y": 53
+          }
+        ]
       },
       {
         "id": "npc_matthews",
         "x": 44,
         "y": 54,
-        "day": "*"
+        "day": "*",
+        "movesTo": [
+          {
+            "day": 1,
+            "turn": "tarde",
+            "x": 50,
+            "y": 48
+          },
+          {
+            "day": 1,
+            "turn": "noche",
+            "x": 44,
+            "y": 54
+          }
+        ]
       },
       {
         "id": "npc_berwyn",
         "x": 37,
         "y": 50,
         "day": "*",
-        "movesTo": {
-          "day": 3,
-          "turn": "manana",
-          "x": 54,
-          "y": 84
-        }
+        "movesTo": [
+          {
+            "day": 1,
+            "turn": "tarde",
+            "x": 36,
+            "y": 42
+          },
+          {
+            "day": 1,
+            "turn": "noche",
+            "x": 37,
+            "y": 50
+          },
+          {
+            "day": 3,
+            "turn": "manana",
+            "x": 54,
+            "y": 84
+          }
+        ]
       },
       {
         "id": "npc_mari",
