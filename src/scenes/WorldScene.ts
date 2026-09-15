@@ -604,7 +604,11 @@ export class WorldScene extends Phaser.Scene {
 
   private updateNearest(): void {
     let best: Interactable | null = null;
-    let bestD = 30; // más margen que el ancho de un tile: cuesta menos alinearse con el pulgar
+    // 30 alcanzaba cuando los personajes eran el placeholder chico (16×24) — con
+    // el arte real (50×67, ver REAL_ART_SCALE) dos sprites adyacentes ya quedan
+    // separados más que eso centro a centro, así que había que superponerse casi
+    // del todo para poder hablar/interactuar. Ver data/config/balance.json (R3).
+    let bestD = registry.balance.global.interactRadiusPx as number;
     for (const it of this.interactables) {
       if (!it.sprite.active) continue;
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y + 6, it.sprite.x, it.sprite.y);

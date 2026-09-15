@@ -10,7 +10,8 @@
     "trailStepsToForm": 3,
     "bondMaxLevel": 5,
     "healthMax": 100,
-    "moraleMax": 100
+    "moraleMax": 100,
+    "interactRadiusPx": 50
   },
 
   "terrainSpeed": {

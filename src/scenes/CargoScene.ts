@@ -11,8 +11,10 @@ import { crisp, FONT, RETRO_FONT } from '@/util/text';
 interface Card {
   bulto: BultoDef;
   bg: Phaser.GameObjects.Rectangle;
+  iconTint: Phaser.GameObjects.Rectangle | null;
   label: Phaser.GameObjects.Text;
   kg: Phaser.GameObjects.Text;
+  checkBg: Phaser.GameObjects.Arc;
   check: Phaser.GameObjects.Text;
   taken: boolean;
 }
@@ -22,6 +24,13 @@ const CARD_W = 126;
 const CARD_H = 99;
 const GAP = 6;
 const GRID_Y = 58;
+// el ícono real (si existe) llena casi toda la tarjeta como fondo — ya viene
+// centrado en un cuadro de 116x89 (scripts/resize-assets.py, ICON_FRAME), que
+// adentro de la tarjeta (126x99) deja este margen parejo por los cuatro lados.
+const ICON_PAD = 5;
+// suficiente para el peor caso real (label de 3 líneas, ej. "El órgano de la
+// capilla") + el peso debajo — medido en vivo, no a ojo (ver historial del commit).
+const SCRIM_H = 54;
 
 /**
  * La decisión de carga (docs/01-nivel-01.md §5): 5 de 8 bultos, sin deshacer, sin
@@ -119,16 +128,32 @@ export class CargoScene extends Phaser.Scene {
       .setStrokeStyle(1, PAL.slate)
       .setInteractive({ useHandCursor: true });
 
-    // ícono si ya existe el PNG (b.icon, ej. "bulto_harina") — centrado arriba de
-    // la tarjeta. Si no existe todavía cae en el mismo layout de siempre, solo
-    // texto, sin dejar un hueco vacío donde iría el ícono.
-    const icon = b.icon ? addIconImage(this, b.icon, x + CARD_W / 2, y + 8) : null;
+    // ícono real, si ya existe el PNG — FONDO de casi toda la tarjeta, no un
+    // ícono chico arriba del texto (28px era ilegible en más de uno). Si no
+    // existe todavía cae en el layout de siempre, solo texto, sin dejar un
+    // hueco vacío ni una franja sin nada debajo.
+    const icon = b.icon ? addIconImage(this, b.icon, x + CARD_W / 2, y + ICON_PAD) : null;
     icon?.setOrigin(0.5, 0).setDepth(1);
-    const labelY = icon ? y + 40 : y + 8;
+
+    // tinte de selección sobre el ícono — el fillStyle de `bg` ya no alcanza
+    // para marcar "elegido" solo, el ícono lo tapa casi entero.
+    const iconTint = icon
+      ? this.add
+          .rectangle(x + ICON_PAD, y + ICON_PAD, CARD_W - ICON_PAD * 2, CARD_H - ICON_PAD * 2, PAL.moss, 0)
+          .setOrigin(0, 0)
+          .setDepth(2)
+      : null;
+
+    // franja semitransparente abajo, solo si hay ilustración detrás: la
+    // etiqueta y el peso tienen que leerse encima sin competir con ella.
+    if (icon) {
+      this.add.rectangle(x, y + CARD_H - SCRIM_H, CARD_W, SCRIM_H, PAL.void, 0.62).setOrigin(0, 0).setDepth(3);
+    }
+    const labelY = icon ? y + CARD_H - SCRIM_H + 4 : y + 8;
 
     const label = crisp(
       this.add
-        .text(x + 8, labelY, b.label, {
+        .text(icon ? x + CARD_W / 2 : x + 8, labelY, b.label, {
           fontFamily: RETRO_FONT,
           fontSize: FONT.small,
           color: '#EAE8E0',
@@ -137,39 +162,47 @@ export class CargoScene extends Phaser.Scene {
           align: icon ? 'center' : 'left',
         })
         .setOrigin(icon ? 0.5 : 0, 0)
-        .setX(icon ? x + CARD_W / 2 : x + 8)
+        .setDepth(4)
         .setResolution(8),
     );
+    // el peso va JUSTO DEBAJO del label real, no a una Y fija — con nombres de
+    // dos líneas ("El órgano de la capilla", "Clavos, hierro y sierra") una Y
+    // fija para el peso quedaba pisada por la segunda línea del label.
     const kg = crisp(
       this.add
-        .text(x + 8, y + CARD_H - 18, `${b.kg} kg`, {
+        .text(icon ? x + CARD_W / 2 : x + 8, labelY + label.height + 2, `${b.kg} kg`, {
           fontFamily: RETRO_FONT,
           fontSize: FONT.tiny,
-          color: '#6B6A5E',
+          color: '#7FB0B8',
         })
+        .setOrigin(icon ? 0.5 : 0, 0)
+        .setDepth(4)
         .setResolution(8),
     );
-    // "elegido" como una marca aparte, no pegada al texto de kg — pegarla ahí
-    // ("140 kg · llevado") se salía del ancho de la tarjeta y quedaba cortado a
-    // la mitad contra la tarjeta de al lado. Esquina propia, siempre entra.
+
+    // "elegido": placa redonda en la esquina, no un ✓ suelto — sobre una
+    // ilustración de fondo un texto sin fondo propio podía perderse según el
+    // color de abajo.
+    const checkBg = this.add.circle(x + CARD_W - 14, y + 14, 9, PAL.wheat, 0.95).setDepth(4).setVisible(false);
     const check = crisp(
       this.add
-        .text(x + CARD_W - 8, y + 6, '✓', {
-          fontFamily: RETRO_FONT,
-          fontSize: FONT.small,
-          color: '#18262A',
-        })
-        .setOrigin(1, 0)
+        .text(x + CARD_W - 14, y + 14, '✓', { fontFamily: RETRO_FONT, fontSize: FONT.tiny, color: '#18262A' })
+        .setOrigin(0.5, 0.5)
+        .setDepth(5)
         .setResolution(8)
         .setVisible(false),
     );
 
-    const card: Card = { bulto: b, bg, label, kg, check, taken: false };
+    const card: Card = { bulto: b, bg, iconTint, label, kg, checkBg, check, taken: false };
     bg.on('pointerover', () => {
-      if (!card.taken) bg.setFillStyle(PAL.slate, 0.95);
+      if (card.taken) return;
+      bg.setFillStyle(PAL.slate, 0.95);
+      card.iconTint?.setFillStyle(PAL.seaPale, 0.12);
     });
     bg.on('pointerout', () => {
-      if (!card.taken) bg.setFillStyle(PAL.ink2, 0.95);
+      if (card.taken) return;
+      bg.setFillStyle(PAL.ink2, 0.95);
+      card.iconTint?.setFillStyle(PAL.moss, 0);
     });
     bg.on('pointerdown', () => this.pick(card));
 
@@ -204,15 +237,15 @@ export class CargoScene extends Phaser.Scene {
     card.taken = taken;
     if (taken) {
       this.taken.add(card.bulto.id);
-      card.bg.setFillStyle(PAL.moss, 0.9).setStrokeStyle(1, PAL.wheat);
-      card.label.setColor('#0E1416');
-      card.kg.setColor('#18262A');
+      card.bg.setFillStyle(PAL.moss, 0.9).setStrokeStyle(2, PAL.wheat);
+      card.iconTint?.setFillStyle(PAL.moss, 0.4);
+      card.checkBg.setVisible(true);
       card.check.setVisible(true);
     } else {
       this.taken.delete(card.bulto.id);
       card.bg.setFillStyle(PAL.ink2, 0.95).setStrokeStyle(1, PAL.slate);
-      card.label.setColor('#EAE8E0');
-      card.kg.setColor('#6B6A5E');
+      card.iconTint?.setFillStyle(PAL.moss, 0);
+      card.checkBg.setVisible(false);
       card.check.setVisible(false);
     }
   }

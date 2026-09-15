@@ -43,6 +43,10 @@
         },
         "moraleMax": {
           "type": "number"
+        },
+        "interactRadiusPx": {
+          "type": "number",
+          "minimum": 1
         }
       }
     },
