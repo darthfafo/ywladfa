@@ -225,13 +225,13 @@ export class UiScene extends Phaser.Scene {
 
   private refreshTime(): void {
     const s = game.state.progress;
-    // los 4 puntitos, uno por turno del día (TURNS): el de hoy resaltado en dorado,
-    // el resto apagado — la misma información que ya da el texto, pero de un
-    // vistazo, sin tener que leer la palabra.
+    // los 4 puntitos, uno por turno del día (TURNS): los YA CRUZADOS (incluido el
+    // actual) en dorado, los que faltan apagados — de un vistazo, cuánto lleva
+    // andado el día, no solo en qué turno está parado ahora mismo.
     const dots = TURNS.map(
       (_, i) =>
         `<span style="width:5px; height:5px; display:inline-block; background:${
-          i === game.time.turnIndex ? '#D9A845' : '#3A4A50'
+          i <= game.time.turnIndex ? '#D9A845' : '#3A4A50'
         };"></span>`,
     ).join('');
     // setHTML(), no node.textContent/innerHTML directo: el centrado (origen 0.5)

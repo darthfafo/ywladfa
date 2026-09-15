@@ -265,8 +265,18 @@ export class DialogueBox {
 
   /** Pone `fullText` en `bodyText`; si no entra entero en lo que queda de bandeja
    * (mismo problema que ya se arregló en renderChoices — una línea larga se salía
-   * del canvas, invisible), corta en el último espacio que sí entra y guarda el
-   * resto en `pendingText` para la próxima página (ver advance()). */
+   * del canvas, invisible), la reparte en páginas.
+   *
+   * NO llena la página actual al máximo posible: eso dejaba páginas siguientes
+   * con una o dos palabras sueltas y colgadas (ej. un texto que entra "casi
+   * entero, menos una palabra" en la página 1 mandaba esa única palabra sola a
+   * la página 2). Primero mide cuántas páginas hacen falta en total (con el
+   * mismo criterio de antes: cuántas palabras entran a tope) y reparte las
+   * palabras lo más parejo posible entre esa cantidad de páginas — mismo
+   * criterio que el control de huérfanas/viudas de cualquier maquetado de
+   * texto. `pendingText` guarda el resto para la próxima llamada (ver
+   * advance()), que vuelve a repartir lo que quede entre las páginas que
+   * todavía falten. */
   private setBodyTextPaginated(fullText: string): void {
     this.bodyText.setText(fullText);
     const maxH = TRAY.h - this.bodyText.y - 6;
@@ -275,14 +285,23 @@ export class DialogueBox {
       return;
     }
     const words = fullText.split(' ');
+    let maxFit = 0;
     let shown = '';
     for (const w of words) {
       const attempt = shown ? `${shown} ${w}` : w;
       this.bodyText.setText(attempt);
       if (this.bodyText.height > maxH) break;
       shown = attempt;
+      maxFit++;
     }
-    if (!shown) shown = words[0] ?? ''; // ni la primera palabra entraría — caso límite, mostrarla igual
+    if (maxFit === 0) maxFit = 1; // ni la primera palabra entraría — caso límite, mostrarla igual
+
+    const pages = Math.ceil(words.length / maxFit);
+    const target = Math.ceil(words.length / pages);
+    // `target` siempre es ≤ maxFit (propiedad de la división por techo), y la
+    // altura del texto crece de forma monótona al agregar palabras — un
+    // prefijo más corto que uno que ya entraba, entra también.
+    shown = words.slice(0, target).join(' ');
     this.bodyText.setText(shown);
     this.pendingText = fullText.slice(shown.length).trim() || null;
   }

@@ -642,6 +642,12 @@
               }
             }
           ],
+          "next": "b5"
+        },
+        "b5": {
+          "speaker": "npc_berwyn",
+          "portrait": "calido",
+          "text": "Seguí un poco más. Tu madre está ahí adelante, mirando el mar.",
           "end": true
         }
       }
