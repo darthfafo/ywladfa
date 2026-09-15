@@ -828,9 +828,21 @@
     },
     {
       "id": "d_n1_final",
-      "lang": "none",
-      "start": "f1",
+      "lang": "cym",
+      "start": "m1",
       "nodes": {
+        "m1": {
+          "speaker": "npc_mari",
+          "portrait": "calido",
+          "text": "Viniste. Pensé que ibas a quedarte mirando el mar toda la tarde.",
+          "next": "m2"
+        },
+        "m2": {
+          "speaker": "npc_mari",
+          "portrait": "neutral",
+          "text": "Bueno. Vamos yendo, que se hace tarde.",
+          "next": "f1"
+        },
         "f1": {
           "speaker": "narrator",
           "text": "Desde la punta se ven las cuevas vacías. Los bultos que quedaron siguen ahí, ordenados.",

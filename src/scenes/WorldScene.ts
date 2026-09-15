@@ -604,15 +604,21 @@ export class WorldScene extends Phaser.Scene {
 
   private updateNearest(): void {
     let best: Interactable | null = null;
-    // 30 alcanzaba cuando los personajes eran el placeholder chico (16×24) — con
-    // el arte real (50×67, ver REAL_ART_SCALE) dos sprites adyacentes ya quedan
-    // separados más que eso centro a centro, así que había que superponerse casi
-    // del todo para poder hablar/interactuar. Ver data/config/balance.json (R3).
-    let bestD = registry.balance.global.interactRadiusPx as number;
+    let bestD = Infinity;
+    // radio por tipo, no uno solo para todo: los NPC necesitan más margen que
+    // antes (arte real 50×67, dos sprites adyacentes ya quedan separados más
+    // que el viejo radio único centro a centro — ver commit anterior), pero
+    // usar ESE MISMO radio más grande para props chicos y apretados (los
+    // cajones de la playa están a 2-4 tiles uno del otro) agarraba el cajón
+    // equivocado, o uno que ni se ve cerca en pantalla. Cada tipo con el suyo.
+    // Ver data/config/balance.json (R3).
+    const npcRadius = registry.balance.global.npcInteractRadiusPx as number;
+    const propRadius = registry.balance.global.propInteractRadiusPx as number;
     for (const it of this.interactables) {
       if (!it.sprite.active) continue;
+      const radius = it.kind === 'npc' ? npcRadius : propRadius;
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y + 6, it.sprite.x, it.sprite.y);
-      if (d < bestD) {
+      if (d < radius && d < bestD) {
         bestD = d;
         best = it;
       }

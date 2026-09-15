@@ -44,7 +44,11 @@
         "moraleMax": {
           "type": "number"
         },
-        "interactRadiusPx": {
+        "npcInteractRadiusPx": {
+          "type": "number",
+          "minimum": 1
+        },
+        "propInteractRadiusPx": {
           "type": "number",
           "minimum": 1
         }

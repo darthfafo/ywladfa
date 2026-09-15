@@ -11,7 +11,8 @@
     "bondMaxLevel": 5,
     "healthMax": 100,
     "moraleMax": 100,
-    "interactRadiusPx": 50
+    "npcInteractRadiusPx": 50,
+    "propInteractRadiusPx": 30
   },
 
   "terrainSpeed": {
