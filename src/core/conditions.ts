@@ -50,6 +50,8 @@ export function tokenize(src: string): Tok[] {
   return out;
 }
 
+const num = (x: unknown): number => (x == null ? 0 : Number(x));
+
 function resolvePath(path: string, ctx: unknown): unknown {
   let cur: any = ctx;
   for (const seg of path.split('.')) {
@@ -94,10 +96,13 @@ class Parser {
       switch (t.v) {
         case '==': return l === r || (l == null && r == null);
         case '!=': return !(l === r || (l == null && r == null));
-        case '>': return Number(l) > Number(r);
-        case '>=': return Number(l) >= Number(r);
-        case '<': return Number(l) < Number(r);
-        case '<=': return Number(l) <= Number(r);
+        // un flag numérico que todavía no existe vale 0 (no NaN): si no,
+        // `flags.n1_cajones_bajados < 4` daba false al arrancar, antes de bajar
+        // el primer cajón, y Pepperell ya decía que estaba todo listo
+        case '>': return num(l) > num(r);
+        case '>=': return num(l) >= num(r);
+        case '<': return num(l) < num(r);
+        case '<=': return num(l) <= num(r);
         case 'includes':
           if (Array.isArray(l)) return l.includes(r as never);
           if (typeof l === 'string') return l.includes(String(r));

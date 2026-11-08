@@ -35,9 +35,11 @@ const REAL_ART_SCALE = 1;
  * sur del centro del dibujo).
  */
 const SOLID = {
-  // ancho como el torso del dibujo (no las piernas): parados lado a lado no se
-  // superponen, y entre dos NPCs sigue pasando el jugador
-  npc: { w: 34, h: 10 },
+  // ancho de la figura entera (~32 px de torso y brazos en un dibujo de 50): con
+  // 34 los centros quedaban a 24 px y los dos personajes se veían encimados.
+  // Con 48 + los 15 del jugador, los centros no bajan de ~32 px. Los pasos entre
+  // zonas miden 4+ tiles (64 px): entre un NPC y la pared sigue pasando el jugador.
+  npc: { w: 48, h: 10 },
   cajon: { w: 12, h: 6 },
   jarilla: { w: 10, h: 6 },
   fogon: { w: 24, h: 14 },
@@ -117,7 +119,7 @@ export class WorldScene extends Phaser.Scene {
     this.layer.setCollision(COLLIDES);
 
     // ---- jugador: la playa solo en la primera jornada — después el campamento es la base
-    const sp = game.state.progress.day > 1 ? level.spawns.fogon : level.spawns.player;
+    const sp = game.state.progress.day > 1 ? (level.spawns.campamento ?? level.spawns.fogon) : level.spawns.player;
     this.player = this.physics.add.sprite(tileCenter(sp.x), tileCenter(sp.y), pcTextureKey, FACING_FRAME.north);
     this.player.setDepth(20);
     this.player.setScale(pcScale);
@@ -232,7 +234,7 @@ export class WorldScene extends Phaser.Scene {
    * cañadón, de vuelta del manantial): te despertás donde corresponde, no donde te
    * agarró el sueño. Mismo punto que ya usa el spawn de un día>1 recién arrancado. */
   wakeAtCamp(): void {
-    const sp = game.level.spawns.fogon;
+    const sp = game.level.spawns.campamento ?? game.level.spawns.fogon;
     this.player.setPosition(tileCenter(sp.x), tileCenter(sp.y));
     this.facing = 'north';
     this.player.setFrame(FACING_FRAME.north);
@@ -901,7 +903,7 @@ export class WorldScene extends Phaser.Scene {
     // punto "seguro" ahí podía dejar al jugador atrapado sin salida en la
     // jornada 1 — el fogón, en cambio, siempre es territorio ya alcanzado.
     if (zone?.id === 'z5_canadon' && !game.flags.is('n1_dafydd_perdido')) {
-      const back = game.level.spawns.fogon;
+      const back = game.level.spawns.campamento ?? game.level.spawns.fogon;
       this.player.setPosition(tileCenter(back.x), tileCenter(back.y));
       this.lastTile = { x: -1, y: -1 };
       const backZone = zoneAt(game.level, back.x, back.y);

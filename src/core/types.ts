@@ -166,6 +166,8 @@ export interface LevelDef {
     cajones: Array<{ x: number; y: number }>;
     cuevas: Array<{ id: string; x: number; y: number }>;
     fogon: { x: number; y: number };
+    /** dónde aparece el jugador al despertar / volver al campamento (no ENCIMA del fogón, que es sólido) */
+    campamento?: { x: number; y: number };
     pasajes: PasajeDef[];
   };
   objectives: Array<{ day: number; id: string; label: string; quest: string }>;

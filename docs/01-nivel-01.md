@@ -289,9 +289,11 @@ Acá van las tres que definen el tono.
 
 > **EDWYN.** Hay treinta bolsas.
 > **PC.** ¿Treinta? Dijiste doscientas.
-> **EDWYN.** Dije que iba a haber doscientas. Es distinto. *(pausa)* No me mires así, mirá el mar. De ahí venía el resto.
-> **PC.** ¿Y ahora?
+> **EDWYN.** Dije que iba a haber doscientas. Es distinto.
 > **EDWYN.** Ahora contamos las treinta y no las contamos en voz alta delante de nadie.
+
+*(En el juego se recortó "No me mires así, mirá el mar…" y el "¿Y ahora?" del PC: el
+diálogo llega más rápido a la decisión sin perder nada de lo que importa.)*
 
 *(Opción de respuesta: [Culparlo] · [Ayudarlo a contar] · [Callarse]. La segunda sube vínculo +1
 y desbloquea que Edwyn te avise de la aguada en el Nivel 2.)*

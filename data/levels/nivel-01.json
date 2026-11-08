@@ -176,7 +176,7 @@
     "npcs": [
       {
         "id": "npc_pepperell",
-        "x": 25,
+        "x": 24,
         "y": 104,
         "day": 1
       },
@@ -407,6 +407,10 @@
     "fogon": {
       "x": 40,
       "y": 52
+    },
+    "campamento": {
+      "x": 38,
+      "y": 55
     },
     "pasajes": [
       {

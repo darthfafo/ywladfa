@@ -114,6 +114,13 @@ describe('evaluador de condiciones', () => {
     expect(evalCondition('', ctx)).toBe(true);
   });
 
+  it('un flag numérico que todavía no existe vale 0 en las comparaciones', () => {
+    const ctx = { flags: {} };
+    expect(evalCondition('flags.n1_cajones_bajados < 4', ctx)).toBe(true);
+    expect(evalCondition('flags.n1_cajones_bajados >= 8', ctx)).toBe(false);
+    expect(evalCondition('flags.n1_bond_edwyn >= 1', ctx)).toBe(false);
+  });
+
   it('evalúa las condiciones reales de los triggers del nivel', () => {
     const g = fresh();
     expect(g.flags.eval("progress.day == 1 && progress.turn == 'amanecer'")).toBe(true);
