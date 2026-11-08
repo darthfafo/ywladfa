@@ -34,6 +34,15 @@ const REAL_ART_SCALE = 1;
  * lados. La cueva copia el afloramiento de World3D (3.4×2 tiles, frente 3 px al
  * sur del centro del dibujo).
  */
+/** Cómo cambian de lugar los NPC entre turnos (ver updateNpcVisibility). */
+const NPC_TRANSITION = {
+  fadeMs: 700,
+  /** más lejos que esto (tiles) se ubica directo: pasa con una pantalla encima */
+  maxWalkTiles: 18,
+  /** caminan un poco más lento que el jugador: van, no corren */
+  walkSpeedFactor: 0.7,
+};
+
 const SOLID = {
   // ancho de la figura entera (~32 px de torso y brazos en un dibujo de 50): con
   // 34 los centros quedaban a 24 px y los dos personajes se veían encimados.
@@ -80,6 +89,8 @@ export class WorldScene extends Phaser.Scene {
   private solids!: Phaser.Physics.Arcade.StaticGroup;
   /** al caer la noche los triggers esperan a que termine de irse el sol (ver create) */
   private holdTriggersUntil = 0;
+  /** false hasta la primera ubicación de NPCs (spawn): esa va de golpe */
+  private npcsPlaced = false;
   private holdTimer: Phaser.Time.TimerEvent | null = null;
   /** se hizo de noche en el reloj pero todavía no se vio el atardecer */
   private duskPending = false;
@@ -600,7 +611,24 @@ export class WorldScene extends Phaser.Scene {
       const flagOk = !n.afterFlag || game.flags.is(n.afterFlag);
       const hidden = !!n.hiddenAfterFlag && game.flags.is(n.hiddenAfterFlag);
       const visible = dayOk && flagOk && !hidden;
-      it.sprite.setVisible(visible).setActive(visible);
+      const wasVisible = it.sprite.visible;
+      // nunca aparecer ni desaparecer de un cuadro al otro: el que entra o sale
+      // del relato se desvanece (ver NPC_TRANSITION). La primera vez (spawn) sí
+      // de golpe: no hay nada que ya se estuviera viendo.
+      this.tweens.killTweensOf(it.sprite);
+      it.sprite.setActive(visible);
+      if (!this.npcsPlaced || visible === wasVisible) it.sprite.setVisible(visible).setAlpha(1);
+      else if (visible) {
+        it.sprite.setVisible(true).setAlpha(0);
+        this.tweens.add({ targets: it.sprite, alpha: 1, duration: NPC_TRANSITION.fadeMs });
+      } else {
+        this.tweens.add({
+          targets: it.sprite,
+          alpha: 0,
+          duration: NPC_TRANSITION.fadeMs,
+          onComplete: () => it.sprite.setVisible(false).setAlpha(1),
+        });
+      }
 
       // movesTo puede ser una sola parada o una lista de mudanzas (ej. Edwyn:
       // playa → barranca en J2 → playa de vuelta en J3) — de las que ya pasaron
@@ -608,9 +636,39 @@ export class WorldScene extends Phaser.Scene {
       const stops = n.movesTo ? (Array.isArray(n.movesTo) ? n.movesTo : [n.movesTo]) : [];
       const reached = stops.filter((m) => day > m.day || (day === m.day && turnIdx >= TURNS.indexOf(m.turn)));
       const pos = reached.length ? reached[reached.length - 1]! : n;
-      it.sprite.setPosition(tileCenter(pos.x), tileCenter(pos.y));
-      this.syncSolid(it.sprite, visible);
+      const tx = tileCenter(pos.x);
+      const ty = tileCenter(pos.y);
+      const dist = Math.hypot(tx - it.sprite.x, ty - it.sprite.y);
+      // mudanza dentro de la misma zona (ej. Lewis yendo al fogón al caer la
+      // noche): camina hasta su lugar en vez de teletransportarse a la vista de
+      // todos. Las mudanzas largas (de la playa a la barranca entre jornadas)
+      // pasan con la pantalla del fogón/amanecer encima: ahí sí, directo.
+      if (this.npcsPlaced && visible && wasVisible && dist > 1 && dist <= NPC_TRANSITION.maxWalkTiles * VIEW.tile) {
+        const speed = (registry.balance.global.playerBaseSpeedPxPerSec as number) * NPC_TRANSITION.walkSpeedFactor;
+        const dx = tx - it.sprite.x;
+        const dy = ty - it.sprite.y;
+        it.sprite.setFrame(FACING_FRAME[Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'east' : 'west') : dy > 0 ? 'south' : 'north']);
+        this.tweens.add({
+          targets: it.sprite,
+          x: tx,
+          y: ty,
+          duration: (dist / speed) * 1000,
+          onComplete: () => it.sprite.setFrame(FACING_FRAME.south),
+        });
+      } else {
+        it.sprite.setPosition(tx, ty);
+      }
+      // el cuerpo sólido ya va al destino: no bloquea el camino mientras camina
+      const body = it.sprite.body as Phaser.Physics.Arcade.StaticBody | null;
+      if (body) {
+        const ox = it.sprite.x;
+        const oy = it.sprite.y;
+        it.sprite.setPosition(tx, ty);
+        this.syncSolid(it.sprite, visible);
+        it.sprite.setPosition(ox, oy);
+      }
     }
+    this.npcsPlaced = true;
   }
 
   private setupKeyboard(): void {
