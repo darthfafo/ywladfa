@@ -66,6 +66,8 @@ const NPC_TRANSITION = {
   maxWalkTiles: 18,
   /** caminan un poco más lento que el jugador: van, no corren */
   walkSpeedFactor: 0.7,
+  /** en una mudanza larga a la vista, cuánto caminan (tiles) hacia allá antes de perderse */
+  exitWalkTiles: 4,
 };
 
 const SOLID = {
@@ -288,6 +290,16 @@ export class WorldScene extends Phaser.Scene {
 
   /** Lleva la luz al turno actual en `ms` (0 = de golpe): el tinte del mundo 2D
    * (TURN_TINT) y la luz del mundo 3D (TURN_LIGHT), ambos en config.ts. */
+  /** ¿El sprite está dentro de lo que muestra la cámara (con un margen)? */
+  private onScreen(s: Phaser.GameObjects.Image): boolean {
+    // contra el jugador, no contra la cámara 2D: esa sigue con retraso (y en
+    // HD-2D ni se ve); la del 3D salta a donde está el jugador. Media pantalla
+    // de ancho y de alto, más un margen de 2 tiles.
+    const hw = VIEW.world.w / 2 + VIEW.tile * 2;
+    const hh = VIEW.world.h / 2 + VIEW.tile * 2;
+    return Math.abs(s.x - this.player.x) < hw && Math.abs(s.y - this.player.y) < hh;
+  }
+
   /** Un paso cada AUDIO.stepPx caminados, con el sonido del suelo que se pisa. */
   private stepSounds(): void {
     const moved = Math.hypot(this.player.x - this.lastStepPos.x, this.player.y - this.lastStepPos.y);
@@ -708,6 +720,26 @@ export class WorldScene extends Phaser.Scene {
           y: ty,
           duration: (dist / speed) * 1000,
           onComplete: () => it.sprite.setFrame(FACING_FRAME.south),
+        });
+      } else if (this.npcsPlaced && visible && wasVisible && dist > 1 && this.onScreen(it.sprite)) {
+        // mudanza larga A LA VISTA (ej. Dafydd yéndose al cañadón mientras hablás
+        // con Lewis): antes desaparecía de golpe. Ahora sale caminando hacia allá,
+        // se desvanece, y recién entonces aparece en su destino.
+        const speed = (registry.balance.global.playerBaseSpeedPxPerSec as number) * NPC_TRANSITION.walkSpeedFactor;
+        const dx = (tx - it.sprite.x) / dist;
+        const dy = (ty - it.sprite.y) / dist;
+        const exitPx = NPC_TRANSITION.exitWalkTiles * VIEW.tile;
+        it.sprite.setFrame(FACING_FRAME[Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'east' : 'west') : dy > 0 ? 'south' : 'north']);
+        this.tweens.add({
+          targets: it.sprite,
+          x: it.sprite.x + dx * exitPx,
+          y: it.sprite.y + dy * exitPx,
+          alpha: 0,
+          duration: (exitPx / speed) * 1000,
+          onComplete: () => {
+            it.sprite.setPosition(tx, ty).setFrame(FACING_FRAME.south);
+            this.tweens.add({ targets: it.sprite, alpha: 1, duration: NPC_TRANSITION.fadeMs });
+          },
         });
       } else {
         it.sprite.setPosition(tx, ty);
