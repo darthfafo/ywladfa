@@ -12,6 +12,7 @@ import { CAM_3D, PAL, RENDER_3D_FX, TERRAIN_HEIGHT_3D, TURN_LIGHT, VIEW } from '
 import { game } from '@/core/Game';
 import { baseTerrain, TERRAIN } from '@/util/mapgen';
 import { buildShip } from './ship';
+import { TEX_TILES, terrainTexture } from './terrainTextures';
 
 /**
  * El mundo en HD-2D: terreno con alturas, mar, luz y sombras en 3D (Three.js),
@@ -78,10 +79,11 @@ export class World3D {
   /** objetos de la escena que no se copian (capa de tiles, capa de luz 2D) */
   private readonly ignored = new WeakSet<Phaser.GameObjects.GameObject>();
   private mirrorCount = 0;
-  private terrainMat: THREE.MeshLambertMaterial | null = null;
   private seaMat: THREE.MeshStandardMaterial | null = null;
   private readonly sources = new Map<unknown, THREE.Texture>();
-  private terrainMesh: THREE.Mesh | null = null;
+  private terrainMeshes: THREE.Mesh[] = [];
+  /** elipse de recorte en píxeles del canvas: centro (x, y) y radios (x, y) */
+  private readonly cut = { value: new THREE.Vector4(0, 0, 1, 1) };
   private terrainBuilt = -1;
   private readonly focus = { value: new THREE.Vector3() };
   private readonly time = { value: 0 };
@@ -156,28 +158,28 @@ export class World3D {
   // ---------------------------------------------------------------- terreno
 
   private buildTerrain(): void {
-    if (this.terrainMesh) {
-      this.scene3.remove(this.terrainMesh);
-      this.terrainMesh.geometry.dispose();
+    for (const m of this.terrainMeshes) {
+      this.scene3.remove(m);
+      m.geometry.dispose();
     }
+    this.terrainMeshes = [];
     const grid = this.src.terrain();
     const H = grid.length;
     const W = grid[0]?.length ?? 0;
-    const atlas = this.src.scene.textures.get('tiles').getSourceImage() as HTMLCanvasElement;
-    const cols = atlas.width / VIEW.tile;
-    const pos: number[] = [];
-    const uv: number[] = [];
-    const nor: number[] = [];
-    const tileUv = (idx: number): [number, number] => {
-      const inset = 0.02 / cols;
-      return [idx / cols + inset, (idx + 1) / cols - inset];
-    };
-    const quad = (a: number[], b: number[], c: number[], d: number[], n: number[], idx: number, vSpan = 1) => {
-      const [u0, u1] = tileUv(idx);
-      pos.push(...a, ...b, ...c, ...a, ...c, ...d);
-      const v1 = Math.min(1, vSpan);
-      uv.push(u0, 0, u1, 0, u1, v1, u0, 0, u1, v1, u0, v1);
-      for (let i = 0; i < 6; i++) nor.push(...n);
+    // una malla por textura (tapa o lateral de cada terreno), con UV en
+    // coordenadas de mundo: la textura corre continua de un tile al otro
+    const groups = new Map<string, { terrain: number; face: 'top' | 'side'; pos: number[]; nor: number[]; uv: number[] }>();
+    const quad = (terrain: number, face: 'top' | 'side', a: number[], b: number[], c: number[], d: number[], n: number[]) => {
+      const key = `${face}:${terrain}`;
+      let g = groups.get(key);
+      if (!g) groups.set(key, (g = { terrain, face, pos: [], nor: [], uv: [] }));
+      for (const v of [a, b, c, a, c, d]) {
+        g.pos.push(v[0]!, v[1]!, v[2]!);
+        g.nor.push(n[0]!, n[1]!, n[2]!);
+        // tapa: x/z; cara que mira a ±z: x/y; cara que mira a ±x: z/y
+        const [U, V] = n[1] ? [v[0]!, -v[2]!] : n[2] ? [v[0]! * n[2]!, v[1]!] : [-v[2]! * n[0]!, v[1]!];
+        g.uv.push(U / TEX_TILES, V / TEX_TILES);
+      }
     };
     const hAt = (i: number, j: number): number => {
       const row = grid[j];
@@ -186,15 +188,13 @@ export class World3D {
     };
     for (let j = 0; j < H; j++) {
       for (let i = 0; i < W; i++) {
-        const idx = grid[j]![i]!;
-        if (baseTerrain(idx) === TERRAIN.SEA) continue; // lo dibuja el mar
+        const t = baseTerrain(grid[j]![i]!);
+        if (t === TERRAIN.SEA) continue; // lo dibuja el mar
         const h = hAt(i, j);
-        // tapa: de norte (z=j) a sur (z=j+1); v=1 arriba de la textura = norte
-        quad([i, h, j + 1], [i + 1, h, j + 1], [i + 1, h, j], [i, h, j], [0, 1, 0], idx);
-        // piso debajo de cada pared: cuando la pared se trama (queda entre la
-        // cámara y el jugador) se ve tierra, no el mar que corre por debajo del mapa
-        if (h > 0) quad([i, 0, j + 1], [i + 1, 0, j + 1], [i + 1, 0, j], [i, 0, j], [0, 1, 0], idx);
-        // paredes hacia cada vecino más bajo
+        quad(t, 'top', [i, h, j + 1], [i + 1, h, j + 1], [i + 1, h, j], [i, h, j], [0, 1, 0]);
+        // piso debajo de cada pared: si la pared se recorta para dejar ver al
+        // jugador, se ve tierra y no el mar que corre por debajo del mapa
+        if (h > 0) quad(TERRAIN.ROCK, 'top', [i, 0, j + 1], [i + 1, 0, j + 1], [i + 1, 0, j], [i, 0, j], [0, 1, 0]);
         const sides: Array<[number, number, number[], number[], number[]]> = [
           [i, j + 1, [i, 0, j + 1], [i + 1, 0, j + 1], [0, 0, 1]], // sur
           [i, j - 1, [i + 1, 0, j], [i, 0, j], [0, 0, -1]], // norte
@@ -204,51 +204,64 @@ export class World3D {
         for (const [ni, nj, a, b, n] of sides) {
           const nh = Math.max(hAt(ni, nj), TERRAIN_HEIGHT_3D.SEA ?? -1);
           if (nh >= h) continue;
-          // en tramos de 1 tile de alto, para que la textura no se estire
-          for (let y0 = nh; y0 < h - 1e-3; y0 += 1) {
-            const y1 = Math.min(h, y0 + 1);
-            quad([a[0]!, y0, a[2]!], [b[0]!, y0, b[2]!], [b[0]!, y1, b[2]!], [a[0]!, y1, a[2]!], n, idx, y1 - y0);
-          }
+          quad(t, 'side', [a[0]!, nh, a[2]!], [b[0]!, nh, b[2]!], [b[0]!, h, b[2]!], [a[0]!, h, a[2]!], n);
         }
       }
     }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
-    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    for (const g of groups.values()) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(g.pos, 3));
+      geo.setAttribute('normal', new THREE.Float32BufferAttribute(g.nor, 3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute(g.uv, 2));
+      const mesh = new THREE.Mesh(geo, this.terrainMaterial(g.terrain, g.face));
+      mesh.receiveShadow = true;
+      mesh.castShadow = g.face === 'side' || heightOf(g.terrain * 4) > 0;
+      this.scene3.add(mesh);
+      this.terrainMeshes.push(mesh);
+    }
+    if (this.terrainBuilt < 0) this.scatterDetail(grid);
+    this.terrainBuilt = this.src.terrainVersion();
+  }
 
-    const tex = new THREE.CanvasTexture(atlas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.magFilter = tex.minFilter = THREE.NearestFilter;
-    tex.generateMipmaps = false;
-    // emissive con el mismo atlas: el piso conserva la paleta del 2D aunque el
-    // sol venga bajo (amanecer, tarde) — la luz tiñe, no apaga
-    const mat = new THREE.MeshLambertMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: TERRAIN_GLOW });
-    this.terrainMat = mat;
-    // las paredes que quedan entre la cámara y el jugador se tramán (medio
-    // transparentes con un patrón de puntos, sin ordenar transparencias)
+  private readonly terrainMats = new Map<string, THREE.MeshLambertMaterial>();
+
+  private terrainMaterial(terrain: number, face: 'top' | 'side'): THREE.MeshLambertMaterial {
+    const key = `${face}:${terrain}`;
+    const cached = this.terrainMats.get(key);
+    if (cached) return cached;
+    const tex = terrainTexture(terrain, face);
+    // emissive con la misma textura: el piso conserva la paleta aunque el sol
+    // venga bajo (amanecer, tarde) — la luz tiñe, no apaga. TURN_LIGHT.glow lo baja de noche
+    const mat = new THREE.MeshLambertMaterial({
+      map: tex,
+      emissive: 0xffffff,
+      emissiveMap: tex,
+      emissiveIntensity: TERRAIN_GLOW * this.light.cur.glow,
+    });
+    // recorte: solo donde una pared tapa al jugador en pantalla (una elipse
+    // alrededor de su sprite, ver render) y la pared está más cerca de la
+    // cámara que él. Antes se tramaba toda pared en una caja delante del
+    // jugador, aunque no lo tapara: en las esquinas quedaban muros "transparentes".
     mat.onBeforeCompile = (sh) => {
       sh.uniforms.uFocus = this.focus;
+      sh.uniforms.uCut = this.cut;
       sh.vertexShader = sh.vertexShader
         .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;')
         .replace('#include <project_vertex>', '#include <project_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nuniform vec3 uFocus;')
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nuniform vec3 uFocus;\nuniform vec4 uCut;')
         .replace(
           '#include <clipping_planes_fragment>',
           `#include <clipping_planes_fragment>
-          vec2 dxz = vWPos.xz - uFocus.xz;
-          if (vWPos.y > 0.2 && dxz.y > 0.2 && dxz.y < 6.0 && abs(dxz.x) < 2.6) {
-            if (mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) < 1.0) discard;
+          if (vWPos.y > 0.05 && vWPos.z > uFocus.z + 0.15) {
+            float d = length((gl_FragCoord.xy - uCut.xy) / uCut.zw);
+            if (d < 0.8) discard;
+            if (d < 1.0 && mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) < 1.0) discard;
           }`,
         );
     };
-    this.terrainMesh = new THREE.Mesh(geo, mat);
-    this.terrainMesh.receiveShadow = true;
-    this.terrainMesh.castShadow = true;
-    this.scene3.add(this.terrainMesh);
-    if (this.terrainBuilt < 0) this.scatterDetail(grid);
-    this.terrainBuilt = this.src.terrainVersion();
+    this.terrainMats.set(key, mat);
+    return mat;
   }
 
   /** Piedritas y matas de pasto seco sueltas: solo decoración (no chocan), fija
@@ -560,7 +573,7 @@ export class World3D {
     if (!this.scene3.fog) this.scene3.fog = new THREE.Fog(c.fog, 75, 170);
     (this.scene3.fog as THREE.Fog).color.copy(c.fog);
     this.lantern.intensity = c.lantern;
-    if (this.terrainMat) this.terrainMat.emissiveIntensity = TERRAIN_GLOW * c.glow;
+    for (const m of this.terrainMats.values()) m.emissiveIntensity = TERRAIN_GLOW * c.glow;
     if (this.seaMat) this.seaMat.emissiveIntensity = c.glow;
     for (const m of this.mirrors.values()) if (m.mat) m.mat.emissiveIntensity = SPRITE_GLOW * c.glow;
   }
@@ -593,6 +606,24 @@ export class World3D {
     }
   }
 
+  /** Proyecta el sprite del jugador a pantalla y deja ahí la elipse de recorte
+   * (en píxeles del buffer, como gl_FragCoord), un poco más grande que el dibujo. */
+  private updateCut(px: number, pz: number, w: number, h: number): void {
+    this.camera.updateMatrixWorld();
+    const size = this.renderer.getDrawingBufferSize(this.tmpV2);
+    const toPx = (v: THREE.Vector3) => v.project(this.camera).set((v.x * 0.5 + 0.5) * size.x, (v.y * 0.5 + 0.5) * size.y, 0);
+    const feet = toPx(this.tmpA.set(px, 0, pz));
+    const head = toPx(this.tmpB.set(px, h, pz));
+    const side = toPx(this.tmpC.set(px + w / 2, h / 2, pz));
+    const mid = this.tmpD.set((feet.x + head.x) / 2, (feet.y + head.y) / 2, 0);
+    this.cut.value.set(mid.x, mid.y, Math.max(8, Math.abs(side.x - mid.x)) * 1.1, Math.max(8, Math.abs(head.y - feet.y) / 2) * 1.2);
+  }
+  private readonly tmpV2 = new THREE.Vector2();
+  private readonly tmpA = new THREE.Vector3();
+  private readonly tmpB = new THREE.Vector3();
+  private readonly tmpC = new THREE.Vector3();
+  private readonly tmpD = new THREE.Vector3();
+
   render(dtMs: number): void {
     const dt = Math.min(dtMs / 1000, 0.05);
     this.time.value += dt;
@@ -612,6 +643,7 @@ export class World3D {
     if (this.camera.position.distanceTo(target) > CAM_3D.snapDistance) this.camera.position.copy(target);
     else this.camera.position.lerp(target, 1 - Math.exp(-dt * CAM_3D.follow));
     this.camera.lookAt(this.camera.position.x, 0, this.camera.position.z - this.camOffset.z);
+    this.updateCut(px, pz, p.displayWidth * PX, p.displayHeight * PX * SPRITE_STRETCH);
 
     this.sun.position.set(px, 0, pz).add(this.sunOffset);
     this.sun.target.position.set(px, 0, pz);

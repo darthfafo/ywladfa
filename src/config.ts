@@ -90,7 +90,7 @@ export const CAM_3D = {
 export const TERRAIN_HEIGHT_3D: Record<string, number> = {
   ROCK: 2.6,
   CLIFF: 2.6,
-  GATE: 1.6,
+  GATE: 2.6, // igual que la barranca: se lee como pared, no como un escalón
   SEA: -1,
   SPRING: -0.25,
 };
