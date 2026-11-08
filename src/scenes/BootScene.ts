@@ -59,6 +59,8 @@ interface Slide {
   wind?: boolean;
   /** centro vertical de la ilustración (por defecto CINE_IMG_CY) */
   cy?: number;
+  /** llena toda la pantalla (recorta los costados) en vez de entrar entera a lo ancho */
+  cover?: boolean;
 }
 
 /** El viaje entero en la portada: salida, travesía, llegada, la barranca. */
@@ -281,8 +283,9 @@ export class BootScene extends Phaser.Scene {
       bg.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
       bg.setScale(Math.max(W / bg.width, H / bg.height) * 1.12).setTint(0x8a9094);
       bg.preFX?.addBlur(2, 2, 2, 1.4);
-      const img = this.add.image(W / 2, slide.cy ?? CINE_IMG_CY, key).setDepth(-6).setAlpha(0);
-      const fit = W / img.width;
+      const img = this.add.image(W / 2, slide.cover ? H / 2 : (slide.cy ?? CINE_IMG_CY), key).setDepth(-6).setAlpha(0);
+      // entera a lo ancho (con el relleno desenfocado arriba/abajo), o llenando todo
+      const fit = slide.cover ? Math.max(W / img.width, H / img.height) : W / img.width;
       // movimiento chico: el pixel art titila si se lo escala mucho
       const dir = c.index % 2 ? 1 : -1;
       img.setScale(fit).setX(W / 2 - dir * 4);
@@ -510,7 +513,10 @@ export class BootScene extends Phaser.Scene {
     const cx = VIEW.width / 2;
     this.setChrome(false);
     // la ilustración arriba de todo: los botones quedan sobre la pintura, no sobre una franja vacía
-    const portrait = (g: Gender): Slide => ({ id: `enlistamiento_${g}`, rain: 0.3, mist: 0.3, cy: 200 });
+    // pantalla completa: con la imagen entera a lo ancho quedaban una franja oscura
+    // arriba, otra abajo y el borde duro entre la pintura y el relleno. Acá el
+    // personaje está al centro: recortar los costados no pierde nada importante.
+    const portrait = (g: Gender): Slide => ({ id: `enlistamiento_${g}`, rain: 0.3, mist: 0.3, cover: true });
     this.startCinematic([portrait(this.playerGender)]);
     // más suave que en la portada: acá arriba solo hay botones, no un título
     // grande — con el degradé fuerte la franja de arriba quedaba negra
