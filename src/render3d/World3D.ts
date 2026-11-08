@@ -235,6 +235,13 @@ export class World3D {
       return baseTerrain(row[i]!);
     };
     const hOf = (t: number) => heightOf(t * 4);
+    const BEACHY = new Set<number>([TERRAIN.SAND_DRY, TERRAIN.SAND_WET, TERRAIN.PEBBLE]);
+    const nearBeach = (cx: number, cz: number): boolean => {
+      const i = Math.floor(cx);
+      const j = Math.floor(cz);
+      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) if (BEACHY.has(tileT(i + di, j + dj))) return true;
+      return false;
+    };
     const isWall = (t: number) => hOf(t) > 0.5;
     const SEA_H = TERRAIN_HEIGHT_3D.SEA ?? -1;
 
@@ -277,16 +284,23 @@ export class World3D {
         } else if (hi > 0.5) {
           // borde de una pared: al nivel del piso (la pared sube adentro de su tile)
           h = lo <= SEA_H ? SEA_H * 0.4 : lo;
-        } else {
-          // costa: la arena baja en declive al agua
+        } else if (ts.some((t) => BEACHY.has(t))) {
+          // costa de playa: la arena baja en declive al agua
           h = SEA_H * 0.45 + (hash(gx, gy, 4) - 0.5) * 0.15;
+        } else {
+          // costa de meseta/barranca: corta en acantilado, con el borde apenas
+          // levantado y desparejo (la caída queda del lado del mar)
+          h = lo === SEA_H ? hi + hash(gx, gy, 9) * 0.35 : lo;
         }
         const k = gy * GW + gx;
         hgt[k] = h;
-        // corrimiento horizontal leve (no en el borde del mapa)
+        // corrimiento horizontal leve (no en el borde del mapa); en la línea de
+        // costa, uno grande y suave: la costa no sigue la grilla
         const edge = gx === 0 || gy === 0 || gx === GW - 1 || gy === GH - 1;
-        const jx = edge ? 0 : (hash(gx, gy, 5) - 0.5) * (0.35 / S);
-        const jz = edge ? 0 : (hash(gx, gy, 6) - 0.5) * (0.35 / S);
+        const coast = lo === SEA_H && hi > SEA_H && hi < 0.5;
+        const [wx, wz] = coast ? wobble(gx / S * 0.7, gy / S * 0.7) : [0, 0];
+        const jx = edge ? 0 : (hash(gx, gy, 5) - 0.5) * (0.35 / S) + wx! * 0.9;
+        const jz = edge ? 0 : (hash(gx, gy, 6) - 0.5) * (0.35 / S) + wz! * 0.9;
         px[k] = gx / S + jx;
         pz[k] = gy / S + jz;
       }
@@ -311,11 +325,16 @@ export class World3D {
       va.set(px[a]!, hgt[a]!, pz[a]!);
       vb.set(px[b]!, hgt[b]!, pz[b]!);
       vc.set(px[c]!, hgt[c]!, pz[c]!);
-      const t = isWall(base) || base === TERRAIN.SEA ? base : triT((va.x + vb.x + vc.x) / 3, (va.z + vb.z + vc.z) / 3);
+      const cx = (va.x + vb.x + vc.x) / 3;
+      const cz = (va.z + vb.z + vc.z) / 3;
+      let t = isWall(base) || base === TERRAIN.SEA ? base : triT(cx, cz);
       const n = vb.clone().sub(va).cross(vc.clone().sub(va)).normalize();
       if (n.y < 0) n.negate();
       // empinado y de pared → cara de barranca (estratos); si no, tapa
       const face: 'top' | 'side' = n.y < 0.6 && (isWall(t) || t === TERRAIN.SEA) ? 'side' : 'top';
+      // el fondo junto a la costa: arena mojada en las playas; en los
+      // acantilados de la meseta/barranca, la cara de la barranca
+      if (t === TERRAIN.SEA && face === 'side' && !nearBeach(cx, cz)) t = TERRAIN.CLIFF;
       const tt = t === TERRAIN.SEA ? TERRAIN.SAND_WET : t;
       const key = `${face}:${tt}`;
       let g = groups.get(key);

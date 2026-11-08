@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PAL, VIEW } from '@/config';
+import { INPUT_GUARD, PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
@@ -145,6 +145,7 @@ export class DialogueBox {
   start(dialogueId: string, onClose?: () => void): void {
     this.onClose = onClose ?? null;
     input.locked = true;
+    this.opening = true;
     this.root.setVisible(true);
     this.show(this.sys.start(dialogueId));
   }
@@ -158,6 +159,7 @@ export class DialogueBox {
   refuse(npcId: string, onClose?: () => void, text = '— Ahora no.'): void {
     this.onClose = onClose ?? null;
     input.locked = true;
+    this.opening = true;
     this.root.setVisible(true);
     this.show({
       nodeId: '__refuse',
@@ -179,6 +181,7 @@ export class DialogueBox {
   announce(text: string, onClose?: () => void, color?: string): void {
     this.onClose = onClose ?? null;
     input.locked = true;
+    this.opening = true;
     this.root.setVisible(true);
     this.show({
       nodeId: '__announce',
@@ -194,6 +197,9 @@ export class DialogueBox {
 
   private advance(): void {
     if (!this.active) return;
+    // tiempo mínimo en pantalla de cada línea (más largo la primera de un
+    // diálogo): un doble toque no puede saltearse algo sin que se lea
+    if (performance.now() < this.readyAt) return;
     if (!this.current?.choices.length) sfx.blip();
     if (this.pendingText) {
       // el propio nodo todavía tiene texto sin mostrar (ver setBodyTextPaginated):
@@ -212,7 +218,14 @@ export class DialogueBox {
     this.show(this.sys.next());
   }
 
+  /** antes de esto, tocar la bandeja no avanza (ver advance) */
+  private readyAt = 0;
+  /** la próxima línea es la primera de un diálogo recién abierto */
+  private opening = false;
+
   private show(line: RenderedLine | null): void {
+    this.readyAt = performance.now() + (this.opening ? INPUT_GUARD.dialogueStartMs : INPUT_GUARD.lineMs);
+    this.opening = false;
     this.clearChoices();
     this.current = line;
     this.pendingText = null;
@@ -362,7 +375,11 @@ export class DialogueBox {
     this.choicesEl = wrap;
     const container = wrap.node as HTMLDivElement;
 
+    const shownAt = performance.now();
     const pick = (i: number): void => {
+      // recién aparecidas, las opciones no se pueden elegir: un toque que venía
+      // para la línea anterior no puede decidir por el jugador
+      if (performance.now() - shownAt < INPUT_GUARD.choiceMs) return;
       bus.emit('ui:toast', { text: '' });
       sfx.select();
       this.show(this.sys.choose(line.choices[i]!.id));

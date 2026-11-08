@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PAL, VIEW } from '@/config';
+import { INPUT_GUARD, PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
@@ -50,7 +50,10 @@ export class CargoScene extends Phaser.Scene {
     super('CargoScene');
   }
 
+  private openedAt = 0;
+
   create(): void {
+    this.openedAt = performance.now();
     this.scene.bringToTop();
     this.scene.pause('World');
     this.scene.pause('Ui');
@@ -208,7 +211,12 @@ export class CargoScene extends Phaser.Scene {
       bg.setFillStyle(PAL.ink2, 0.001);
       card.iconTint?.setFillStyle(PAL.moss, 0);
     });
-    bg.on('pointerdown', () => this.pick(card));
+    // la pantalla se abre justo al cerrar el anuncio de la marcha: el mismo toque
+    // no puede llevarse un bulto (ver INPUT_GUARD)
+    bg.on('pointerdown', () => {
+      if (performance.now() - this.openedAt < INPUT_GUARD.choiceMs) return;
+      this.pick(card);
+    });
 
     this.cards.push(card);
   }

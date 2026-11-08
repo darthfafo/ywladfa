@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PAL, VIEW } from '@/config';
+import { INPUT_GUARD, PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
@@ -469,6 +469,15 @@ export class UiScene extends Phaser.Scene {
     input.locked = true;
     this.touch.setVisible(false);
 
+    // las opciones recién aparecidas no se pueden elegir (ver INPUT_GUARD)
+    const openedAt = performance.now();
+    options = options.map((o) => ({
+      ...o,
+      onPick: () => {
+        if (performance.now() - openedAt < INPUT_GUARD.choiceMs) return;
+        o.onPick();
+      },
+    }));
     const top = VIEW.world.y;
     const margin = 10;
     const bg = addPanel(this, margin, top + margin, VIEW.width - margin * 2, VIEW.world.h - margin * 2, {

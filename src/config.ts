@@ -95,6 +95,24 @@ export const TERRAIN_HEIGHT_3D: Record<string, number> = {
   SPRING: -0.25,
 };
 
+/**
+ * Tiempos mínimos entre una cosa y la siguiente (ms): un toque de más (o el
+ * mismo toque que cerró algo) no puede saltear una línea sin leer, elegir una
+ * opción ni disparar la acción del mundo.
+ */
+export const INPUT_GUARD = {
+  /** al abrirse un diálogo (o una escena ilustrada con su texto) */
+  dialogueStartMs: 500,
+  /** entre línea y línea */
+  lineMs: 250,
+  /** desde que aparecen las opciones de una decisión */
+  choiceMs: 500,
+  /** el botón de acción del mundo, después de cerrar un diálogo o un menú */
+  actionAfterModalMs: 400,
+  /** botones de menú, desde que aparecen */
+  buttonMs: 300,
+} as const;
+
 /** Volumen del sonido sintetizado (src/audio/Sfx.ts), 0..1 por grupo. */
 export const AUDIO = {
   master: 0.8,

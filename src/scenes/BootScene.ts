@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PAL, VIEW } from '@/config';
+import { INPUT_GUARD, PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { createInitialState } from '@/core/GameState';
@@ -814,7 +814,11 @@ export class BootScene extends Phaser.Scene {
     const btn = el.node as HTMLButtonElement;
     btn.textContent = label;
     btn.type = 'button';
+    const shownAt = performance.now();
     btn.addEventListener('click', () => {
+      // un botón recién aparecido no responde: el toque que abrió esta pantalla no
+      // puede, además, apretar lo que quedó debajo (ver INPUT_GUARD)
+      if (performance.now() - shownAt < INPUT_GUARD.buttonMs) return;
       sfx.select();
       onPick();
     });

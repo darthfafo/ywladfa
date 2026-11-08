@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PAL, VIEW } from '@/config';
+import { INPUT_GUARD, PAL, VIEW } from '@/config';
 import { saveSystem } from '@/systems/SaveSystem';
 import { crisp, RETRO_FONT } from '@/util/text';
 import { addPanel } from '@/ui/panel';
@@ -65,7 +65,11 @@ export class TransitionScene extends Phaser.Scene {
       box.setStrokeStyle(1, PAL.slate);
       text.setColor('#BFD3D8');
     });
-    box.on('pointerdown', onPick);
+    const shownAt = performance.now();
+    box.on('pointerdown', () => {
+      if (performance.now() - shownAt < INPUT_GUARD.buttonMs) return;
+      onPick();
+    });
 
     const kb = this.input.keyboard;
     kb?.on('keydown-SPACE', onPick);
