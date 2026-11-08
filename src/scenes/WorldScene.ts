@@ -56,6 +56,7 @@ export class WorldScene extends Phaser.Scene {
   private lastTile = { x: -1, y: -1 };
   private facing: keyof typeof FACING_FRAME = 'north';
   private nearest: Interactable | null = null;
+  private nearestLabel: string | null = null;
   private carriedCajones = 0;
   private carriedLena = 0;
   private gateOpen = new Map<string, boolean>();
@@ -747,10 +748,20 @@ export class WorldScene extends Phaser.Scene {
         best = it;
       }
     }
-    if (best !== this.nearest) {
+    // la etiqueta puede cambiar sin cambiar de objetivo (la cueva: Elegir → Apuntalar)
+    const label = best ? this.labelFor(best) : null;
+    if (best !== this.nearest || label !== this.nearestLabel) {
       this.nearest = best;
-      bus.emit('ui:action-context', { label: best ? best.label : null });
+      this.nearestLabel = label;
+      bus.emit('ui:action-context', { label });
     }
+  }
+
+  private labelFor(it: Interactable): string {
+    if (it.kind !== 'cueva') return it.label;
+    const chosen = game.flags.get('n1_cueva_elegida') as string | undefined;
+    if (!chosen) return 'Elegir';
+    return it.id === chosen && !game.flags.is('n1_apuntalado') ? 'Apuntalar' : 'Mirar';
   }
 
   private interact(): void {
@@ -797,9 +808,16 @@ export class WorldScene extends Phaser.Scene {
           bus.emit('ui:toast', { text: 'El fogón. Acá se pasa la noche.' });
         }
         break;
-      case 'cueva':
-        this.runTriggerById('trig_eleccion_cueva');
+      case 'cueva': {
+        // primero se elige la cueva; después, tocando la PROPIA, se la apuntala
+        // (trig_apuntalar, manual): eso cierra la tarde del J1 y trae la noche
+        const chosen = game.flags.get('n1_cueva_elegida') as string | undefined;
+        if (!chosen) this.runTriggerById('trig_eleccion_cueva');
+        else if (it.id !== chosen) bus.emit('ui:toast', { text: 'Esa no es la de tu familia.' });
+        else if (game.flags.is('n1_apuntalado')) bus.emit('ui:toast', { text: 'Ya está apuntalada. Aguanta.' });
+        else this.runTriggerById('trig_apuntalar');
         break;
+      }
       case 'guanaco':
         bus.emit('ui:toast', { text: '— Guarda que escupen.' });
         break;

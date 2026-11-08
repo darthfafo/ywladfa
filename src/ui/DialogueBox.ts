@@ -7,6 +7,7 @@ import { DialogueSystem, type RenderedLine } from '@/systems/DialogueSystem';
 import { portraitIdForSpeaker, portraitTextureKey } from '@/util/assets';
 import { input } from '@/util/input';
 import { crisp, FONT, FONT_FAMILY, RETRO_FONT } from '@/util/text';
+import { addInsetFrame, addPanel } from '@/ui/panel';
 
 const TRAY = VIEW.tray;
 
@@ -16,7 +17,8 @@ const TRAY = VIEW.tray;
  */
 export class DialogueBox {
   private root: Phaser.GameObjects.Container;
-  private bg: Phaser.GameObjects.Rectangle;
+  private bg: Phaser.GameObjects.Graphics;
+  private portraitFrame: Phaser.GameObjects.Graphics;
   private portrait: Phaser.GameObjects.Rectangle;
   private portraitImg: Phaser.GameObjects.Image;
   private nameText: Phaser.GameObjects.Text;
@@ -40,22 +42,26 @@ export class DialogueBox {
 
     // opaco del todo, no 0.97: contra una cutscene con foto de fondo (BootScene,
     // cold_open) ese resto de transparencia bajaba el contraste del texto.
-    this.bg = scene.add.rectangle(0, 0, TRAY.w, TRAY.h, PAL.ink, 1).setOrigin(0, 0);
+    // placa con volumen (ui/panel.ts): degradé, cantos con luz y sombra, filete
+    // dorado y sombra proyectada hacia arriba sobre el mundo
+    this.bg = addPanel(scene, 0, 0, TRAY.w, TRAY.h, { top: PAL.ink2, bottom: PAL.void, trim: true, dropShadow: 'up' });
     // línea sola arriba, no un marco de los 4 lados: es el mismo contenedor que la
     // bandeja vacía (UiScene.buildTray) y el HUD (borde solo en el filo compartido
     // con el mundo) — un stroke completo le agregaba a esto un borde a la derecha
     // que ningún otro panel del juego tiene, se notaba distinto en las cutscenes.
-    const topBorder = scene.add.rectangle(0, 0, TRAY.w, 1, PAL.slate).setOrigin(0, 0);
+    // (el canto de arriba ya lo dibuja el panel)
     // el borde importa sobre todo cuando hay arte real: el relleno pasa a PAL.ink
     // (ver show()), el mismo color que el fondo de la bandeja — sin borde el
     // recuadro queda invisible, sin contraste contra lo que lo rodea. PAL.bone a
     // baja opacidad, no el celeste que se sacó de las imágenes: mismo tono ya usado
     // para el joystick (sutil, neutro) y suficientemente claro para no fundirse con
     // ningún color de relleno posible (ink/slate/clayDark/moss).
-    this.portrait = scene.add.rectangle(8, 12, 48, 48, PAL.slate).setOrigin(0, 0).setStrokeStyle(1, PAL.bone, 0.35);
+    this.portrait = scene.add.rectangle(10, 14, 48, 48, PAL.slate).setOrigin(0, 0);
+    // retrato hundido en la placa, con filete dorado
+    this.portraitFrame = addInsetFrame(scene, 10, 14, 48, 48);
     // placeholder de color mientras no haya PNG real para ese personaje/expresión
     // (src/util/assets.ts decide en show() cuál de los dos se ve).
-    this.portraitImg = scene.add.image(8, 12, '__DEFAULT').setOrigin(0, 0).setVisible(false);
+    this.portraitImg = scene.add.image(10, 14, '__DEFAULT').setOrigin(0, 0).setVisible(false);
     // el nombre arranca a la misma altura (12) que el recuadro de retrato — antes
     // estaba unos px más arriba (7) y quedaba desalineado con el borde de la foto.
     // x=70, no 64: un poco más de aire entre el retrato y el texto (mismo x que ya
@@ -116,8 +122,8 @@ export class DialogueBox {
     this.root = scene.add
       .container(TRAY.x, TRAY.y, [
         this.bg,
-        topBorder,
         this.tapCatcher,
+        this.portraitFrame,
         this.portrait,
         this.portraitImg,
         this.nameText,
@@ -241,6 +247,7 @@ export class DialogueBox {
     // sin ningún borde/caja que lo contenga (a diferencia del placeholder de color,
     // que siempre se sintió "encajado" por ser él mismo un rectángulo sólido).
     this.portrait.setVisible(showPortrait);
+    this.portraitFrame.setVisible(showPortrait);
     this.portrait.setFillStyle(hasArt ? PAL.ink : portraitColor(line.portrait));
     this.portraitImg.setVisible(hasArt);
     if (hasArt) {

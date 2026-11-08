@@ -142,7 +142,7 @@ props:
 | **T2 Mañana** | Sobrecargarte hace el segundo viaje obligatorio. Nadie te reta: simplemente tardás más | Peso | 3 min |
 | T2 | **Edwyn Roberts** aparece con la mala noticia: el depósito que él preparó tiene un tercio de lo prometido | Diálogo | 2 min |
 | **T3 Tarde** | Subida a la barranca. Elegís **qué cueva ocupa tu familia** entre tres (mejor abrigo / más seca / más cerca del fogón). Decisión con consecuencia en J2 | Elección | 4 min |
-| T3 | Cavar y apuntalar: minijuego simple de colocación de maderos | Construcción base | 3 min |
+| T3 | Cavar y apuntalar: minijuego simple de colocación de maderos. *Hoy (sin minijuego):* tocar la cueva propia la apuntala con un diálogo corto; eso cierra la tarde y trae la noche | Construcción base | 3 min |
 | **T4 Noche** | **Primer fogón.** El HUD muestra el consumo nocturno en vivo: −1 ración por persona, −2 L agua. Quedan **4 días de agua** | Recursos | 2 min |
 | T4 | Rueda de diálogo en el fogón: Lewis, Matthews, Edwyn. Elegís a quién escuchar. Sube vínculo con uno | Vínculo | 3 min |
 | T4 | **Autoguardado.** Entrada de diario escrita sola | Guardado | 20 s |
@@ -206,7 +206,7 @@ Ocho bultos, capacidad para cinco. **Esta es la pantalla más importante del niv
 | `trig_edwyn_deposito` | z1 | dialogue | `cajones_bajados >= 6` | ✔ | 1 |
 | `trig_subida_barranca` | z2 | zone | Entrar a z2 por primera vez | ✔ | 0 |
 | `trig_eleccion_cueva` | z2 | choice | Interactuar con cueva 1, 2 o 3 | ✔ | 1 |
-| `trig_apuntalar` | z2 | minigame | Tras elegir cueva | ✔ | 1 |
+| `trig_apuntalar` | z2 | minigame (manual) | Tocar la cueva propia, tras elegirla | ✔ | 1 |
 | `trig_fogon_j1` | z2 | scene | `turno == noche && jornada == 1` | ✔ | 1 |
 | `trig_amanecer_j2` | z2 | scene | `jornada == 2 && turno == amanecer` | ✔ | 0 |
 | `trig_reparto_tareas` | z2 | choice | Tras `trig_amanecer_j2` | ✔ | 0 |

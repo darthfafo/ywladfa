@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { BUTTON_3D_ACTIVE_CSS } from '@/ui/panel';
+import { RETRO_FONT } from '@/util/text';
 import { PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { input } from '@/util/input';
@@ -65,8 +67,10 @@ export class TouchControls {
         'button',
         'height:24px; box-sizing:border-box; margin:0; padding:0 10px; min-width:24px; ' +
           'display:inline-flex; align-items:center; justify-content:center; white-space:nowrap; ' +
-          'border-radius:12px; background:#2E464F; color:#EAE8E0; border:1px solid #7FB0B8; ' +
-          'font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:10px; text-align:center; ' +
+          // mismo botón con volumen que el resto de la UI (ui/panel.ts), en dorado: es LA acción
+          BUTTON_3D_ACTIVE_CSS +
+          ' border-radius:12px; ' +
+          `font-family: ${RETRO_FONT}; font-size:8px; text-align:center; ` +
           'cursor:pointer; -webkit-tap-highlight-color:transparent;',
       )
       .setOrigin(1, 0.5);

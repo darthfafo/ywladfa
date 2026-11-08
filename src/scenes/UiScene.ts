@@ -12,6 +12,7 @@ import { input } from '@/util/input';
 import { SelectList } from '@/util/selectList';
 import { crisp, FONT, RETRO_FONT } from '@/util/text';
 import { TURNS } from '@/systems/TimeSystem';
+import { addPanel } from '@/ui/panel';
 
 /** Recursos que se muestran en el HUD del Nivel 1. El resto vive en el panel de jornada. */
 const HUD_RESOURCES: ResourceId[] = ['agua', 'comida', 'lena'];
@@ -58,7 +59,9 @@ export class UiScene extends Phaser.Scene {
   private touch!: TouchControls;
   private overlay: Phaser.GameObjects.Container | null = null;
   private overlayNav: SelectList | null = null;
-  private hudObjects: Array<Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle | Phaser.GameObjects.DOMElement> = [];
+  private hudObjects: Array<
+    Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle | Phaser.GameObjects.DOMElement | Phaser.GameObjects.Graphics
+  > = [];
   private cutsceneBg: Phaser.GameObjects.Image | null = null;
 
   constructor() {
@@ -108,13 +111,15 @@ export class UiScene extends Phaser.Scene {
    */
   private buildHud(): void {
     const h = VIEW.hud;
-    const track = (o: Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle | Phaser.GameObjects.DOMElement): void => {
+    const track = (
+      o: Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle | Phaser.GameObjects.DOMElement | Phaser.GameObjects.Graphics,
+    ): void => {
       this.hudObjects.push(o);
     };
     // opaco del todo, no 0.96: mismo criterio que la bandeja (DialogueBox.bg,
     // buildTray) — más contraste para el texto contra el mundo de fondo.
-    track(this.add.rectangle(h.x, h.y, h.w, h.h, PAL.ink, 1).setOrigin(0, 0).setDepth(60));
-    track(this.add.rectangle(h.x, h.y + h.h - 1, h.w, 1, PAL.slate).setOrigin(0, 0).setDepth(61));
+    // placa con volumen (ui/panel.ts), con sombra proyectada hacia abajo sobre el mundo
+    track(addPanel(this, h.x, h.y, h.w, h.h, { top: PAL.ink2, bottom: PAL.void, dropShadow: 'down' }).setDepth(60));
 
     // texto del HUD en HTML real, no Phaser Text: por más que se lo fuerce a
     // reescalado suave (index.html), a este tamaño (8-9px internos) el texto de
@@ -165,7 +170,9 @@ export class UiScene extends Phaser.Scene {
     // quedaba apretada contra los recursos. La barra ya se explica sola (el
     // tutorial tut_carga la señala como "la barra de la derecha") y gana el ancho
     // que liberó la etiqueta.
-    track(this.add.rectangle(LOADBAR_X, 20, LOADBAR_W, 5, PAL.ink2).setOrigin(0, 0).setDepth(62));
+    // barra de carga hundida: fondo oscuro con canto de luz abajo
+    track(this.add.rectangle(LOADBAR_X - 1, 19, LOADBAR_W + 2, 7, PAL.void).setOrigin(0, 0).setDepth(62));
+    track(this.add.rectangle(LOADBAR_X - 1, 25, LOADBAR_W + 2, 1, PAL.seaPale, 0.3).setOrigin(0, 0).setDepth(62));
     this.loadBar = this.add.rectangle(LOADBAR_X, 20, 0, 5, PAL.moss).setOrigin(0, 0).setDepth(63);
     track(this.loadBar);
   }
@@ -186,8 +193,8 @@ export class UiScene extends Phaser.Scene {
     // PAL.ink, no PAL.void: la bandeja tiene que leerse como panel del juego,
     // no fundirse con el fondo de la página que queda fuera del canvas. Opaca del
     // todo (no 0.97): mismo criterio que DialogueBox.bg.
-    this.add.rectangle(t.x, t.y, t.w, t.h, PAL.ink, 1).setOrigin(0, 0).setDepth(40);
-    this.add.rectangle(t.x, t.y, t.w, 1, PAL.slate).setOrigin(0, 0).setDepth(41);
+    // misma placa que el diálogo (DialogueBox.bg): al abrirse uno sobre la otra no cambia nada de lugar
+    addPanel(this, t.x, t.y, t.w, t.h, { top: PAL.ink2, bottom: PAL.void, trim: true, dropShadow: 'up' }).setDepth(40);
 
     this.zoneLabel = crisp(
       this.add
@@ -460,10 +467,13 @@ export class UiScene extends Phaser.Scene {
 
     const top = VIEW.world.y;
     const margin = 10;
-    const bg = this.add
-      .rectangle(margin, top + margin, VIEW.width - margin * 2, VIEW.world.h - margin * 2, PAL.void, 0.96)
-      .setOrigin(0, 0)
-      .setStrokeStyle(1, PAL.seaPale, 0.5);
+    const bg = addPanel(this, margin, top + margin, VIEW.width - margin * 2, VIEW.world.h - margin * 2, {
+      top: PAL.ink2,
+      bottom: PAL.void,
+      alpha: 0.97,
+      trim: true,
+      dropShadow: 'around',
+    });
     const titleT = crisp(
       this.add
         .text(16, top + 24, title, {
@@ -508,8 +518,11 @@ export class UiScene extends Phaser.Scene {
           .setResolution(8),
       );
       const boxH = label.height + 16;
+      // botón con volumen debajo; el rectángulo de encima solo marca el borde y recibe el toque
+      const face = addPanel(this, 16, y, VIEW.width - 32, boxH, { top: PAL.slate, bottom: PAL.ink });
+      items.push(face);
       const box = this.add
-        .rectangle(16, y, VIEW.width - 32, boxH, PAL.ink2, 0.9)
+        .rectangle(16, y, VIEW.width - 32, boxH, PAL.ink2, 0.001)
         .setOrigin(0, 0)
         .setStrokeStyle(1, PAL.slate)
         .setInteractive({ useHandCursor: true });

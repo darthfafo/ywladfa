@@ -7,6 +7,7 @@ import type { WorldScene } from '@/scenes/WorldScene';
 import { addSceneBackground } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { crisp, FONT, RETRO_FONT } from '@/util/text';
+import { addPanel } from '@/ui/panel';
 
 interface CampData {
   dialogueId: string;
@@ -59,7 +60,7 @@ export class CampScene extends Phaser.Scene {
     this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void).setOrigin(0, 0);
 
     const h = VIEW.hud;
-    this.add.rectangle(h.x, h.y, h.w, h.h, PAL.ink, 0.96).setOrigin(0, 0);
+    addPanel(this, h.x, h.y, h.w, h.h, { top: PAL.ink2, bottom: PAL.void, dropShadow: 'down' }).setDepth(1);
     crisp(
       this.add
         .text(h.x + h.w / 2, 4, `Jornada ${this.night} · Noche`, {

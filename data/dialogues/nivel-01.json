@@ -74,20 +74,7 @@
           "speaker": "npc_pepperell",
           "portrait": "neutral",
           "broken": true,
-          "text": "Vos. Sí, vos. Marea sube en cuatro horas. Cajones abajo antes, o cajones al agua.",
-          "next": "p2"
-        },
-        "p2": {
-          "speaker": "pc",
-          "portrait": "neutral",
-          "text": "¿Nadie más los baja?",
-          "next": "p3"
-        },
-        "p3": {
-          "speaker": "npc_pepperell",
-          "portrait": "neutral",
-          "broken": true,
-          "text": "Todos bajan. Vos también bajás. Ocho cajones. Yo cuento.",
+          "text": "Vos. Sí, vos. Marea sube en cuatro horas. Ocho cajones arriba de la arena antes, o al agua.",
           "next": "p4"
         },
         "p4": {
@@ -760,6 +747,24 @@
       }
     },
     {
+      "id": "d_n1_apuntalar",
+      "lang": "none",
+      "start": "a1",
+      "note": "Apuntalar la cueva elegida (trig_apuntalar, a mano): cierra la tarde del J1. Su turnCost lleva a la noche; el atardecer lo muestra WorldScene al cerrar este diálogo.",
+      "nodes": {
+        "a1": {
+          "speaker": "narrator",
+          "text": "Apuntalás la boca de la cueva con piedras y las tablas de un cajón roto. La arcilla cruje, pero aguanta.",
+          "next": "a2"
+        },
+        "a2": {
+          "speaker": "narrator",
+          "text": "Cuando terminás, ya está cayendo el sol.",
+          "end": true
+        }
+      }
+    },
+    {
       "id": "d_n1_cold_open",
       "lang": "none",
       "start": "c1",
@@ -767,12 +772,7 @@
       "nodes": {
         "c1": {
           "speaker": "narrator",
-          "text": "28 de julio de 1865. El bote toca la playa y nadie baja primero.",
-          "next": "c2"
-        },
-        "c2": {
-          "speaker": "narrator",
-          "text": "Nos dijeron que era verde.",
+          "text": "28 de julio de 1865. El bote toca la playa y nadie baja primero. Nos dijeron que era verde.",
           "next": "c3"
         },
         "c3": {

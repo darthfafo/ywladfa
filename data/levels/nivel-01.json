@@ -617,17 +617,23 @@
       "once": true,
       "turnCost": 1,
       "action": {
-        "choice": "ch_n1_cueva"
+        "choice": "ch_n1_cueva",
+        "toast": "Antes de que oscurezca, apuntalá tu cueva."
       }
     },
     {
       "id": "trig_apuntalar",
       "type": "minigame",
-      "requires": "flags.n1_cueva_elegida != null",
+      "manual": true,
+      "requires": "flags.n1_cueva_elegida != null && progress.day == 1",
+      "note": "Se dispara tocando TU cueva (WorldScene.interact, 'cueva') después de elegirla. Antes no tenía lugar ni acción propia (el minijuego no existe): se disparaba solo apenas se elegía la cueva y gastaba el turno, saltando de mañana/tarde a la noche — la tarde del J1 no se llegaba a jugar. Su turnCost es el que lleva la tarde a la noche.",
       "once": true,
       "turnCost": 1,
       "action": {
-        "minigame": "mg_apuntalar"
+        "dialogue": "d_n1_apuntalar",
+        "setFlag": {
+          "n1_apuntalado": true
+        }
       }
     },
     {

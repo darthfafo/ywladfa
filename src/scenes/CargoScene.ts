@@ -7,6 +7,7 @@ import type { BultoDef, ResourceId } from '@/core/types';
 import type { WorldScene } from '@/scenes/WorldScene';
 import { addIconImage, addSceneBackground } from '@/util/assets';
 import { crisp, FONT, RETRO_FONT } from '@/util/text';
+import { addPanel } from '@/ui/panel';
 
 interface Card {
   bulto: BultoDef;
@@ -122,8 +123,10 @@ export class CargoScene extends Phaser.Scene {
     const x = 6 + col * (CARD_W + GAP);
     const y = GRID_Y + row * (CARD_H + GAP);
 
+    // tarjeta con volumen (ui/panel.ts) debajo; el rectángulo de encima da el borde y recibe el toque
+    addPanel(this, x, y, CARD_W, CARD_H, { top: PAL.slate, bottom: PAL.ink, alpha: 0.95 });
     const bg = this.add
-      .rectangle(x, y, CARD_W, CARD_H, PAL.ink2, 0.95)
+      .rectangle(x, y, CARD_W, CARD_H, PAL.ink2, 0.001)
       .setOrigin(0, 0)
       .setStrokeStyle(1, PAL.slate)
       .setInteractive({ useHandCursor: true });
@@ -196,12 +199,12 @@ export class CargoScene extends Phaser.Scene {
     const card: Card = { bulto: b, bg, iconTint, label, kg, checkBg, check, taken: false };
     bg.on('pointerover', () => {
       if (card.taken) return;
-      bg.setFillStyle(PAL.slate, 0.95);
+      bg.setFillStyle(PAL.slate, 0.45);
       card.iconTint?.setFillStyle(PAL.seaPale, 0.12);
     });
     bg.on('pointerout', () => {
       if (card.taken) return;
-      bg.setFillStyle(PAL.ink2, 0.95);
+      bg.setFillStyle(PAL.ink2, 0.001);
       card.iconTint?.setFillStyle(PAL.moss, 0);
     });
     bg.on('pointerdown', () => this.pick(card));
@@ -237,13 +240,13 @@ export class CargoScene extends Phaser.Scene {
     card.taken = taken;
     if (taken) {
       this.taken.add(card.bulto.id);
-      card.bg.setFillStyle(PAL.moss, 0.9).setStrokeStyle(2, PAL.wheat);
+      card.bg.setFillStyle(PAL.moss, 0.55).setStrokeStyle(2, PAL.wheat);
       card.iconTint?.setFillStyle(PAL.moss, 0.4);
       card.checkBg.setVisible(true);
       card.check.setVisible(true);
     } else {
       this.taken.delete(card.bulto.id);
-      card.bg.setFillStyle(PAL.ink2, 0.95).setStrokeStyle(1, PAL.slate);
+      card.bg.setFillStyle(PAL.ink2, 0.001).setStrokeStyle(1, PAL.slate);
       card.iconTint?.setFillStyle(PAL.moss, 0);
       card.checkBg.setVisible(false);
       card.check.setVisible(false);

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { PAL, VIEW } from '@/config';
 import { saveSystem } from '@/systems/SaveSystem';
 import { crisp, RETRO_FONT } from '@/util/text';
+import { addPanel } from '@/ui/panel';
 
 interface TransitionData {
   /** id del nivel que sigue (`data/levels/*.json` → `next`). Todavía no existe
@@ -50,8 +51,9 @@ export class TransitionScene extends Phaser.Scene {
     );
     const w = text.width + 32;
     const h = text.height + 16;
+    addPanel(this, cx - w / 2, y - h / 2, w, h, { top: PAL.slate, bottom: PAL.ink, alpha: 0.95 }).setDepth(-2);
     const box = this.add
-      .rectangle(cx, y, w, h, PAL.ink2, 0.9)
+      .rectangle(cx, y, w, h, PAL.ink2, 0.001)
       .setStrokeStyle(1, PAL.slate)
       .setInteractive({ useHandCursor: true })
       .setDepth(-1);

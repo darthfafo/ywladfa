@@ -6,6 +6,7 @@ import { createInitialState } from '@/core/GameState';
 import { saveSystem } from '@/systems/SaveSystem';
 import { addSceneBackground, preloadArt, sceneTextureKey } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
+import { BUTTON_3D_ACTIVE_CSS, BUTTON_3D_CSS } from '@/ui/panel';
 import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
 import { RETRO_FONT } from '@/util/text';
 
@@ -54,15 +55,16 @@ interface Slide {
   id: string;
   rain: number;
   mist: number;
-  spray?: boolean;
   lightning?: boolean;
   wind?: boolean;
+  /** centro vertical de la ilustración (por defecto CINE_IMG_CY) */
+  cy?: number;
 }
 
 /** El viaje entero en la portada: salida, travesía, llegada, la barranca. */
 const TITLE_SLIDES: Slide[] = [
   { id: 'mimosa_puerto', rain: 0.5, mist: 0.4 },
-  { id: 'travesia', rain: 1, mist: 0.2, spray: true, lightning: true },
+  { id: 'travesia', rain: 1, mist: 0.2, lightning: true },
   { id: 'cold_open', rain: 0.25, mist: 1 },
   { id: 'mimosa_zarpa', rain: 0, mist: 0.5, wind: true },
 ];
@@ -92,11 +94,12 @@ export class BootScene extends Phaser.Scene {
     slides: Slide[];
     index: number;
     current: Phaser.GameObjects.Image[];
+    /** tomas anteriores que todavía se están desvaneciendo */
+    fading: Phaser.GameObjects.Image[];
     timer: Phaser.Time.TimerEvent | null;
     flash: Phaser.Time.TimerEvent | null;
     rain: Phaser.GameObjects.Particles.ParticleEmitter;
     mist: Phaser.GameObjects.Particles.ParticleEmitter;
-    spray: Phaser.GameObjects.Particles.ParticleEmitter;
     wind: Phaser.GameObjects.Particles.ParticleEmitter;
     flashRect: Phaser.GameObjects.Rectangle;
     overlays: Phaser.GameObjects.GameObject[];
@@ -240,17 +243,6 @@ export class BootScene extends Phaser.Scene {
       alpha: { onUpdate: (_p: unknown, _k: string, t: number) => Math.sin(t * Math.PI) * 0.22 },
       frequency: -1,
     }).setDepth(4);
-    const spray = this.add.particles(0, 0, 'fx_dot', {
-      x: { min: 0, max: W },
-      y: { min: H * 0.62, max: H * 0.8 },
-      lifespan: 900,
-      speedY: { min: -140, max: -60 },
-      speedX: { min: -80, max: 20 },
-      gravityY: 260,
-      scale: { min: 0.5, max: 1.2 },
-      alpha: { start: 0.8, end: 0 },
-      frequency: -1,
-    }).setDepth(5);
     const wind = this.add.particles(0, 0, 'fx_wisp', {
       x: -10,
       y: { min: H * 0.15, max: H * 0.9 },
@@ -268,7 +260,7 @@ export class BootScene extends Phaser.Scene {
         'background: radial-gradient(ellipse at 50% 45%, rgba(14,20,22,0) 45%, rgba(14,20,22,0.75) 100%);')
       .setOrigin(0, 0)
       .setDepth(-2);
-    this.cine = { slides, index: -1, current: [], timer: null, flash: null, rain, mist, spray, wind, flashRect, overlays: [vignette] };
+    this.cine = { slides, index: -1, current: [], fading: [], timer: null, flash: null, rain, mist, wind, flashRect, overlays: [vignette] };
     this.nextSlide();
   }
 
@@ -287,9 +279,9 @@ export class BootScene extends Phaser.Scene {
       // imagen agrandada, desenfocada y oscura — como un video vertical en el celular.
       const bg = this.add.image(W / 2, H / 2, key).setDepth(-8).setAlpha(0);
       bg.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
-      bg.setScale(Math.max(W / bg.width, H / bg.height) * 1.12).setTint(0x5a5f62);
+      bg.setScale(Math.max(W / bg.width, H / bg.height) * 1.12).setTint(0x8a9094);
       bg.preFX?.addBlur(2, 2, 2, 1.4);
-      const img = this.add.image(W / 2, CINE_IMG_CY, key).setDepth(-6).setAlpha(0);
+      const img = this.add.image(W / 2, slide.cy ?? CINE_IMG_CY, key).setDepth(-6).setAlpha(0);
       const fit = W / img.width;
       // movimiento chico: el pixel art titila si se lo escala mucho
       const dir = c.index % 2 ? 1 : -1;
@@ -299,7 +291,17 @@ export class BootScene extends Phaser.Scene {
       this.tweens.add({ targets: bg, x: W / 2 + dir * 10, duration: SLIDE_MS + FADE_MS * 2, ease: 'Sine.easeInOut' });
       for (const prev of c.current) {
         prev.setDepth(prev.depth - 1);
-        this.tweens.add({ targets: prev, alpha: 0, delay: FADE_MS * 0.6, duration: FADE_MS, onComplete: () => prev.destroy() });
+        c.fading.push(prev);
+        this.tweens.add({
+          targets: prev,
+          alpha: 0,
+          delay: FADE_MS * 0.6,
+          duration: FADE_MS,
+          onComplete: () => {
+            c.fading = c.fading.filter((f) => f !== prev);
+            prev.destroy();
+          },
+        });
       }
       c.current = [bg, img];
     }
@@ -310,8 +312,6 @@ export class BootScene extends Phaser.Scene {
     c.mist.setFrequency(slide.mist > 0 ? 1100 / slide.mist : -1, 1);
     if (slide.mist > 0) c.mist.start();
     else c.mist.stop();
-    if (slide.spray) c.spray.setFrequency(60, 4).start();
-    else c.spray.stop();
     if (slide.wind) c.wind.setFrequency(90, 1).start();
     else c.wind.stop();
     c.flash?.remove();
@@ -342,7 +342,7 @@ export class BootScene extends Phaser.Scene {
     if (!c) return;
     c.timer?.remove();
     c.flash?.remove();
-    for (const o of [...c.current, c.rain, c.mist, c.spray, c.wind, c.flashRect, ...c.overlays]) {
+    for (const o of [...c.current, ...c.fading, c.rain, c.mist, c.wind, c.flashRect, ...c.overlays]) {
       if (o) {
         this.tweens.killTweensOf(o);
         o.destroy();
@@ -390,12 +390,12 @@ export class BootScene extends Phaser.Scene {
   }
 
   /** Degradé oscuro (HTML) para que el texto se lea sobre el 3D sin tapar todo con una franja. */
-  private renderShade(y: number, h: number, from: 'top' | 'bottom'): void {
+  private renderShade(y: number, h: number, from: 'top' | 'bottom', strength = 0.88): void {
     const dir = from === 'top' ? 'to bottom' : 'to top';
     this.track(
       this.add
         .dom(0, y, 'div', `width:${VIEW.width}px; height:${h}px; pointer-events:none; ` +
-          `background:linear-gradient(${dir}, rgba(14,20,22,0.88), rgba(14,20,22,0.55) 55%, rgba(14,20,22,0));`)
+          `background:linear-gradient(${dir}, rgba(14,20,22,${strength}), rgba(14,20,22,${strength * 0.6}) 55%, rgba(14,20,22,0));`)
         .setOrigin(0, 0)
         .setDepth(-1), // debajo de los textos (0) y botones (16)
     );
@@ -509,9 +509,12 @@ export class BootScene extends Phaser.Scene {
     this.clearStep();
     const cx = VIEW.width / 2;
     this.setChrome(false);
-    const portrait = (g: Gender): Slide => ({ id: `enlistamiento_${g}`, rain: 0.3, mist: 0.3 });
+    // la ilustración arriba de todo: los botones quedan sobre la pintura, no sobre una franja vacía
+    const portrait = (g: Gender): Slide => ({ id: `enlistamiento_${g}`, rain: 0.3, mist: 0.3, cy: 200 });
     this.startCinematic([portrait(this.playerGender)]);
-    this.renderShade(0, 200, 'top');
+    // más suave que en la portada: acá arriba solo hay botones, no un título
+    // grande — con el degradé fuerte la franja de arriba quedaba negra
+    this.renderShade(0, 150, 'top', 0.55);
     this.renderShade(VIEW.height - 110, 110, 'bottom');
     const top = 18;
     this.track(this.renderDomText(cx, top, '¿Quién sos?', { size: 13, color: '#D9A845', align: 'center' }));
@@ -539,9 +542,13 @@ export class BootScene extends Phaser.Scene {
       ] as const) {
         const b = el.node as HTMLButtonElement;
         const on = this.playerGender === g;
-        b.style.background = on ? 'rgba(217,168,69,0.9)' : 'rgba(46,70,79,0.75)';
-        b.style.color = on ? '#18262A' : '#BFD3D8';
-        b.style.borderColor = on ? '#D9A845' : '#7FB0B8';
+        // se reescribe solo el "look" (fondo, borde, sombras), no el estilo entero:
+        // Phaser maneja la posición del botón con su propio transform
+        const look = on ? BUTTON_3D_ACTIVE_CSS : BUTTON_3D_CSS + ' color:#D8E4E7;';
+        for (const decl of look.split(';')) {
+          const [prop, ...val] = decl.split(':');
+          if (prop?.trim() && val.length) b.style.setProperty(prop.trim(), val.join(':').trim());
+        }
       }
     };
 
@@ -792,7 +799,7 @@ export class BootScene extends Phaser.Scene {
       'button',
       `width:${width}px; height:${height}px; box-sizing:border-box; margin:0; padding:0 6px; ` +
         '-webkit-appearance:none; appearance:none; border-radius:0; ' +
-        'background:rgba(46,70,79,0.75); color:#BFD3D8; border:1px solid #7FB0B8; ' +
+        BUTTON_3D_CSS + ' color:#D8E4E7; ' +
         `font-family: ${retro ? RETRO_FONT : UI_FONT}; font-size:${retro ? 9 : 12}px; line-height:1; text-align:center; ` +
         'cursor:pointer; -webkit-tap-highlight-color:transparent;',
     );
@@ -800,8 +807,9 @@ export class BootScene extends Phaser.Scene {
     btn.textContent = label;
     btn.type = 'button';
     btn.addEventListener('click', onPick);
-    btn.addEventListener('touchstart', () => (btn.style.background = 'rgba(58,85,96,0.85)'), { passive: true });
-    btn.addEventListener('touchend', () => (btn.style.background = 'rgba(46,70,79,0.75)'));
+    // al apretar se hunde: sin la sombra de abajo y un píxel más abajo el texto
+    btn.addEventListener('touchstart', () => (btn.style.filter = 'brightness(1.25)'), { passive: true });
+    btn.addEventListener('touchend', () => (btn.style.filter = ''));
     return el.setDepth(16);
   }
 
