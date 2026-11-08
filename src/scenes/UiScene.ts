@@ -13,6 +13,7 @@ import { SelectList } from '@/util/selectList';
 import { crisp, FONT, RETRO_FONT } from '@/util/text';
 import { TURNS } from '@/systems/TimeSystem';
 import { addPanel } from '@/ui/panel';
+import { sfx } from '@/audio/Sfx';
 
 /** Recursos que se muestran en el HUD del Nivel 1. El resto vive en el panel de jornada. */
 const HUD_RESOURCES: ResourceId[] = ['agua', 'comida', 'lena'];
@@ -90,7 +91,10 @@ export class UiScene extends Phaser.Scene {
     // correcto: cuando el jugador se despierta, no en medio de la noche anterior.
     bus.on('time:turn-advanced', () => this.refreshTime());
     bus.on('inventory:weight-changed', () => this.refreshLoad());
-    bus.on('ui:toast', ({ text }) => this.showToast(text));
+    bus.on('ui:toast', ({ text }) => {
+      sfx.chime();
+      this.showToast(text);
+    });
     bus.on('ui:tutorial', ({ id }) => this.openTutorial(id));
     bus.on('zone:entered', ({ label }) => this.showZone(label));
     // CampScene/CargoScene pausan Ui pero no la ocultan: el HUD es HTML aparte del
@@ -534,7 +538,10 @@ export class UiScene extends Phaser.Scene {
         box.setStrokeStyle(1, PAL.slate);
         label.setColor('#BFD3D8');
       });
-      box.on('pointerdown', () => o.onPick());
+      box.on('pointerdown', () => {
+        sfx.select();
+        o.onPick();
+      });
       items.push(box, label);
       y += boxH + 8;
       return { text: label, onPick: o.onPick };

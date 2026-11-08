@@ -10,6 +10,7 @@ import { BUTTON_3D_ACTIVE_CSS, BUTTON_3D_CSS } from '@/ui/panel';
 import { ensureFxTextures } from '@/ui/cinematic';
 import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
 import { RETRO_FONT } from '@/util/text';
+import { sfx } from '@/audio/Sfx';
 
 type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
@@ -288,6 +289,13 @@ export class BootScene extends Phaser.Scene {
       }
       c.current = [bg, img];
     }
+    // sonido de esta toma: lluvia, el mar en las tomas con agua, viento en la barranca
+    const seaSlides = ['travesia', 'cold_open', 'mimosa_zarpa', 'mimosa_puerto'];
+    sfx.setAmbience({
+      rain: slide.rain,
+      sea: seaSlides.includes(slide.id) ? (slide.id === 'travesia' ? 1 : 0.6) : 0,
+      wind: slide.wind ? 0.9 : 0.35,
+    });
     // clima de esta toma
     c.rain.setFrequency(slide.rain > 0 ? 60 / slide.rain : -1, slide.rain > 0.7 ? 2 : 1);
     if (slide.rain > 0) c.rain.start();
@@ -307,6 +315,7 @@ export class BootScene extends Phaser.Scene {
   private lightning(): void {
     const r = this.cine?.flashRect;
     if (!r || Math.random() < 0.35) return;
+    sfx.thunder();
     this.tweens.killTweensOf(r);
     r.setFillStyle(0xeef3f5, 0);
     this.tweens.chain({
@@ -436,6 +445,16 @@ export class BootScene extends Phaser.Scene {
     for (const o of this.stepObjects) {
       if (o instanceof Phaser.GameObjects.DOMElement && o.node instanceof HTMLButtonElement) o.node.classList.add('ttl-up', 'ttl-d3');
     }
+
+    // sonido sí/no, chiquito arriba a la derecha (queda guardado por jugador)
+    const soundLabel = () => (sfx.isMuted ? 'Sonido: No' : 'Sonido: Sí');
+    const soundBtn = this.renderDomButton(VIEW.width - 52, 12, soundLabel(), () => {
+      sfx.toggleMute();
+      (soundBtn.node as HTMLButtonElement).textContent = soundLabel();
+    }, 92, 18);
+    (soundBtn.node as HTMLButtonElement).style.fontSize = '7px';
+    (soundBtn.node as HTMLButtonElement).style.whiteSpace = 'nowrap';
+    this.track(soundBtn);
 
     // input de archivo invisible, siempre presente: el botón "Importar partida" de
     // arriba solo lo dispara (inputEl.click()).
@@ -792,7 +811,10 @@ export class BootScene extends Phaser.Scene {
     const btn = el.node as HTMLButtonElement;
     btn.textContent = label;
     btn.type = 'button';
-    btn.addEventListener('click', onPick);
+    btn.addEventListener('click', () => {
+      sfx.select();
+      onPick();
+    });
     // al apretar se hunde: sin la sombra de abajo y un píxel más abajo el texto
     btn.addEventListener('touchstart', () => (btn.style.filter = 'brightness(1.25)'), { passive: true });
     btn.addEventListener('touchend', () => (btn.style.filter = ''));

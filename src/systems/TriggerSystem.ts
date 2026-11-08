@@ -6,6 +6,10 @@ export interface TriggerContext {
   tileX: number;
   tileY: number;
   zoneId: string;
+  /** true solo en el chequeo en que el jugador acaba de entrar a `zoneId`:
+   * los triggers de ambiente repetibles de zona (viento, pistas) disparan ahí,
+   * no en cada tile que se pisa adentro */
+  enteredZone?: boolean;
 }
 
 /**
@@ -16,6 +20,17 @@ export interface TriggerContext {
  * así quedan incluidos en cualquier guardado sin que el SaveSystem tenga que saber
  * nada de triggers, y cargar una partida no repite cutscenes de una sola vez.
  */
+/**
+ * Orden de prioridad (solo dispara el primero): la historia (`once`) siempre antes
+ * que el ambiente repetible — si no, el viento de la meseta (zona entera, se
+ * repite) le ganaba siempre al vigía, y la jarilla del monte a las huellas de
+ * Dafydd. Dentro de cada grupo, rect antes que zona antes que sin ubicación.
+ */
+function rank(t: TriggerDef): number {
+  const space = t.rect ? 2 : t.zone ? 1 : 0;
+  return (t.once ? 10 : 0) + space;
+}
+
 export class TriggerSystem {
   constructor(private game: Game, private triggers: TriggerDef[]) {
     if (!this.game.state.triggersFired) this.game.state.triggersFired = [];
@@ -46,10 +61,11 @@ export class TriggerSystem {
       if (t.manual) continue; // solo se llega hablándole al NPC (WorldScene.talkTo)
       if (t.once && this.hasFired(t.id)) continue;
       if (!this.matchesSpace(t, ctx)) continue;
+      if (!t.once && t.zone && !t.rect && !ctx.enteredZone) continue;
       if (!this.game.flags.eval(t.requires)) continue;
       out.push(t);
     }
-    out.sort((a, b) => Number(!!b.zone || !!b.rect) - Number(!!a.zone || !!a.rect));
+    out.sort((a, b) => rank(b) - rank(a));
     return out;
   }
 

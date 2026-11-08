@@ -95,6 +95,17 @@ export const TERRAIN_HEIGHT_3D: Record<string, number> = {
   SPRING: -0.25,
 };
 
+/** Volumen del sonido sintetizado (src/audio/Sfx.ts), 0..1 por grupo. */
+export const AUDIO = {
+  master: 0.8,
+  steps: 0.35,
+  actions: 0.7,
+  ui: 0.8,
+  ambience: 0.6,
+  /** cada cuántos px de mundo caminados suena un paso */
+  stepPx: 20,
+} as const;
+
 /** Cambio de luz entre turnos (ms): nunca de un cuadro al otro. */
 export const TURN_LIGHT_MS = 2500;
 /** Atardecer: al caer la noche el sol se va de a poco y, recién cuando terminó,

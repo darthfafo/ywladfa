@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { PAL } from '@/config';
 import { sceneTextureKey } from '@/util/assets';
+import { sfx } from '@/audio/Sfx';
 
 /**
  * Escenas ilustradas del juego (cutscenes, fogón, amanecer) con vida: entran con
@@ -97,6 +98,7 @@ export function playCinematic(
   depth = -5,
 ): Cinematic {
   ensureFxTextures(scene);
+  sfx.whoosh();
   const key = sceneTextureKey(sceneId);
   const objs: Phaser.GameObjects.GameObject[] = [];
   const emitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];

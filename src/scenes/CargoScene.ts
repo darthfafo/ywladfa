@@ -8,6 +8,7 @@ import type { WorldScene } from '@/scenes/WorldScene';
 import { addIconImage, addSceneBackground } from '@/util/assets';
 import { crisp, FONT, RETRO_FONT } from '@/util/text';
 import { addPanel } from '@/ui/panel';
+import { sfx } from '@/audio/Sfx';
 
 interface Card {
   bulto: BultoDef;
@@ -237,6 +238,8 @@ export class CargoScene extends Phaser.Scene {
   }
 
   private setCardTaken(card: Card, taken: boolean): void {
+    if (taken) sfx.pickup();
+    else sfx.drop();
     card.taken = taken;
     if (taken) {
       this.taken.add(card.bulto.id);

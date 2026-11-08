@@ -8,6 +8,7 @@ import { portraitIdForSpeaker, portraitTextureKey } from '@/util/assets';
 import { input } from '@/util/input';
 import { crisp, FONT, FONT_FAMILY, RETRO_FONT } from '@/util/text';
 import { addInsetFrame, addPanel } from '@/ui/panel';
+import { sfx } from '@/audio/Sfx';
 
 const TRAY = VIEW.tray;
 
@@ -193,6 +194,7 @@ export class DialogueBox {
 
   private advance(): void {
     if (!this.active) return;
+    if (!this.current?.choices.length) sfx.blip();
     if (this.pendingText) {
       // el propio nodo todavía tiene texto sin mostrar (ver setBodyTextPaginated):
       // sigue paginando ANTES de pasar al siguiente nodo o mostrar sus opciones.
@@ -362,6 +364,7 @@ export class DialogueBox {
 
     const pick = (i: number): void => {
       bus.emit('ui:toast', { text: '' });
+      sfx.select();
       this.show(this.sys.choose(line.choices[i]!.id));
     };
 

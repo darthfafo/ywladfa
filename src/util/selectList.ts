@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sfx } from '@/audio/Sfx';
 
 import { crisp } from './text';
 
@@ -78,6 +79,7 @@ export class SelectList {
   }
 
   private confirm(): void {
+    if (this.items[this.index]) sfx.select();
     this.items[this.index]?.onPick();
   }
 

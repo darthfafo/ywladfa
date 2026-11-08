@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { DUSK_MS, PAL, RENDER_3D, TURN_LIGHT_MS, TURN_TINT, VIEW } from '@/config';
+import { AUDIO, DUSK_MS, PAL, RENDER_3D, TURN_LIGHT_MS, TURN_TINT, VIEW } from '@/config';
+import { sfx, type Surface } from '@/audio/Sfx';
 import { World3D } from '@/render3d/World3D';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
@@ -34,6 +35,30 @@ const REAL_ART_SCALE = 1;
  * lados. La cueva copia el afloramiento de World3D (3.4×2 tiles, frente 3 px al
  * sur del centro del dibujo).
  */
+/** Suelo de cada terreno, para el sonido de los pasos. */
+const STEP_SURFACE: Record<number, Surface> = {
+  [TERRAIN.SAND_DRY]: 'sand',
+  [TERRAIN.SAND_WET]: 'wet',
+  [TERRAIN.SPRING]: 'wet',
+  [TERRAIN.PEBBLE]: 'pebble',
+  [TERRAIN.CLAY]: 'clay',
+  [TERRAIN.CANYON]: 'clay',
+  [TERRAIN.MESA]: 'earth',
+  [TERRAIN.SCRUB]: 'earth',
+  [TERRAIN.PATH]: 'path',
+};
+
+/** Ambiente por zona (0..1): el mar se oye en la costa y la punta, y algo desde
+ * la meseta, que mira al golfo; el viento pega más arriba. */
+const ZONE_AMBIENCE: Record<string, { wind?: number; sea?: number }> = {
+  z1_playa: { wind: 0.6, sea: 1 },
+  z6_punta: { wind: 0.8, sea: 0.8 },
+  z2_barranca: { wind: 0.5, sea: 0.3 },
+  z4_meseta: { wind: 1, sea: 0.25 },
+  z3_monte: { wind: 0.7 },
+  z5_canadon: { wind: 0.4 },
+};
+
 /** Cómo cambian de lugar los NPC entre turnos (ver updateNpcVisibility). */
 const NPC_TRANSITION = {
   fadeMs: 700,
@@ -91,6 +116,10 @@ export class WorldScene extends Phaser.Scene {
   private holdTriggersUntil = 0;
   /** false hasta la primera ubicación de NPCs (spawn): esa va de golpe */
   private npcsPlaced = false;
+  private stepAcc = 0;
+  private lastStepPos = { x: 0, y: 0 };
+  /** zona del último chequeo de triggers: para saber cuándo se ENTRA a una */
+  private lastTriggerZone = '';
   private holdTimer: Phaser.Time.TimerEvent | null = null;
   /** se hizo de noche en el reloj pero todavía no se vio el atardecer */
   private duskPending = false;
@@ -235,6 +264,9 @@ export class WorldScene extends Phaser.Scene {
     // "bloqueado" y no hacía nada — un tick después ya está desbloqueado.
     bus.on('dialogue:end', () => this.time.delayedCall(0, () => this.checkTriggers()));
 
+    this.lastStepPos = { x: this.player.x, y: this.player.y };
+    this.refreshAmbience();
+    bus.on('time:turn-advanced', () => this.refreshAmbience());
     this.setupKeyboard();
     this.scene.launch('Ui');
     this.time.delayedCall(120, () => this.checkTriggers());
@@ -256,6 +288,28 @@ export class WorldScene extends Phaser.Scene {
 
   /** Lleva la luz al turno actual en `ms` (0 = de golpe): el tinte del mundo 2D
    * (TURN_TINT) y la luz del mundo 3D (TURN_LIGHT), ambos en config.ts. */
+  /** Un paso cada AUDIO.stepPx caminados, con el sonido del suelo que se pisa. */
+  private stepSounds(): void {
+    const moved = Math.hypot(this.player.x - this.lastStepPos.x, this.player.y - this.lastStepPos.y);
+    this.lastStepPos = { x: this.player.x, y: this.player.y };
+    if (moved > VIEW.tile) return; // teletransporte, no un paso
+    this.stepAcc += moved;
+    if (this.stepAcc < AUDIO.stepPx) return;
+    this.stepAcc = 0;
+    const t = baseTerrain(this.terrain[toTile(this.player.y + 8)]?.[toTile(this.player.x)] ?? 0);
+    sfx.step(STEP_SURFACE[t] ?? 'earth');
+  }
+
+  /** Ambiente según dónde se está y la hora: mar cerca de la costa, viento
+   * más fuerte en la meseta, todo más calmo de noche. Público: CampScene lo
+   * vuelve a poner al cerrar el fogón. */
+  refreshAmbience(): void {
+    const zone = game.state.progress.zone;
+    const night = game.state.progress.turn === 'noche';
+    const amb = ZONE_AMBIENCE[zone] ?? { wind: 0.6 };
+    sfx.setAmbience({ wind: (amb.wind ?? 0.6) * (night ? 0.6 : 1), sea: amb.sea ?? 0 });
+  }
+
   private applyTurnLight(ms = 0): void {
     const turn = game.state.progress.turn;
     this.world3d?.setTurn(turn, ms);
@@ -724,6 +778,7 @@ export class WorldScene extends Phaser.Scene {
     // Sprite fijo por ahora — un ciclo de caminata de verdad (2+ frames por
     // dirección) es la próxima vuelta de arte, no algo para simular por código.
     this.updateNearest();
+    this.stepSounds();
     if (input.takeAction()) this.interact();
     this.updateDafyddFollow(delta);
     this.trackTile();
@@ -829,6 +884,7 @@ export class WorldScene extends Phaser.Scene {
     if (!it) return;
     switch (it.kind) {
       case 'cajon':
+        sfx.pickup();
         it.sprite.destroy();
         this.carriedCajones += 1;
         game.inv.add('cajon_provisiones', 1);
@@ -840,6 +896,7 @@ export class WorldScene extends Phaser.Scene {
         }
         const n = this.carriedCajones;
         game.inv.remove('cajon_provisiones', n);
+        sfx.drop();
         this.carriedCajones = 0;
         const total = game.flags.inc('n1_cajones_bajados', n);
         bus.emit('ui:toast', { text: `Cajones bajados: ${total} de 8` });
@@ -847,6 +904,7 @@ export class WorldScene extends Phaser.Scene {
         break;
       }
       case 'jarilla': {
+        sfx.chop();
         it.sprite.destroy();
         const amount = registry.levelBalance(game.state.progress.level).gains.jarilla.amount as number;
         this.carriedLena += amount;
@@ -863,6 +921,7 @@ export class WorldScene extends Phaser.Scene {
           game.inv.remove('haz_lena', n);
           this.carriedLena = 0;
           game.res.change('lena', n, 'jarilla');
+          sfx.fireUp();
           bus.emit('ui:toast', { text: `Leña cargada al fogón: +${n}` });
         } else {
           bus.emit('ui:toast', { text: 'El fogón. Acá se pasa la noche.' });
@@ -875,7 +934,10 @@ export class WorldScene extends Phaser.Scene {
         if (!chosen) this.runTriggerById('trig_eleccion_cueva');
         else if (it.id !== chosen) bus.emit('ui:toast', { text: 'Esa no es la de tu familia.' });
         else if (game.flags.is('n1_apuntalado')) bus.emit('ui:toast', { text: 'Ya está apuntalada. Aguanta.' });
-        else this.runTriggerById('trig_apuntalar');
+        else {
+          sfx.knock();
+          this.runTriggerById('trig_apuntalar');
+        }
         break;
       }
       case 'guanaco':
@@ -939,6 +1001,7 @@ export class WorldScene extends Phaser.Scene {
     if (zone && zone.id !== game.state.progress.zone) {
       game.state.progress.zone = zone.id;
       bus.emit('zone:entered', { zoneId: zone.id, label: zone.label });
+      this.refreshAmbience();
     }
 
     // Dafydd te siguió hasta acá (ver sendDafyddHome): recién al llegar de
@@ -1037,7 +1100,11 @@ export class WorldScene extends Phaser.Scene {
     this.updateGates();
     const tx = toTile(this.player.x);
     const ty = toTile(this.player.y + 8);
-    const list = this.triggers.check({ tileX: tx, tileY: ty, zoneId: game.state.progress.zone });
+    // los de ambiente repetibles de zona solo al entrar (ver TriggerSystem.check)
+    const zoneId = game.state.progress.zone;
+    const enteredZone = zoneId !== this.lastTriggerZone;
+    this.lastTriggerZone = zoneId;
+    const list = this.triggers.check({ tileX: tx, tileY: ty, zoneId, enteredZone });
     if (list.length) {
       this.runTrigger(list[0]!);
       return;

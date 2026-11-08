@@ -8,6 +8,7 @@ import { playCinematic } from '@/ui/cinematic';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { crisp, FONT, RETRO_FONT } from '@/util/text';
 import { addPanel } from '@/ui/panel';
+import { sfx } from '@/audio/Sfx';
 
 interface CampData {
   dialogueId: string;
@@ -80,6 +81,8 @@ export class CampScene extends Phaser.Scene {
     // toda y dejaba 0 — se mostraba fogon_chico igual). Si no hay PNG todavía,
     // cae en el placeholder de siempre (rectángulos + círculo animado).
     const artId = game.flags.get('_lastFire') === 'bigFire' ? 'fogon_grande' : 'fogon_chico';
+    // adentro de la cueva: fuego crepitando y el viento de afuera, apagado
+    sfx.setAmbience({ fire: artId === 'fogon_grande' ? 1 : 0.55, wind: 0.25 });
     // entrada animada, movimiento lento y brasas subiendo (ui/cinematic.ts)
     const bg = playCinematic(this, artId, { x: w.x, y: w.y, w: w.w, h: w.h }, 0).image;
     this.add.rectangle(w.x, w.y + w.h - 60, w.w, 60, PAL.soil, bg ? 0.25 : 0.5).setOrigin(0, 0);
@@ -129,6 +132,7 @@ export class CampScene extends Phaser.Scene {
 
     const world = this.scene.get('World') as WorldScene;
     const ui = this.scene.get('Ui') as UiScene;
+    world.refreshAmbience();
     // te despertás en el campamento, no donde te agarró el sueño — si la noche cayó
     // mientras todavía andabas explorando (ej. volviendo del manantial), World seguía
     // pausado ahí mismo y al reanudar aparecías en pleno cañadón en la jornada nueva.
