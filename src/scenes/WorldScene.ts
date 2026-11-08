@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { PAL, TURN_TINT, VIEW } from '@/config';
+import { PAL, RENDER_3D, TURN_TINT, VIEW } from '@/config';
+import { World3D } from '@/render3d/World3D';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
@@ -50,6 +51,10 @@ export class WorldScene extends Phaser.Scene {
   /** id de NPC → texture key + escala resueltas (arte real o placeholder) — ver create(). */
   private npcTextures = new Map<string, { key: string; scale: number }>();
   private lightOverlay!: Phaser.GameObjects.Rectangle;
+  /** Mundo HD-2D (config RENDER_3D): copia lo que hay en esta escena y lo dibuja en 3D. */
+  private world3d: World3D | null = null;
+  /** sube cada vez que se repinta el terreno, para que World3D lo reconstruya */
+  private terrainVersion = 0;
 
   constructor() {
     super('World');
@@ -137,6 +142,27 @@ export class WorldScene extends Phaser.Scene {
       .setDepth(50);
     this.applyTurnLight();
     bus.on('time:turn-advanced', () => this.applyTurnLight());
+
+    // ---- mundo HD-2D: esta escena sigue con toda la lógica pero deja de
+    // dibujar; World3D copia cada cuadro sus objetos y los dibuja en 3D debajo
+    // del canvas de Phaser (transparente). La cámara 2D sigue siguiendo al
+    // jugador porque otras cosas (gaviotas) leen su worldView.
+    if (RENDER_3D) {
+      cam.setVisible(false);
+      this.world3d = new World3D({
+        scene: this,
+        player: this.player,
+        terrain: () => this.terrain,
+        terrainVersion: () => this.terrainVersion,
+      });
+      const draw = () => this.world3d?.render(this.game.loop.delta);
+      this.game.events.on(Phaser.Core.Events.POST_RENDER, draw);
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+        this.game.events.off(Phaser.Core.Events.POST_RENDER, draw);
+        this.world3d?.destroy();
+        this.world3d = null;
+      });
+    }
 
     // ---- triggers
     this.triggers = new TriggerSystem(game, level.triggers as TriggerDef[]);
@@ -800,6 +826,7 @@ export class WorldScene extends Phaser.Scene {
         this.layer.putTileAt(idx, i, j);
       }
     }
+    this.terrainVersion++;
     if (open) bus.emit('ui:toast', { text: 'Se abrió el paso.' });
   }
 

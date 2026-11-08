@@ -11,7 +11,7 @@ import pepperellSheet from '@/assets/sprites/npc_pepperell.png?url';
 import edwynSheet from '@/assets/sprites/npc_edwyn.png?url';
 import coironUrl from '@/assets/props/coiron.png?url';
 import gaviotasUrl from '@/assets/props/gaviotas.png?url';
-import { buildShip } from './ship';
+import { buildShip } from '@/render3d/ship';
 
 // Prueba aislada (no es el juego): la playa del J1 con terreno, mar, barranca y
 // objetos en 3D real, luz/sombras dinámicas por turno, y los personajes como

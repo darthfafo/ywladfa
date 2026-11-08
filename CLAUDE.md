@@ -37,8 +37,12 @@ Un `if (agua < 6)` en el código es un bug aunque funcione.
 **R4 · Pantalla 9:16 fija, en tres franjas.**
 270×480 internos: HUD 32 px arriba, mundo 352 px (viewport recortado de la cámara), bandeja 96 px abajo.
 La bandeja es la misma para los controles táctiles y para el diálogo: no aparece ni desaparece nada.
-Nada de rotaciones ni escalas no enteras en el mundo. El texto hoy usa `Text` con `setResolution(4)`;
-falta migrarlo a bitmap font (`docs/03-assets.md` §6).
+El mundo es **HD-2D**: `src/render3d/World3D.ts` lo dibuja en 3D con Three.js debajo del canvas de
+Phaser (transparente en la franja del mundo). `WorldScene` sigue siendo dueña de toda la lógica y
+deja de dibujar; World3D copia sus objetos cada cuadro. Ahí sí hay perspectiva, rotación y escala
+libre — la regla de escalas enteras vale para la UI de Phaser (HUD, bandeja, escenas a pantalla
+completa). `?2d` en la URL vuelve al mundo 2D. Cámara, alturas y luz por turno: `src/config.ts`.
+El texto hoy usa `Text` con `setResolution(4)`; falta migrarlo a bitmap font (`docs/03-assets.md` §6).
 
 **R5 · Integridad referencial validada en build.**
 `npm run validate:data` valida contra los JSON Schema de `data/schemas/` y verifica que todo
