@@ -7,6 +7,7 @@ import { saveSystem } from '@/systems/SaveSystem';
 import { addSceneBackground, preloadArt, sceneTextureKey } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { BUTTON_3D_ACTIVE_CSS, BUTTON_3D_CSS } from '@/ui/panel';
+import { ensureFxTextures } from '@/ui/cinematic';
 import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
 import { RETRO_FONT } from '@/util/text';
 
@@ -189,33 +190,9 @@ export class BootScene extends Phaser.Scene {
 
   /* ---------------- secuencia cinemática (portada y personaje) ---------------- */
 
-  /** Texturas chicas para las partículas, dibujadas por código. */
+  /** Texturas chicas para las partículas (compartidas con las cutscenes, ui/cinematic.ts). */
   private makeFxTextures(): void {
-    if (this.textures.exists('fx_rain')) return;
-    const g = this.make.graphics({ x: 0, y: 0 }, false);
-    // gota: una raya fina que se desvanece hacia arriba
-    for (let y = 0; y < 16; y++) {
-      g.fillStyle(0xeef3f5, 0.35 + (0.65 * (y + 1)) / 16);
-      g.fillRect(0, y, 1, 1);
-    }
-    g.generateTexture('fx_rain', 1, 16);
-    g.clear();
-    // bruma: un disco muy suave (anillos concéntricos de alpha creciente al centro)
-    for (let r = 32; r > 0; r -= 2) {
-      g.fillStyle(0xffffff, 0.05);
-      g.fillCircle(32, 32, r);
-    }
-    g.generateTexture('fx_mist', 64, 64);
-    g.clear();
-    g.fillStyle(0xffffff, 1);
-    g.fillRect(0, 0, 2, 2);
-    g.generateTexture('fx_dot', 2, 2);
-    g.clear();
-    // brizna de pasto/polvo para el viento
-    g.fillStyle(0xd9c79a, 1);
-    g.fillRect(0, 0, 4, 1);
-    g.generateTexture('fx_wisp', 4, 1);
-    g.destroy();
+    ensureFxTextures(this);
   }
 
   /**

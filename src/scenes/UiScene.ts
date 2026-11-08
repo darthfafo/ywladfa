@@ -5,7 +5,7 @@ import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
 import type { ResourceId } from '@/core/types';
 import type { WorldScene } from '@/scenes/WorldScene';
-import { addSceneBackground } from '@/util/assets';
+import { playCinematic, type Cinematic } from '@/ui/cinematic';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { TouchControls } from '@/ui/TouchControls';
 import { input } from '@/util/input';
@@ -62,7 +62,7 @@ export class UiScene extends Phaser.Scene {
   private hudObjects: Array<
     Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle | Phaser.GameObjects.DOMElement | Phaser.GameObjects.Graphics
   > = [];
-  private cutsceneBg: Phaser.GameObjects.Image | null = null;
+  private cutsceneBg: Cinematic | null = null;
 
   constructor() {
     super('Ui');
@@ -323,8 +323,8 @@ export class UiScene extends Phaser.Scene {
 
     const cx = VIEW.width / 2;
     const cy = VIEW.tray.y / 2;
-    const bg = addSceneBackground(this, 'sunrise', cx, cy, VIEW.width, VIEW.tray.y);
-    bg?.setDepth(-5);
+    const cine = playCinematic(this, 'sunrise', { x: 0, y: 0, w: VIEW.width, h: VIEW.tray.y });
+    const bg = cine.image;
     const extras: Phaser.GameObjects.GameObject[] = [];
     if (!bg) {
       extras.push(this.add.rectangle(0, 0, VIEW.width, VIEW.tray.y, PAL.ink2).setOrigin(0, 0).setDepth(-6));
@@ -362,7 +362,7 @@ export class UiScene extends Phaser.Scene {
         this.touch.setContext(null);
         this.touch.setVisible(true);
         this.setHudVisible(true);
-        bg?.destroy();
+        cine.close();
         title.destroy();
         for (const o of extras) o.destroy();
         onDone?.();
@@ -392,8 +392,8 @@ export class UiScene extends Phaser.Scene {
       this.zoneLabel.setText(location ? location.toUpperCase() : '').setAlpha(location ? 1 : 0);
       // solo contra el área sin bandeja (0-384, el HUD ya está oculto): cubrir la
       // pantalla 9:16 entera recortaba mucho más de una imagen pedida en 3:4.
-      this.cutsceneBg = addSceneBackground(this, cutsceneId, VIEW.width / 2, VIEW.tray.y / 2, VIEW.width, VIEW.tray.y);
-      this.cutsceneBg?.setDepth(-5);
+      // con entrada animada, movimiento y ambiente (ui/cinematic.ts), no de golpe y quieta
+      this.cutsceneBg = playCinematic(this, cutsceneId, { x: 0, y: 0, w: VIEW.width, h: VIEW.tray.y });
     }
     this.dialogue.start(id, () => {
       // `next` viene del trigger que disparó este diálogo (ej. trig_punta_final):
@@ -408,7 +408,7 @@ export class UiScene extends Phaser.Scene {
       this.touch.setVisible(true);
       if (cutsceneId) {
         this.setHudVisible(true);
-        this.cutsceneBg?.destroy();
+        this.cutsceneBg?.close();
         this.cutsceneBg = null;
         if (CUTSCENE_LOCATIONS[id]) this.zoneLabel.setAlpha(0);
       }

@@ -4,7 +4,7 @@ import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import type { UiScene } from '@/scenes/UiScene';
 import type { WorldScene } from '@/scenes/WorldScene';
-import { addSceneBackground } from '@/util/assets';
+import { playCinematic } from '@/ui/cinematic';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { crisp, FONT, RETRO_FONT } from '@/util/text';
 import { addPanel } from '@/ui/panel';
@@ -80,7 +80,8 @@ export class CampScene extends Phaser.Scene {
     // toda y dejaba 0 — se mostraba fogon_chico igual). Si no hay PNG todavía,
     // cae en el placeholder de siempre (rectángulos + círculo animado).
     const artId = game.flags.get('_lastFire') === 'bigFire' ? 'fogon_grande' : 'fogon_chico';
-    const bg = addSceneBackground(this, artId, w.x + w.w / 2, w.y + w.h / 2, w.w, w.h);
+    // entrada animada, movimiento lento y brasas subiendo (ui/cinematic.ts)
+    const bg = playCinematic(this, artId, { x: w.x, y: w.y, w: w.w, h: w.h }, 0).image;
     this.add.rectangle(w.x, w.y + w.h - 60, w.w, 60, PAL.soil, bg ? 0.25 : 0.5).setOrigin(0, 0);
 
     // el fuego animado y las siluetas eran EL placeholder de toda la escena — ahora
