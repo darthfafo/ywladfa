@@ -36,7 +36,17 @@ def ctext(txt,size,y,fill,shadow=(14,20,22),sh=6):
     x=(W-w)/2
     d.text((x+sh,y+sh),txt,font=f,fill=shadow)
     d.text((x,y),txt,font=f,fill=fill)
-ctext('CHUBUT 1865',76,30,(217,168,69),sh=6)
+# en la fuente pixel el espacio ocupa una letra entera: el título se arma con
+# un hueco más chico entre CHUBUT y 1865
+def title(words,size,y,fill,gap,sh):
+    f=ImageFont.truetype(F,size)
+    ws=[d.textlength(t,font=f) for t in words]
+    x=(W-sum(ws)-gap*(len(words)-1))/2
+    for t,w in zip(words,ws):
+        d.text((x+sh,y+sh),t,font=f,fill=(14,20,22))
+        d.text((x,y),t,font=f,fill=fill)
+        x+=w+gap
+title(['CHUBUT','1865'],76,30,(217,168,69),gap=34,sh=6)
 d.rectangle((W/2-230,124,W/2+230,127),fill=(156,58,36))
 ctext('LA HUELLA DE LOS RIFLEROS',24,142,(234,232,224),sh=3)
 ctext('El juego histórico de la colonia galesa en Chubut',17,H-46,(234,232,224),sh=2)
