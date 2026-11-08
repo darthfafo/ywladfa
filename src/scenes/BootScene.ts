@@ -67,6 +67,8 @@ const TITLE_SLIDES: Slide[] = [
   { id: 'mimosa_zarpa', rain: 0, mist: 0.5, wind: true },
 ];
 const SLIDE_MS = 7000;
+/** centro vertical de la ilustración: entre el título (arriba) y el menú (abajo) */
+const CINE_IMG_CY = 262;
 const FADE_MS = 1600;
 export class BootScene extends Phaser.Scene {
   /** Todo lo que dibuja el paso actual (menos el título/bandeja fijos), para borrarlo al cambiar de paso. */
@@ -89,7 +91,7 @@ export class BootScene extends Phaser.Scene {
   private cine: {
     slides: Slide[];
     index: number;
-    current: Phaser.GameObjects.Image | null;
+    current: Phaser.GameObjects.Image[];
     timer: Phaser.Time.TimerEvent | null;
     flash: Phaser.Time.TimerEvent | null;
     rain: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -266,7 +268,7 @@ export class BootScene extends Phaser.Scene {
         'background: radial-gradient(ellipse at 50% 45%, rgba(14,20,22,0) 45%, rgba(14,20,22,0.75) 100%);')
       .setOrigin(0, 0)
       .setDepth(-2);
-    this.cine = { slides, index: -1, current: null, timer: null, flash: null, rain, mist, spray, wind, flashRect, overlays: [vignette] };
+    this.cine = { slides, index: -1, current: [], timer: null, flash: null, rain, mist, spray, wind, flashRect, overlays: [vignette] };
     this.nextSlide();
   }
 
@@ -279,23 +281,30 @@ export class BootScene extends Phaser.Scene {
     if (this.textures.exists(key)) {
       const W = VIEW.width;
       const H = VIEW.height;
-      const img = this.add.image(W / 2, H / 2, key).setDepth(-6).setAlpha(0);
-      img.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
-      const cover = Math.max(W / img.width, H / img.height);
-      // de cerca a más cerca, corriéndose hacia un lado (alterna en cada toma)
+      // Las ilustraciones son 3:4 y la pantalla 9:16: llenarla recortaba un cuarto
+      // de cada costado (cabezas, el barco) y encima se acercaba más. Ahora la
+      // ilustración entra ENTERA a lo ancho, y arriba/abajo se rellena con la misma
+      // imagen agrandada, desenfocada y oscura — como un video vertical en el celular.
+      const bg = this.add.image(W / 2, H / 2, key).setDepth(-8).setAlpha(0);
+      bg.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      bg.setScale(Math.max(W / bg.width, H / bg.height) * 1.12).setTint(0x5a5f62);
+      bg.preFX?.addBlur(2, 2, 2, 1.4);
+      const img = this.add.image(W / 2, CINE_IMG_CY, key).setDepth(-6).setAlpha(0);
+      const fit = W / img.width;
+      // movimiento chico: el pixel art titila si se lo escala mucho
       const dir = c.index % 2 ? 1 : -1;
-      img.setScale(cover * 1.04).setX(W / 2 - dir * 18);
-      this.tweens.add({ targets: img, alpha: 1, duration: FADE_MS, ease: 'Sine.easeInOut' });
-      this.tweens.add({ targets: img, scale: cover * 1.16, x: W / 2 + dir * 18, duration: SLIDE_MS + FADE_MS * 2, ease: 'Sine.easeInOut' });
-      const prev = c.current;
-      if (prev) {
-        prev.setDepth(-7);
+      img.setScale(fit).setX(W / 2 - dir * 4);
+      this.tweens.add({ targets: [bg, img], alpha: 1, duration: FADE_MS, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: img, scale: fit * 1.05, x: W / 2 + dir * 4, duration: SLIDE_MS + FADE_MS * 2, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: bg, x: W / 2 + dir * 10, duration: SLIDE_MS + FADE_MS * 2, ease: 'Sine.easeInOut' });
+      for (const prev of c.current) {
+        prev.setDepth(prev.depth - 1);
         this.tweens.add({ targets: prev, alpha: 0, delay: FADE_MS * 0.6, duration: FADE_MS, onComplete: () => prev.destroy() });
       }
-      c.current = img;
+      c.current = [bg, img];
     }
     // clima de esta toma
-    c.rain.setFrequency(slide.rain > 0 ? 40 / slide.rain : -1, slide.rain > 0.7 ? 3 : 1);
+    c.rain.setFrequency(slide.rain > 0 ? 60 / slide.rain : -1, slide.rain > 0.7 ? 2 : 1);
     if (slide.rain > 0) c.rain.start();
     else c.rain.stop();
     c.mist.setFrequency(slide.mist > 0 ? 1100 / slide.mist : -1, 1);
@@ -333,7 +342,7 @@ export class BootScene extends Phaser.Scene {
     if (!c) return;
     c.timer?.remove();
     c.flash?.remove();
-    for (const o of [c.current, c.rain, c.mist, c.spray, c.wind, c.flashRect, ...c.overlays]) {
+    for (const o of [...c.current, c.rain, c.mist, c.spray, c.wind, c.flashRect, ...c.overlays]) {
       if (o) {
         this.tweens.killTweensOf(o);
         o.destroy();
