@@ -94,6 +94,8 @@ export const TERRAIN_HEIGHT_3D: Record<string, number> = {
   SEA: -1,
   SPRING: -0.25,
 };
+/** Altura de la superficie del mar en el mundo 3D (tiles): el fondo está en TERRAIN_HEIGHT_3D.SEA. */
+export const SEA_SURFACE_3D = -0.45;
 
 /**
  * Tiempos mínimos entre una cosa y la siguiente (ms): un toque de más (o el

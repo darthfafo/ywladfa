@@ -8,7 +8,8 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { HorizontalTiltShiftShader } from 'three/examples/jsm/shaders/HorizontalTiltShiftShader.js';
 import { VerticalTiltShiftShader } from 'three/examples/jsm/shaders/VerticalTiltShiftShader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { CAM_3D, PAL, RENDER_3D_FX, TERRAIN_HEIGHT_3D, TURN_LIGHT, VIEW } from '@/config';
+import { CAM_3D, PAL, RENDER_3D_FX, TERRAIN_HEIGHT_3D,
+  SEA_SURFACE_3D, TURN_LIGHT, VIEW } from '@/config';
 import { game } from '@/core/Game';
 import { baseTerrain, TERRAIN } from '@/util/mapgen';
 import { buildShip } from './ship';
@@ -229,13 +230,67 @@ export class World3D {
       const h = Math.sin(a * 127.1 + b * 311.7 + k * 74.7) * 43758.5453;
       return h - Math.floor(h);
     };
-    const tileT = (i: number, j: number): number => {
+    const rawT = (i: number, j: number): number => {
       const row = grid[j];
       if (!row || i < 0 || i >= W) return TERRAIN.ROCK;
       return baseTerrain(row[i]!);
     };
+    // los pasajes (PATH) no se pintan con un color propio entre dos terrenos:
+    // cada tramo toma el terreno caminable más cercano, así el pasaje es la
+    // continuación de lo que une y los dos se encuentran a mitad de camino.
+    // Solo visual: la velocidad de sendero (TERRAIN_SPEED) sigue igual.
+    const pathAs = new Map<number, number>();
+    const tileT = (i: number, j: number): number => {
+      const t = rawT(i, j);
+      if (t !== TERRAIN.PATH) return t;
+      const key = j * W + i;
+      const cached = pathAs.get(key);
+      if (cached !== undefined) return cached;
+      let best: number = TERRAIN.SAND_DRY;
+      let bestD = Infinity;
+      for (let r = 1; r <= 14 && bestD === Infinity; r++) {
+        for (let dj = -r; dj <= r; dj++) {
+          for (let di = -r; di <= r; di++) {
+            if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue;
+            const n = rawT(i + di, j + dj);
+            if (n === TERRAIN.PATH || n === TERRAIN.SEA || heightOf(n * 4) > 0.5) continue;
+            const d = di * di + dj * dj;
+            if (d < bestD) {
+              bestD = d;
+              best = n;
+            }
+          }
+        }
+      }
+      pathAs.set(key, best);
+      return best;
+    };
     const hOf = (t: number) => heightOf(t * 4);
     const BEACHY = new Set<number>([TERRAIN.SAND_DRY, TERRAIN.SAND_WET, TERRAIN.PEBBLE]);
+    /** hasta cuántos tiles mar adentro llega el fondo que sube frente a una playa */
+    const SHORE_TILES = 2.5;
+    /** distancia (tiles) desde un punto a la playa más cercana (hasta SHORE_TILES) */
+    const beachDist = (x: number, z: number): number => {
+      let best = SHORE_TILES;
+      for (let j = Math.floor(z - SHORE_TILES); j <= Math.floor(z + SHORE_TILES); j++) {
+        for (let i = Math.floor(x - SHORE_TILES); i <= Math.floor(x + SHORE_TILES); i++) {
+          if (!BEACHY.has(tileT(i, j))) continue;
+          const dx = Math.max(i - x, 0, x - (i + 1));
+          const dz = Math.max(j - z, 0, z - (j + 1));
+          best = Math.min(best, Math.hypot(dx, dz));
+        }
+      }
+      return best;
+    };
+    /** ruido suave 0..1, de baja frecuencia (formas de costa) */
+    const smooth = (x: number, z: number): number =>
+      0.5 + 0.28 * Math.sin(x * 0.9 + z * 0.35) + 0.22 * Math.sin(z * 1.25 - x * 0.55 + 2.1);
+    /** nivel del agua (ver buildSea) */
+    const WATER_Y = SEA_SURFACE_3D;
+    /** cuánto avanza la arena mojada mar adentro (tiles, 0..~1.9): bancos, puntas
+     * y entradas a lo largo de la playa, en vez de un borde recto */
+    const shoreReach = (x: number, z: number): number =>
+      1.9 * (0.6 * smooth(x, z) + 0.4 * (0.5 + 0.5 * Math.sin(x * 2.3 - z * 1.7 + 0.8) * Math.sin(z * 2.9 + x * 0.6)));
     const nearBeach = (cx: number, cz: number): boolean => {
       const i = Math.floor(cx);
       const j = Math.floor(cz);
@@ -278,15 +333,21 @@ export class World3D {
         const lo = Math.min(...hs);
         const hi = Math.max(...hs);
         let h: number;
-        if (lo === hi) {
+        if (lo === hi && hi === SEA_H) {
+          // fondo del mar: frente a una playa sube de a poco y con ruido, así la
+          // línea donde corta el agua (y = nivel del mar) queda irregular —
+          // bancos de arena, entradas— en vez de seguir el borde de los tiles
+          const d = beachDist(gx / S, gy / S);
+          h = d < SHORE_TILES ? Math.max(SEA_H, Math.min(WATER_Y + 0.3, WATER_Y + 0.45 * (shoreReach(gx / S, gy / S) - d))) : SEA_H;
+        } else if (lo === hi) {
           // adentro de un solo terreno: lomo irregular en paredes, leve ondulación en el piso
-          h = isWall(ts[0]!) ? hi * (0.82 + hash(gx, gy, 1) * 0.3) : hi === SEA_H ? SEA_H : hi + (hash(gx, gy, 2) - 0.5) * 0.06;
+          h = isWall(ts[0]!) ? hi * (0.82 + hash(gx, gy, 1) * 0.3) : hi + (hash(gx, gy, 2) - 0.5) * 0.06;
         } else if (hi > 0.5) {
           // borde de una pared: al nivel del piso (la pared sube adentro de su tile)
           h = lo <= SEA_H ? SEA_H * 0.4 : lo;
         } else if (ts.some((t) => BEACHY.has(t))) {
           // costa de playa: la arena baja en declive al agua
-          h = SEA_H * 0.45 + (hash(gx, gy, 4) - 0.5) * 0.15;
+          h = WATER_Y + 0.08 + 0.12 * shoreReach(gx / S, gy / S) + (hash(gx, gy, 4) - 0.5) * 0.1;
         } else {
           // costa de meseta/barranca: corta en acantilado, con el borde apenas
           // levantado y desparejo (la caída queda del lado del mar)
@@ -519,7 +580,7 @@ export class World3D {
     };
     this.seaMat = mat;
     const sea = new THREE.Mesh(geo, mat);
-    sea.position.set(32, -0.45, 60);
+    sea.position.set(32, SEA_SURFACE_3D, 60);
     sea.receiveShadow = true;
     this.scene3.add(sea);
   }
