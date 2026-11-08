@@ -3,7 +3,7 @@
   "comment": "Todos los números tuneables del juego. Ningún valor numérico de balance debe estar hardcodeado en src/.",
 
   "global": {
-    "playerBaseSpeedPxPerSec": 62,
+    "playerBaseSpeedPxPerSec": 80,
     "overloadSpeedMultiplier": 0.3,
     "overloadRangeMultiplier": 0.35,
     "windSpeedMultiplier": 0.7,

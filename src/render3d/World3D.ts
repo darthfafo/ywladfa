@@ -38,6 +38,9 @@ const PX = 1 / VIEW.tile;
 /** brillo propio (emissive) del piso y de los sprites a plena luz; TURN_LIGHT.glow lo escala */
 const TERRAIN_GLOW = 0.35;
 const SPRITE_GLOW = 0.5;
+/** caminata procedural: pasos por tile recorrido, alto del saltito (tiles),
+ * balanceo (radianes) y duración de la nube de polvo */
+const WALK = { stepsPerTile: 1.1, hop: 0.16, sway: 0.07, dustSeconds: 0.45 };
 /** Inclinación de los sprites hacia la cámara y estiramiento vertical que
  * compensa el escorzo: un sprite parado visto desde arriba se ve achatado
  * (cos del ángulo); estirándolo así se ve del mismo alto que en el 2D. */
@@ -56,6 +59,8 @@ interface Mirror {
   lift?: number;
   /** corrimiento mínimo en profundidad: dos sprites en la misma fila no titilan */
   zBias?: number;
+  /** caminata procedural (ver walk()): última posición, fase del paso, intensidad */
+  walk?: { x: number; y: number; phase: number; amp: number };
   update?: (t: number) => void;
 }
 
@@ -409,7 +414,7 @@ export class World3D {
     return { kind: flat ? 'flat' : 'billboard', obj: mesh, mat, tex, lift: key.includes('gaviotas') ? 5 : flat ? 0.03 : 0 };
   }
 
-  private sync(t: number): void {
+  private sync(t: number, dt: number): void {
     const seen = new Set<Phaser.GameObjects.GameObject>();
     for (const go of this.src.scene.children.list) {
       if (this.ignored.has(go)) continue;
@@ -435,6 +440,7 @@ export class World3D {
         // los pies (borde de abajo del sprite) sobre el piso, en la fila donde pisan
         m.obj.position.set(g.x * PX, m.lift ?? 0, (g.y + g.displayHeight * (1 - g.originY)) * PX + (m.zBias ?? 0));
         m.obj.scale.set(w, h * SPRITE_STRETCH, 1);
+        if (!m.lift) this.walk(m, g, dt);
       } else if (m.kind === 'flat') {
         m.obj.position.set(g.x * PX, m.lift ?? 0, g.y * PX);
         m.obj.scale.set(w, 1, h);
@@ -453,6 +459,68 @@ export class World3D {
       this.scene3.remove(m.obj);
       m.tex?.dispose();
       this.mirrors.delete(go);
+    }
+  }
+
+  // ---------------------------------------------------------------- caminata
+
+  /**
+   * Los sprites tienen un solo cuadro por dirección (sin ciclo de caminata): sin
+   * esto se deslizan por el piso. Cada paso es un saltito, un balanceo de lado a
+   * lado apoyado en los pies y una nube de polvo. La cadencia sale de la
+   * velocidad real, así que más lento (arena, sobrecarga) = pasos más lentos.
+   */
+  private walk(m: Mirror, g: Phaser.GameObjects.Image, dt: number): void {
+    const w = (m.walk ??= { x: g.x, y: g.y, phase: 0, amp: 0 });
+    const dist = Math.hypot(g.x - w.x, g.y - w.y) * PX; // tiles
+    w.x = g.x;
+    w.y = g.y;
+    // un salto de más de un tile en un cuadro es un teletransporte (movesTo,
+    // despertarse en el campamento), no una caminata
+    const moving = dt > 0 && dist > 0.002 && dist < 1;
+    w.amp += ((moving ? 1 : 0) - w.amp) * Math.min(1, dt * 12);
+    if (moving) {
+      const before = Math.floor(w.phase / Math.PI);
+      w.phase += dist * WALK.stepsPerTile * Math.PI;
+      if (Math.floor(w.phase / Math.PI) !== before) this.puff(m.obj.position);
+    } else if (w.amp < 0.02) {
+      w.phase = 0;
+    }
+    const step = Math.sin(w.phase);
+    m.obj.position.y += Math.abs(step) * WALK.hop * w.amp;
+    m.obj.rotation.z = step * WALK.sway * w.amp;
+  }
+
+  private readonly dust: { mesh: THREE.Mesh; age: number }[] = [];
+  private dustNext = 0;
+
+  private puff(at: THREE.Vector3): void {
+    if (!this.dust.length) {
+      const mat = new THREE.MeshBasicMaterial({ color: PAL.sandLight, transparent: true, opacity: 0, depthWrite: false });
+      for (let i = 0; i < 12; i++) {
+        const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.22, 0), mat.clone());
+        mesh.visible = false;
+        this.scene3.add(mesh);
+        this.dust.push({ mesh, age: 1 });
+      }
+    }
+    const d = this.dust[this.dustNext++ % this.dust.length]!;
+    d.age = 0;
+    d.mesh.visible = true;
+    d.mesh.position.set(at.x + (Math.random() - 0.5) * 0.3, 0.12, at.z + 0.1);
+  }
+
+  private stepDust(dt: number): void {
+    for (const d of this.dust) {
+      if (!d.mesh.visible) continue;
+      d.age += dt / WALK.dustSeconds;
+      if (d.age >= 1) {
+        d.mesh.visible = false;
+        continue;
+      }
+      d.mesh.scale.setScalar(0.6 + d.age * 1.4);
+      d.mesh.position.y += dt * 0.6;
+      (d.mesh.material as THREE.MeshBasicMaterial).opacity = 0.45 * (1 - d.age) * this.light.cur.glow;
     }
   }
 
@@ -531,7 +599,8 @@ export class World3D {
     this.stepLight(dtMs);
     if (this.terrainBuilt !== this.src.terrainVersion()) this.buildTerrain();
     this.fitToCanvas();
-    this.sync(this.time.value);
+    this.sync(this.time.value, dt);
+    this.stepDust(dt);
 
     const p = this.src.player;
     const px = p.x * PX;
