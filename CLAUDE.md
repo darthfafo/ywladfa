@@ -1,6 +1,6 @@
 # CLAUDE.md — instrucciones para la sesión de código
 
-Este repo es **Y Wladfa — La Huella de los Rifleros**, un RPG de supervivencia sin combate
+Este repo es **Chubut 1865 — La Huella de los Rifleros** (antes "Y Wladfa": ese es el nombre de la colonia, no del juego), un RPG de supervivencia sin combate
 sobre la colonización galesa del Chubut (1865–1902), en Phaser 3 + TypeScript.
 
 Pantalla **vertical 9:16 (270×480), mobile-first**. El repo ya tiene los documentos de diseño,

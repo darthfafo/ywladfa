@@ -26,13 +26,39 @@ import { TEX_TILES, terrainTexture } from './terrainTextures';
  * Unidades: 1 = un tile (16 px del mapa). x = columna, z = fila (norte = -z).
  */
 
-/** Lo que World3D necesita de WorldScene (sin depender de sus privados). */
+/** Lo mínimo del jugador que necesita la cámara (un sprite real o un punto que se mueve). */
+export interface Focus {
+  x: number;
+  y: number;
+  displayWidth: number;
+  displayHeight: number;
+  originY: number;
+}
+
+/** Lo que World3D necesita de quien lo usa (WorldScene, o la portada). */
 export interface WorldSource {
   scene: Phaser.Scene;
-  player: Phaser.GameObjects.Sprite;
+  player: Focus;
   terrain(): number[][];
   /** sube cada vez que cambia el terreno (se abre un pasaje) */
   terrainVersion(): number;
+  /** objetos de Phaser a copiar al 3D; por defecto, todos los de `scene` */
+  objects?: () => readonly Phaser.GameObjects.GameObject[];
+}
+
+/** Variantes de cámara/encuadre: el juego usa las de CAM_3D; la portada, una
+ * toma baja mirando al mar, a pantalla completa. */
+export interface ViewOptions {
+  /** ocupa los 480 px del canvas, no solo la franja del mundo */
+  fullScreen?: boolean;
+  pitch?: number;
+  distance?: number;
+  /** 'north' = como el mapa (el juego); 'south' = de espaldas a la barranca, mirando al mar */
+  facing?: 'north' | 'south';
+  /** a qué altura mira la cámara (tiles); 0 = al piso */
+  lookHeight?: number;
+  /** recorte de paredes delante del jugador (sin sentido sin jugador) */
+  cutaway?: boolean;
 }
 
 const PX = 1 / VIEW.tile;
@@ -94,7 +120,10 @@ export class World3D {
   /** luz actual, interpolando de `from` a `to` (ver setTurn) */
   private light = { from: lightOf('manana'), to: lightOf('manana'), cur: lightOf('manana'), k: 1, ms: 1 };
 
-  constructor(private readonly src: WorldSource) {
+  constructor(
+    private readonly src: WorldSource,
+    private readonly view: ViewOptions = {},
+  ) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
@@ -112,10 +141,12 @@ export class World3D {
     parent.style.isolation = 'isolate';
     parent.prepend(el);
 
-    const pitch = THREE.MathUtils.degToRad(CAM_3D.pitch);
-    this.camOffset = new THREE.Vector3(0, Math.sin(pitch) * CAM_3D.distance, Math.cos(pitch) * CAM_3D.distance);
+    const pitch = THREE.MathUtils.degToRad(view.pitch ?? CAM_3D.pitch);
+    const dist = view.distance ?? CAM_3D.distance;
+    const dir = view.facing === 'south' ? -1 : 1;
+    this.camOffset = new THREE.Vector3(0, Math.sin(pitch) * dist, Math.cos(pitch) * dist * dir);
     // el jugador va un poco abajo del centro, como en 2D: se ve más de lo que hay adelante
-    this.lookAhead = 2;
+    this.lookAhead = 2 * dir;
     this.camera = new THREE.PerspectiveCamera(CAM_3D.fov, VIEW.world.w / VIEW.world.h, 1, 220);
 
     this.scene3.add(this.hemi, this.sun, this.sun.target, this.lantern);
@@ -148,6 +179,21 @@ export class World3D {
     this.setTurn(game.state.progress.turn, 0);
     const p = this.src.player;
     this.camera.position.set(p.x * PX, 0, p.y * PX).add(this.camOffset);
+  }
+
+  /** Agrega un objeto 3D suelto (sin sprite de Phaser detrás), ej. el Mimosa de la portada. */
+  addModel(obj: THREE.Object3D, update?: (t: number) => void): void {
+    this.scene3.add(obj);
+    if (update) this.extraUpdates.push(update);
+  }
+  private readonly extraUpdates: Array<(t: number) => void> = [];
+
+  /** El Mimosa fondeado (mismo modelo que en el juego), en tiles. */
+  static mimosa(): { obj: THREE.Object3D; update: (t: number) => void } {
+    const ship = buildShip();
+    ship.scale.setScalar(0.42);
+    ship.rotation.y = 0.12;
+    return { obj: ship, update: (t) => (ship.position.y = -0.4 + Math.sin(t * 0.7) * 0.12) };
   }
 
   destroy(): void {
@@ -390,13 +436,11 @@ export class World3D {
     if (key === 'tiles') return null;
     if (key.includes('mimosa')) {
       // el 2D lo pone pegado al borde del mapa; en 3D va mar adentro, de costado
-      const ship = buildShip();
-      ship.scale.setScalar(0.42);
-      ship.rotation.y = 0.12;
+      const ship = World3D.mimosa();
       const holder = new THREE.Group();
-      holder.add(ship);
-      ship.position.z = 3;
-      return { kind: 'model', obj: holder, lift: 0, update: (t) => (ship.position.y = -0.4 + Math.sin(t * 0.7) * 0.12) };
+      holder.add(ship.obj);
+      ship.obj.position.z = 3;
+      return { kind: 'model', obj: holder, lift: 0, update: ship.update };
     }
     if (key === 'prop_cajon') return { kind: 'model', obj: crate() };
     if (key === 'prop_jarilla') return { kind: 'model', obj: bush() };
@@ -429,7 +473,7 @@ export class World3D {
 
   private sync(t: number, dt: number): void {
     const seen = new Set<Phaser.GameObjects.GameObject>();
-    for (const go of this.src.scene.children.list) {
+    for (const go of this.src.objects ? this.src.objects() : this.src.scene.children.list) {
       if (this.ignored.has(go)) continue;
       let m = this.mirrors.get(go);
       if (!m) {
@@ -587,9 +631,9 @@ export class World3D {
     const pr = parent.getBoundingClientRect();
     const k = r.height / VIEW.height;
     const left = r.left - pr.left;
-    const top = r.top - pr.top + VIEW.world.y * k;
+    const top = r.top - pr.top + (this.view.fullScreen ? 0 : VIEW.world.y * k);
     const w = r.width;
-    const h = VIEW.world.h * k;
+    const h = this.view.fullScreen ? r.height : VIEW.world.h * k;
     const key = `${left}|${top}|${w}|${h}`;
     if (key === this.rect) return;
     this.rect = key;
@@ -632,6 +676,7 @@ export class World3D {
     this.fitToCanvas();
     this.sync(this.time.value, dt);
     this.stepDust(dt);
+    for (const u of this.extraUpdates) u(this.time.value);
 
     const p = this.src.player;
     const px = p.x * PX;
@@ -642,8 +687,9 @@ export class World3D {
     // recorre en cámara lenta por medio mapa: se corta directo
     if (this.camera.position.distanceTo(target) > CAM_3D.snapDistance) this.camera.position.copy(target);
     else this.camera.position.lerp(target, 1 - Math.exp(-dt * CAM_3D.follow));
-    this.camera.lookAt(this.camera.position.x, 0, this.camera.position.z - this.camOffset.z);
-    this.updateCut(px, pz, p.displayWidth * PX, p.displayHeight * PX * SPRITE_STRETCH);
+    this.camera.lookAt(this.camera.position.x, this.view.lookHeight ?? 0, this.camera.position.z - this.camOffset.z);
+    if (this.view.cutaway === false) this.cut.value.set(-1e5, -1e5, 1, 1);
+    else this.updateCut(px, pz, p.displayWidth * PX, p.displayHeight * PX * SPRITE_STRETCH);
 
     this.sun.position.set(px, 0, pz).add(this.sunOffset);
     this.sun.target.position.set(px, 0, pz);

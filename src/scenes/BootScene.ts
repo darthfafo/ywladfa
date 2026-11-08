@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PAL, VIEW } from '@/config';
+import { PAL, RENDER_3D, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { createInitialState } from '@/core/GameState';
@@ -8,6 +8,8 @@ import { addSceneBackground, preloadArt } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
 import { RETRO_FONT } from '@/util/text';
+import { buildTerrain } from '@/util/mapgen';
+import { World3D } from '@/render3d/World3D';
 
 type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
@@ -31,11 +33,20 @@ const TRAY_H = VIEW.tray.h;
 const IMG_H = TRAY_Y - TOP_H;
 const IMG_CY = TOP_H + IMG_H / 2;
 
+/** Título del juego (antes "Y Wladfa": ese es el nombre de la colonia, no del juego). */
+const GAME_TITLE = 'CHUBUT 1865';
+const GAME_SUBTITLE = 'La Huella de los Rifleros';
+
 /**
  * Portada + arranque de partida. La secuencia es: título (continuar/nueva partida)
- * → la Mimosa en el puerto, preguntando género → nombre → enlistamiento con
- * Pepperell (con la escena correspondiente al género) → recién ahí el Nivel 1.
+ * → personaje (género y nombre en una sola pantalla) → enlistamiento con Pepperell
+ * (con la escena correspondiente al género) → travesía corta → el Nivel 1.
  * Así conocés al capitán ANTES de que te grite en la playa (docs/01 T1).
+ *
+ * Con el mundo HD-2D (RENDER_3D), la portada y el personaje van sobre el mundo 3D
+ * real: la playa de Punta Cuevas al amanecer con el Mimosa fondeado, la cámara a
+ * ras del agua y paneando despacio. Las franjas fijas de arriba/abajo (`chrome`)
+ * solo aparecen en los pasos con imagen (enlistamiento, travesía).
  */
 export class BootScene extends Phaser.Scene {
   /** Todo lo que dibuja el paso actual (menos el título/bandeja fijos), para borrarlo al cambiar de paso. */
@@ -52,6 +63,11 @@ export class BootScene extends Phaser.Scene {
   // apenas la tipografía real entra y reflowea más ancha. Se reintenta el centrado
   // de cada texto retro en cuanto la fuente esté lista, sea cual sea el paso activo.
   private retroRefreshers: Array<() => void> = [];
+  /** franjas fijas de título/bandeja: visibles solo en los pasos con imagen */
+  private chrome: Phaser.GameObjects.GameObject[] = [];
+  /** el mundo 3D de fondo de la portada (null si RENDER_3D está apagado o ya se cerró) */
+  private backdrop: World3D | null = null;
+  private stopBackdropDraw: (() => void) | null = null;
 
   constructor() {
     super('Boot');
@@ -75,48 +91,54 @@ export class BootScene extends Phaser.Scene {
     makeShipLarge(this); // versión grande de 3 mástiles, solo para estas cinemáticas
     makePortraits(this); // retratos placeholder por si el diálogo de enlistamiento ya los necesita
 
+    const c = (o: Phaser.GameObjects.GameObject) => this.chrome.push(o);
     // placeholder de color mientras no haya PNG real, acotado al área de la imagen.
-    this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void).setOrigin(0, 0).setDepth(-10);
-    this.add.rectangle(0, TOP_H + IMG_H * 0.55, VIEW.width, IMG_H * 0.2, PAL.sea, 0.5).setOrigin(0, 0).setDepth(-10);
-    this.add.rectangle(0, TOP_H + IMG_H * 0.75, VIEW.width, IMG_H * 0.25, PAL.soil, 0.6).setOrigin(0, 0).setDepth(-10);
+    c(this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void).setOrigin(0, 0).setDepth(-10));
+    c(this.add.rectangle(0, TOP_H + IMG_H * 0.55, VIEW.width, IMG_H * 0.2, PAL.sea, 0.5).setOrigin(0, 0).setDepth(-10));
+    c(this.add.rectangle(0, TOP_H + IMG_H * 0.75, VIEW.width, IMG_H * 0.25, PAL.soil, 0.6).setOrigin(0, 0).setDepth(-10));
 
     // franja superior fija: título/subtítulo, siempre visibles durante todo el arranque,
     // con su propio fondo sólido — así nunca compiten con la imagen de atrás. Opaca del
     // todo (no 0.97): mismo criterio que la bandeja de diálogo (DialogueBox.bg), más
     // contraste para el título contra la imagen de fondo.
-    this.add.rectangle(0, 0, VIEW.width, TOP_H, PAL.ink, 1).setOrigin(0, 0).setDepth(20);
-    this.add.rectangle(0, TOP_H - 1, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21);
-    this.renderDomText(cx, 14, 'Y WLADFA', { size: 15, color: '#EAE8E0', align: 'center', retro: true });
-    // "La colonia galesa en Chubut" REEMPLAZA al subtítulo evocador de antes ("La
-    // Huella de los Rifleros") — contexto llano para quien lo ve por primera vez,
-    // no se suman las dos. Debajo, la aclaración de rigor histórico — blanca, más
-    // chica, no compite con el título ni el subtítulo.
-    this.renderDomText(cx, 42, 'La colonia galesa en Chubut', { size: 9, color: '#D9A845', align: 'center', retro: true });
-    this.renderDomText(cx, 58, 'JUEGO CON RIGOR HISTÓRICO, ASÍ SUCEDIÓ', {
-      size: 6,
-      color: '#EAE8E0',
-      align: 'center',
-      retro: true,
-    });
+    c(this.add.rectangle(0, 0, VIEW.width, TOP_H, PAL.ink, 1).setOrigin(0, 0).setDepth(20));
+    c(this.add.rectangle(0, TOP_H - 1, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21));
+    c(this.renderDomText(cx, 14, GAME_TITLE, { size: 15, color: '#EAE8E0', align: 'center', retro: true }));
+    // "Chubut 1865" ya da el contexto (dónde y cuándo) que antes ponía "La colonia
+    // galesa en Chubut", así que vuelve el subtítulo evocador. Debajo, la
+    // aclaración de rigor histórico — blanca, más chica, no compite con el título.
+    c(this.renderDomText(cx, 42, GAME_SUBTITLE, { size: 9, color: '#D9A845', align: 'center', retro: true }));
+    c(
+      this.renderDomText(cx, 58, 'JUEGO CON RIGOR HISTÓRICO, ASÍ SUCEDIÓ', {
+        size: 6,
+        color: '#EAE8E0',
+        align: 'center',
+        retro: true,
+      }),
+    );
 
     // bandeja inferior fija: mismo estilo que la bandeja real del juego (UiScene.buildTray),
     // opaca del todo — igual que DialogueBox.bg, para que no haya un salto de contraste
     // entre esta franja "de reposo" y la que se ve apenas arranca un diálogo.
-    this.add.rectangle(0, TRAY_Y, VIEW.width, TRAY_H, PAL.ink, 1).setOrigin(0, 0).setDepth(20);
-    this.add.rectangle(0, TRAY_Y, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21);
+    c(this.add.rectangle(0, TRAY_Y, VIEW.width, TRAY_H, PAL.ink, 1).setOrigin(0, 0).setDepth(20));
+    c(this.add.rectangle(0, TRAY_Y, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21));
 
     // firma discreta — fuera de cualquier paso (no this.track()) para que sobreviva
     // los clearStep() y se vea en todo el arranque, hasta la travesía; una vez que
     // arranca World esta escena entera se destruye sola, se va con ella. Esquina
     // inferior IZQUIERDA, no derecha: ahí abajo a la derecha vive el "▼" de
     // DialogueBox que avisa que hay más texto — coincidían casi pixel a pixel.
-    this.renderDomText(8, TRAY_Y + TRAY_H - 12, 'FP', {
-      size: 7,
-      color: '#22343A',
-      align: 'left',
-      retro: true,
-    });
+    c(
+      this.renderDomText(8, TRAY_Y + TRAY_H - 12, 'FP', {
+        size: 7,
+        color: '#22343A',
+        align: 'left',
+        retro: true,
+      }),
+    );
 
+    if (RENDER_3D) this.startBackdrop();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.stopBackdrop());
     this.renderTitle();
 
     document.fonts?.ready.then(() => {
@@ -124,52 +146,107 @@ export class BootScene extends Phaser.Scene {
     });
   }
 
+  /* ---------------- fondo 3D de la portada ---------------- */
+
+  /** La playa de Punta Cuevas en 3D, de espaldas a la barranca y mirando al mar,
+   * con el Mimosa fondeado. La cámara sigue un punto que pasea despacio por la
+   * orilla — un paneo lento, sin jugador. Mismo terreno y luz que el juego. */
+  private startBackdrop(): void {
+    const grid = buildTerrain(game.level);
+    const drift = { x: 0, y: 0, displayWidth: 0, displayHeight: 0, originY: 0.5 };
+    const shore = { x0: 23, x1: 32, z: 104 }; // tiles: el tramo de playa que recorre la cámara
+    const set = (t: number) => {
+      const k = 0.5 + 0.5 * Math.sin(t * 0.04);
+      drift.x = (shore.x0 + (shore.x1 - shore.x0) * k) * VIEW.tile;
+      drift.y = shore.z * VIEW.tile;
+    };
+    set(0);
+    this.backdrop = new World3D(
+      { scene: this, player: drift, terrain: () => grid, terrainVersion: () => 0, objects: () => [] },
+      // cerca y bajo: más lejos, la cámara quedaba encima de la barranca y en primer plano se veía roca, no playa
+      { fullScreen: true, pitch: 13, distance: 20, facing: 'south', lookHeight: 2, cutaway: false },
+    );
+    this.backdrop.setTurn('amanecer', 0);
+    const ship = World3D.mimosa();
+    ship.obj.position.set(27.5, 0, 124);
+    this.backdrop.addModel(ship.obj, ship.update);
+    let t = 0;
+    const draw = () => {
+      t += this.game.loop.delta / 1000;
+      set(t);
+      this.backdrop?.render(this.game.loop.delta);
+    };
+    this.game.events.on(Phaser.Core.Events.POST_RENDER, draw);
+    this.stopBackdropDraw = () => this.game.events.off(Phaser.Core.Events.POST_RENDER, draw);
+  }
+
+  private stopBackdrop(): void {
+    this.stopBackdropDraw?.();
+    this.stopBackdropDraw = null;
+    this.backdrop?.destroy();
+    this.backdrop = null;
+  }
+
+  /** Muestra u oculta las franjas fijas (título arriba, bandeja abajo, fondo liso). */
+  private setChrome(visible: boolean): void {
+    for (const o of this.chrome) {
+      (o as unknown as Phaser.GameObjects.Components.Visible).setVisible(visible);
+      // un texto HTML que se re-midió escondido (al terminar de cargar la fuente
+      // con la portada 3D encima) quedó con ancho 0 y el centrado corrido: se
+      // muestra ya (sin esperar al render de Phaser) y se vuelve a medir
+      if (visible && o instanceof Phaser.GameObjects.DOMElement) {
+        (o.node as HTMLElement).style.display = '';
+        o.updateSize();
+      }
+    }
+  }
+
+  /** Degradé oscuro (HTML) para que el texto se lea sobre el 3D sin tapar todo con una franja. */
+  private renderShade(y: number, h: number, from: 'top' | 'bottom'): void {
+    const dir = from === 'top' ? 'to bottom' : 'to top';
+    this.track(
+      this.add
+        .dom(0, y, 'div', `width:${VIEW.width}px; height:${h}px; pointer-events:none; ` +
+          `background:linear-gradient(${dir}, rgba(14,20,22,0.88), rgba(14,20,22,0.55) 55%, rgba(14,20,22,0));`)
+        .setOrigin(0, 0)
+        .setDepth(-1), // debajo de los textos (0) y botones (16)
+    );
+  }
+
   /* ---------------- paso 1: título (continuar / nueva partida) ---------------- */
 
   private renderTitle(): void {
     this.clearStep();
-    // acá arranca la historia de verdad: la salida, no la llegada a Punta Cuevas
-    // (docs/04-guia-historica.md — el Mimosa zarpa el 28-V-1865 de Liverpool. Liverpool
-    // es un puerto inglés, no galés — los colonos viajaron hasta ahí para embarcarse).
-    this.renderImage('mimosa_puerto');
+    const cx = VIEW.width / 2;
+    if (!this.backdrop) {
+      // sin mundo 3D (?2d): la portada de siempre, con imagen y franjas
+      this.setChrome(true);
+      this.renderImage('mimosa_puerto');
+    } else {
+      this.setChrome(false);
+      this.renderShade(0, 150, 'top');
+      this.renderShade(VIEW.height - 170, 170, 'bottom');
+      const shadow = 'text-shadow: 0 2px 0 #0E1416, 0 0 8px rgba(14,20,22,0.8);';
+      this.track(
+        this.renderDomText(cx, 34, '', { size: 22, color: '#EAE8E0', align: 'center', retro: true, html: `<span style="${shadow}">${GAME_TITLE}</span>` }),
+      );
+      this.track(
+        this.renderDomText(cx, 70, '', { size: 9, color: '#D9A845', align: 'center', retro: true, html: `<span style="${shadow}">${GAME_SUBTITLE}</span>` }),
+      );
+      this.track(
+        this.renderDomText(cx, 90, 'JUEGO CON RIGOR HISTÓRICO, ASÍ SUCEDIÓ', { size: 6, color: '#BFD3D8', align: 'center', retro: true }),
+      );
+    }
 
-    // contexto narrativo en la bandeja, como cualquier línea de narrador. La fecha
-    // en dorado (mismo tono que el resto de los acentos del juego, #D9A845) para
-    // que se distinga del resto sin perder contraste contra el fondo oscuro.
-    // size 9, igual que DialogueBox.bodyText: es el mismo tipo de texto (narrado,
-    // en la misma bandeja) y quedaba más chico que el resto del juego sin motivo.
-    // El resto del párrafo queda en size 9 (igual que DialogueBox.bodyText, es el
-    // mismo tipo de texto narrado en la misma bandeja). La fecha sola, un punto más
-    // chico (8px) TAMPOCO entra en una línea (mide 240px contra 238 disponibles,
-    // literalmente al límite, no un margen ajustado) — a 7px mide 210px, con margen
-    // real, así que queda en 7 para que "Liverpool, 28 de mayo de 1865." entre
-    // siempre en una sola línea sin salto interno. "fundar" separado de "Y Wladfa"
-    // por la misma razón que el resto — medido que las líneas entran con margen
-    // real en la bandeja.
-    this.track(
-      this.renderDomText(16, TRAY_Y + 10, '', {
-        size: 9,
-        color: '#EAE8E0',
-        width: VIEW.width - 32,
-        retro: true,
-        lineHeight: 1.5,
-        html:
-          '<span style="color:#D9A845; font-size:7px;">Liverpool, 28 de mayo de 1865.</span><br>El Mimosa lleva colonos galeses ' +
-          'rumbo a Sudamérica: van a fundar<br>Y Wladfa, la Colonia.',
-      }),
-    );
-
-    // el menú (continuar/nueva partida) va bien visible sobre la imagen, no perdido
-    // adentro del párrafo de la bandeja. Exportar/importar van como parte de la
-    // misma lista, debajo de las dos opciones principales — no como links sueltos
-    // aparte, para que se lean como parte del mismo menú.
+    // el menú abajo, a la altura del pulgar; continuar/nueva partida primero, y
+    // exportar/importar como parte de la misma lista, no como links sueltos aparte
     const options: Array<{ label: string; onPick: () => void }> = [];
     const save = saveSystem.peek();
     if (save) options.push({ label: `Continuar — Jornada ${save.day}`, onPick: () => this.continueGame() });
-    options.push({ label: 'Nueva partida', onPick: () => this.renderGenderIntro() });
+    options.push({ label: 'Nueva partida', onPick: () => this.renderCharacter() });
     options.push({ label: 'Importar partida', onPick: () => this.triggerImportFile() });
     if (save) options.push({ label: 'Exportar partida', onPick: () => this.exportCurrentSave() });
-    this.renderMenu(options, IMG_CY);
+    this.renderMenu(options, this.backdrop ? VIEW.height - 34 - (options.length * 26) / 2 : IMG_CY);
 
     // input de archivo invisible, siempre presente: el botón "Importar partida" de
     // arriba solo lo dispara (inputEl.click()).
@@ -217,84 +294,85 @@ export class BootScene extends Phaser.Scene {
     this.track(fileInput);
   }
 
-  /* ---------------- paso 2: la Mimosa en el puerto, ¿varón o mujer? ---------------- */
+  /* ---------------- paso 2: personaje (género y nombre, una sola pantalla) ---------------- */
 
-  private renderGenderIntro(): void {
-    this.clearStep();
-    this.renderImage('mimosa_puerto');
-    this.renderMenu(
-      [
-        { label: 'Varón', onPick: () => this.pickGender('m') },
-        { label: 'Mujer', onPick: () => this.pickGender('f') },
-      ],
-      IMG_CY,
-      '¿Sos varón o mujer?',
-    );
-  }
-
-  private pickGender(g: Gender): void {
-    this.playerGender = g;
-    this.renderName();
-  }
-
-  /* ---------------- paso 3: nombre ---------------- */
-
-  private renderName(): void {
+  /** Antes eran dos pantallas (género, después nombre) con una imagen cada una;
+   * ahora una sola sobre el mundo 3D. El panel va arriba de todo: un teclado
+   * virtual de celular tapa desde la mitad de la pantalla para abajo. */
+  private renderCharacter(): void {
     this.clearStep();
     const cx = VIEW.width / 2;
+    if (this.backdrop) {
+      this.setChrome(false);
+      this.renderShade(0, 200, 'top');
+      this.renderShade(VIEW.height - 110, 110, 'bottom');
+    } else {
+      this.setChrome(true);
+      this.renderImage(`enlistamiento_${this.playerGender}`);
+      this.renderTextBacking(TOP_H, TOP_H + 120);
+    }
+    const top = this.backdrop ? 18 : TOP_H + 8;
+    this.track(this.renderDomText(cx, top, '¿Quién sos?', { size: 13, color: '#D9A845', align: 'center' }));
 
-    // la misma escena de enlistamiento a la que se llega después, ya con el género
-    // elegido — no la Mimosa genérica de los pasos anteriores.
-    this.renderImage(`enlistamiento_${this.playerGender}`);
-    // esta pantalla es la única excepción a "todo el diálogo va en la bandeja de
-    // abajo": el campo de nombre tiene que quedar arriba, pegado a la franja del
-    // título, porque un teclado virtual de celular tapa desde la mitad de la
-    // pantalla para abajo — si viviera en la bandeja, quedaría inaccesible al escribir.
-    // Una sola franja bajita (campo + botón lado a lado), no un cuadro grande.
-    const rowY = TOP_H + 44;
-    this.renderTextBacking(TOP_H, TOP_H + 72);
-    this.track(this.renderDomText(cx, TOP_H + 8, '¿Cómo te llamás?', { size: 13, color: '#D9A845', align: 'center' }));
+    // género: dos botones lado a lado, el elegido resaltado
+    const pick = (g: Gender) => {
+      const prev = DEFAULT_NAME[this.playerGender];
+      this.playerGender = g;
+      const input = this.nameInput?.node as HTMLInputElement | undefined;
+      // el nombre por defecto sigue al género, salvo que ya se haya escrito otro
+      if (input && (!input.value.trim() || input.value === prev)) input.value = DEFAULT_NAME[g];
+      paint();
+    };
+    const rowG = top + 34;
+    const btnM = this.renderDomButton(cx - 54, rowG, 'Varón', () => pick('m'), 100, 24);
+    const btnF = this.renderDomButton(cx + 54, rowG, 'Mujer', () => pick('f'), 100, 24);
+    this.track(btnM);
+    this.track(btnF);
+    const paint = () => {
+      for (const [el, g] of [
+        [btnM, 'm'],
+        [btnF, 'f'],
+      ] as const) {
+        const b = el.node as HTMLButtonElement;
+        const on = this.playerGender === g;
+        b.style.background = on ? 'rgba(217,168,69,0.9)' : 'rgba(46,70,79,0.75)';
+        b.style.color = on ? '#18262A' : '#BFD3D8';
+        b.style.borderColor = on ? '#D9A845' : '#7FB0B8';
+      }
+    };
 
+    const rowN = rowG + 34;
     const defaultName = DEFAULT_NAME[this.playerGender];
-    const inputX = cx - 40;
-    // RETRO_FONT, no el monoespaciado de sistema: era el único campo del arranque
-    // que había quedado afuera, al lado del botón "Ir" que sí ya la usa.
+    // RETRO_FONT, igual que los botones de al lado
     this.nameInput = this.add.dom(
-      inputX,
-      rowY,
+      cx - 46,
+      rowN,
       'input',
-      `width:104px; padding:4px; text-align:center; font-family: ${RETRO_FONT}; ` +
+      `width:120px; height:24px; box-sizing:border-box; padding:4px; text-align:center; font-family: ${RETRO_FONT}; ` +
         'font-size:9px; background:#18262A; color:#EAE8E0; border:1px solid #2E464F; outline:none;',
     );
     const inputEl = this.nameInput.node as HTMLInputElement;
     inputEl.value = this.playerName || defaultName; // el 5to arg de add.dom() no sirve para el value de un <input>
     inputEl.maxLength = 18;
     inputEl.autocomplete = 'off'; // si no, el navegador puede autocompletar/sugerir un nombre ya tipeado antes
-
     inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
       e.stopPropagation();
       if (e.key === 'Enter') this.confirmName();
     });
-    // si el jugador cierra el teclado sin todavía avanzar de paso (toca afuera, o el
-    // botón "ocultar teclado" del navegador), el mismo desincronizado de scale.ts
-    // puede pasar ACÁ, antes de llegar a clearStep() — se dispara el mismo reintento
-    // apenas el campo pierde foco, no solo al salir del paso.
+    // si el jugador cierra el teclado sin avanzar (toca afuera, o "ocultar teclado"),
+    // el desincronizado de scale.ts puede pasar ACÁ: mismo reintento al perder foco
     inputEl.addEventListener('blur', () => {
       window.dispatchEvent(new Event('resize'));
       setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
       setTimeout(() => window.dispatchEvent(new Event('resize')), 400);
     });
-    inputEl.focus();
+    this.track(this.renderDomButton(cx + 66, rowN, 'Empezar ›', () => this.confirmName(), 96, 24));
+    this.track(this.renderDomButton(cx, rowN + 34, '‹ Volver', () => this.renderTitle(), 90, 20));
+    paint();
 
-    // botón compacto al lado del campo, no una opción de lista aparte más abajo.
-    this.track(this.renderDomButton(cx + 68, rowY, 'Ir ›', () => this.confirmName(), 62, 24));
-
-    // contexto narrativo en la bandeja de abajo — la misma caja que usa TODO el
-    // texto narrado del juego (ver renderTitle), no un texto suelto sobre la
-    // imagen: antes este paso era el único del arranque sin ninguna línea de qué
-    // está pasando.
+    // contexto narrativo abajo, como cualquier línea de narrador
     this.track(
-      this.renderDomText(16, TRAY_Y + 10, 'Vas a enlistarte para viajar en el Mimosa junto a tu madre.', {
+      this.renderDomText(16, VIEW.height - 64, 'Vas a enlistarte para viajar en el Mimosa junto a tu madre.', {
         size: 9,
         color: '#EAE8E0',
         width: VIEW.width - 32,
@@ -315,12 +393,15 @@ export class BootScene extends Phaser.Scene {
 
   private renderConfirmOverwrite(): void {
     this.clearStep();
+    this.setChrome(true);
     this.renderImage(`enlistamiento_${this.playerGender}`);
-    this.track(this.renderDomText(16, TRAY_Y + 10, 'Se pierde la partida guardada.', { size: 11, color: '#DE7050' }));
+    this.track(
+      this.renderDomText(16, TRAY_Y + 10, 'Se pierde la partida guardada.', { size: 9, color: '#DE7050', width: VIEW.width - 32 }),
+    );
     this.renderOptions(
       [
         { label: 'Sí, empezar de nuevo', onPick: () => this.renderEnlist() },
-        { label: 'Volver', onPick: () => this.renderName() },
+        { label: 'Volver', onPick: () => this.renderCharacter() },
       ],
       TRAY_Y + 44,
     );
@@ -330,6 +411,9 @@ export class BootScene extends Phaser.Scene {
 
   private renderEnlist(): void {
     this.clearStep();
+    // desde acá son escenas con imagen (Liverpool, la travesía): se apaga el 3D
+    this.stopBackdrop();
+    this.setChrome(true);
     // el estado del juego pasa a tener el nombre/género elegidos ANTES de arrancar
     // el diálogo: si se hacía en beginNewGame() (al cerrarse), la charla misma se
     // jugaba todavía con el estado por defecto ("Elin"), sin importar qué se eligiera.
@@ -353,12 +437,13 @@ export class BootScene extends Phaser.Scene {
     const goToWorld = (): void => {
       if (this.scene.isActive()) this.scene.start('World');
     };
-    this.time.delayedCall(6000, goToWorld);
+    // 3 s, no 6: lo justo para leer la línea — el arranque tiene que llevar rápido a jugar
+    this.time.delayedCall(3000, goToWorld);
     // respaldo con setTimeout nativo, no de Phaser: si algo deja trabado el
     // propio loop de Phaser (this.time depende de que el juego siga actualizando
     // cuadro a cuadro; un timer del navegador no) esto igual dispara el salto.
     // isActive() en los dos evita el doble disparo si el de arriba sí llegó a andar.
-    window.setTimeout(goToWorld, 7000);
+    window.setTimeout(goToWorld, 4000);
 
     const bg = this.renderImage('travesia');
 

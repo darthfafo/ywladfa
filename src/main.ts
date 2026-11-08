@@ -27,7 +27,7 @@ function showFatalError(message: string): void {
     'position:fixed; inset:0; z-index:99999; background:#3a0f0f; color:#f2f2ec; ' +
     'font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:12px; line-height:1.5; ' +
     'padding:16px; overflow:auto; white-space:pre-wrap; word-break:break-word;';
-  el.textContent = 'Y Wladfa se rompió acá — mandá este texto tal cual:\n\n' + message;
+  el.textContent = 'Chubut 1865 se rompió acá — mandá este texto tal cual:\n\n' + message;
   document.body.appendChild(el);
 }
 window.addEventListener('error', (e) => {
