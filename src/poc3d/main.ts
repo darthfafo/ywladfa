@@ -33,6 +33,12 @@ const camera = new THREE.PerspectiveCamera(38, 9 / 16, 0.1, 200);
 // la cámara mira desde la barranca hacia el mar: el agua y el Mimosa quedan
 // arriba en la pantalla, en el horizonte, en vez de detrás de la cámara.
 const CAM_OFFSET = new THREE.Vector3(0, 5.2, -10);
+// pegado a la barranca: más alta y más cerca, casi cenital
+const CRANE_OFFSET = new THREE.Vector3(0, 8.5, -7.5);
+const camOffset = new THREE.Vector3();
+const ray = new THREE.Raycaster();
+const rayFrom = new THREE.Vector3();
+const rayDir = new THREE.Vector3();
 
 // ---------- texturas procedurales ----------
 function canvasTex(size: number, draw: (g: CanvasRenderingContext2D, s: number) => void, repeat = 1): THREE.CanvasTexture {
@@ -84,7 +90,8 @@ const woodTex = canvasTex(128, (g, s) => {
 });
 
 // ---------- terreno ----------
-const BEACH = { minX: -18, maxX: 18, minZ: -10, maxZ: 8.5 };
+// minZ deja al jugador delante del pie de la barranca (su frente anda por z≈-10.5)
+const BEACH = { minX: -18, maxX: 18, minZ: -9.3, maxZ: 8.5 };
 // la arena termina en la franja húmeda — antes se extendía por debajo del mar
 // (plano más alto que el agua) y lo tapaba hasta lejos de la costa.
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 32), new THREE.MeshStandardMaterial({ map: sandTex, roughness: 1 }));
@@ -111,19 +118,27 @@ sea.position.set(0, -0.05, 50.5);
 sea.receiveShadow = true;
 scene.add(sea);
 
-// la barranca al fondo: bloques de arcilla de alturas irregulares
-const clayMat = new THREE.MeshStandardMaterial({ map: clayTex, roughness: 0.95, flatShading: true });
+// la barranca al fondo: bloques de arcilla de alturas irregulares.
+// Cada bloque tiene su material para poder desvanecerlo cuando tapa al jugador.
+const clayMat = new THREE.MeshStandardMaterial({ map: clayTex, roughness: 0.95, flatShading: true, transparent: true });
+const occluders: THREE.Mesh[] = [];
 for (let x = -30; x <= 30; x += 2.4) {
   const h = 5 + Math.sin(x * 0.7) * 1.5 + Math.random() * 2;
   const geo = new THREE.BoxGeometry(2.6, h, 3 + Math.random() * 2, 2, 3, 2);
   const p = geo.attributes.position!;
   for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + (Math.random() - 0.5) * 0.4, p.getY(i), p.getZ(i) + (Math.random() - 0.5) * 0.5);
   geo.computeVertexNormals();
-  const block = new THREE.Mesh(geo, clayMat);
+  const block = new THREE.Mesh(geo, clayMat.clone());
   block.position.set(x, h / 2, -13 - Math.random());
   block.castShadow = block.receiveShadow = true;
   scene.add(block);
+  occluders.push(block);
 }
+
+// colisiones simples: círculos en el plano XZ que empujan al jugador hacia afuera
+type Obstacle = { x: number; z: number; r: number };
+const obstacles: Obstacle[] = [];
+const PLAYER_R = 0.35;
 // rocas sueltas
 const rockMat = new THREE.MeshStandardMaterial({ color: 0x6b6a5e, roughness: 0.9, flatShading: true });
 for (let i = 0; i < 22; i++) {
@@ -134,6 +149,7 @@ for (let i = 0; i < 22; i++) {
   r.scale.y = 0.6;
   r.castShadow = r.receiveShadow = true;
   scene.add(r);
+  if (onShore) obstacles.push({ x: r.position.x, z: r.position.z, r: 0.45 });
 }
 
 // ---------- objetos 3D ----------
@@ -149,11 +165,14 @@ for (const [x, z] of crateSpots) {
   c.rotation.y = (Math.random() - 0.5) * 0.6;
   c.castShadow = c.receiveShadow = true;
   scene.add(c);
+  const ob: Obstacle = { x, z, r: 0.55 };
+  obstacles.push(ob);
   const it: Interactable = {
     obj: c,
     label: 'LEVANTAR',
     onUse: () => {
       scene.remove(c);
+      obstacles.splice(obstacles.indexOf(ob), 1);
       interactables.splice(interactables.indexOf(it), 1);
       carried++;
       $('cajones').textContent = `CAJONES ${carried} / 8`;
@@ -186,7 +205,13 @@ boats[0]!.position.set(-12, 0, 9.2);
 boats[0]!.rotation.set(0, 0.4, 0.12);
 boats[1]!.position.set(12, 0, 8.8);
 boats[1]!.rotation.set(0, -0.3, -0.1);
-boats.forEach((b) => scene.add(b));
+boats.forEach((b) => {
+  scene.add(b);
+  // el casco es largo: tres círculos a lo largo de su eje
+  for (const k of [-1.3, 0, 1.3]) {
+    obstacles.push({ x: b.position.x + Math.cos(b.rotation.y) * k, z: b.position.z - Math.sin(b.rotation.y) * k, r: 0.8 });
+  }
+});
 
 // el Mimosa, fondeado mar adentro
 function ship(): THREE.Group {
@@ -266,9 +291,10 @@ class Billboard {
   frame(i: number, frames: number): void {
     this.tex.offset.x = i / frames;
   }
-  face(): void {
-    // cilíndrico: gira solo en Y hacia la cámara, se queda parado sobre el piso
-    this.mesh.rotation.y = Math.atan2(camera.position.x - this.mesh.position.x, camera.position.z - this.mesh.position.z);
+  face(yaw: number): void {
+    // cilíndrico y paralelo al plano de la cámara (no apuntando a su posición):
+    // así dos personajes juntos nunca se cruzan entre sí, uno queda delante del otro.
+    this.mesh.rotation.y = yaw;
   }
 }
 
@@ -286,6 +312,7 @@ pepperell.frame(FACING.sur, 4);
 const edwyn = new Billboard(edwynSheet, 4, CHAR_H, CHAR_ASPECT);
 edwyn.mesh.position.set(9, 0, 1);
 edwyn.frame(FACING.sur, 4);
+for (const n of [pepperell, edwyn]) obstacles.push({ x: n.mesh.position.x, z: n.mesh.position.z, r: 0.4 });
 
 interactables.push(
   { obj: pepperell.mesh, label: 'HABLAR', onUse: () => say('Cap. George Pepperell', 'Cajones. Abajo. Antes de marea. Rápido.') },
@@ -462,13 +489,44 @@ renderer.setAnimationLoop(() => {
     const p = player.mesh.position;
     p.x = THREE.MathUtils.clamp(p.x - vx * SPEED * dt, BEACH.minX, BEACH.maxX);
     p.z = THREE.MathUtils.clamp(p.z - vz * SPEED * dt, BEACH.minZ, BEACH.maxZ);
+    for (const o of obstacles) {
+      const dx = p.x - o.x;
+      const dz = p.z - o.z;
+      const d = Math.hypot(dx, dz);
+      const min = o.r + PLAYER_R;
+      if (d < min && d > 1e-4) {
+        p.x = o.x + (dx / d) * min;
+        p.z = o.z + (dz / d) * min;
+      }
+    }
     player.frame(FACING[facing], 4);
   }
 
-  // cámara que sigue con suavizado
-  tmp.copy(player.mesh.position).add(CAM_OFFSET);
+  // cámara que sigue con suavizado. Cerca de la barranca sube y se acerca
+  // (pasa por arriba del borde en vez de quedar adentro de la arcilla).
+  const pz = player.mesh.position.z;
+  const crane = THREE.MathUtils.smoothstep(-pz, 1, -BEACH.minZ);
+  camOffset.set(0, THREE.MathUtils.lerp(CAM_OFFSET.y, CRANE_OFFSET.y, crane), THREE.MathUtils.lerp(CAM_OFFSET.z, CRANE_OFFSET.z, crane));
+  tmp.copy(player.mesh.position).add(camOffset);
   camera.position.lerp(tmp, 1 - Math.exp(-dt * 5));
-  camera.lookAt(player.mesh.position.x, 1.6, player.mesh.position.z + 6);
+  camera.lookAt(player.mesh.position.x, 1.6, player.mesh.position.z + 6 - crane * 5);
+
+  // lo que quede entre la cámara y el jugador se desvanece
+  rayFrom.set(player.mesh.position.x, 1, player.mesh.position.z);
+  rayDir.copy(camera.position).sub(rayFrom);
+  const camDist = rayDir.length();
+  ray.set(rayFrom, rayDir.normalize());
+  ray.far = camDist;
+  const hidden = new Set(ray.intersectObjects(occluders, false).map((h) => h.object));
+  for (const o of occluders) {
+    const m = o.material as THREE.MeshStandardMaterial;
+    // el rayo solo mira el centro; pegado a la barranca se abre un hueco del
+    // ancho del sprite y algo más, para que nunca quede medio personaje tapado
+    const near = crane > 0.25 && Math.abs(o.position.x - player.mesh.position.x) < 3.6;
+    const target = hidden.has(o) || near ? 0.12 : 1;
+    m.opacity += (target - m.opacity) * (1 - Math.exp(-dt * 10));
+    m.depthWrite = m.opacity > 0.95;
+  }
   sun.position.copy(player.mesh.position).add(sunOffset);
   sun.target.position.copy(player.mesh.position);
   lantern.position.set(player.mesh.position.x, 1.6, player.mesh.position.z + 0.3);
@@ -493,7 +551,8 @@ renderer.setAnimationLoop(() => {
     g.b.frame(Math.floor(t * 4 + g.phase) % 3, 3);
   }
 
-  for (const b of [player, pepperell, edwyn, ...scenery, ...gulls.map((g) => g.b)]) b.face();
+  const yaw = Math.atan2(camera.position.x - player.mesh.position.x, camera.position.z - player.mesh.position.z);
+  for (const b of [player, pepperell, edwyn, ...scenery, ...gulls.map((g) => g.b)]) b.face(yaw);
 
   // interactuable más cercano
   let best: Interactable | null = null;
@@ -523,4 +582,4 @@ renderer.setAnimationLoop(() => {
   }
 });
 
-if (import.meta.env.DEV) (window as unknown as { poc: unknown }).poc = { player, interactables, use, get nearest() { return nearest; } };
+if (import.meta.env.DEV) (window as unknown as { poc: unknown }).poc = { player, camera, occluders, obstacles, keys, interactables, use, get nearest() { return nearest; } };
