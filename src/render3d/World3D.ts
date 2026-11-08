@@ -62,6 +62,8 @@ export interface ViewOptions {
 }
 
 const PX = 1 / VIEW.tile;
+/** subdivisiones por tile de la malla del terreno (ver buildTerrain) */
+const TERRAIN_SUB = 2;
 /** brillo propio (emissive) del piso y de los sprites a plena luz; TURN_LIGHT.glow lo escala */
 const TERRAIN_GLOW = 0.35;
 const SPRITE_GLOW = 0.5;
@@ -203,6 +205,16 @@ export class World3D {
 
   // ---------------------------------------------------------------- terreno
 
+  /**
+   * Terreno como una malla continua, más fina que la grilla (TERRAIN_SUB celdas
+   * por tile), en vez de un cubo por tile:
+   * - barrancas empinadas pero con borde y lomo irregulares (la pendiente queda
+   *   ADENTRO del tile de pared: el piso caminable no se achica)
+   * - la playa baja en declive al agua, no en escalón
+   * - los límites entre terrenos caminables se deshilachan en vez de seguir la grilla
+   * - todo con un leve desplazamiento horizontal y facetado ("low-poly")
+   * Es solo visual: la colisión sigue siendo la de la grilla de WorldScene.
+   */
   private buildTerrain(): void {
     for (const m of this.terrainMeshes) {
       this.scene3.remove(m);
@@ -212,56 +224,154 @@ export class World3D {
     const grid = this.src.terrain();
     const H = grid.length;
     const W = grid[0]?.length ?? 0;
-    // una malla por textura (tapa o lateral de cada terreno), con UV en
-    // coordenadas de mundo: la textura corre continua de un tile al otro
-    const groups = new Map<string, { terrain: number; face: 'top' | 'side'; pos: number[]; nor: number[]; uv: number[] }>();
-    const quad = (terrain: number, face: 'top' | 'side', a: number[], b: number[], c: number[], d: number[], n: number[]) => {
-      const key = `${face}:${terrain}`;
+    const S = TERRAIN_SUB;
+    const hash = (a: number, b: number, k: number) => {
+      const h = Math.sin(a * 127.1 + b * 311.7 + k * 74.7) * 43758.5453;
+      return h - Math.floor(h);
+    };
+    const tileT = (i: number, j: number): number => {
+      const row = grid[j];
+      if (!row || i < 0 || i >= W) return TERRAIN.ROCK;
+      return baseTerrain(row[i]!);
+    };
+    const hOf = (t: number) => heightOf(t * 4);
+    const isWall = (t: number) => hOf(t) > 0.5;
+    const SEA_H = TERRAIN_HEIGHT_3D.SEA ?? -1;
+
+    // terreno de cada triángulo: el del tile bajo su centro, corrido por un ruido
+    // suave — los límites entre terrenos caminables quedan ondulados y en
+    // diagonal, no siguiendo la grilla. Nunca invade una pared ni el mar.
+    const wobble = (x: number, z: number) => [
+      Math.sin(x * 1.3 + z * 0.7) * 0.28 + Math.sin(x * 0.45 - z * 1.9 + 1.7) * 0.2,
+      Math.sin(z * 1.1 - x * 0.8 + 0.4) * 0.28 + Math.sin(z * 0.5 + x * 1.7 + 2.3) * 0.2,
+    ];
+    const triT = (cx: number, cz: number): number => {
+      const t = tileT(Math.floor(cx), Math.floor(cz));
+      if (isWall(t) || t === TERRAIN.SEA) return t;
+      const [dx, dz] = wobble(cx, cz);
+      const n = tileT(Math.floor(cx + dx!), Math.floor(cz + dz!));
+      return isWall(n) || n === TERRAIN.SEA ? t : n;
+    };
+
+    // alturas en los vértices de la malla fina
+    const GW = W * S + 1;
+    const GH = H * S + 1;
+    const hgt = new Float32Array(GW * GH);
+    const px = new Float32Array(GW * GH);
+    const pz = new Float32Array(GW * GH);
+    for (let gy = 0; gy < GH; gy++) {
+      for (let gx = 0; gx < GW; gx++) {
+        // los 4 tiles (no subceldas) que tocan este vértice
+        // las 4 subceldas alrededor del vértice → sus tiles
+        const ts: number[] = [];
+        for (const [dx, dy] of [[-1, -1], [0, -1], [-1, 0], [0, 0]] as const) {
+          ts.push(tileT(Math.floor((gx + dx) / S), Math.floor((gy + dy) / S)));
+        }
+        const hs = ts.map(hOf);
+        const lo = Math.min(...hs);
+        const hi = Math.max(...hs);
+        let h: number;
+        if (lo === hi) {
+          // adentro de un solo terreno: lomo irregular en paredes, leve ondulación en el piso
+          h = isWall(ts[0]!) ? hi * (0.82 + hash(gx, gy, 1) * 0.3) : hi === SEA_H ? SEA_H : hi + (hash(gx, gy, 2) - 0.5) * 0.06;
+        } else if (hi > 0.5) {
+          // borde de una pared: al nivel del piso (la pared sube adentro de su tile)
+          h = lo <= SEA_H ? SEA_H * 0.4 : lo;
+        } else {
+          // costa: la arena baja en declive al agua
+          h = SEA_H * 0.45 + (hash(gx, gy, 4) - 0.5) * 0.15;
+        }
+        const k = gy * GW + gx;
+        hgt[k] = h;
+        // corrimiento horizontal leve (no en el borde del mapa)
+        const edge = gx === 0 || gy === 0 || gx === GW - 1 || gy === GH - 1;
+        const jx = edge ? 0 : (hash(gx, gy, 5) - 0.5) * (0.35 / S);
+        const jz = edge ? 0 : (hash(gx, gy, 6) - 0.5) * (0.35 / S);
+        px[k] = gx / S + jx;
+        pz[k] = gy / S + jz;
+      }
+    }
+    // el anillo de vértices justo adentro de una pared también queda alto pero
+    // dentado: arriba del borde, la barranca no es una línea recta
+    for (let gy = 1; gy < GH - 1; gy++) {
+      for (let gx = 1; gx < GW - 1; gx++) {
+        const k = gy * GW + gx;
+        const t = tileT(Math.floor(gx / S - 0.0001), Math.floor(gy / S - 0.0001));
+        if (!isWall(t)) continue;
+        const nearEdge = [hgt[k - 1]!, hgt[k + 1]!, hgt[k - GW]!, hgt[k + GW]!].some((v) => v < 0.5);
+        if (nearEdge && hgt[k]! > 0.5) hgt[k] = hOf(t) * (0.55 + hash(gx, gy, 7) * 0.45);
+      }
+    }
+
+    const groups = new Map<string, { terrain: number; face: 'top' | 'side'; pos: number[]; uv: number[] }>();
+    const va = new THREE.Vector3();
+    const vb = new THREE.Vector3();
+    const vc = new THREE.Vector3();
+    const tri = (base: number, a: number, b: number, c: number) => {
+      va.set(px[a]!, hgt[a]!, pz[a]!);
+      vb.set(px[b]!, hgt[b]!, pz[b]!);
+      vc.set(px[c]!, hgt[c]!, pz[c]!);
+      const t = isWall(base) || base === TERRAIN.SEA ? base : triT((va.x + vb.x + vc.x) / 3, (va.z + vb.z + vc.z) / 3);
+      const n = vb.clone().sub(va).cross(vc.clone().sub(va)).normalize();
+      if (n.y < 0) n.negate();
+      // empinado y de pared → cara de barranca (estratos); si no, tapa
+      const face: 'top' | 'side' = n.y < 0.6 && (isWall(t) || t === TERRAIN.SEA) ? 'side' : 'top';
+      const tt = t === TERRAIN.SEA ? TERRAIN.SAND_WET : t;
+      const key = `${face}:${tt}`;
       let g = groups.get(key);
-      if (!g) groups.set(key, (g = { terrain, face, pos: [], nor: [], uv: [] }));
-      for (const v of [a, b, c, a, c, d]) {
-        g.pos.push(v[0]!, v[1]!, v[2]!);
-        g.nor.push(n[0]!, n[1]!, n[2]!);
-        // tapa: x/z; cara que mira a ±z: x/y; cara que mira a ±x: z/y
-        const [U, V] = n[1] ? [v[0]!, -v[2]!] : n[2] ? [v[0]! * n[2]!, v[1]!] : [-v[2]! * n[0]!, v[1]!];
-        g.uv.push(U / TEX_TILES, V / TEX_TILES);
+      if (!g) groups.set(key, (g = { terrain: tt, face, pos: [], uv: [] }));
+      for (const v of [va, vb, vc]) {
+        g.pos.push(v.x, v.y, v.z);
+        if (face === 'top') g.uv.push(v.x / TEX_TILES, -v.z / TEX_TILES);
+        else g.uv.push((Math.abs(n.x) > Math.abs(n.z) ? v.z : v.x) / TEX_TILES, v.y / TEX_TILES);
       }
     };
-    const hAt = (i: number, j: number): number => {
-      const row = grid[j];
-      if (!row || i < 0 || i >= W) return heightOf(TERRAIN.ROCK * 4);
-      return heightOf(row[i]!);
-    };
-    for (let j = 0; j < H; j++) {
-      for (let i = 0; i < W; i++) {
-        const t = baseTerrain(grid[j]![i]!);
-        if (t === TERRAIN.SEA) continue; // lo dibuja el mar
-        const h = hAt(i, j);
-        quad(t, 'top', [i, h, j + 1], [i + 1, h, j + 1], [i + 1, h, j], [i, h, j], [0, 1, 0]);
-        // piso debajo de cada pared: si la pared se recorta para dejar ver al
-        // jugador, se ve tierra y no el mar que corre por debajo del mapa
-        if (h > 0) quad(TERRAIN.ROCK, 'top', [i, 0, j + 1], [i + 1, 0, j + 1], [i + 1, 0, j], [i, 0, j], [0, 1, 0]);
-        const sides: Array<[number, number, number[], number[], number[]]> = [
-          [i, j + 1, [i, 0, j + 1], [i + 1, 0, j + 1], [0, 0, 1]], // sur
-          [i, j - 1, [i + 1, 0, j], [i, 0, j], [0, 0, -1]], // norte
-          [i + 1, j, [i + 1, 0, j + 1], [i + 1, 0, j], [1, 0, 0]], // este
-          [i - 1, j, [i, 0, j], [i, 0, j + 1], [-1, 0, 0]], // oeste
-        ];
-        for (const [ni, nj, a, b, n] of sides) {
-          const nh = Math.max(hAt(ni, nj), TERRAIN_HEIGHT_3D.SEA ?? -1);
-          if (nh >= h) continue;
-          quad(t, 'side', [a[0]!, nh, a[2]!], [b[0]!, nh, b[2]!], [b[0]!, h, b[2]!], [a[0]!, h, a[2]!], n);
+    for (let sy = 0; sy < H * S; sy++) {
+      for (let sx = 0; sx < W * S; sx++) {
+        const t = tileT(Math.floor(sx / S), Math.floor(sy / S));
+        const a = sy * GW + sx;
+        const b = a + 1;
+        const c = a + GW;
+        const d = c + 1;
+        // diagonal alternada al azar: sin dibujo de grilla
+        if (hash(sx, sy, 8) < 0.5) {
+          tri(t, a, c, b);
+          tri(t, b, c, d);
+        } else {
+          tri(t, a, c, d);
+          tri(t, a, d, b);
         }
       }
     }
+    // piso debajo de las paredes: si una pared se recorta para dejar ver al
+    // jugador, se ve tierra y no el mar que corre por debajo del mapa
+    const under = { terrain: TERRAIN.ROCK, face: 'top' as const, pos: [] as number[], uv: [] as number[] };
+    for (let j = 0; j < H; j++) {
+      for (let i = 0; i < W; i++) {
+        if (!isWall(tileT(i, j))) continue;
+        const y = -0.08;
+        const q = [
+          [i, j + 1],
+          [i + 1, j + 1],
+          [i + 1, j],
+          [i, j],
+        ];
+        for (const idx of [0, 1, 2, 0, 2, 3]) {
+          under.pos.push(q[idx]![0]!, y, q[idx]![1]!);
+          under.uv.push(q[idx]![0]! / TEX_TILES, -q[idx]![1]! / TEX_TILES);
+        }
+      }
+    }
+    groups.set('under', under);
+
     for (const g of groups.values()) {
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(g.pos, 3));
-      geo.setAttribute('normal', new THREE.Float32BufferAttribute(g.nor, 3));
       geo.setAttribute('uv', new THREE.Float32BufferAttribute(g.uv, 2));
+      geo.computeVertexNormals(); // sin índices: normal por cara → facetado
       const mesh = new THREE.Mesh(geo, this.terrainMaterial(g.terrain, g.face));
       mesh.receiveShadow = true;
-      mesh.castShadow = g.face === 'side' || heightOf(g.terrain * 4) > 0;
+      mesh.castShadow = g.face === 'side' || isWall(g.terrain);
       this.scene3.add(mesh);
       this.terrainMeshes.push(mesh);
     }
@@ -299,7 +409,7 @@ export class World3D {
         .replace(
           '#include <clipping_planes_fragment>',
           `#include <clipping_planes_fragment>
-          if (vWPos.y > 0.05 && vWPos.z > uFocus.z + 0.15) {
+          if (vWPos.y > 0.3 && vWPos.z > uFocus.z + 0.15) {
             float d = length((gl_FragCoord.xy - uCut.xy) / uCut.zw);
             if (d < 0.8) discard;
             if (d < 1.0 && mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) < 1.0) discard;
