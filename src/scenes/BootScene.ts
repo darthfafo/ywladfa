@@ -400,22 +400,25 @@ export class BootScene extends Phaser.Scene {
     const cx = VIEW.width / 2;
     this.setChrome(false);
     if (!this.cine || this.cine.slides !== TITLE_SLIDES) this.startCinematic(TITLE_SLIDES);
-    this.renderShade(0, 170, 'top');
+    this.renderShade(0, 190, 'top');
     this.renderShade(VIEW.height - 180, 180, 'bottom');
     // entrada del título: cada parte aparece después de la anterior (CSS, ver ensureTitleCss)
     this.ensureTitleCss();
     const glow = 'text-shadow: 0 2px 0 #0E1416, 0 0 14px rgba(217,168,69,0.35), 0 0 4px rgba(14,20,22,0.9);';
     this.track(
-      this.renderDomText(cx, 40, '', {
+      // en dos renglones (CHUBUT arriba, 1865 abajo): así quedaba durante la
+      // animación de entrada y se veía mejor que en una sola línea de borde a borde
+      this.renderDomText(cx, 34, '', {
         size: 24,
         color: '#F2EDE0',
         align: 'center',
         retro: true,
-        html: `<span class="ttl-in" style="${glow}">${GAME_TITLE}</span>`,
+        lineHeight: 1.3,
+        html: `<span class="ttl-in" style="${glow}">${GAME_TITLE.replace(' ', '<br>')}</span>`,
       }),
     );
     this.track(
-      this.renderDomText(cx, 80, '', {
+      this.renderDomText(cx, 104, '', {
         size: 9,
         color: '#D9A845',
         align: 'center',
@@ -424,7 +427,7 @@ export class BootScene extends Phaser.Scene {
       }),
     );
     this.track(
-      this.renderDomText(cx, 100, '', {
+      this.renderDomText(cx, 124, '', {
         size: 6,
         color: '#BFD3D8',
         align: 'center',
