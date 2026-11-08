@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PAL, RENDER_3D, TURN_TINT, VIEW } from '@/config';
+import { DUSK_MS, PAL, RENDER_3D, TURN_LIGHT_MS, TURN_TINT, VIEW } from '@/config';
 import { World3D } from '@/render3d/World3D';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
@@ -26,6 +26,25 @@ interface Interactable {
 // chico (16×24) y necesita su propio multiplicador para no perderse contra
 // el mapa (270px de ancho de pantalla).
 const REAL_ART_SCALE = 1;
+
+/**
+ * Cuerpos sólidos (px de mundo), apoyados en el borde de abajo de cada sprite.
+ * Chicos a propósito para props que se levantan o se usan (cajón, jarilla): con
+ * propInteractRadiusPx (balance.json) tienen que seguir alcanzándose de los cuatro
+ * lados. La cueva copia el afloramiento de World3D (3.4×2 tiles, frente 3 px al
+ * sur del centro del dibujo).
+ */
+const SOLID = {
+  // ancho como el torso del dibujo (no las piernas): parados lado a lado no se
+  // superponen, y entre dos NPCs sigue pasando el jugador
+  npc: { w: 34, h: 10 },
+  cajon: { w: 12, h: 6 },
+  jarilla: { w: 10, h: 6 },
+  fogon: { w: 24, h: 14 },
+  cueva: { w: 54, h: 32, frontPx: 3 },
+  animal: { wFrac: 0.55, h: 8 },
+  hull: { wFrac: 0.8, hFrac: 0.4 },
+} as const;
 const PLACEHOLDER_SCALE = 1.5;
 
 export class WorldScene extends Phaser.Scene {
@@ -55,6 +74,12 @@ export class WorldScene extends Phaser.Scene {
   private world3d: World3D | null = null;
   /** sube cada vez que se repinta el terreno, para que World3D lo reconstruya */
   private terrainVersion = 0;
+  private solids!: Phaser.Physics.Arcade.StaticGroup;
+  /** al caer la noche los triggers esperan a que termine de irse el sol (ver create) */
+  private holdTriggersUntil = 0;
+  private holdTimer: Phaser.Time.TimerEvent | null = null;
+  /** se hizo de noche en el reloj pero todavía no se vio el atardecer */
+  private duskPending = false;
 
   constructor() {
     super('World');
@@ -117,6 +142,12 @@ export class WorldScene extends Phaser.Scene {
     );
     this.physics.add.collider(this.player, this.layer);
 
+    // ---- cosas que no se atraviesan (NPCs, guanacos, cajones, fogón, cuevas,
+    // botes): solo la "base" de cada una, como la caja de los pies del jugador —
+    // la cabeza de un personaje o el mástil de un bote no chocan. Ver solid().
+    this.solids = this.physics.add.staticGroup();
+    this.physics.add.collider(this.player, this.solids);
+
     this.spawnProps(level);
     this.spawnDecor();
 
@@ -141,7 +172,14 @@ export class WorldScene extends Phaser.Scene {
       .setBlendMode(Phaser.BlendModes.MULTIPLY)
       .setDepth(50);
     this.applyTurnLight();
-    bus.on('time:turn-advanced', () => this.applyTurnLight());
+    // la luz nunca salta de un cuadro al otro. La noche, además, no se aplica
+    // cuando cambia el reloj (eso suele pasar en el medio de un diálogo): queda
+    // pendiente y el atardecer se ve recién cuando el jugador vuelve a tener el
+    // control — ver checkTriggers().
+    bus.on('time:turn-advanced', () => {
+      this.duskPending = game.state.progress.turn === 'noche';
+      if (!this.duskPending) this.applyTurnLight(TURN_LIGHT_MS);
+    });
 
     // ---- mundo HD-2D: esta escena sigue con toda la lógica pero deja de
     // dibujar; World3D copia cada cuadro sus objetos y los dibuja en 3D debajo
@@ -202,11 +240,19 @@ export class WorldScene extends Phaser.Scene {
     this.trackTile();
   }
 
-  /** Tiñe el mundo según el turno actual (TURN_TINT, config.ts) — se llama al
-   * crear la escena y de nuevo en cada `time:turn-advanced`. */
-  private applyTurnLight(): void {
-    const tint = TURN_TINT[game.state.progress.turn] ?? TURN_TINT.manana!;
-    this.lightOverlay.setFillStyle(tint.color, tint.alpha);
+  /** Lleva la luz al turno actual en `ms` (0 = de golpe): el tinte del mundo 2D
+   * (TURN_TINT) y la luz del mundo 3D (TURN_LIGHT), ambos en config.ts. */
+  private applyTurnLight(ms = 0): void {
+    const turn = game.state.progress.turn;
+    this.world3d?.setTurn(turn, ms);
+    const tint = TURN_TINT[turn] ?? TURN_TINT.manana!;
+    this.tweens.killTweensOf(this.lightOverlay);
+    if (ms <= 0) {
+      this.lightOverlay.setFillStyle(tint.color, tint.alpha);
+      return;
+    }
+    this.lightOverlay.setFillStyle(tint.color, this.lightOverlay.fillAlpha);
+    this.tweens.add({ targets: this.lightOverlay, fillAlpha: tint.alpha, duration: ms, ease: 'Sine.easeInOut' });
   }
 
   /** Al cerrar d_n1_manantial (UiScene.openDialogue), Dafydd se despide y arranca a
@@ -224,7 +270,41 @@ export class WorldScene extends Phaser.Scene {
     const it = this.interactables.find((x) => x.kind === 'npc' && x.id === 'npc_dafydd');
     if (!it || !it.sprite.visible) return;
     this.dafyddFollow = it.sprite;
+    // camina detrás tuyo: si fuera sólido, darte vuelta te dejaba trabado contra él
+    this.syncSolid(it.sprite, false);
     this.playerTrail = [{ x: this.player.x, y: this.player.y }];
+  }
+
+  /**
+   * Le da a `s` un cuerpo estático de `w`×`h` px de mundo, apoyado en el borde de
+   * abajo del sprite y corrido `dy` px (positivo = más abajo). Medidas fijas, no
+   * proporcionales al dibujo: así los radios de interacción (balance.json) siguen
+   * alcanzando desde cualquier lado.
+   */
+  private solid(s: Phaser.GameObjects.Image, w: number, h: number, dy = 0): void {
+    this.solids.add(s);
+    const body = s.body as Phaser.Physics.Arcade.StaticBody;
+    body.setSize(w, h, false);
+    body.setOffset((s.displayWidth - w) / 2, s.displayHeight - h + dy);
+    body.reset(); // (no updateFromGameObject: ese vuelve al tamaño del dibujo y pierde el offset)
+  }
+
+  /** Guanaco: las patas, no el cuello. */
+  private solidAnimal(s: Phaser.GameObjects.Image): void {
+    this.solid(s, Math.round(s.displayWidth * SOLID.animal.wFrac), SOLID.animal.h);
+  }
+
+  /** Bote / restos: casco bajo y ancho. */
+  private solidHull(s: Phaser.GameObjects.Image): void {
+    this.solid(s, Math.round(s.displayWidth * SOLID.hull.wFrac), Math.round(s.displayHeight * SOLID.hull.hFrac));
+  }
+
+  /** Reubica/activa el cuerpo de un sólido después de mover o esconder su sprite. */
+  private syncSolid(s: Phaser.GameObjects.Image, enabled: boolean): void {
+    const body = s.body as Phaser.Physics.Arcade.StaticBody | null;
+    if (!body) return;
+    body.enable = enabled;
+    if (enabled) body.reset();
   }
 
   private spawnProps(level: typeof game.level): void {
@@ -260,6 +340,7 @@ export class WorldScene extends Phaser.Scene {
           addPropImage(this, 'cajon', tileCenter(c.x), tileCenter(c.y)) ??
           this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cajon');
         s.setDepth(10);
+        this.solid(s, SOLID.cajon.w, SOLID.cajon.h);
         this.interactables.push({ sprite: s, kind: 'cajon', id: `cajon_${i}`, label: 'Levantar' });
       }
     }
@@ -278,6 +359,7 @@ export class WorldScene extends Phaser.Scene {
         addPropImage(this, 'jarilla', tileCenter(n.x), tileCenter(n.y)) ??
         this.add.image(tileCenter(n.x), tileCenter(n.y), 'prop_jarilla');
       s.setDepth(10);
+      this.solid(s, SOLID.jarilla.w, SOLID.jarilla.h);
       this.interactables.push({ sprite: s, kind: 'jarilla', id: n.id, label: 'Cortar' });
     }
     // fogón y cuevas — arte real si ya existe (src/assets/props/fogon.png, cueva.png)
@@ -286,12 +368,17 @@ export class WorldScene extends Phaser.Scene {
       addPropImage(this, 'fogon', tileCenter(f.x), tileCenter(f.y)) ??
       this.add.image(tileCenter(f.x), tileCenter(f.y), 'prop_fogon');
     fs.setDepth(10);
+    // centrado en el fogón (el 3D dibuja el aro de piedras alrededor del centro)
+    this.solid(fs, SOLID.fogon.w, SOLID.fogon.h, SOLID.fogon.h / 2 - fs.displayHeight / 2);
     this.interactables.push({ sprite: fs, kind: 'fogon', id: 'fogon', label: 'Fogón' });
     for (const c of level.spawns.cuevas) {
       const s =
         addPropImage(this, 'cueva', tileCenter(c.x), tileCenter(c.y)) ??
         this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cueva');
       s.setDepth(8);
+      // el afloramiento 3D de la cueva es más grande que el dibujo 2D: el cuerpo
+      // copia ese bloque (ancho, y hacia el norte) para no caminar adentro de la roca
+      this.solid(s, SOLID.cueva.w, SOLID.cueva.h, SOLID.cueva.frontPx - s.displayHeight / 2);
       this.interactables.push({ sprite: s, kind: 'cueva', id: c.id, label: 'Entrar' });
     }
     // NPCs
@@ -301,6 +388,7 @@ export class WorldScene extends Phaser.Scene {
         .image(tileCenter(n.x), tileCenter(n.y), resolved?.key ?? n.id, FACING_FRAME.south)
         .setDepth(15)
         .setScale(resolved?.scale ?? PLACEHOLDER_SCALE);
+      this.solid(s, SOLID.npc.w, SOLID.npc.h);
       this.interactables.push({ sprite: s, kind: 'npc', id: n.id, label: 'Hablar' });
     }
     this.updateNpcVisibility();
@@ -321,7 +409,10 @@ export class WorldScene extends Phaser.Scene {
     // sabor nada más (no da ni pide nada) — que el jugador se acerque a mirarlo
     // tiene que valer la pena con algo, aunque sea un chiste.
     const guanaco = addPropImage(this, 'guanaco', tileCenter(9), tileCenter(59))?.setDepth(6);
-    if (guanaco) this.interactables.push({ sprite: guanaco, kind: 'guanaco', id: 'guanaco', label: 'Mirar' });
+    if (guanaco) {
+      this.solidAnimal(guanaco);
+      this.interactables.push({ sprite: guanaco, kind: 'guanaco', id: 'guanaco', label: 'Mirar' });
+    }
 
     // coirón disperso por el monte — decoración de terreno, no interactuable
     // (distinto de la jarilla, que sí se corta).
@@ -336,7 +427,8 @@ export class WorldScene extends Phaser.Scene {
     // restos de costa, algas varadas y botes menores — la playa se siente usada,
     // no vacía. Lejos de los cajones y la pila para no confundir qué se puede
     // levantar.
-    addPropImage(this, 'restos_costa', tileCenter(10), tileCenter(103))?.setDepth(6);
+    const restos = addPropImage(this, 'restos_costa', tileCenter(10), tileCenter(103))?.setDepth(6);
+    if (restos) this.solidHull(restos);
 
     // algas: varios ovillos esparcidos por la arena húmeda (donde de verdad las
     // deja la marea, no en la seca) — cada uno interactuable, mismo criterio que
@@ -366,7 +458,10 @@ export class WorldScene extends Phaser.Scene {
       [22, 102],
     ] as const).forEach(([bx, by], i) => {
       const s = addPropImage(this, 'bote_menor', tileCenter(bx), tileCenter(by))?.setDepth(6);
-      if (s) this.interactables.push({ sprite: s, kind: 'bote', id: `bote_${i}`, label: 'Mirar' });
+      if (s) {
+        this.solidHull(s);
+        this.interactables.push({ sprite: s, kind: 'bote', id: `bote_${i}`, label: 'Mirar' });
+      }
     });
 
     // fauna del cañadón: es un espacio abierto y grande, no tiene sentido que esté
@@ -375,6 +470,7 @@ export class WorldScene extends Phaser.Scene {
     // los afloramientos de roca nuevos y del propio manantial.
     const guanacoCanadon = addPropImage(this, 'guanaco', tileCenter(21), tileCenter(30))?.setDepth(6);
     if (guanacoCanadon) {
+      this.solidAnimal(guanacoCanadon);
       this.interactables.push({ sprite: guanacoCanadon, kind: 'guanaco', id: 'guanaco_canadon', label: 'Mirar' });
     }
     for (const [tx, ty] of [
@@ -411,6 +507,7 @@ export class WorldScene extends Phaser.Scene {
     for (const group of mesetaGroups) {
       group.spots.forEach(([gx, gy], i) => {
         const s = addPropImage(this, 'guanaco', tileCenter(gx), tileCenter(gy))?.setDepth(6);
+        if (s) this.solidAnimal(s);
         if (s && i === 0) this.interactables.push({ sprite: s, kind: 'guanaco', id: group.id, label: 'Mirar' });
       });
     }
@@ -509,6 +606,7 @@ export class WorldScene extends Phaser.Scene {
       const reached = stops.filter((m) => day > m.day || (day === m.day && turnIdx >= TURNS.indexOf(m.turn)));
       const pos = reached.length ? reached[reached.length - 1]! : n;
       it.sprite.setPosition(tileCenter(pos.x), tileCenter(pos.y));
+      this.syncSolid(it.sprite, visible);
     }
   }
 
@@ -840,6 +938,24 @@ export class WorldScene extends Phaser.Scene {
 
   private checkTriggers(): void {
     if (input.locked) return;
+    // atardecer: recién acá (con el jugador libre, no en el medio de un diálogo)
+    // se va el sol, de a poco, y nada dispara hasta que terminó de irse. Antes la
+    // pantalla se ponía negra de un cuadro al otro y el fogón arrancaba al toque.
+    if (this.duskPending) {
+      this.duskPending = false;
+      this.applyTurnLight(DUSK_MS);
+      const atCamp = game.state.progress.zone === 'z2_barranca';
+      bus.emit('ui:toast', { text: atCamp ? 'Se va el sol.' : 'Se va el sol. Hay que volver al fogón.' });
+      this.holdTriggersUntil = this.time.now + DUSK_MS;
+    }
+    const wait = this.holdTriggersUntil - this.time.now;
+    if (wait > 0) {
+      this.holdTimer ??= this.time.delayedCall(wait, () => {
+        this.holdTimer = null;
+        this.checkTriggers();
+      });
+      return;
+    }
     this.updateGates();
     const tx = toTile(this.player.x);
     const ty = toTile(this.player.y + 8);

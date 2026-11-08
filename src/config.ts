@@ -81,8 +81,9 @@ export const CAM_3D = {
   follow: 5,
   /** a partir de esta distancia (tiles) la cámara salta en vez de deslizarse */
   snapDistance: 10,
-  /** cuánto se inclinan los sprites hacia la cámara (0 = parados, 1 = de frente a la cámara) */
-  spriteLean: 0.45,
+  /** cuánto se inclinan los sprites hacia la cámara (0 = parados, 1 = de frente a la cámara).
+   * 0: inclinados hacia atrás, la cabeza se metía en la pared que tenían detrás. */
+  spriteLean: 0,
 } as const;
 
 /** Alto de cada terreno en el mundo 3D (tiles). Lo que no figura es piso (0). */
@@ -94,17 +95,25 @@ export const TERRAIN_HEIGHT_3D: Record<string, number> = {
   SPRING: -0.25,
 };
 
-/** Luz por turno en el mundo 3D — el equivalente de TURN_TINT. */
+/** Cambio de luz entre turnos (ms): nunca de un cuadro al otro. */
+export const TURN_LIGHT_MS = 2500;
+/** Atardecer: al caer la noche el sol se va de a poco y, recién cuando terminó,
+ * los triggers del fogón pueden disparar (WorldScene.checkTriggers). */
+export const DUSK_MS = 4000;
+
+/** Luz por turno en el mundo 3D — el equivalente de TURN_TINT. `glow` escala el
+ * brillo propio del piso y los sprites (que los mantiene legibles a contraluz):
+ * de noche casi se apaga, si no la noche se ve como de día. */
 export const TURN_LIGHT: Record<
   string,
-  { sun: number; sunI: number; sunDir: [number, number, number]; sky: number; ground: number; hemiI: number; fog: number; lantern: number }
+  { sun: number; sunI: number; sunDir: [number, number, number]; sky: number; ground: number; hemiI: number; fog: number; lantern: number; glow: number }
 > = {
   // sol del este a la mañana (+x) y del oeste a la tarde, apenas del lado de la
   // cámara (+z) para que las paredes que dan al jugador no queden a contraluz
-  amanecer: { sun: 0xffb27a, sunI: 2.1, sunDir: [16, 8, 5], sky: 0xe8cdb8, ground: PAL.grey, hemiI: 0.95, fog: 0xc9a58d, lantern: 0 },
-  manana: { sun: 0xfff4e0, sunI: 2.5, sunDir: [7, 18, 7], sky: 0xd8e6ea, ground: 0x7a7468, hemiI: 1.05, fog: PAL.sky, lantern: 0 },
-  tarde: { sun: 0xffc46b, sunI: 2.2, sunDir: [-16, 9, 5], sky: 0xe6c79a, ground: 0x6b5a40, hemiI: 0.9, fog: 0xd9a37a, lantern: 0 },
-  noche: { sun: 0x7f9fd8, sunI: 0.35, sunDir: [-8, 14, 5], sky: PAL.slate, ground: PAL.void, hemiI: 0.3, fog: PAL.ink, lantern: 7 },
+  amanecer: { sun: 0xffb27a, sunI: 2.1, sunDir: [16, 8, 5], sky: 0xe8cdb8, ground: PAL.grey, hemiI: 0.95, fog: 0xc9a58d, lantern: 0, glow: 1 },
+  manana: { sun: 0xfff4e0, sunI: 2.5, sunDir: [7, 18, 7], sky: 0xd8e6ea, ground: 0x7a7468, hemiI: 1.05, fog: PAL.sky, lantern: 0, glow: 1 },
+  tarde: { sun: 0xffc46b, sunI: 2.2, sunDir: [-16, 9, 5], sky: 0xe6c79a, ground: 0x6b5a40, hemiI: 0.9, fog: 0xd9a37a, lantern: 0, glow: 1 },
+  noche: { sun: 0x7f9fd8, sunI: 0.35, sunDir: [-8, 14, 5], sky: PAL.slate, ground: PAL.void, hemiI: 0.3, fog: PAL.ink, lantern: 7, glow: 0.12 },
 };
 
 export const GAME_CONFIG: Phaser.Types.Core.GameConfig = {

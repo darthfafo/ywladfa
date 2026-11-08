@@ -9,7 +9,6 @@ import { HorizontalTiltShiftShader } from 'three/examples/jsm/shaders/Horizontal
 import { VerticalTiltShiftShader } from 'three/examples/jsm/shaders/VerticalTiltShiftShader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { CAM_3D, PAL, RENDER_3D_FX, TERRAIN_HEIGHT_3D, TURN_LIGHT, VIEW } from '@/config';
-import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { baseTerrain, TERRAIN } from '@/util/mapgen';
 import { buildShip } from './ship';
@@ -36,6 +35,14 @@ export interface WorldSource {
 }
 
 const PX = 1 / VIEW.tile;
+/** brillo propio (emissive) del piso y de los sprites a plena luz; TURN_LIGHT.glow lo escala */
+const TERRAIN_GLOW = 0.35;
+const SPRITE_GLOW = 0.5;
+/** Inclinación de los sprites hacia la cámara y estiramiento vertical que
+ * compensa el escorzo: un sprite parado visto desde arriba se ve achatado
+ * (cos del ángulo); estirándolo así se ve del mismo alto que en el 2D. */
+const SPRITE_TILT = THREE.MathUtils.degToRad(CAM_3D.pitch) * CAM_3D.spriteLean;
+const SPRITE_STRETCH = 1 / Math.cos(THREE.MathUtils.degToRad(CAM_3D.pitch) - SPRITE_TILT);
 const TERRAIN_NAME = Object.fromEntries(Object.entries(TERRAIN).map(([k, v]) => [v, k])) as Record<number, string>;
 const heightOf = (tileIdx: number): number => TERRAIN_HEIGHT_3D[TERRAIN_NAME[baseTerrain(tileIdx)] ?? ''] ?? 0;
 
@@ -47,6 +54,8 @@ interface Mirror {
   mat?: THREE.MeshLambertMaterial;
   tex?: THREE.Texture;
   lift?: number;
+  /** corrimiento mínimo en profundidad: dos sprites en la misma fila no titilan */
+  zBias?: number;
   update?: (t: number) => void;
 }
 
@@ -63,6 +72,9 @@ export class World3D {
   private readonly mirrors = new Map<Phaser.GameObjects.GameObject, Mirror>();
   /** objetos de la escena que no se copian (capa de tiles, capa de luz 2D) */
   private readonly ignored = new WeakSet<Phaser.GameObjects.GameObject>();
+  private mirrorCount = 0;
+  private terrainMat: THREE.MeshLambertMaterial | null = null;
+  private seaMat: THREE.MeshStandardMaterial | null = null;
   private readonly sources = new Map<unknown, THREE.Texture>();
   private terrainMesh: THREE.Mesh | null = null;
   private terrainBuilt = -1;
@@ -72,7 +84,8 @@ export class World3D {
   private readonly lookAhead: number;
   private readonly sunOffset = new THREE.Vector3();
   private rect = '';
-  private readonly onTurn = () => this.applyTurn();
+  /** luz actual, interpolando de `from` a `to` (ver setTurn) */
+  private light = { from: lightOf('manana'), to: lightOf('manana'), cur: lightOf('manana'), k: 1, ms: 1 };
 
   constructor(private readonly src: WorldSource) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -125,14 +138,12 @@ export class World3D {
       this.composer = null;
     }
 
-    this.applyTurn();
-    bus.on('time:turn-advanced', this.onTurn);
+    this.setTurn(game.state.progress.turn, 0);
     const p = this.src.player;
     this.camera.position.set(p.x * PX, 0, p.y * PX).add(this.camOffset);
   }
 
   destroy(): void {
-    bus.off('time:turn-advanced', this.onTurn);
     this.renderer.dispose();
     this.renderer.domElement.remove();
   }
@@ -175,6 +186,9 @@ export class World3D {
         const h = hAt(i, j);
         // tapa: de norte (z=j) a sur (z=j+1); v=1 arriba de la textura = norte
         quad([i, h, j + 1], [i + 1, h, j + 1], [i + 1, h, j], [i, h, j], [0, 1, 0], idx);
+        // piso debajo de cada pared: cuando la pared se trama (queda entre la
+        // cámara y el jugador) se ve tierra, no el mar que corre por debajo del mapa
+        if (h > 0) quad([i, 0, j + 1], [i + 1, 0, j + 1], [i + 1, 0, j], [i, 0, j], [0, 1, 0], idx);
         // paredes hacia cada vecino más bajo
         const sides: Array<[number, number, number[], number[], number[]]> = [
           [i, j + 1, [i, 0, j + 1], [i + 1, 0, j + 1], [0, 0, 1]], // sur
@@ -204,7 +218,8 @@ export class World3D {
     tex.generateMipmaps = false;
     // emissive con el mismo atlas: el piso conserva la paleta del 2D aunque el
     // sol venga bajo (amanecer, tarde) — la luz tiñe, no apaga
-    const mat = new THREE.MeshLambertMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.35 });
+    const mat = new THREE.MeshLambertMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: TERRAIN_GLOW });
+    this.terrainMat = mat;
     // las paredes que quedan entre la cámara y el jugador se tramán (medio
     // transparentes con un patrón de puntos, sin ordenar transparencias)
     mat.onBeforeCompile = (sh) => {
@@ -309,6 +324,7 @@ export class World3D {
           transformed.y += sin(wp.x * 0.45 + uTime * 1.2) * 0.12 + cos(wp.z * 0.6 + uTime * 0.9) * 0.1;`,
         );
     };
+    this.seaMat = mat;
     const sea = new THREE.Mesh(geo, mat);
     sea.position.set(32, -0.45, 60);
     sea.receiveShadow = true;
@@ -377,7 +393,7 @@ export class World3D {
       map: tex,
       emissive: 0xffffff,
       emissiveMap: tex,
-      emissiveIntensity: 0.5,
+      emissiveIntensity: SPRITE_GLOW * this.light.cur.glow,
       alphaTest: 0.5,
       side: THREE.DoubleSide,
     });
@@ -389,7 +405,7 @@ export class World3D {
     mesh.castShadow = !flat;
     mesh.receiveShadow = flat;
     mesh.customDepthMaterial = new THREE.MeshDepthMaterial({ map: tex, alphaTest: 0.5, depthPacking: THREE.RGBADepthPacking });
-    if (!flat) mesh.rotation.x = -THREE.MathUtils.degToRad(CAM_3D.pitch) * CAM_3D.spriteLean;
+    if (!flat) mesh.rotation.x = -SPRITE_TILT;
     return { kind: flat ? 'flat' : 'billboard', obj: mesh, mat, tex, lift: key.includes('gaviotas') ? 5 : flat ? 0.03 : 0 };
   }
 
@@ -405,6 +421,7 @@ export class World3D {
           continue;
         }
         m = made;
+        m.zBias = (this.mirrorCount++ % 11) * 0.004;
         this.mirrors.set(go, m);
         this.scene3.add(m.obj);
       }
@@ -416,8 +433,8 @@ export class World3D {
       const h = g.displayHeight * PX;
       if (m.kind === 'billboard') {
         // los pies (borde de abajo del sprite) sobre el piso, en la fila donde pisan
-        m.obj.position.set(g.x * PX, m.lift ?? 0, (g.y + g.displayHeight * (1 - g.originY)) * PX);
-        m.obj.scale.set(w, h, 1);
+        m.obj.position.set(g.x * PX, m.lift ?? 0, (g.y + g.displayHeight * (1 - g.originY)) * PX + (m.zBias ?? 0));
+        m.obj.scale.set(w, h * SPRITE_STRETCH, 1);
       } else if (m.kind === 'flat') {
         m.obj.position.set(g.x * PX, m.lift ?? 0, g.y * PX);
         m.obj.scale.set(w, 1, h);
@@ -441,17 +458,43 @@ export class World3D {
 
   // ---------------------------------------------------------------- luz
 
-  private applyTurn(): void {
-    const c = TURN_LIGHT[game.state.progress.turn] ?? TURN_LIGHT.manana!;
-    this.sun.color.setHex(c.sun);
+  /** Lleva la luz al turno `turn` en `ms` milisegundos (0 = de golpe). La
+   * decide WorldScene, no el reloj: así el atardecer se ve cuando el jugador
+   * puede verlo, no en el medio de un diálogo. */
+  setTurn(turn: string, ms: number): void {
+    this.light.from = { ...this.light.cur };
+    this.light.to = lightOf(turn);
+    this.light.k = ms > 0 ? 0 : 1;
+    this.light.ms = Math.max(1, ms);
+    if (ms <= 0) this.light.cur = { ...this.light.to };
+    this.applyLight();
+  }
+
+  private stepLight(dtMs: number): void {
+    const L = this.light;
+    if (L.k >= 1) return;
+    L.k = Math.min(1, L.k + dtMs / L.ms);
+    const e = L.k * L.k * (3 - 2 * L.k); // suave al principio y al final
+    L.cur = mixLight(L.from, L.to, e);
+    this.applyLight();
+  }
+
+  private applyLight(): void {
+    const c = this.light.cur;
+    this.sun.color.copy(c.sun);
     this.sun.intensity = c.sunI;
-    this.sunOffset.set(...c.sunDir);
-    this.hemi.color.setHex(c.sky);
-    this.hemi.groundColor.setHex(c.ground);
+    this.sunOffset.copy(c.sunDir);
+    this.hemi.color.copy(c.sky);
+    this.hemi.groundColor.copy(c.ground);
     this.hemi.intensity = c.hemiI;
-    this.scene3.background = new THREE.Color(c.fog);
-    this.scene3.fog = new THREE.Fog(c.fog, 75, 170);
+    if (!(this.scene3.background instanceof THREE.Color)) this.scene3.background = new THREE.Color();
+    (this.scene3.background as THREE.Color).copy(c.fog);
+    if (!this.scene3.fog) this.scene3.fog = new THREE.Fog(c.fog, 75, 170);
+    (this.scene3.fog as THREE.Fog).color.copy(c.fog);
     this.lantern.intensity = c.lantern;
+    if (this.terrainMat) this.terrainMat.emissiveIntensity = TERRAIN_GLOW * c.glow;
+    if (this.seaMat) this.seaMat.emissiveIntensity = c.glow;
+    for (const m of this.mirrors.values()) if (m.mat) m.mat.emissiveIntensity = SPRITE_GLOW * c.glow;
   }
 
   // ---------------------------------------------------------------- cuadro
@@ -485,6 +528,7 @@ export class World3D {
   render(dtMs: number): void {
     const dt = Math.min(dtMs / 1000, 0.05);
     this.time.value += dt;
+    this.stepLight(dtMs);
     if (this.terrainBuilt !== this.src.terrainVersion()) this.buildTerrain();
     this.fitToCanvas();
     this.sync(this.time.value);
@@ -621,5 +665,49 @@ function fire(): { group: THREE.Group; update: (t: number) => void } {
       });
       light.intensity = 3.6 + Math.sin(t * 13) * 0.5 + Math.sin(t * 7.1) * 0.4;
     },
+  };
+}
+
+// ---------------------------------------------------------------- luz
+
+interface Light {
+  sun: THREE.Color;
+  sunI: number;
+  sunDir: THREE.Vector3;
+  sky: THREE.Color;
+  ground: THREE.Color;
+  hemiI: number;
+  fog: THREE.Color;
+  lantern: number;
+  glow: number;
+}
+
+function lightOf(turn: string): Light {
+  const c = TURN_LIGHT[turn] ?? TURN_LIGHT.manana!;
+  return {
+    sun: new THREE.Color(c.sun),
+    sunI: c.sunI,
+    sunDir: new THREE.Vector3(...c.sunDir),
+    sky: new THREE.Color(c.sky),
+    ground: new THREE.Color(c.ground),
+    hemiI: c.hemiI,
+    fog: new THREE.Color(c.fog),
+    lantern: c.lantern,
+    glow: c.glow,
+  };
+}
+
+function mixLight(a: Light, b: Light, k: number): Light {
+  const n = (x: number, y: number) => x + (y - x) * k;
+  return {
+    sun: a.sun.clone().lerp(b.sun, k),
+    sunI: n(a.sunI, b.sunI),
+    sunDir: a.sunDir.clone().lerp(b.sunDir, k),
+    sky: a.sky.clone().lerp(b.sky, k),
+    ground: a.ground.clone().lerp(b.ground, k),
+    hemiI: n(a.hemiI, b.hemiI),
+    fog: a.fog.clone().lerp(b.fog, k),
+    lantern: n(a.lantern, b.lantern),
+    glow: n(a.glow, b.glow),
   };
 }
