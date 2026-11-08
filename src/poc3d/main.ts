@@ -11,6 +11,7 @@ import pepperellSheet from '@/assets/sprites/npc_pepperell.png?url';
 import edwynSheet from '@/assets/sprites/npc_edwyn.png?url';
 import coironUrl from '@/assets/props/coiron.png?url';
 import gaviotasUrl from '@/assets/props/gaviotas.png?url';
+import { buildShip } from './ship';
 
 // Prueba aislada (no es el juego): la playa del J1 con terreno, mar, barranca y
 // objetos en 3D real, luz/sombras dinámicas por turno, y los personajes como
@@ -107,14 +108,14 @@ wet.receiveShadow = true;
 scene.add(wet);
 
 // mar: plano subdividido con olas en el vértice (CPU, alcanza para una prueba)
-const seaGeo = new THREE.PlaneGeometry(140, 80, 100, 50);
+const seaGeo = new THREE.PlaneGeometry(260, 160, 120, 64);
 seaGeo.rotateX(-Math.PI / 2);
 const seaBase = Float32Array.from(seaGeo.attributes.position!.array as Float32Array);
 const sea = new THREE.Mesh(
   seaGeo,
   new THREE.MeshStandardMaterial({ color: 0x4e8a96, emissive: 0x1d3a42, roughness: 0.45, metalness: 0, flatShading: true }),
 );
-sea.position.set(0, -0.05, 50.5);
+sea.position.set(0, -0.05, 90.5);
 sea.receiveShadow = true;
 scene.add(sea);
 
@@ -213,41 +214,11 @@ boats.forEach((b) => {
   }
 });
 
-// el Mimosa, fondeado mar adentro
-function ship(): THREE.Group {
-  const g = new THREE.Group();
-  const hull = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 20, 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2),
-    new THREE.MeshStandardMaterial({ color: 0x2b2118, roughness: 0.7, flatShading: true }),
-  );
-  hull.scale.set(7, 1.8, 1.8);
-  hull.position.y = 1.2;
-  g.add(hull);
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(13, 0.3, 3.2), new THREE.MeshStandardMaterial({ color: 0x5c3e24 }));
-  deck.position.y = 1.25;
-  g.add(deck);
-  const sailMat = new THREE.MeshStandardMaterial({ color: 0xeae2cc, roughness: 1, side: THREE.DoubleSide });
-  for (const x of [-3.5, 0.5, 4]) {
-    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 11), new THREE.MeshStandardMaterial({ color: 0x3e2a17 }));
-    mast.position.set(x, 6.5, 0);
-    g.add(mast);
-    for (const [y, w] of [[4.8, 4.2], [7.6, 3.4], [9.8, 2.4]] as const) {
-      const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 2.2, 1, 4), sailMat);
-      sail.scale.x = w / 0.2;
-      sail.rotation.y = Math.PI / 2;
-      sail.position.set(x, y, 0);
-      // velas apenas recogidas, no un plano rígido
-      const p = sail.geometry.attributes.position!;
-      for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin((p.getY(i) / 2.2) * Math.PI + Math.PI / 2) * 0.15);
-      g.add(sail);
-    }
-  }
-  g.traverse((o) => ((o as THREE.Mesh).castShadow = true));
-  return g;
-}
-const mimosa = ship();
-mimosa.position.set(-4, 0, 48);
-mimosa.rotation.y = 0.75;
+// el Mimosa, fondeado mar adentro (más lejos: es un clíper de verdad, no un bote)
+const mimosa = buildShip();
+mimosa.position.set(-2, 0, 76);
+mimosa.scale.setScalar(0.8);
+mimosa.rotation.y = 0.55;
 scene.add(mimosa);
 
 // ---------- sprites (personajes y vegetación) en el mundo 3D ----------
@@ -369,7 +340,7 @@ function applyTurn(t: Turn): void {
   hemi.groundColor.setHex(c.hemiGround);
   hemi.intensity = c.hemiI;
   scene.background = new THREE.Color(c.sky);
-  scene.fog = new THREE.Fog(c.fog, 40, 110);
+  scene.fog = new THREE.Fog(c.fog, 60, 190);
   lantern.intensity = c.lantern;
   $('turnLabel').textContent = t;
   document.querySelectorAll('#turns button').forEach((b) => b.classList.toggle('on', b.textContent === t));
