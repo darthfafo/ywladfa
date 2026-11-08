@@ -64,11 +64,14 @@ interface Slide {
 }
 
 /** El viaje entero en la portada: salida, travesía, llegada, la barranca. */
+// a pantalla completa (cover): entera a lo ancho dejaba franjas y bordes duros
+// arriba y abajo. Lo importante de cada ilustración está al centro.
+// Llueve en Liverpool y en altamar; al llegar a Chubut ya no: bruma nomás.
 const TITLE_SLIDES: Slide[] = [
-  { id: 'mimosa_puerto', rain: 0.5, mist: 0.4 },
-  { id: 'travesia', rain: 1, mist: 0.2, lightning: true },
-  { id: 'cold_open', rain: 0.25, mist: 1 },
-  { id: 'mimosa_zarpa', rain: 0, mist: 0.5, wind: true },
+  { id: 'mimosa_puerto', rain: 0.5, mist: 0.4, cover: true },
+  { id: 'travesia', rain: 1, mist: 0.2, lightning: true, cover: true },
+  { id: 'cold_open', rain: 0, mist: 1, cover: true },
+  { id: 'mimosa_zarpa', rain: 0, mist: 0.5, wind: true, cover: true },
 ];
 const SLIDE_MS = 7000;
 /** centro vertical de la ilustración: entre el título (arriba) y el menú (abajo) */
