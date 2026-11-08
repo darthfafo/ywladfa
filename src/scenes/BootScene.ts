@@ -1,15 +1,13 @@
 import Phaser from 'phaser';
-import { PAL, RENDER_3D, VIEW } from '@/config';
+import { PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { createInitialState } from '@/core/GameState';
 import { saveSystem } from '@/systems/SaveSystem';
-import { addSceneBackground, preloadArt } from '@/util/assets';
+import { addSceneBackground, preloadArt, sceneTextureKey } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
 import { RETRO_FONT } from '@/util/text';
-import { buildTerrain } from '@/util/mapgen';
-import { World3D } from '@/render3d/World3D';
 
 type Gender = 'f' | 'm';
 const DEFAULT_NAME: Record<Gender, string> = { f: 'Elin', m: 'Idris' };
@@ -43,11 +41,33 @@ const GAME_SUBTITLE = 'La Huella de los Rifleros';
  * (con la escena correspondiente al género) → travesía corta → el Nivel 1.
  * Así conocés al capitán ANTES de que te grite en la playa (docs/01 T1).
  *
- * Con el mundo HD-2D (RENDER_3D), la portada y el personaje van sobre el mundo 3D
- * real: la playa de Punta Cuevas al amanecer con el Mimosa fondeado, la cámara a
- * ras del agua y paneando despacio. Las franjas fijas de arriba/abajo (`chrome`)
- * solo aparecen en los pasos con imagen (enlistamiento, travesía).
+ * La portada y el personaje van a pantalla completa sobre una secuencia
+ * cinemática (ver startCinematic): las ilustraciones del viaje encadenadas, con
+ * movimiento de cámara lento y clima encima — lluvia en Liverpool, tormenta en
+ * altamar, bruma al llegar, viento en la barranca. Las franjas fijas de
+ * arriba/abajo (`chrome`) solo aparecen en los pasos de diálogo (enlistamiento,
+ * travesía).
  */
+
+/** Una toma de la secuencia de portada: qué imagen y qué clima lleva encima (0..1). */
+interface Slide {
+  id: string;
+  rain: number;
+  mist: number;
+  spray?: boolean;
+  lightning?: boolean;
+  wind?: boolean;
+}
+
+/** El viaje entero en la portada: salida, travesía, llegada, la barranca. */
+const TITLE_SLIDES: Slide[] = [
+  { id: 'mimosa_puerto', rain: 0.5, mist: 0.4 },
+  { id: 'travesia', rain: 1, mist: 0.2, spray: true, lightning: true },
+  { id: 'cold_open', rain: 0.25, mist: 1 },
+  { id: 'mimosa_zarpa', rain: 0, mist: 0.5, wind: true },
+];
+const SLIDE_MS = 7000;
+const FADE_MS = 1600;
 export class BootScene extends Phaser.Scene {
   /** Todo lo que dibuja el paso actual (menos el título/bandeja fijos), para borrarlo al cambiar de paso. */
   private stepObjects: Phaser.GameObjects.GameObject[] = [];
@@ -65,9 +85,20 @@ export class BootScene extends Phaser.Scene {
   private retroRefreshers: Array<() => void> = [];
   /** franjas fijas de título/bandeja: visibles solo en los pasos con imagen */
   private chrome: Phaser.GameObjects.GameObject[] = [];
-  /** el mundo 3D de fondo de la portada (null si RENDER_3D está apagado o ya se cerró) */
-  private backdrop: World3D | null = null;
-  private stopBackdropDraw: (() => void) | null = null;
+  /** la secuencia cinemática de fondo (portada, personaje), o null si no hay */
+  private cine: {
+    slides: Slide[];
+    index: number;
+    current: Phaser.GameObjects.Image | null;
+    timer: Phaser.Time.TimerEvent | null;
+    flash: Phaser.Time.TimerEvent | null;
+    rain: Phaser.GameObjects.Particles.ParticleEmitter;
+    mist: Phaser.GameObjects.Particles.ParticleEmitter;
+    spray: Phaser.GameObjects.Particles.ParticleEmitter;
+    wind: Phaser.GameObjects.Particles.ParticleEmitter;
+    flashRect: Phaser.GameObjects.Rectangle;
+    overlays: Phaser.GameObjects.GameObject[];
+  } | null = null;
 
   constructor() {
     super('Boot');
@@ -137,8 +168,8 @@ export class BootScene extends Phaser.Scene {
       }),
     );
 
-    if (RENDER_3D) this.startBackdrop();
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.stopBackdrop());
+    this.makeFxTextures();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.stopCinematic());
     this.renderTitle();
 
     document.fonts?.ready.then(() => {
@@ -146,45 +177,193 @@ export class BootScene extends Phaser.Scene {
     });
   }
 
-  /* ---------------- fondo 3D de la portada ---------------- */
+  /* ---------------- secuencia cinemática (portada y personaje) ---------------- */
 
-  /** La playa de Punta Cuevas en 3D, de espaldas a la barranca y mirando al mar,
-   * con el Mimosa fondeado. La cámara sigue un punto que pasea despacio por la
-   * orilla — un paneo lento, sin jugador. Mismo terreno y luz que el juego. */
-  private startBackdrop(): void {
-    const grid = buildTerrain(game.level);
-    const drift = { x: 0, y: 0, displayWidth: 0, displayHeight: 0, originY: 0.5 };
-    const shore = { x0: 23, x1: 32, z: 104 }; // tiles: el tramo de playa que recorre la cámara
-    const set = (t: number) => {
-      const k = 0.5 + 0.5 * Math.sin(t * 0.04);
-      drift.x = (shore.x0 + (shore.x1 - shore.x0) * k) * VIEW.tile;
-      drift.y = shore.z * VIEW.tile;
-    };
-    set(0);
-    this.backdrop = new World3D(
-      { scene: this, player: drift, terrain: () => grid, terrainVersion: () => 0, objects: () => [] },
-      // cerca y bajo: más lejos, la cámara quedaba encima de la barranca y en primer plano se veía roca, no playa
-      { fullScreen: true, pitch: 13, distance: 20, facing: 'south', lookHeight: 2, cutaway: false },
-    );
-    this.backdrop.setTurn('amanecer', 0);
-    const ship = World3D.mimosa();
-    ship.obj.position.set(27.5, 0, 124);
-    this.backdrop.addModel(ship.obj, ship.update);
-    let t = 0;
-    const draw = () => {
-      t += this.game.loop.delta / 1000;
-      set(t);
-      this.backdrop?.render(this.game.loop.delta);
-    };
-    this.game.events.on(Phaser.Core.Events.POST_RENDER, draw);
-    this.stopBackdropDraw = () => this.game.events.off(Phaser.Core.Events.POST_RENDER, draw);
+  /** Texturas chicas para las partículas, dibujadas por código. */
+  private makeFxTextures(): void {
+    if (this.textures.exists('fx_rain')) return;
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
+    // gota: una raya fina que se desvanece hacia arriba
+    for (let y = 0; y < 16; y++) {
+      g.fillStyle(0xeef3f5, 0.35 + (0.65 * (y + 1)) / 16);
+      g.fillRect(0, y, 1, 1);
+    }
+    g.generateTexture('fx_rain', 1, 16);
+    g.clear();
+    // bruma: un disco muy suave (anillos concéntricos de alpha creciente al centro)
+    for (let r = 32; r > 0; r -= 2) {
+      g.fillStyle(0xffffff, 0.05);
+      g.fillCircle(32, 32, r);
+    }
+    g.generateTexture('fx_mist', 64, 64);
+    g.clear();
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(0, 0, 2, 2);
+    g.generateTexture('fx_dot', 2, 2);
+    g.clear();
+    // brizna de pasto/polvo para el viento
+    g.fillStyle(0xd9c79a, 1);
+    g.fillRect(0, 0, 4, 1);
+    g.generateTexture('fx_wisp', 4, 1);
+    g.destroy();
   }
 
-  private stopBackdrop(): void {
-    this.stopBackdropDraw?.();
-    this.stopBackdropDraw = null;
-    this.backdrop?.destroy();
-    this.backdrop = null;
+  /**
+   * Encadena `slides` a pantalla completa: cada imagen entra con un fundido, se
+   * acerca y se corre despacio (Ken Burns), y cambia el clima de encima según la
+   * toma. Con una sola toma, se queda en ella moviéndose.
+   */
+  private startCinematic(slides: Slide[]): void {
+    this.stopCinematic();
+    const W = VIEW.width;
+    const H = VIEW.height;
+    const rain = this.add.particles(0, 0, 'fx_rain', {
+      x: { min: -60, max: W + 120 },
+      y: -20,
+      lifespan: 1100,
+      speedY: { min: 520, max: 680 },
+      speedX: { min: -190, max: -150 },
+      rotate: 16,
+      scaleY: { min: 0.7, max: 1.4 },
+      alpha: { start: 0.85, end: 0.35 },
+      frequency: -1,
+    }).setDepth(5);
+    const mist = this.add.particles(0, 0, 'fx_mist', {
+      x: { min: -80, max: W },
+      y: { min: H * 0.25, max: H * 0.85 },
+      lifespan: 14000,
+      speedX: { min: 8, max: 22 },
+      scale: { min: 2.5, max: 5 },
+      // entra y sale suave: 0 → pico → 0 a lo largo de su vida
+      alpha: { onUpdate: (_p: unknown, _k: string, t: number) => Math.sin(t * Math.PI) * 0.22 },
+      frequency: -1,
+    }).setDepth(4);
+    const spray = this.add.particles(0, 0, 'fx_dot', {
+      x: { min: 0, max: W },
+      y: { min: H * 0.62, max: H * 0.8 },
+      lifespan: 900,
+      speedY: { min: -140, max: -60 },
+      speedX: { min: -80, max: 20 },
+      gravityY: 260,
+      scale: { min: 0.5, max: 1.2 },
+      alpha: { start: 0.8, end: 0 },
+      frequency: -1,
+    }).setDepth(5);
+    const wind = this.add.particles(0, 0, 'fx_wisp', {
+      x: -10,
+      y: { min: H * 0.15, max: H * 0.9 },
+      lifespan: 2600,
+      speedX: { min: 140, max: 240 },
+      speedY: { min: -20, max: 25 },
+      rotate: { min: -10, max: 10 },
+      alpha: { start: 0.7, end: 0 },
+      frequency: -1,
+    }).setDepth(5);
+    const flashRect = this.add.rectangle(0, 0, W, H, 0xeef3f5, 0).setOrigin(0, 0).setDepth(6);
+    // viñeta: oscurece los bordes, lo de siempre en una toma de cine
+    const vignette = this.add
+      .dom(0, 0, 'div', `width:${W}px; height:${H}px; pointer-events:none; ` +
+        'background: radial-gradient(ellipse at 50% 45%, rgba(14,20,22,0) 45%, rgba(14,20,22,0.75) 100%);')
+      .setOrigin(0, 0)
+      .setDepth(-2);
+    this.cine = { slides, index: -1, current: null, timer: null, flash: null, rain, mist, spray, wind, flashRect, overlays: [vignette] };
+    this.nextSlide();
+  }
+
+  private nextSlide(): void {
+    const c = this.cine;
+    if (!c) return;
+    c.index = (c.index + 1) % c.slides.length;
+    const slide = c.slides[c.index]!;
+    const key = sceneTextureKey(slide.id);
+    if (this.textures.exists(key)) {
+      const W = VIEW.width;
+      const H = VIEW.height;
+      const img = this.add.image(W / 2, H / 2, key).setDepth(-6).setAlpha(0);
+      img.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      const cover = Math.max(W / img.width, H / img.height);
+      // de cerca a más cerca, corriéndose hacia un lado (alterna en cada toma)
+      const dir = c.index % 2 ? 1 : -1;
+      img.setScale(cover * 1.04).setX(W / 2 - dir * 18);
+      this.tweens.add({ targets: img, alpha: 1, duration: FADE_MS, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: img, scale: cover * 1.16, x: W / 2 + dir * 18, duration: SLIDE_MS + FADE_MS * 2, ease: 'Sine.easeInOut' });
+      const prev = c.current;
+      if (prev) {
+        prev.setDepth(-7);
+        this.tweens.add({ targets: prev, alpha: 0, delay: FADE_MS * 0.6, duration: FADE_MS, onComplete: () => prev.destroy() });
+      }
+      c.current = img;
+    }
+    // clima de esta toma
+    c.rain.setFrequency(slide.rain > 0 ? 40 / slide.rain : -1, slide.rain > 0.7 ? 3 : 1);
+    if (slide.rain > 0) c.rain.start();
+    else c.rain.stop();
+    c.mist.setFrequency(slide.mist > 0 ? 1100 / slide.mist : -1, 1);
+    if (slide.mist > 0) c.mist.start();
+    else c.mist.stop();
+    if (slide.spray) c.spray.setFrequency(60, 4).start();
+    else c.spray.stop();
+    if (slide.wind) c.wind.setFrequency(90, 1).start();
+    else c.wind.stop();
+    c.flash?.remove();
+    c.flash = slide.lightning ? this.time.addEvent({ delay: 2600, loop: true, callback: () => this.lightning() }) : null;
+    if (slide.lightning) this.time.delayedCall(700, () => this.lightning());
+    c.timer = c.slides.length > 1 ? this.time.delayedCall(SLIDE_MS, () => this.nextSlide()) : null;
+  }
+
+  /** Relámpago lejano: dos destellos cortos, el segundo más débil. */
+  private lightning(): void {
+    const r = this.cine?.flashRect;
+    if (!r || Math.random() < 0.35) return;
+    this.tweens.killTweensOf(r);
+    r.setFillStyle(0xeef3f5, 0);
+    this.tweens.chain({
+      targets: r,
+      tweens: [
+        { fillAlpha: 0.55, duration: 60 },
+        { fillAlpha: 0.05, duration: 120 },
+        { fillAlpha: 0.3, duration: 50 },
+        { fillAlpha: 0, duration: 500, ease: 'Sine.easeOut' },
+      ],
+    });
+  }
+
+  private stopCinematic(): void {
+    const c = this.cine;
+    if (!c) return;
+    c.timer?.remove();
+    c.flash?.remove();
+    for (const o of [c.current, c.rain, c.mist, c.spray, c.wind, c.flashRect, ...c.overlays]) {
+      if (o) {
+        this.tweens.killTweensOf(o);
+        o.destroy();
+      }
+    }
+    this.cine = null;
+  }
+
+  /** Cambia la toma de una secuencia de una sola imagen (ej. el personaje al elegir género). */
+  private swapCinematic(slide: Slide): void {
+    if (!this.cine) return this.startCinematic([slide]);
+    this.cine.slides = [slide];
+    this.cine.index = -1;
+    this.cine.timer?.remove();
+    this.nextSlide();
+  }
+
+  /** Animaciones CSS de la entrada del título (una sola vez por página). */
+  private ensureTitleCss(): void {
+    if (document.getElementById('ttl-css')) return;
+    const st = document.createElement('style');
+    st.id = 'ttl-css';
+    st.textContent =
+      '@keyframes ttl-in { from { opacity:0; letter-spacing:0.5em; filter:blur(6px); } to { opacity:1; letter-spacing:normal; filter:blur(0); } }' +
+      '.ttl-in { display:inline-block; animation: ttl-in 1.6s cubic-bezier(.2,.7,.2,1) both; }' +
+      '.ttl-d1 { animation-delay: .7s; } .ttl-d2 { animation-delay: 1.2s; } .ttl-d3 { animation-delay: 1.7s; }' +
+      // solo opacidad: Phaser ubica los botones con `transform` en el mismo nodo
+      '@keyframes ttl-up { from { opacity:0; } to { opacity:1; } }' +
+      '.ttl-up { animation: ttl-up .9s ease-out both; }';
+    document.head.appendChild(st);
   }
 
   /** Muestra u oculta las franjas fijas (título arriba, bandeja abajo, fondo liso). */
@@ -218,25 +397,40 @@ export class BootScene extends Phaser.Scene {
   private renderTitle(): void {
     this.clearStep();
     const cx = VIEW.width / 2;
-    if (!this.backdrop) {
-      // sin mundo 3D (?2d): la portada de siempre, con imagen y franjas
-      this.setChrome(true);
-      this.renderImage('mimosa_puerto');
-    } else {
-      this.setChrome(false);
-      this.renderShade(0, 150, 'top');
-      this.renderShade(VIEW.height - 170, 170, 'bottom');
-      const shadow = 'text-shadow: 0 2px 0 #0E1416, 0 0 8px rgba(14,20,22,0.8);';
-      this.track(
-        this.renderDomText(cx, 34, '', { size: 22, color: '#EAE8E0', align: 'center', retro: true, html: `<span style="${shadow}">${GAME_TITLE}</span>` }),
-      );
-      this.track(
-        this.renderDomText(cx, 70, '', { size: 9, color: '#D9A845', align: 'center', retro: true, html: `<span style="${shadow}">${GAME_SUBTITLE}</span>` }),
-      );
-      this.track(
-        this.renderDomText(cx, 90, 'JUEGO CON RIGOR HISTÓRICO, ASÍ SUCEDIÓ', { size: 6, color: '#BFD3D8', align: 'center', retro: true }),
-      );
-    }
+    this.setChrome(false);
+    if (!this.cine || this.cine.slides !== TITLE_SLIDES) this.startCinematic(TITLE_SLIDES);
+    this.renderShade(0, 170, 'top');
+    this.renderShade(VIEW.height - 180, 180, 'bottom');
+    // entrada del título: cada parte aparece después de la anterior (CSS, ver ensureTitleCss)
+    this.ensureTitleCss();
+    const glow = 'text-shadow: 0 2px 0 #0E1416, 0 0 14px rgba(217,168,69,0.35), 0 0 4px rgba(14,20,22,0.9);';
+    this.track(
+      this.renderDomText(cx, 40, '', {
+        size: 24,
+        color: '#F2EDE0',
+        align: 'center',
+        retro: true,
+        html: `<span class="ttl-in" style="${glow}">${GAME_TITLE}</span>`,
+      }),
+    );
+    this.track(
+      this.renderDomText(cx, 80, '', {
+        size: 9,
+        color: '#D9A845',
+        align: 'center',
+        retro: true,
+        html: `<span class="ttl-in ttl-d1" style="text-shadow: 0 1px 0 #0E1416;">${GAME_SUBTITLE}</span>`,
+      }),
+    );
+    this.track(
+      this.renderDomText(cx, 100, '', {
+        size: 6,
+        color: '#BFD3D8',
+        align: 'center',
+        retro: true,
+        html: '<span class="ttl-in ttl-d2">JUEGO CON RIGOR HISTÓRICO, ASÍ SUCEDIÓ</span>',
+      }),
+    );
 
     // el menú abajo, a la altura del pulgar; continuar/nueva partida primero, y
     // exportar/importar como parte de la misma lista, no como links sueltos aparte
@@ -246,7 +440,10 @@ export class BootScene extends Phaser.Scene {
     options.push({ label: 'Nueva partida', onPick: () => this.renderCharacter() });
     options.push({ label: 'Importar partida', onPick: () => this.triggerImportFile() });
     if (save) options.push({ label: 'Exportar partida', onPick: () => this.exportCurrentSave() });
-    this.renderMenu(options, this.backdrop ? VIEW.height - 34 - (options.length * 26) / 2 : IMG_CY);
+    this.renderMenu(options, VIEW.height - 34 - (options.length * 26) / 2);
+    for (const o of this.stepObjects) {
+      if (o instanceof Phaser.GameObjects.DOMElement && o.node instanceof HTMLButtonElement) o.node.classList.add('ttl-up', 'ttl-d3');
+    }
 
     // input de archivo invisible, siempre presente: el botón "Importar partida" de
     // arriba solo lo dispara (inputEl.click()).
@@ -302,16 +499,12 @@ export class BootScene extends Phaser.Scene {
   private renderCharacter(): void {
     this.clearStep();
     const cx = VIEW.width / 2;
-    if (this.backdrop) {
-      this.setChrome(false);
-      this.renderShade(0, 200, 'top');
-      this.renderShade(VIEW.height - 110, 110, 'bottom');
-    } else {
-      this.setChrome(true);
-      this.renderImage(`enlistamiento_${this.playerGender}`);
-      this.renderTextBacking(TOP_H, TOP_H + 120);
-    }
-    const top = this.backdrop ? 18 : TOP_H + 8;
+    this.setChrome(false);
+    const portrait = (g: Gender): Slide => ({ id: `enlistamiento_${g}`, rain: 0.3, mist: 0.3 });
+    this.startCinematic([portrait(this.playerGender)]);
+    this.renderShade(0, 200, 'top');
+    this.renderShade(VIEW.height - 110, 110, 'bottom');
+    const top = 18;
     this.track(this.renderDomText(cx, top, '¿Quién sos?', { size: 13, color: '#D9A845', align: 'center' }));
 
     // género: dos botones lado a lado, el elegido resaltado
@@ -321,6 +514,8 @@ export class BootScene extends Phaser.Scene {
       const input = this.nameInput?.node as HTMLInputElement | undefined;
       // el nombre por defecto sigue al género, salvo que ya se haya escrito otro
       if (input && (!input.value.trim() || input.value === prev)) input.value = DEFAULT_NAME[g];
+      // la escena de fondo cambia con el género (enlistamiento_f / _m)
+      this.swapCinematic(portrait(g));
       paint();
     };
     const rowG = top + 34;
@@ -393,6 +588,7 @@ export class BootScene extends Phaser.Scene {
 
   private renderConfirmOverwrite(): void {
     this.clearStep();
+    this.stopCinematic();
     this.setChrome(true);
     this.renderImage(`enlistamiento_${this.playerGender}`);
     this.track(
@@ -411,8 +607,8 @@ export class BootScene extends Phaser.Scene {
 
   private renderEnlist(): void {
     this.clearStep();
-    // desde acá son escenas con imagen (Liverpool, la travesía): se apaga el 3D
-    this.stopBackdrop();
+    // desde acá son escenas con imagen fija y bandeja de diálogo
+    this.stopCinematic();
     this.setChrome(true);
     // el estado del juego pasa a tener el nombre/género elegidos ANTES de arrancar
     // el diálogo: si se hacía en beginNewGame() (al cerrarse), la charla misma se
@@ -516,11 +712,6 @@ export class BootScene extends Phaser.Scene {
     if (!img) return null;
     this.track(img.setDepth(-5));
     return img;
-  }
-
-  /** Franja oscura semitransparente para que el texto se lea encima de un fondo cinemático. */
-  private renderTextBacking(fromY: number, toY: number = VIEW.height): void {
-    this.track(this.add.rectangle(0, fromY, VIEW.width, toY - fromY, PAL.void, 0.55).setOrigin(0, 0).setDepth(-1));
   }
 
   /** Menú centrado sobre la imagen, con su propia caja — para las dos decisiones
