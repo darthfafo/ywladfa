@@ -805,7 +805,7 @@ export class BootScene extends Phaser.Scene {
     text.textContent = label;
     b.append(left, text, right);
     b.style.cssText +=
-      '; position:relative; padding:0 12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.35); font-size:8px; letter-spacing:1px; white-space:nowrap;' +
+      '; padding:0 12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.35); font-size:8px; letter-spacing:1px; white-space:nowrap;' +
       ' backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);';
     const paint = (): void => {
       const hover = b.dataset.hover === '1';

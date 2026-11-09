@@ -76,8 +76,9 @@ export class TransitionScene extends Phaser.Scene {
     );
     const b = el.node as HTMLButtonElement;
     b.type = 'button';
-    // "› ‹" en los márgenes, aparte del texto: sumados al texto lo sacaban del botón
-    b.style.position = 'relative';
+    // "› ‹" en los márgenes, aparte del texto: sumados al texto lo sacaban del botón.
+    // Sin tocar `position`: Phaser ya lo deja en absolute para ubicar el botón (con
+    // relative los botones se apilaban como texto común y se corrían de lugar)
     b.innerHTML =
       '<span data-mk style="position:absolute; left:5px; top:50%; transform:translateY(-50%); visibility:hidden;">›</span>' +
       `<span>${label}</span>` +
