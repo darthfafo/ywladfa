@@ -32,7 +32,7 @@ que el jugador va a seguir sintiendo diez horas después.
 **Dimensiones:** 64 × 112 tiles (1024 × 1792 px) · tile 16 px · cámara **270 × 352 px** (~17 × 22 tiles).
 
 El mapa es **vertical y se sube**. El jugador arranca abajo en la playa y todo el nivel es una
-ascensión: playa → barranca → monte y meseta → cañadón. En 9:16 eso significa que el progreso
+ascensión: playa → barranca → estepa y meseta → cañadón. En 9:16 eso significa que el progreso
 del nivel coincide con el eje natural de scroll del teléfono, y que la barranca se lee como lo que
 es: una pared que hay que trepar.
 
@@ -41,7 +41,7 @@ es: una pared que hay que trepar.
           │ Z5 CAÑADÓN SECO │ Z4 MESETA   │   viento del oeste →→→
           │ (agua · oculto) │ (vigía)     │
    y 40   ├─────────────────┼─────────────┤
-          │ Z3 MONTE        │ Z2 BARRANCA │
+          │ Z3 ESTEPA       │ Z2 BARRANCA │
           │ (leña · caza)   │ ★ LAS CUEVAS│   HUB · fogón · guardado
    y 70   ├─────────────────┴──────┬──────┤
           │                        │ Z6   │
@@ -60,7 +60,7 @@ es: una pared que hay que trepar.
 | `z1_playa` | La playa | 6,92 → 44×18 | Spawn. Cajones, botes, el capitán. Tutorial de movimiento y carga |
 | `z6_punta` | La punta | 48,70 → 15×26 | Mirador. Escena de apertura y de cierre. Sin recursos |
 | `z2_barranca` | Las cuevas | 24,40 → 36×30 | **Hub.** Tres cuevas elegibles, el fogón, todos los NPCs, guardado |
-| `z3_monte` | El monte | 2,44 → 21×34 | Leña (jarilla), rastro de guanaco, arbusto de fruto |
+| `z3_monte` | La estepa | 2,44 → 21×34 | Leña (jarilla), rastro de guanaco, arbusto de fruto |
 | `z4_meseta` | La meseta | 30,4 → 32×34 | Viento fuerte (−30 % velocidad). Punto de vigía. Vista del golfo |
 | `z5_canadon` | El cañadón seco | 2,2 → 26×40 | **El manantial.** Sin señalizar. Solo se llega leyendo el terreno |
 
@@ -152,7 +152,7 @@ props:
 | Turno | Beat | Sistema | Duración |
 |---|---|---|---|
 | **T1 Amanecer** | Lectura del cielo: viento en aumento. **Mari tose.** Objetivo del día: agua | Clima / salud | 2 min |
-| T1 | Lewis reparte tareas. Elegís **una** de tres: buscar agua (meseta), juntar leña (monte), ayudar en las cuevas. Solo alcanza para una | Coste de oportunidad | 2 min |
+| T1 | Lewis reparte tareas. Elegís **una** de tres: buscar agua (meseta), juntar leña (estepa), arreglar tu cueva. Solo alcanza para una. **La mañana no termina hasta que la cumplís** (subir al vigía · 3 haces al fogón · tapar las grietas de tu cueva): ningún turno pasa solo | Coste de oportunidad | 2 min |
 | **T2 Mañana** | Exploración libre. **Sin marcador.** Las pistas son ambientales: matas verdes en fila, vuelo de palomas al amanecer, una huella de guanaco que baja al cañadón | Exploración | 6 min |
 | T2 | Si vas a la meseta: viento fuerte, velocidad −30 %, se ve el *Mimosa* levando ancla desde el vigía. Momento de "ya no hay vuelta" | Atmósfera | 2 min |
 | **T3 Tarde** | **Dafydd desapareció.** Todos paran. Lo buscás siguiendo huellas pequeñas en la arena hacia el cañadón | Rastros | 4 min |

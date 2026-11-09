@@ -109,7 +109,7 @@
     },
     {
       "id": "z3_monte",
-      "label": "El monte",
+      "label": "La estepa",
       "rect": [
         2,
         44,
@@ -618,7 +618,12 @@
       "id": "trig_eleccion_cueva",
       "type": "choice",
       "zone": "z2_barranca",
-      "rect": [37, 49, 6, 6],
+      "rect": [
+        37,
+        49,
+        6,
+        6
+      ],
       "once": true,
       "turnCost": 1,
       "action": {
@@ -683,16 +688,14 @@
       "id": "trig_lewis_j2_manana",
       "type": "dialogue",
       "requires": "progress.day == 2 && progress.turn == 'manana'",
-      "manual": true,
       "once": true,
-      "turnCost": 1,
-      "note": "resguardo de trig_vigia_mimosa: si el jugador nunca llega al mirador, hablarle a Lewis en el campamento también empuja Mañana → Tarde. El que dispare primero deja al otro sin efecto (mismo requires de turno). n1_vio_zarpar también se marca acá (aunque el jugador no haya visto la escena): el Mimosa ya zarpó de todos modos, no puede seguir amarrado en la playa por no haber subido a mirar.",
+      "turnCost": 0,
+      "note": "Lewis te dice qué hacer con la tarea que elegiste (ch_n1_tareas). No gasta turno: la mañana termina recién cuando cumplís la tarea (trig_tarea_agua / trig_tarea_lena / trig_tarea_cuevas).",
       "action": {
-        "dialogue": "d_n1_lewis_j2_manana",
-        "setFlag": {
-          "n1_vio_zarpar": true
-        }
-      }
+        "approach": "npc_lewis",
+        "dialogue": "d_n1_lewis_j2_manana"
+      },
+      "zone": "z2_barranca"
     },
     {
       "id": "trig_viento_meseta",
@@ -718,11 +721,54 @@
         6
       ],
       "requires": "progress.day == 2 && progress.turn == 'manana'",
-      "note": "llegar acá durante la Mañana de J2 empuja el turno a Tarde (ver trig_lewis_j2_manana para el resguardo si nunca se visita).",
+      "note": "Cualquiera que suba en la mañana de J2 ve zarpar al Mimosa. No gasta turno: si la tarea era agua, la cierra trig_tarea_agua.",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n1_mimosa_zarpa"
+      }
+    },
+    {
+      "id": "trig_tarea_agua",
+      "type": "dialogue",
+      "requires": "progress.day == 2 && progress.turn == 'manana' && flags.n1_tarea == 'agua' && flags.n1_vio_zarpar == true",
+      "note": "tarea de agua cumplida: subiste al vigía. Cierra la mañana.",
       "once": true,
       "turnCost": 1,
       "action": {
-        "dialogue": "d_n1_mimosa_zarpa"
+        "dialogue": "d_n1_tarea_agua",
+        "setFlag": {
+          "n1_tarea_hecha": true
+        }
+      }
+    },
+    {
+      "id": "trig_tarea_lena",
+      "type": "dialogue",
+      "requires": "progress.day == 2 && progress.turn == 'manana' && flags.n1_tarea == 'lena' && flags.n1_lena_traida_j2 >= 3",
+      "note": "tarea de leña cumplida: tres haces cargados al fogón en la mañana de J2. Cierra la mañana.",
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "dialogue": "d_n1_tarea_lena",
+        "setFlag": {
+          "n1_tarea_hecha": true
+        }
+      }
+    },
+    {
+      "id": "trig_tarea_cuevas",
+      "type": "minigame",
+      "requires": "progress.day == 2 && progress.turn == 'manana' && flags.n1_tarea == 'cuevas'",
+      "manual": true,
+      "note": "tarea de cuevas: se dispara tocando la PROPIA cueva (WorldScene.interact). Cierra la mañana.",
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "dialogue": "d_n1_tarea_cuevas",
+        "setFlag": {
+          "n1_tarea_hecha": true
+        }
       }
     },
     {
@@ -812,7 +858,12 @@
       "id": "trig_berwyn_libreta",
       "type": "unlock",
       "zone": "z6_punta",
-      "rect": [51, 81, 6, 6],
+      "rect": [
+        51,
+        81,
+        6,
+        6
+      ],
       "requires": "flags.n1_fogon_2 == true && flags.n1_carga != null",
       "note": "antes disparaba apenas se ponía n1_fogon_2, sin zona — eso lo hacía caer justo al lado de trig_anuncio_marcha/trig_pantalla_carga al despertar en J3 (mismo instante, mismo lugar), todo junto. Berwyn ya se reubica en la punta el día 3 (ver npcs.movesTo, x:54 y:84 — al sur de donde se queda Mari, x:58 y:72, ver trig_punta_final). Un rect chico centrado en su posición (no la zona entera) para que el encuentro se sienta atado a él de verdad — pasar cerca es lo que dispara la charla, no cruzar cualquier punto de la punta.",
       "once": true,
@@ -853,7 +904,7 @@
       "type": "dialogue",
       "requires": "flags.n1_carga != null",
       "once": true,
-      "turnCost": 1,
+      "turnCost": 0,
       "action": {
         "dialogue": "d_n1_reacciones"
       }

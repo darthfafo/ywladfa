@@ -50,13 +50,16 @@ export const TERRAIN_SPEED: Record<number, number> = {
   [TERRAIN.SPRING]: 0.7,
 };
 
+/** Costa este (columna desde la que empieza el mar): base y límites de la ondulación. */
+const EAST_COAST = { base: 59.5, min: 57, max: 62 };
+
 const ZONE_TERRAIN: Record<string, number> = {
   z1_playa: TERRAIN.SAND_DRY,
   z6_punta: TERRAIN.PEBBLE,
   z2_barranca: TERRAIN.CLAY,
-  // el monte usa el mismo terreno que la meseta, no SCRUB: todavía no hay verdes en
+  // la estepa usa el mismo terreno que la meseta, no SCRUB: todavía no hay verdes en
   // el juego (docs/03-assets.md — se reservan para más adelante en la campaña) y el
-  // monte se lee como una continuación abierta de la meseta, no como una zona propia
+  // estepa se lee como una continuación abierta de la meseta, no como una zona propia
   // con su propio color.
   z3_monte: TERRAIN.MESA,
   z4_meseta: TERRAIN.MESA,
@@ -71,7 +74,7 @@ const ZONE_TERRAIN: Record<string, number> = {
 export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => boolean = () => true): number[][] {
   const { widthTiles: W, heightTiles: H } = level.map;
   // roca genérica, no acantilado: el relleno por default es el borde exterior del mapa
-  // jugable (monte, el resto de la meseta) y tiene que leerse como límite natural sin
+  // jugable (estepa, el resto de la meseta) y tiene que leerse como límite natural sin
   // ser una pared de piedra por todos lados — el acantilado (TERRAIN.CLIFF) se reserva
   // para donde de verdad hay una pared con intención (la barranca, más abajo). El mar
   // sí marca border explícito, pero solo donde corresponde (playa al sur, golfo al
@@ -111,6 +114,31 @@ export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => bool
     if (barrancaZone && j >= barrancaY && j < barrancaY + barrancaH) continue;
     for (let i = 60; i < W; i++) {
       if (g[j]![i] === TERRAIN.ROCK) g[j]![i] = TERRAIN.SEA;
+    }
+  }
+
+  // costa este irregular: la línea recta de x=60 se veía de regla. Se come un
+  // poco de meseta / punta con una ondulación suave, sin tocar nada que el juego
+  // use (NPCs, sus mudanzas, rects de triggers): ahí la costa se corre afuera.
+  const keep: Array<{ x: number; y: number }> = [];
+  for (const n of level.spawns.npcs) {
+    keep.push({ x: n.x, y: n.y });
+    const mv = n.movesTo ? (Array.isArray(n.movesTo) ? n.movesTo : [n.movesTo]) : [];
+    for (const m of mv) keep.push({ x: m.x, y: m.y });
+  }
+  for (const t of level.triggers) {
+    if (!t.rect) continue;
+    const [rx, ry, rw, rh] = t.rect;
+    for (let j = ry; j < ry + rh; j++) keep.push({ x: rx + rw - 1, y: j });
+  }
+  for (let j = 2; j < 106 && j < H; j++) {
+    if (barrancaZone && j >= barrancaY - 1 && j < barrancaY + barrancaH + 1) continue;
+    const wave = 1.5 * Math.sin(j * 0.37 + 1.3) + 0.9 * Math.sin(j * 0.91 + 0.4);
+    let coast = Math.max(EAST_COAST.min, Math.min(EAST_COAST.max, Math.round(EAST_COAST.base + wave)));
+    for (const k of keep) if (Math.abs(k.y - j) <= 2 && k.x + 2 > coast) coast = Math.max(coast, k.x + 2);
+    for (let i = coast; i < W; i++) {
+      const t = g[j]![i];
+      if (t === TERRAIN.MESA || t === TERRAIN.PEBBLE || t === TERRAIN.CLIFF || t === TERRAIN.ROCK) g[j]![i] = TERRAIN.SEA;
     }
   }
 

@@ -391,21 +391,97 @@
           "speaker": "npc_lewis",
           "portrait": "neutral",
           "condition": "flags.n1_tarea == 'agua'",
-          "text": "El agua no grita. Se queda calladita bajo las matas verdes. Si subís a mirar el golfo de paso, vas a ver algo que conviene ver antes de que caiga la noche.",
+          "text": "Subí a la meseta, al vigía del norte. Si hay agua arriba, va a estar entre las piedras. Y mirá el golfo: conviene verlo antes de que caiga la noche.",
           "end": true
         },
         "lm_lena": {
           "speaker": "npc_lewis",
           "portrait": "neutral",
           "condition": "flags.n1_tarea == 'lena'",
-          "text": "Buen día para el monte. Traé lo que puedas, que a la noche el frío no negocia. Si te da el tiempo, date una vuelta por la meseta: desde ahí se ve todo lo que hay para ver.",
+          "text": "Andá a la estepa, al oeste. Cortá jarilla y traé tres haces al fogón, que a la noche el frío no negocia.",
           "end": true
         },
         "lm_cuevas": {
           "speaker": "npc_lewis",
           "portrait": "calido",
           "condition": "flags.n1_tarea == 'cuevas'",
-          "text": "Quedate tranquilo, hoy sobran manos acá. Yo en tu lugar, antes de que baje el sol, subiría hasta la meseta. Se ve el golfo entero desde arriba.",
+          "text": "Tu cueva tiene grietas por donde entra el viento. Tapalas con arcilla antes de que baje el sol: tu madre no aguanta otra noche así.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_tarea_agua",
+      "lang": "none",
+      "start": "ta1",
+      "note": "Cierra la mañana de J2 con la tarea de agua (trig_tarea_agua).",
+      "nodes": {
+        "ta1": {
+          "speaker": "narrator",
+          "text": "Entre las piedras del vigía hay un charco de lluvia. Poco, pero es agua: llenás lo que podés.",
+          "effects": [
+            {
+              "resource": {
+                "id": "agua",
+                "delta": 6,
+                "reason": "charco de la meseta"
+              }
+            }
+          ],
+          "next": "ta2"
+        },
+        "ta2": {
+          "speaker": "narrator",
+          "text": "Las palomas bajan todas para el mismo lado, al oeste. Allá abajo tiene que haber más.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_tarea_lena",
+      "lang": "none",
+      "start": "tl1",
+      "note": "Cierra la mañana de J2 con la tarea de leña (trig_tarea_lena).",
+      "nodes": {
+        "tl1": {
+          "speaker": "npc_lewis",
+          "portrait": "calido",
+          "text": "Con esto hay fuego para toda la noche. Bien hecho.",
+          "effects": [
+            {
+              "morale": 2
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_tarea_cuevas",
+      "lang": "none",
+      "start": "tc1",
+      "note": "Cierra la mañana de J2 con la tarea de las cuevas (trig_tarea_cuevas).",
+      "nodes": {
+        "tc1": {
+          "speaker": "narrator",
+          "text": "Tapás las grietas con arcilla mojada y piedras chicas. Adentro ya no silba el viento.",
+          "effects": [
+            {
+              "morale": 5
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": 8
+              }
+            }
+          ],
+          "next": "tc2"
+        },
+        "tc2": {
+          "speaker": "npc_mari",
+          "portrait": "calido",
+          "text": "Así sí. Esta noche duermo.",
           "end": true
         }
       }
@@ -1142,7 +1218,7 @@
       "id": "ch_n1_tareas",
       "prompt": "Lewis reparte el día. Solo alcanza para una cosa.",
       "turnCost": 0,
-      "hint": "Agua: en la meseta o el cañadón. Leña: suma al instante. Cuevas: ayudan a tu madre.",
+      "hint": "El día no sigue hasta que termines la tarea.",
       "options": [
         {
           "id": "t_agua",
@@ -1156,7 +1232,8 @@
             {
               "objective": "obj_agua"
             }
-          ]
+          ],
+          "detail": "Meseta: algo de agua y vista al golfo."
         },
         {
           "id": "t_lena",
@@ -1166,15 +1243,9 @@
               "setFlag": {
                 "n1_tarea": "lena"
               }
-            },
-            {
-              "resource": {
-                "id": "lena",
-                "delta": 3,
-                "reason": "jornada de monte"
-              }
             }
-          ]
+          ],
+          "detail": "Estepa: 3 haces al fogón, fuego grande."
         },
         {
           "id": "t_cuevas",
@@ -1184,17 +1255,9 @@
               "setFlag": {
                 "n1_tarea": "cuevas"
               }
-            },
-            {
-              "morale": 5
-            },
-            {
-              "partyStat": {
-                "npc": "npc_mari",
-                "health": 8
-              }
             }
-          ]
+          ],
+          "detail": "Tu cueva: tu madre se recupera."
         }
       ]
     }

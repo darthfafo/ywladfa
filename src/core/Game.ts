@@ -101,7 +101,8 @@ export class Game {
     // el fuego que en realidad se prendió esa noche.
     this.flags.set('_lastFire', fire);
     this.party.applyNight(fire);
-    const fireText = fire === 'bigFire' ? 'El fuego es grande.' : fire === 'smallFire' ? 'El fuego es chico.' : 'No hubo fuego.';
+    // se lee a la mañana siguiente, con el fuego ya apagado: en pasado
+    const fireText = fire === 'bigFire' ? 'Anoche el fuego fue grande.' : fire === 'smallFire' ? 'Anoche el fuego fue chico.' : 'Anoche no hubo fuego.';
     // autoguardado al cerrar jornada, un solo slot (docs/01-nivel-01.md checklist)
     saveSystem.save(this.state);
     bus.emit('ui:toast', { text: `${fireText} · Partida guardada.` });

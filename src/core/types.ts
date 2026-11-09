@@ -232,7 +232,8 @@ export interface ChoiceScreenDef {
   id: string;
   prompt: string;
   turnCost: number;
-  options: Array<{ id: string; text: string; effects?: DialogueEffect[] }>;
+  /** `detail`: qué implica la opción (adónde vas, qué te deja), en letra chica debajo */
+  options: Array<{ id: string; text: string; detail?: string; effects?: DialogueEffect[] }>;
   /** Aclaración técnica sobre la decisión (consecuencias no obvias en el texto de
    * las opciones) — va en el pie del panel, ver UiScene.openOverlay. */
   hint?: string;

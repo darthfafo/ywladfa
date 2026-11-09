@@ -23,7 +23,7 @@ export interface TriggerContext {
 /**
  * Orden de prioridad (solo dispara el primero): la historia (`once`) siempre antes
  * que el ambiente repetible — si no, el viento de la meseta (zona entera, se
- * repite) le ganaba siempre al vigía, y la jarilla del monte a las huellas de
+ * repite) le ganaba siempre al vigía, y la jarilla de la estepa a las huellas de
  * Dafydd. Dentro de cada grupo, rect antes que zona antes que sin ubicación.
  */
 function rank(t: TriggerDef): number {

@@ -69,9 +69,9 @@
       "title": "Leña para la noche",
       "day": 2,
       "optional": true,
-      "journalLine": "Cortamos jarilla en el monte. {n} haces.",
+      "journalLine": "Cortamos jarilla en la estepa. {n} haces.",
       "steps": [
-        { "id": "s1", "label": "Juntar leña en el monte", "counter": { "resource": "lena", "target": 4 } }
+        { "id": "s1", "label": "Juntar leña en la estepa", "counter": { "resource": "lena", "target": 4 } }
       ],
       "rewards": [{ "note": "El fuego de la noche 2 es grande: Mari se recupera." }],
       "onComplete": { "setFlag": { "q_n1_lena": "done" } }

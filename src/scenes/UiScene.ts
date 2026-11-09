@@ -438,9 +438,13 @@ export class UiScene extends Phaser.Scene {
       c.prompt,
       c.options.map((o) => ({
         label: o.text,
+        detail: o.detail,
         onPick: () => {
           game.applyEffects(o.effects);
           this.closeOverlay();
+          // lo que se eligió puede habilitar un trigger al toque (ej. Lewis
+          // explicando la tarea): no esperar a que el jugador dé un paso
+          (this.scene.get('World') as WorldScene).recheckTriggers();
         },
       })),
       c.hint,
@@ -457,7 +461,7 @@ export class UiScene extends Phaser.Scene {
   private openOverlay(
     title: string,
     body: string,
-    options: Array<{ label: string; onPick: () => void }>,
+    options: Array<{ label: string; detail?: string; onPick: () => void }>,
     footer?: string,
   ): void {
     this.closeOverlay();
@@ -508,7 +512,15 @@ export class UiScene extends Phaser.Scene {
       cur.textContent = '›';
       cur.style.cssText = 'flex:none; width:8px;';
       const label = document.createElement('span');
-      label.textContent = o.label;
+      label.style.cssText = 'display:flex; flex-direction:column; gap:3px;';
+      label.append(o.label);
+      if (o.detail) {
+        // qué implica la opción, en chico y apagado debajo
+        const det = document.createElement('span');
+        det.textContent = o.detail;
+        det.style.cssText = 'font-size:7px; line-height:1.6; color:#7FB0B8;';
+        label.appendChild(det);
+      }
       b.append(cur, label);
       b.addEventListener('click', () => pick(i));
       b.addEventListener('pointerenter', () => {

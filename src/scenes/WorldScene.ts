@@ -256,6 +256,7 @@ export class WorldScene extends Phaser.Scene {
     bus.on('time:turn-advanced', () => {
       this.updateGates();
       this.updateNpcVisibility();
+      this.regrowJarilla();
     });
     // los triggers sin `zone`/`rect` (ej. trig_pantalla_carga, trig_reacciones_carga)
     // no dependen de dónde estás parado — solo de un flag — pero checkTriggers()
@@ -416,6 +417,20 @@ export class WorldScene extends Phaser.Scene {
     sp.setFrame(FACING_FRAME[horiz ? (dx > 0 ? 'west' : 'east') : dy > 0 ? 'north' : 'south']);
   }
 
+  /** jarilla cortada → jornada en que se cortó */
+  private readonly cutJarilla = new Map<Phaser.GameObjects.Image, number>();
+
+  /** Al empezar una jornada nueva, la jarilla cortada en las anteriores vuelve. */
+  private regrowJarilla(): void {
+    const day = game.state.progress.day;
+    for (const [sp, cutDay] of this.cutJarilla) {
+      if (cutDay >= day) continue;
+      sp.setVisible(true).setActive(true);
+      this.syncSolid(sp, true);
+      this.cutJarilla.delete(sp);
+    }
+  }
+
   private syncSolid(s: Phaser.GameObjects.Image, enabled: boolean): void {
     const body = s.body as Phaser.Physics.Arcade.StaticBody | null;
     if (!body) return;
@@ -519,7 +534,7 @@ export class WorldScene extends Phaser.Scene {
    * acercarse, no ser un detalle que se pierde contra el terreno.
    */
   private spawnDecor(): void {
-    // guanaco a la distancia — vida silvestre del monte, mismo espíritu que
+    // guanaco a la distancia — vida silvestre de la estepa, mismo espíritu que
     // hint_agua_3 (huella de guanaco → agua), pero lejos de los nodos de jarilla.
     // 42, no 28: a 28 no se distinguía la silueta. Interactuable con una línea de
     // sabor nada más (no da ni pide nada) — que el jugador se acerque a mirarlo
@@ -530,7 +545,7 @@ export class WorldScene extends Phaser.Scene {
       this.interactables.push({ sprite: guanaco, kind: 'guanaco', id: 'guanaco', label: 'Mirar' });
     }
 
-    // coirón disperso por el monte — decoración de terreno, no interactuable
+    // coirón disperso por la estepa — decoración de terreno, no interactuable
     // (distinto de la jarilla, que sí se corta).
     for (const [tx, ty] of [
       [4, 47],
@@ -581,7 +596,7 @@ export class WorldScene extends Phaser.Scene {
     });
 
     // fauna del cañadón: es un espacio abierto y grande, no tiene sentido que esté
-    // vacío de vida — mismo guanaco que ya se usa en el monte (roamea Patagonia
+    // vacío de vida — mismo guanaco que ya se usa en la estepa (roamea Patagonia
     // entera, no es exclusivo de una zona) y un par de matas de coirón, lejos de
     // los afloramientos de roca nuevos y del propio manantial.
     const guanacoCanadon = addPropImage(this, 'guanaco', tileCenter(21), tileCenter(30))?.setDepth(6);
@@ -598,7 +613,7 @@ export class WorldScene extends Phaser.Scene {
 
     // la meseta: pasto y agua en algún lado (por algo baja Lewis a buscarla ahí) —
     // dos tropillas de guanaco (3-4 juntos, que es como se los ve de verdad, no de
-    // a uno suelto como en el monte o el cañadón) y varios juncos dispersos. Cada
+    // a uno suelto como en la estepa o el cañadón) y varios juncos dispersos. Cada
     // tropilla registra un solo guanaco como interactuable ("Mirar"); el resto es
     // decoración — se lee igual como grupo, no hace falta que los cuatro respondan.
     const mesetaGroups: Array<{ id: string; spots: ReadonlyArray<readonly [number, number]> }> = [
@@ -985,7 +1000,12 @@ export class WorldScene extends Phaser.Scene {
       }
       case 'jarilla': {
         sfx.chop();
-        it.sprite.destroy();
+        // se esconde, no se destruye: la mata vuelve a estar al día siguiente
+        // (ver regrowJarilla) — si no, lo cortado en J1 dejaba la estepa sin
+        // jarilla para la tarea de leña de J2
+        it.sprite.setVisible(false).setActive(false);
+        this.syncSolid(it.sprite, false);
+        this.cutJarilla.set(it.sprite, game.state.progress.day);
         const amount = registry.levelBalance(game.state.progress.level).gains.jarilla.amount as number;
         this.carriedLena += amount;
         game.inv.add('haz_lena', amount);
@@ -1001,8 +1021,11 @@ export class WorldScene extends Phaser.Scene {
           game.inv.remove('haz_lena', n);
           this.carriedLena = 0;
           game.res.change('lena', n, 'jarilla');
+          // cuánta leña se trajo cada jornada: la tarea de leña de J2 (trig_tarea_lena) la cuenta
+          game.flags.inc(`n1_lena_traida_j${game.state.progress.day}`, n);
           sfx.fireUp();
           bus.emit('ui:toast', { text: `Leña cargada al fogón: +${n}` });
+          this.checkTriggers();
         } else {
           bus.emit('ui:toast', { text: 'El fogón. Acá se pasa la noche.' });
         }
@@ -1011,8 +1034,15 @@ export class WorldScene extends Phaser.Scene {
         // primero se elige la cueva; después, tocando la PROPIA, se la apuntala
         // (trig_apuntalar, manual): eso cierra la tarde del J1 y trae la noche
         const chosen = game.flags.get('n1_cueva_elegida') as string | undefined;
+        const task = game.level.triggers.find((x) => x.id === 'trig_tarea_cuevas');
+        const taskPending = !!task && !this.triggers.hasFired(task.id) && game.flags.eval(task.requires);
         if (!chosen) this.runTriggerById('trig_eleccion_cueva');
         else if (it.id !== chosen) bus.emit('ui:toast', { text: 'Esa no es la de tu familia.' });
+        else if (taskPending) {
+          // tarea de la mañana de J2 (ch_n1_tareas): arreglar la propia cueva
+          sfx.knock();
+          this.runTriggerById('trig_tarea_cuevas');
+        }
         else if (game.flags.is('n1_apuntalado')) bus.emit('ui:toast', { text: 'Ya está apuntalada. Aguanta.' });
         else {
           sfx.knock();
@@ -1131,7 +1161,10 @@ export class WorldScene extends Phaser.Scene {
     }
     if (changed) this.layer.setCollision(COLLIDES);
 
-    if (this.mimosa && game.flags.is('n1_vio_zarpar')) {
+    // el Mimosa zarpa en la mañana de J2, lo haya visto el jugador o no
+    const p = game.state.progress;
+    const sailed = p.day > 2 || (p.day === 2 && TURNS.indexOf(p.turn) > TURNS.indexOf('manana'));
+    if (this.mimosa && (game.flags.is('n1_vio_zarpar') || sailed)) {
       this.mimosa.destroy();
       this.mimosa = null;
     }

@@ -210,13 +210,46 @@ describe('recorrido completo del Nivel 1', () => {
     }
   });
 
-  it('si nunca se sube al mirador, hablar con Lewis igual empuja la mañana del J2', () => {
-    const p = new Playthrough();
+  /** hasta la mañana del J2 con la tarea elegida, ya en el campamento */
+  const toJ2Morning = (task: string): Playthrough => {
+    const p = new Playthrough().choose('ch_n1_tareas', task);
     p.settle().carryCrates().goTo('z2_barranca', [30, 60]).stepOn('trig_eleccion_cueva').use('trig_apuntalar');
+    p.goTo('z2_barranca', [31, 60]);
     expect(p.when).toBe('2-manana');
-    p.talkTo('npc_lewis');
+    return p;
+  };
+
+  it('la mañana del J2 no pasa sola: Lewis explica la tarea sin gastar turno', () => {
+    const p = toJ2Morning('t_lena');
     expect(p.fired).toContain('trig_lewis_j2_manana');
+    expect(p.when).toBe('2-manana');
+    // subir a mirar el golfo con otra tarea tampoco la cierra
+    p.stepOn('trig_vigia_mimosa');
+    expect(p.fired).toContain('trig_vigia_mimosa');
+    expect(p.when).toBe('2-manana');
+  });
+
+  it('tarea de leña: termina con tres haces en el fogón', () => {
+    const p = toJ2Morning('t_lena');
+    p.g.flags.inc('n1_lena_traida_j2', 2);
+    p.settle();
+    expect(p.when).toBe('2-manana');
+    p.g.flags.inc('n1_lena_traida_j2', 1);
+    p.settle();
+    expect(p.fired).toContain('trig_tarea_lena');
     expect(p.when).toBe('2-tarde');
-    expect(p.g.flags.is('n1_vio_zarpar')).toBe(true);
+  });
+
+  it('tarea de cuevas: termina arreglando la propia cueva', () => {
+    const p = toJ2Morning('t_cuevas');
+    p.use('trig_tarea_cuevas');
+    expect(p.when).toBe('2-tarde');
+  });
+
+  it('tarea de agua: termina subiendo al vigía', () => {
+    const p = toJ2Morning('t_agua');
+    p.stepOn('trig_vigia_mimosa');
+    expect(p.fired).toContain('trig_tarea_agua');
+    expect(p.when).toBe('2-tarde');
   });
 });

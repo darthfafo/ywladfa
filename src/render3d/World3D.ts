@@ -250,10 +250,12 @@ export class World3D {
       const h = Math.sin(a * 127.1 + b * 311.7 + k * 74.7) * 43758.5453;
       return h - Math.floor(h);
     };
+    // fuera del mapa, lo mismo que el tile del borde: antes era roca, y donde el
+    // borde es mar los vértices de la orilla subían a una pared (una raya roja
+    // de acantilado en medio del agua, al este)
     const rawT = (i: number, j: number): number => {
-      const row = grid[j];
-      if (!row || i < 0 || i >= W) return TERRAIN.ROCK;
-      return baseTerrain(row[i]!);
+      const row = grid[Math.max(0, Math.min(H - 1, j))]!;
+      return baseTerrain(row[Math.max(0, Math.min(W - 1, i))]!);
     };
     // los pasajes (PATH) no se pintan con un color propio entre dos terrenos:
     // cada tramo toma el terreno caminable más cercano, así el pasaje es la
@@ -599,6 +601,16 @@ export class World3D {
         );
     };
     this.seaMat = mat;
+    // fondo de mar más allá del mapa: sin esto, pasando el borde del terreno el
+    // agua (semitransparente) dejaba ver el color del cielo, con un corte recto
+    // donde terminaba la malla del terreno
+    const bedMat = new THREE.MeshLambertMaterial({ color: PAL.sea, emissive: PAL.sea, emissiveIntensity: TERRAIN_GLOW * this.light.cur.glow });
+    this.terrainMats.set('ocean_floor', bedMat);
+    const bed = new THREE.Mesh(new THREE.PlaneGeometry(240, 300), bedMat);
+    bed.rotateX(-Math.PI / 2);
+    bed.position.set(32, (TERRAIN_HEIGHT_3D.SEA ?? -1) - 0.05, 60);
+    bed.receiveShadow = true;
+    this.scene3.add(bed);
     const sea = new THREE.Mesh(geo, mat);
     sea.position.set(32, SEA_SURFACE_3D, 60);
     sea.receiveShadow = true;
