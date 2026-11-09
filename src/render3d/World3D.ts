@@ -8,7 +8,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { HorizontalTiltShiftShader } from 'three/examples/jsm/shaders/HorizontalTiltShiftShader.js';
 import { VerticalTiltShiftShader } from 'three/examples/jsm/shaders/VerticalTiltShiftShader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { CAM_3D, PAL, RENDER_3D_FX, TERRAIN_HEIGHT_3D,
+import { CAM_3D, CAM_TALK, PAL, RENDER_3D_FX, TERRAIN_HEIGHT_3D,
   SEA_SURFACE_3D, TURN_LIGHT, VIEW } from '@/config';
 import { game } from '@/core/Game';
 import { baseTerrain, TERRAIN } from '@/util/mapgen';
@@ -182,7 +182,27 @@ export class World3D {
     this.setTurn(game.state.progress.turn, 0);
     const p = this.src.player;
     this.camera.position.set(p.x * PX, 0, p.y * PX).add(this.camOffset);
+    this.followPos.copy(this.camera.position);
   }
+
+  // ---------------------------------------------------------------- conversación
+
+  /** con quién se habla (null = vista de siempre) y cuánto se llegó del plano de
+   * arriba (0) al de conversación (1) */
+  private talk: Phaser.GameObjects.Image | null = null;
+  private talkK = 0;
+  /** posición de seguimiento de la vista de arriba, aparte de la cámara real */
+  private readonly followPos = new THREE.Vector3();
+  /** giro de los sprites hacia la cámara (en la vista de arriba, 0) */
+  private spriteYaw = 0;
+
+  /** Plano de conversación: la cámara baja detrás del jugador mirando a `other`
+   * (null vuelve a la vista de arriba). La transición es suave en los dos sentidos. */
+  setTalk(other: Phaser.GameObjects.Image | null): void {
+    if (other) this.talk = other;
+    this.talkTarget = other ? 1 : 0;
+  }
+  private talkTarget = 0;
 
   /** Agrega un objeto 3D suelto (sin sprite de Phaser detrás), ej. el Mimosa de la portada. */
   addModel(obj: THREE.Object3D, update?: (t: number) => void): void {
@@ -686,7 +706,8 @@ export class World3D {
       if (m.kind === 'billboard') {
         // los pies (borde de abajo del sprite) sobre el piso, en la fila donde pisan
         m.obj.position.set(g.x * PX, m.lift ?? 0, (g.y + g.displayHeight * (1 - g.originY)) * PX + (m.zBias ?? 0));
-        m.obj.scale.set(w, h * SPRITE_STRETCH, 1);
+        m.obj.scale.set(w, h * this.spriteStretch(), 1);
+        m.obj.rotation.y = this.spriteYaw;
         if (!m.lift) this.walk(m, g, dt);
       } else if (m.kind === 'flat') {
         m.obj.position.set(g.x * PX, m.lift ?? 0, g.y * PX);
@@ -707,6 +728,17 @@ export class World3D {
       m.tex?.dispose();
       this.mirrors.delete(go);
     }
+  }
+
+  /** estiramiento vertical de los sprites: el de la vista de arriba, o casi nada de frente */
+  private spriteStretch(): number {
+    const e = this.talkEase();
+    return SPRITE_STRETCH + (CAM_TALK.stretch - SPRITE_STRETCH) * e;
+  }
+
+  private talkEase(): number {
+    const k = this.talkK;
+    return k * k * (3 - 2 * k);
   }
 
   // ---------------------------------------------------------------- caminata
@@ -857,6 +889,9 @@ export class World3D {
   private readonly tmpB = new THREE.Vector3();
   private readonly tmpC = new THREE.Vector3();
   private readonly tmpD = new THREE.Vector3();
+  private readonly tmpLook = new THREE.Vector3();
+  private readonly tmpCam = new THREE.Vector3();
+  private readonly tmpLookT = new THREE.Vector3();
 
   render(dtMs: number): void {
     const dt = Math.min(dtMs / 1000, 0.05);
@@ -875,10 +910,47 @@ export class World3D {
     const target = new THREE.Vector3(px, 0, pz - this.lookAhead).add(this.camOffset);
     // un salto grande (despertarse en el campamento, cambio de escena) no se
     // recorre en cámara lenta por medio mapa: se corta directo
-    if (this.camera.position.distanceTo(target) > CAM_3D.snapDistance) this.camera.position.copy(target);
-    else this.camera.position.lerp(target, 1 - Math.exp(-dt * CAM_3D.follow));
-    this.camera.lookAt(this.camera.position.x, this.view.lookHeight ?? 0, this.camera.position.z - this.camOffset.z);
-    if (this.view.cutaway === false) this.cut.value.set(-1e5, -1e5, 1, 1);
+    if (this.followPos.distanceTo(target) > CAM_3D.snapDistance) this.followPos.copy(target);
+    else this.followPos.lerp(target, 1 - Math.exp(-dt * CAM_3D.follow));
+    const look = this.tmpLook.set(this.followPos.x, this.view.lookHeight ?? 0, this.followPos.z - this.camOffset.z);
+    this.camera.position.copy(this.followPos);
+
+    // plano de conversación, mezclado con la vista de arriba según talkK
+    this.talkK += (this.talkTarget - this.talkK) * (1 - Math.exp(-dt * CAM_TALK.blend));
+    if (this.talkTarget === 0 && this.talkK < 0.002) {
+      this.talkK = 0;
+      this.talk = null;
+    }
+    const e = this.talkEase();
+    if (this.talk && e > 0) {
+      const o = this.talk;
+      const ox = o.x * PX;
+      const oz = (o.y + o.displayHeight * (1 - o.originY)) * PX;
+      // de quien escucha hacia el jugador: la cámara va de ese lado, detrás
+      let bx = px - ox;
+      let bz = pz - oz;
+      const len = Math.hypot(bx, bz) || 1;
+      bx /= len;
+      bz /= len;
+      if (len < 0.01) bz = 1;
+      const camT = this.tmpCam.set(
+        px + bx * CAM_TALK.back + bz * CAM_TALK.shoulder,
+        CAM_TALK.height,
+        pz + bz * CAM_TALK.back - bx * CAM_TALK.shoulder,
+      );
+      const lookT = this.tmpLookT.set(px + (ox - px) * CAM_TALK.lookAt, CAM_TALK.lookHeight, pz + (oz - pz) * CAM_TALK.lookAt);
+      this.camera.position.lerp(camT, e);
+      look.lerp(lookT, e);
+    }
+    this.camera.lookAt(look);
+    const fov = CAM_3D.fov + (CAM_TALK.fov - CAM_3D.fov) * e;
+    if (Math.abs(this.camera.fov - fov) > 0.01) {
+      this.camera.fov = fov;
+      this.camera.updateProjectionMatrix();
+    }
+    // los sprites giran para quedar de frente a la cámara (en la vista de arriba no giran)
+    this.spriteYaw = Math.atan2(this.camera.position.x - look.x, this.camera.position.z - look.z) * (e > 0 ? 1 : 0);
+    if (this.view.cutaway === false || e > 0.5) this.cut.value.set(-1e5, -1e5, 1, 1);
     else this.updateCut(px, pz, p.displayWidth * PX, p.displayHeight * PX * SPRITE_STRETCH);
 
     this.sun.position.set(px, 0, pz).add(this.sunOffset);

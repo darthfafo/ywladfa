@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { AUDIO, DUSK_MS, PAL, RENDER_3D, TURN_LIGHT_MS, TURN_TINT, VIEW } from '@/config';
+import { AUDIO, CAM_TALK, DUSK_MS, NPC_SCRIPT, PAL, RENDER_3D, TURN_LIGHT_MS, TURN_TINT, VIEW } from '@/config';
 import { sfx, type Surface } from '@/audio/Sfx';
 import { World3D } from '@/render3d/World3D';
 import { bus } from '@/core/EventBus';
@@ -60,6 +60,8 @@ const ZONE_AMBIENCE: Record<string, { wind?: number; sea?: number }> = {
 };
 
 /** Cómo cambian de lugar los NPC entre turnos (ver updateNpcVisibility). */
+const DIR_VEC = { north: { x: 0, y: -1 }, south: { x: 0, y: 1 }, east: { x: 1, y: 0 }, west: { x: -1, y: 0 } } as const;
+
 const NPC_TRANSITION = {
   fadeMs: 700,
   /** más lejos que esto (tiles) se ubica directo: pasa con una pantalla encima */
@@ -264,7 +266,10 @@ export class WorldScene extends Phaser.Scene {
     // de que DialogueBox termine de poner input.locked en false, así que
     // checkTriggers() en el mismo instante se encontraba con el juego todavía
     // "bloqueado" y no hacía nada — un tick después ya está desbloqueado.
-    bus.on('dialogue:end', () => this.time.delayedCall(0, () => this.checkTriggers()));
+    bus.on('dialogue:end', () => {
+      this.endTalk();
+      this.time.delayedCall(0, () => this.checkTriggers());
+    });
 
     this.lastStepPos = { x: this.player.x, y: this.player.y };
     this.refreshAmbience();
@@ -380,6 +385,37 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /** Reubica/activa el cuerpo de un sólido después de mover o esconder su sprite. */
+  /** Con quién es la charla que está por abrirse (talkTo / approach) */
+  private talkPartner: string | null = null;
+  /** sprite con el que se está hablando ahora, en plano de conversación */
+  private talking: Phaser.GameObjects.Image | null = null;
+
+  /** Plano de conversación 3D: cámara detrás del jugador (de espaldas: nuca y
+   * hombros) y, enfrente, de frente, el otro. Solo si está cerca de verdad. */
+  private startTalk(npcId: string): void {
+    const sp = this.interactables.find((x) => x.kind === 'npc' && x.id === npcId)?.sprite;
+    if (!this.world3d || !sp?.visible) return;
+    if (Math.hypot(sp.x - this.player.x, sp.y - this.player.y) > CAM_TALK.maxTiles * VIEW.tile) return;
+    this.talking = sp;
+    this.player.setFrame(FACING_FRAME.north);
+    sp.setFrame(FACING_FRAME.south);
+    this.world3d.setTalk(sp);
+  }
+
+  private endTalk(): void {
+    const sp = this.talking;
+    if (!sp) return;
+    this.talking = null;
+    this.world3d?.setTalk(null);
+    // de vuelta a la vista de arriba: cada uno mirando al otro
+    const dx = sp.x - this.player.x;
+    const dy = sp.y - this.player.y;
+    const horiz = Math.abs(dx) > Math.abs(dy);
+    this.facing = horiz ? (dx > 0 ? 'east' : 'west') : dy > 0 ? 'south' : 'north';
+    this.player.setFrame(FACING_FRAME[this.facing]!);
+    sp.setFrame(FACING_FRAME[horiz ? (dx > 0 ? 'west' : 'east') : dy > 0 ? 'north' : 'south']);
+  }
+
   private syncSolid(s: Phaser.GameObjects.Image, enabled: boolean): void {
     const body = s.body as Phaser.Physics.Arcade.StaticBody | null;
     if (!body) return;
@@ -725,22 +761,34 @@ export class WorldScene extends Phaser.Scene {
         // mudanza larga A LA VISTA (ej. Dafydd yéndose al cañadón mientras hablás
         // con Lewis): antes desaparecía de golpe. Ahora sale caminando hacia allá,
         // se desvanece, y recién entonces aparece en su destino.
+        // con `exitDir` (ej. Dafydd yéndose para el oeste) camina más y para ese
+        // lado: es el indicio de adónde fue. La escena que sigue (Mari
+        // preguntando por él) espera a que se haya ido del todo.
         const speed = (registry.balance.global.playerBaseSpeedPxPerSec as number) * NPC_TRANSITION.walkSpeedFactor;
-        const dx = (tx - it.sprite.x) / dist;
-        const dy = (ty - it.sprite.y) / dist;
-        const exitPx = NPC_TRANSITION.exitWalkTiles * VIEW.tile;
+        const exitDir = 'exitDir' in pos ? pos.exitDir : undefined;
+        const dx = exitDir ? DIR_VEC[exitDir].x : (tx - it.sprite.x) / dist;
+        const dy = exitDir ? DIR_VEC[exitDir].y : (ty - it.sprite.y) / dist;
+        const exitPx = (exitDir ? NPC_SCRIPT.exitTiles : NPC_TRANSITION.exitWalkTiles) * VIEW.tile;
+        const walkMs = (exitPx / speed) * 1000;
         it.sprite.setFrame(FACING_FRAME[Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'east' : 'west') : dy > 0 ? 'south' : 'north']);
         this.tweens.add({
           targets: it.sprite,
           x: it.sprite.x + dx * exitPx,
           y: it.sprite.y + dy * exitPx,
-          alpha: 0,
-          duration: (exitPx / speed) * 1000,
+          duration: walkMs,
           onComplete: () => {
             it.sprite.setPosition(tx, ty).setFrame(FACING_FRAME.south);
             this.tweens.add({ targets: it.sprite, alpha: 1, duration: NPC_TRANSITION.fadeMs });
           },
         });
+        // se desvanece recién en el último tramo, no durante toda la caminata
+        this.tweens.add({
+          targets: it.sprite,
+          alpha: 0,
+          delay: Math.max(0, walkMs - NPC_TRANSITION.fadeMs),
+          duration: Math.min(walkMs, NPC_TRANSITION.fadeMs),
+        });
+        if (exitDir) this.holdTriggersUntil = Math.max(this.holdTriggersUntil, this.time.now + walkMs + NPC_SCRIPT.exitPauseMs);
       } else {
         it.sprite.setPosition(tx, ty);
       }
@@ -1007,6 +1055,7 @@ export class WorldScene extends Phaser.Scene {
       return game.flags.eval(tr.requires);
     });
     if (t) {
+      this.talkPartner = npcId;
       this.runTrigger(t as TriggerDef);
       return;
     }
@@ -1169,7 +1218,69 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private runTrigger(t: TriggerDef): void {
+    const approach = t.action?.approach as string | undefined;
+    if (approach && t.action?.dialogue) {
+      // alguien viene a hablarte (ej. Mari preguntando por Dafydd): primero se
+      // acerca caminando, recién después habla — no desde la otra punta del mapa
+      this.talkPartner = approach;
+      input.locked = true;
+      this.approach(approach, () => {
+        input.locked = false;
+        this.runTriggerNow(t);
+      });
+      return;
+    }
+    this.runTriggerNow(t);
+  }
+
+  /** NPC que camina hasta quedar al lado del jugador, de frente, y después `done`.
+   * Se para sobre el eje (horizontal o vertical) del que viene, como el resto de
+   * los movimientos del juego, que son en las 4 direcciones. */
+  private approach(npcId: string, done: () => void): void {
+    const it = this.interactables.find((x) => x.kind === 'npc' && x.id === npcId);
+    const sp = it?.sprite;
+    if (!sp || !sp.visible) return done();
+    const dx = sp.x - this.player.x;
+    const dy = sp.y - this.player.y;
+    // muy lejos (otra punta del mapa): habla sin la caminata, no se la espera un minuto
+    if (Math.hypot(dx, dy) > NPC_SCRIPT.approachMaxTiles * VIEW.tile) return done();
+    const horiz = Math.abs(dx) > Math.abs(dy);
+    const gap = NPC_SCRIPT.approachGapPx;
+    const tx = horiz ? this.player.x + Math.sign(dx) * gap : this.player.x;
+    const ty = horiz ? this.player.y : this.player.y + Math.sign(dy || 1) * gap;
+    const dist = Math.hypot(tx - sp.x, ty - sp.y);
+    const towardPlayer = horiz ? (dx > 0 ? 'west' : 'east') : dy > 0 ? 'north' : 'south';
+    this.facing = horiz ? (dx > 0 ? 'east' : 'west') : dy > 0 ? 'south' : 'north';
+    this.player.setFrame(FACING_FRAME[this.facing]!);
+    if (dist < 2) {
+      sp.setFrame(FACING_FRAME[towardPlayer]);
+      return done();
+    }
+    // viene a paso de jugador, no de paseo: trae una noticia
+    const speed = registry.balance.global.playerBaseSpeedPxPerSec as number;
+    const mx = tx - sp.x;
+    const my = ty - sp.y;
+    sp.setFrame(FACING_FRAME[Math.abs(mx) > Math.abs(my) ? (mx > 0 ? 'east' : 'west') : my > 0 ? 'south' : 'north']);
+    this.tweens.killTweensOf(sp);
+    this.tweens.add({
+      targets: sp,
+      x: tx,
+      y: ty,
+      duration: (dist / speed) * 1000,
+      onComplete: () => {
+        sp.setFrame(FACING_FRAME[towardPlayer]);
+        this.syncSolid(sp, true);
+        done();
+      },
+    });
+  }
+
+  private runTriggerNow(t: TriggerDef): void {
     const out = this.triggers.consume(t);
+    // plano de conversación (World3D.setTalk) solo con alguien de verdad al lado
+    const partner = this.talkPartner;
+    this.talkPartner = null;
+    if (out.dialogue && partner && registry.dialogue(out.dialogue).context !== 'camp') this.startTalk(partner);
     if (out.toast) bus.emit('ui:toast', { text: out.toast });
     if (out.tutorial) bus.emit('ui:tutorial', { id: out.tutorial });
     if (out.dialogue && registry.dialogue(out.dialogue).context === 'camp') {

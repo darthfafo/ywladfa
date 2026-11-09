@@ -294,7 +294,8 @@
           "day": 2,
           "turn": "tarde",
           "x": 11,
-          "y": 9
+          "y": 9,
+          "exitDir": "west"
         },
         "hiddenAfterFlag": "_dafydd_se_fue"
       }
@@ -744,6 +745,7 @@
       "once": true,
       "turnCost": 0,
       "action": {
+        "approach": "npc_mari",
         "dialogue": "d_n1_dafydd_perdido"
       }
     },

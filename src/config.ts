@@ -86,6 +86,44 @@ export const CAM_3D = {
   spriteLean: 0,
 } as const;
 
+/**
+ * Plano de conversación (World3D.setTalk): al hablar con alguien la cámara baja
+ * y se pone detrás del jugador — se le ve la nuca y los hombros en primer plano
+ * y, enfrente, a quien le habla. Unidades en tiles.
+ */
+export const CAM_TALK = {
+  /** cuánto detrás del jugador (sobre la línea que lo une con el otro) */
+  back: 4.2,
+  /** alto de la cámara */
+  height: 3.6,
+  /** corrimiento de costado: el jugador queda a un lado del cuadro, no tapando al otro */
+  shoulder: 3.4,
+  /** a qué punto mira, de 0 (el jugador) a 1 (el otro) */
+  lookAt: 1,
+  /** a qué altura mira */
+  lookHeight: 1.5,
+  /** campo visual (grados): más abierto que el de arriba, como una toma de cerca */
+  fov: 48,
+  /** estiramiento vertical de los sprites en este plano (casi de frente: casi nada) */
+  stretch: 1.08,
+  /** velocidad de la transición (1/s) */
+  blend: 3.5,
+  /** más lejos que esto (tiles) del otro, no hay plano de conversación */
+  maxTiles: 5,
+} as const;
+
+/** NPCs guionados en el mundo: alguien que se acerca a hablarte, alguien que se va. */
+export const NPC_SCRIPT = {
+  /** a qué distancia (px) del jugador se para quien viene a hablarle */
+  approachGapPx: 36,
+  /** más lejos que esto (tiles), quien viene a hablarte no camina: habla desde donde está */
+  approachMaxTiles: 26,
+  /** respiro después de que alguien se fue, antes de que la escena siga (ms) */
+  exitPauseMs: 600,
+  /** cuánto camina (tiles) alguien que se va a la vista con `exitDir` */
+  exitTiles: 9,
+} as const;
+
 /** Alto de cada terreno en el mundo 3D (tiles). Lo que no figura es piso (0). */
 export const TERRAIN_HEIGHT_3D: Record<string, number> = {
   ROCK: 2.6,

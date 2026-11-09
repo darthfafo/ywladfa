@@ -110,6 +110,16 @@ export interface ZoneDef {
   speedModifier?: number;
 }
 
+/** Mudanza de un NPC. `exitDir`: si la mudanza pasa a la vista, sale caminando
+ * para ese lado (un indicio de adónde fue), no derecho hacia el destino. */
+export interface NpcMove {
+  day: number;
+  turn: TurnId;
+  x: number;
+  y: number;
+  exitDir?: 'north' | 'south' | 'east' | 'west';
+}
+
 export interface TriggerDef {
   id: string;
   type: string;
@@ -158,7 +168,7 @@ export interface LevelDef {
       /** Una reubicación programada: a partir de este día/turno, aparece en x,y en vez
        * de la posición base. Puede ser una sola parada o una lista (varias mudanzas a
        * lo largo del nivel) — se usa la última cuyo umbral ya pasó. */
-      movesTo?: { day: number; turn: TurnId; x: number; y: number } | Array<{ day: number; turn: TurnId; x: number; y: number }>;
+      movesTo?: NpcMove | NpcMove[];
       /** Una vez que este flag está, el NPC deja de mostrarse en el mapa (ya se despidió y se fue). */
       hiddenAfterFlag?: string;
     }>;
