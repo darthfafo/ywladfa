@@ -90,6 +90,15 @@ export class UiScene extends Phaser.Scene {
     // correcto: cuando el jugador se despierta, no en medio de la noche anterior.
     bus.on('time:turn-advanced', () => this.refreshTime());
     bus.on('inventory:weight-changed', () => this.refreshLoad());
+    bus.on('ui:pc-says', ({ text }) => {
+      // con otra cosa abierta (diálogo, cartel) no se pisa: queda como aviso
+      if (this.dialogue.active || this.overlay) {
+        this.showToast(text);
+        return;
+      }
+      this.touch.setVisible(false);
+      this.dialogue.say(text, () => this.touch.setVisible(true));
+    });
     bus.on('ui:toast', ({ text }) => {
       sfx.chime();
       this.showToast(text);

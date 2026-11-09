@@ -172,6 +172,25 @@ export class DialogueBox {
     });
   }
 
+  /** Algo que dice u observa el propio personaje (mirar un bote, una pista en el
+   * camino): con su nombre y su retrato, en la misma bandeja que cualquier
+   * diálogo — no un aviso flotando sobre el mundo. */
+  say(text: string, onClose?: () => void): void {
+    this.onClose = onClose ?? null;
+    input.locked = true;
+    this.opening = true;
+    this.root.setVisible(true);
+    this.show({
+      nodeId: '__pc',
+      speakerId: 'pc',
+      speakerName: game.state.player.name,
+      text,
+      portrait: 'neutral',
+      choices: [],
+      isNarrator: false,
+    });
+  }
+
   /** Línea narrada suelta, sin diálogo registrado en /data — mismo espíritu que
    * refuse() pero para texto de sistema con partes dinámicas (ej. la bajada de la
    * cutscene de amanecer, con el día armado en código) que no tiene sentido

@@ -6,7 +6,7 @@ import type { UiScene } from '@/scenes/UiScene';
 import type { WorldScene } from '@/scenes/WorldScene';
 import { playCinematic } from '@/ui/cinematic';
 import { DialogueBox } from '@/ui/DialogueBox';
-import { crisp, FONT, RETRO_FONT } from '@/util/text';
+import { FONT, RETRO_FONT } from '@/util/text';
 import { addPanel } from '@/ui/panel';
 import { sfx } from '@/audio/Sfx';
 
@@ -62,16 +62,19 @@ export class CampScene extends Phaser.Scene {
 
     const h = VIEW.hud;
     addPanel(this, h.x, h.y, h.w, h.h, { top: PAL.ink2, bottom: PAL.void, dropShadow: 'down' }).setDepth(1);
-    crisp(
-      this.add
-        .text(h.x + h.w / 2, 4, `Jornada ${this.night} · Noche`, {
-          fontFamily: RETRO_FONT,
-          fontSize: FONT.small,
-          color: '#D9A845',
-        })
-        .setOrigin(0.5, 0)
-        .setResolution(8),
-    );
+    // mismo encabezado que el HUD del juego (UiScene.refreshTime): HTML nítido,
+    // con los cuatro rombos de turno encendidos. Antes era Text de Phaser debajo
+    // del panel (profundidad 0 contra 1): la franja quedaba vacía.
+    const dots = Array.from({ length: 4 }, () => '<span style="width:4px; height:4px; display:inline-block; transform:rotate(45deg); background:#D9A845;"></span>').join('');
+    this.add
+      .dom(h.x, 11, 'div', `pointer-events:none; font-family: ${RETRO_FONT}; font-size:${FONT.tiny}; width:${h.w}px;`)
+      .setOrigin(0, 0)
+      .setDepth(2)
+      .setHTML(
+        `<div style="display:flex; align-items:center; justify-content:center; gap:6px;">` +
+          `<span style="color:#D9A845;">JORNADA ${this.night} · NOCHE</span>` +
+          `<span style="display:inline-flex; gap:3px;">${dots}</span></div>`,
+      );
 
     const w = VIEW.world;
     // fuego grande o chico según lo que REALMENTE se prendió anoche (game.flags,
@@ -85,7 +88,8 @@ export class CampScene extends Phaser.Scene {
     sfx.setAmbience({ fire: artId === 'fogon_grande' ? 1 : 0.55, wind: 0.25 });
     // entrada animada, movimiento lento y brasas subiendo (ui/cinematic.ts)
     const bg = playCinematic(this, artId, { x: w.x, y: w.y, w: w.w, h: w.h }, 0).image;
-    this.add.rectangle(w.x, w.y + w.h - 60, w.w, 60, PAL.soil, bg ? 0.25 : 0.5).setOrigin(0, 0);
+    // piso del placeholder; con ilustración real no va (tapaba el borde de abajo)
+    if (!bg) this.add.rectangle(w.x, w.y + w.h - 60, w.w, 60, PAL.soil, 0.5).setOrigin(0, 0).setDepth(1);
 
     // el fuego animado y las siluetas eran EL placeholder de toda la escena — ahora
     // que fogon_grande/fogon_chico ya pintan gente sentada alrededor del fuego, se

@@ -1002,7 +1002,7 @@ export class WorldScene extends Phaser.Scene {
         break;
       case 'pila': {
         if (this.carriedCajones === 0) {
-          bus.emit('ui:toast', { text: 'No estás cargando nada.' });
+          bus.emit('ui:pc-says', { text: 'No estoy cargando nada.' });
           return;
         }
         const n = this.carriedCajones;
@@ -1043,7 +1043,7 @@ export class WorldScene extends Phaser.Scene {
           bus.emit('ui:toast', { text: `Leña cargada al fogón: +${n}` });
           this.checkTriggers();
         } else {
-          bus.emit('ui:toast', { text: 'El fogón. Acá se pasa la noche.' });
+          bus.emit('ui:pc-says', { text: 'El fogón. Acá vamos a pasar la noche.' });
         }
         break;
       case 'cueva': {
@@ -1053,13 +1053,13 @@ export class WorldScene extends Phaser.Scene {
         const task = game.level.triggers.find((x) => x.id === 'trig_tarea_cuevas');
         const taskPending = !!task && !this.triggers.hasFired(task.id) && game.flags.eval(task.requires);
         if (!chosen) this.runTriggerById('trig_eleccion_cueva');
-        else if (it.id !== chosen) bus.emit('ui:toast', { text: 'Esa no es la de tu familia.' });
+        else if (it.id !== chosen) bus.emit('ui:pc-says', { text: 'Esa no es la nuestra.' });
         else if (taskPending) {
           // tarea de la mañana de J2 (ch_n1_tareas): arreglar la propia cueva
           sfx.knock();
           this.runTriggerById('trig_tarea_cuevas');
         }
-        else if (game.flags.is('n1_apuntalado')) bus.emit('ui:toast', { text: 'Ya está apuntalada. Aguanta.' });
+        else if (game.flags.is('n1_apuntalado')) bus.emit('ui:pc-says', { text: 'Ya está apuntalada. Aguanta.' });
         else {
           sfx.knock();
           this.runTriggerById('trig_apuntalar');
@@ -1067,16 +1067,16 @@ export class WorldScene extends Phaser.Scene {
         break;
       }
       case 'guanaco':
-        bus.emit('ui:toast', { text: '— Guarda que escupen.' });
+        bus.emit('ui:pc-says', { text: 'Guanacos. Mejor no acercarse: escupen.' });
         break;
       case 'algas':
-        bus.emit('ui:toast', { text: 'Hay muchas algas en la costa.' });
+        bus.emit('ui:pc-says', { text: 'Cuántas algas hay en esta costa.' });
         break;
       case 'bote':
         // no son botes de pesca cualquiera: son los que bajaron a los 150
         // colonos del Mimosa a remo, como el del cold open ("El bote toca la
         // playa y nadie baja primero") — varios viajes, no cupo todos de una.
-        bus.emit('ui:toast', { text: 'Uno de los botes que bajamos del Mimosa.' });
+        bus.emit('ui:pc-says', { text: 'Uno de los botes en los que bajamos del Mimosa.' });
         break;
     }
   }
@@ -1156,7 +1156,7 @@ export class WorldScene extends Phaser.Scene {
       this.lastTile = { x: -1, y: -1 };
       const backZone = zoneAt(game.level, back.x, back.y);
       if (backZone) game.state.progress.zone = backZone.id;
-      bus.emit('ui:toast', { text: 'Todavía no. Hay que volver más tarde.' });
+      bus.emit('ui:pc-says', { text: 'Todavía no. Tengo que volver más tarde.' });
       this.checkTriggers();
       return;
     }
@@ -1331,6 +1331,7 @@ export class WorldScene extends Phaser.Scene {
     this.talkPartner = null;
     if (out.dialogue && partner && registry.dialogue(out.dialogue).context !== 'camp') this.startTalk(partner);
     if (out.toast) bus.emit('ui:toast', { text: out.toast });
+    if (out.hint) bus.emit('ui:pc-says', { text: out.hint });
     if (out.tutorial) bus.emit('ui:tutorial', { id: out.tutorial });
     if (out.dialogue && registry.dialogue(out.dialogue).context === 'camp') {
       this.scene.launch('Camp', { dialogueId: out.dialogue, night: out.night });

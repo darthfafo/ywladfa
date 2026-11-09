@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { INPUT_GUARD, PAL, VIEW } from '@/config';
 import { saveSystem } from '@/systems/SaveSystem';
-import { crisp, RETRO_FONT } from '@/util/text';
-import { addPanel } from '@/ui/panel';
+import { RETRO_FONT } from '@/util/text';
+import { sceneTextureKey } from '@/util/assets';
 
 interface TransitionData {
   /** id del nivel que sigue (`data/levels/*.json` → `next`). Todavía no existe
@@ -25,55 +25,75 @@ export class TransitionScene extends Phaser.Scene {
   create(_data: TransitionData): void {
     this.scene.stop('World');
     this.scene.stop('Ui');
+    const cx = VIEW.width / 2;
+    const cy = VIEW.height / 2;
 
     this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void, 1).setOrigin(0, 0);
+    // la última ilustración del nivel (la punta) detrás, apagada: cierra con imagen, no en negro
+    const key = sceneTextureKey('punta_final');
+    if (this.textures.exists(key)) {
+      const img = this.add.image(cx, cy, key);
+      img.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      img.setScale(Math.max(VIEW.width / img.width, VIEW.height / img.height)).setAlpha(0);
+      this.tweens.add({ targets: img, alpha: 0.4, duration: 1600, ease: 'Sine.easeOut' });
+      this.tweens.add({ targets: img, scale: img.scale * 1.06, duration: 20000, ease: 'Sine.easeInOut' });
+    }
+    // viñeta, como la portada
+    this.add
+      .dom(0, 0, 'div', `width:${VIEW.width}px; height:${VIEW.height}px; pointer-events:none; ` +
+        'background:radial-gradient(ellipse at 50% 50%, rgba(14,20,22,0.35) 30%, rgba(14,20,22,0.9) 100%);')
+      .setOrigin(0, 0);
 
-    crisp(
-      this.add
-        .text(VIEW.width / 2, VIEW.height / 2 - 24, 'Continuará…', {
-          fontFamily: RETRO_FONT,
-          fontSize: '13px',
-          color: '#D9A845',
-        })
-        .setOrigin(0.5, 0.5)
-        .setResolution(8),
+    const font = RETRO_FONT.replace(/"/g, "'");
+    const outline = 'text-shadow: 1px 0 0 #0E1416, -1px 0 0 #0E1416, 0 1px 0 #0E1416, 0 -1px 0 #0E1416, 0 3px 0 rgba(14,20,22,0.85);';
+    const rule = (side: 'left' | 'right') =>
+      `<span style="display:inline-block; width:40px; height:1px; vertical-align:middle; background:linear-gradient(to ${side}, #D9A845, rgba(217,168,69,0));"></span>`;
+    const diamond = '<span style="display:inline-block; width:4px; height:4px; margin:0 7px; vertical-align:middle; background:#9C3A24; transform:rotate(45deg);"></span>';
+    const el = this.add.dom(0, cy - 58, 'div', `width:${VIEW.width}px; pointer-events:none;`).setOrigin(0, 0);
+    el.setHTML(
+      `<div style="font-family:${font}; text-align:center; opacity:0; animation: tr-in 1.4s .4s ease-out forwards;">` +
+        `<style>@keyframes tr-in { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:none;} }</style>` +
+        `<div style="font-size:7px; color:#BFD3D8; letter-spacing:1px; ${outline}">Fin de la primera parte</div>` +
+        `<div style="margin:12px 0 10px; white-space:nowrap;">${rule('left')}${diamond}${rule('right')}</div>` +
+        `<div style="font-size:15px; color:#D9A845; ${outline}">Continuará…</div>` +
+      `</div>`,
     );
 
-    this.renderButton(VIEW.width / 2, VIEW.height / 2 + 30, '› Jugar otra vez', () => this.playAgain());
+    this.renderButton(cx, cy + 48, 'Jugar otra vez', () => this.playAgain());
   }
 
+  /** Botón de vidrio con filete dorado, el mismo de la portada (BootScene.glassButton). */
   private renderButton(cx: number, y: number, label: string, onPick: () => void): void {
-    const text = crisp(
-      this.add
-        .text(cx, y, label, { fontFamily: RETRO_FONT, fontSize: '12px', color: '#BFD3D8' })
-        .setOrigin(0.5, 0.5)
-        .setResolution(8),
+    const el = this.add.dom(
+      cx,
+      y,
+      'button',
+      `width:150px; height:21px; box-sizing:border-box; margin:0; padding:0 6px; border-radius:0; ` +
+        `font-family: ${RETRO_FONT}; font-size:8px; letter-spacing:1px; cursor:pointer; ` +
+        'background:linear-gradient(rgba(46,70,79,0.85), rgba(24,38,42,0.85)); border:1px solid rgba(217,168,69,0.85); ' +
+        'color:#F2EDE0; text-shadow:0 1px 0 #0E1416; box-shadow:0 2px 8px rgba(0,0,0,0.35); ' +
+        'opacity:0; transition:opacity .8s; -webkit-tap-highlight-color:transparent;',
     );
-    const w = text.width + 32;
-    const h = text.height + 16;
-    addPanel(this, cx - w / 2, y - h / 2, w, h, { top: PAL.ink2, bottom: PAL.void, alpha: 0.85 }).setDepth(-2);
-    const box = this.add
-      .rectangle(cx, y, w, h, PAL.ink2, 0.001)
-      .setStrokeStyle(1, PAL.wheat, 0.35)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(-1);
-    box.on('pointerover', () => {
-      box.setStrokeStyle(1, PAL.wheat);
-      text.setColor('#D9A845');
-    });
-    box.on('pointerout', () => {
-      box.setStrokeStyle(1, PAL.wheat, 0.35);
-      text.setColor('#BFD3D8');
-    });
+    const b = el.node as HTMLButtonElement;
+    b.type = 'button';
+    b.textContent = label;
+    setTimeout(() => (b.style.opacity = '1'), 1400);
+    const on = (yes: boolean) => {
+      b.textContent = yes ? `› ${label} ‹` : label;
+      b.style.color = yes ? '#D9A845' : '#F2EDE0';
+      b.style.borderColor = yes ? '#D9A845' : 'rgba(217,168,69,0.85)';
+    };
+    b.addEventListener('pointerenter', () => on(true));
+    b.addEventListener('pointerleave', () => on(false));
     const shownAt = performance.now();
-    box.on('pointerdown', () => {
+    const pick = (): void => {
       if (performance.now() - shownAt < INPUT_GUARD.buttonMs) return;
       onPick();
-    });
-
+    };
+    b.addEventListener('click', pick);
     const kb = this.input.keyboard;
-    kb?.on('keydown-SPACE', onPick);
-    kb?.on('keydown-E', onPick);
+    kb?.on('keydown-SPACE', pick);
+    kb?.on('keydown-E', pick);
   }
 
   /** Borra la partida guardada — sin esto, "jugar otra vez" volvía a la portada

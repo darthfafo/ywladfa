@@ -94,7 +94,7 @@ export class TriggerSystem {
   /** Ejecuta la parte "de datos" de la acción y devuelve lo que la escena tiene que hacer. */
   consume(
     t: TriggerDef,
-  ): { dialogue?: string; choice?: string; scene?: string; tutorial?: string; toast?: string; next?: string; night?: number } {
+  ): { dialogue?: string; choice?: string; scene?: string; tutorial?: string; toast?: string; hint?: string; next?: string; night?: number } {
     this.markFired(t.id);
     bus.emit('trigger:fired', { triggerId: t.id });
 
@@ -114,7 +114,9 @@ export class TriggerSystem {
       choice: a.choice,
       scene: a.scene,
       tutorial: a.tutorial,
-      toast: a.toast ?? a.modifier?.toast ?? a.hint,
+      toast: a.toast ?? a.modifier?.toast,
+      // pista ambiental ("Palomas…", "Huellas chicas…"): la dice el personaje, no un aviso suelto
+      hint: a.hint,
       next: a.next,
       // el número de jornada que Camp muestra en su header: no puede leer
       // game.state.progress.day EN VIVO porque spendTurns() (arriba) ya puede haber

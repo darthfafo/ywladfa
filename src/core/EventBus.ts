@@ -31,6 +31,8 @@ export type GameEvents = {
   'journal:entry': { entry: JournalEntry };
   'save:written': { slot: number };
   'ui:toast': { text: string; icon?: string };
+  /** algo que el propio personaje dice u observa: va en la bandeja con su retrato */
+  'ui:pc-says': { text: string };
   'ui:tutorial': { id: string };
   'ui:action-context': { label: string | null };
   'ui:hud-visible': { visible: boolean };
