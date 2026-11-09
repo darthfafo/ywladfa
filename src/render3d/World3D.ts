@@ -982,7 +982,27 @@ export class World3D {
         CAM_TALK.height,
         pz + CAM_TALK.distance * (ca * bz - sa * bx),
       );
-      const lookT = this.tmpLookT.set(px + (ox - px) * CAM_TALK.lookAt, CAM_TALK.lookHeight, pz + (oz - pz) * CAM_TALK.lookAt);
+      // encuadre: la cámara apunta al centro de lo que ocupan las DOS figuras
+      // juntas (de un borde del jugador al borde opuesto del otro), así ninguna
+      // queda cortada contra el costado del cuadro
+      const mx = (px + ox) / 2;
+      const mz = (pz + oz) / 2;
+      const base = Math.atan2(mx - camT.x, mz - camT.z);
+      const rel = (x: number, z: number): number => {
+        let r = Math.atan2(x - camT.x, z - camT.z) - base;
+        while (r > Math.PI) r -= 2 * Math.PI;
+        while (r < -Math.PI) r += 2 * Math.PI;
+        return r;
+      };
+      const half = (w: number, x: number, z: number): number =>
+        Math.atan((w * CAM_TALK.bodyWidth) / 2 / Math.max(0.5, Math.hypot(x - camT.x, z - camT.z)));
+      const rp = rel(px, pz);
+      const ro = rel(ox, oz);
+      const hp = half(p.displayWidth * PX, px, pz);
+      const ho = half(o.displayWidth * PX, ox, oz);
+      const center = base + (Math.min(rp - hp, ro - ho) + Math.max(rp + hp, ro + ho)) / 2;
+      const md = Math.hypot(mx - camT.x, mz - camT.z);
+      const lookT = this.tmpLookT.set(camT.x + Math.sin(center) * md, CAM_TALK.lookHeight, camT.z + Math.cos(center) * md);
       this.camera.position.lerp(camT, e);
       look.lerp(lookT, e);
     }
