@@ -12,8 +12,6 @@ import { sfx } from '@/audio/Sfx';
  */
 
 export interface SceneFx {
-  /** bruma que cruza */
-  mist?: number;
   /** briznas de pasto/polvo llevadas por el viento (de izquierda a derecha) */
   wind?: number;
   /** motas de polvo flotando a contraluz */
@@ -28,12 +26,12 @@ export interface SceneFx {
 
 /** Ambiente de cada ilustración. Lo que no figura entra igual, con movimiento y sin partículas. */
 export const SCENE_FX: Record<string, SceneFx> = {
-  cold_open: { mist: 1, wind: 0.3 },
-  subida_barranca: { wind: 1, mist: 0.3 },
-  manantial: { motes: 1, mist: 0.3 },
-  mimosa_zarpa: { wind: 0.8, mist: 0.4 },
-  punta_final: { wind: 0.7, mist: 0.5 },
-  sunrise: { motes: 0.8, mist: 0.6 },
+  cold_open: { wind: 0.3 },
+  subida_barranca: { wind: 1 },
+  manantial: { motes: 1 },
+  mimosa_zarpa: { wind: 0.8 },
+  punta_final: { wind: 0.7 },
+  sunrise: { motes: 0.8 },
   fogon_grande: { embers: 1, emberAt: [0.52, 0.66], motes: 0.3 },
   fogon_chico: { embers: 0.5, emberAt: [0.52, 0.66] },
   decision_carga: { motes: 0.6, wind: 0.3 },
@@ -52,12 +50,6 @@ export function ensureFxTextures(scene: Phaser.Scene): void {
       g.fillRect(0, y, 1, 1);
     }
     g.generateTexture('fx_rain', 1, 16);
-    g.clear();
-    for (let r = 32; r > 0; r -= 2) {
-      g.fillStyle(0xffffff, 0.05);
-      g.fillCircle(32, 32, r);
-    }
-    g.generateTexture('fx_mist', 64, 64);
     g.clear();
     g.fillStyle(0xffffff, 1);
     g.fillRect(0, 0, 2, 2);
@@ -133,20 +125,6 @@ export function playCinematic(
   const fx = SCENE_FX[sceneId] ?? {};
   const pdepth = depth + 0.5;
   const area = (o: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig) => o;
-  if (fx.mist) {
-    emitters.push(
-      scene.add.particles(0, 0, 'fx_mist', area({
-        x: { min: rect.x - 80, max: rect.x + rect.w },
-        y: { min: rect.y + rect.h * 0.3, max: rect.y + rect.h * 0.95 },
-        lifespan: 12000,
-        speedX: { min: 6, max: 18 },
-        scale: { min: 2, max: 4.5 },
-        alpha: { onUpdate: (_p: unknown, _k: string, t: number) => Math.sin(t * Math.PI) * 0.18 * fx.mist! },
-        frequency: 900 / fx.mist,
-        advance: 6000, // ya hay bruma cuando arranca, no aparece de a una
-      })).setDepth(pdepth),
-    );
-  }
   if (fx.wind) {
     emitters.push(
       scene.add.particles(0, 0, 'fx_wisp', area({

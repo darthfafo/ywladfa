@@ -201,7 +201,16 @@ export class UiScene extends Phaser.Scene {
 
     this.zoneLabel = crisp(
       this.add
-        .text(VIEW.width / 2, VIEW.world.y + 8, '', { fontFamily: RETRO_FONT, fontSize: FONT.body, color: '#EAE8E0' })
+        .text(VIEW.width / 2, VIEW.world.y + 8, '', {
+          fontFamily: RETRO_FONT,
+          fontSize: FONT.small,
+          color: '#F2EDE0',
+          // contorno fino + sombra corta, como el título de la portada: se lee
+          // sobre cualquier fondo sin el trazo grueso de antes
+          stroke: '#0E1416',
+          strokeThickness: 2,
+          shadow: { offsetX: 0, offsetY: 2, color: 'rgba(14,20,22,0.8)', blur: 0, fill: true, stroke: true },
+        })
         .setOrigin(0.5, 0)
         .setDepth(70)
         .setAlpha(0)

@@ -6,7 +6,7 @@ import { createInitialState } from '@/core/GameState';
 import { saveSystem } from '@/systems/SaveSystem';
 import { addSceneBackground, preloadArt, sceneTextureKey } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
-import { BUTTON_3D_ACTIVE_CSS, BUTTON_3D_CSS } from '@/ui/panel';
+import { BUTTON_3D_CSS } from '@/ui/panel';
 import { ensureFxTextures } from '@/ui/cinematic';
 import { makePortraits, makeProps, makeShipLarge } from '@/util/textures';
 import { RETRO_FONT } from '@/util/text';
@@ -56,7 +56,6 @@ const GAME_SUBTITLE = 'La Huella de los Rifleros';
 interface Slide {
   id: string;
   rain: number;
-  mist: number;
   lightning?: boolean;
   wind?: boolean;
   /** centro vertical de la ilustración (por defecto CINE_IMG_CY) */
@@ -70,10 +69,10 @@ interface Slide {
 // arriba y abajo. Lo importante de cada ilustración está al centro.
 // Llueve en Liverpool y en altamar; al llegar a Chubut ya no: bruma nomás.
 const TITLE_SLIDES: Slide[] = [
-  { id: 'mimosa_puerto', rain: 0.5, mist: 0.4, cover: true },
-  { id: 'travesia', rain: 1, mist: 0.2, lightning: true, cover: true },
-  { id: 'cold_open', rain: 0, mist: 1, cover: true },
-  { id: 'mimosa_zarpa', rain: 0, mist: 0.5, wind: true, cover: true },
+  { id: 'mimosa_puerto', rain: 0.5, cover: true },
+  { id: 'travesia', rain: 1, lightning: true, cover: true },
+  { id: 'cold_open', rain: 0, cover: true },
+  { id: 'mimosa_zarpa', rain: 0, wind: true, cover: true },
 ];
 const SLIDE_MS = 7000;
 /** centro vertical de la ilustración: entre el título (arriba) y el menú (abajo) */
@@ -106,7 +105,6 @@ export class BootScene extends Phaser.Scene {
     timer: Phaser.Time.TimerEvent | null;
     flash: Phaser.Time.TimerEvent | null;
     rain: Phaser.GameObjects.Particles.ParticleEmitter;
-    mist: Phaser.GameObjects.Particles.ParticleEmitter;
     wind: Phaser.GameObjects.Particles.ParticleEmitter;
     flashRect: Phaser.GameObjects.Rectangle;
     overlays: Phaser.GameObjects.GameObject[];
@@ -145,17 +143,31 @@ export class BootScene extends Phaser.Scene {
     // todo (no 0.97): mismo criterio que la bandeja de diálogo (DialogueBox.bg), más
     // contraste para el título contra la imagen de fondo.
     c(this.add.rectangle(0, 0, VIEW.width, TOP_H, PAL.ink, 1).setOrigin(0, 0).setDepth(20));
-    c(this.add.rectangle(0, TOP_H - 1, VIEW.width, 1, PAL.slate).setOrigin(0, 0).setDepth(21));
-    c(this.renderDomText(cx, 14, GAME_TITLE, { size: 15, color: '#EAE8E0', align: 'center', retro: true }));
+    // filete dorado fino abajo, como los botones del arranque (antes una línea pizarra)
+    c(this.add.rectangle(0, TOP_H - 1, VIEW.width, 1, PAL.wheat, 0.45).setOrigin(0, 0).setDepth(21));
+    const [titleWord, titleYear] = GAME_TITLE.split(' ');
+    c(
+      this.renderDomText(cx, 14, '', {
+        size: 14,
+        color: '#F2EDE0',
+        align: 'center',
+        retro: true,
+        lineHeight: 1,
+        html:
+          `<span style="letter-spacing:1px; text-shadow:0 2px 0 rgba(0,0,0,0.6);">${titleWord}</span>` +
+          `<span style="display:inline-block; width:3px; height:3px; margin:0 6px; position:relative; top:-5px; background:#9C3A24; transform:rotate(45deg);"></span>` +
+          `<span style="color:#D9A845; letter-spacing:2px; text-shadow:0 2px 0 rgba(0,0,0,0.6);">${titleYear}</span>`,
+      }),
+    );
     // "Chubut 1865" ya da el contexto (dónde y cuándo) que antes ponía "La colonia
     // galesa en Chubut", así que vuelve el subtítulo evocador. Debajo, la
     // aclaración de rigor histórico — blanca, más chica, no compite con el título.
-    c(this.renderDomText(cx, 42, GAME_SUBTITLE, { size: 9, color: '#D9A845', align: 'center', retro: true }));
+    c(this.renderDomText(cx, 40, GAME_SUBTITLE, { size: 8, color: '#EAE8E0', align: 'center', retro: true }));
     c(
       // en minúsculas: Press Start 2P no tiene mayúsculas acentuadas ("HISTóRICO")
-      this.renderDomText(cx, 58, 'Un juego con rigor histórico', {
+      this.renderDomText(cx, 56, 'Un juego con rigor histórico', {
         size: 6,
-        color: '#EAE8E0',
+        color: '#7FB0B8',
         align: 'center',
         retro: true,
       }),
@@ -217,16 +229,6 @@ export class BootScene extends Phaser.Scene {
       alpha: { start: 0.85, end: 0.35 },
       frequency: -1,
     }).setDepth(5);
-    const mist = this.add.particles(0, 0, 'fx_mist', {
-      x: { min: -80, max: W },
-      y: { min: H * 0.25, max: H * 0.85 },
-      lifespan: 14000,
-      speedX: { min: 8, max: 22 },
-      scale: { min: 2.5, max: 5 },
-      // entra y sale suave: 0 → pico → 0 a lo largo de su vida
-      alpha: { onUpdate: (_p: unknown, _k: string, t: number) => Math.sin(t * Math.PI) * 0.22 },
-      frequency: -1,
-    }).setDepth(4);
     const wind = this.add.particles(0, 0, 'fx_wisp', {
       x: -10,
       y: { min: H * 0.15, max: H * 0.9 },
@@ -244,7 +246,7 @@ export class BootScene extends Phaser.Scene {
         'background: radial-gradient(ellipse at 50% 45%, rgba(14,20,22,0) 45%, rgba(14,20,22,0.75) 100%);')
       .setOrigin(0, 0)
       .setDepth(-2);
-    this.cine = { slides, index: -1, current: [], fading: [], timer: null, flash: null, rain, mist, wind, flashRect, overlays: [vignette] };
+    this.cine = { slides, index: -1, current: [], fading: [], timer: null, flash: null, rain, wind, flashRect, overlays: [vignette] };
     this.nextSlide();
   }
 
@@ -301,9 +303,6 @@ export class BootScene extends Phaser.Scene {
     c.rain.setFrequency(slide.rain > 0 ? 60 / slide.rain : -1, slide.rain > 0.7 ? 2 : 1);
     if (slide.rain > 0) c.rain.start();
     else c.rain.stop();
-    c.mist.setFrequency(slide.mist > 0 ? 1100 / slide.mist : -1, 1);
-    if (slide.mist > 0) c.mist.start();
-    else c.mist.stop();
     if (slide.wind) c.wind.setFrequency(90, 1).start();
     else c.wind.stop();
     c.flash?.remove();
@@ -335,7 +334,7 @@ export class BootScene extends Phaser.Scene {
     if (!c) return;
     c.timer?.remove();
     c.flash?.remove();
-    for (const o of [...c.current, ...c.fading, c.rain, c.mist, c.wind, c.flashRect, ...c.overlays]) {
+    for (const o of [...c.current, ...c.fading, c.rain, c.wind, c.flashRect, ...c.overlays]) {
       if (o) {
         this.tweens.killTweensOf(o);
         o.destroy();
@@ -477,25 +476,7 @@ export class BootScene extends Phaser.Scene {
     const top = VIEW.height - 30 - options.length * rowH;
     options.forEach((o, i) => {
       const el = this.renderDomButton(cx, top + i * rowH + rowH / 2, o.label, o.onPick, 172, 21);
-      const b = el.node as HTMLButtonElement;
-      const primary = i === 0;
-      // botón de portada: vidrio oscuro con filete dorado fino, no el bloque con
-      // volumen de los menús del juego; el principal, un poco más marcado
-      b.style.cssText +=
-        `; background:${primary ? 'linear-gradient(rgba(46,70,79,0.82), rgba(24,38,42,0.82))' : 'rgba(14,20,22,0.55)'};` +
-        ` border:1px solid ${primary ? 'rgba(217,168,69,0.85)' : 'rgba(217,168,69,0.35)'}; box-shadow:0 2px 8px rgba(0,0,0,0.35);` +
-        ` color:${primary ? '#F2EDE0' : '#BFD3D8'}; font-size:8px; letter-spacing:1px;` +
-        ' backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);';
-      const label = o.label;
-      const on = (yes: boolean) => {
-        b.textContent = yes ? `› ${label} ‹` : label;
-        b.style.color = yes ? '#D9A845' : primary ? '#F2EDE0' : '#BFD3D8';
-        b.style.borderColor = yes ? '#D9A845' : primary ? 'rgba(217,168,69,0.85)' : 'rgba(217,168,69,0.35)';
-      };
-      b.addEventListener('pointerenter', () => on(true));
-      b.addEventListener('pointerleave', () => on(false));
-      b.addEventListener('focus', () => on(true));
-      b.addEventListener('blur', () => on(false));
+      const b = this.glassButton(el, i === 0);
       b.classList.add('ttl-up', 'ttl-d3');
       this.track(el);
     });
@@ -571,14 +552,14 @@ export class BootScene extends Phaser.Scene {
     // pantalla completa: con la imagen entera a lo ancho quedaban una franja oscura
     // arriba, otra abajo y el borde duro entre la pintura y el relleno. Acá el
     // personaje está al centro: recortar los costados no pierde nada importante.
-    const portrait = (g: Gender): Slide => ({ id: `enlistamiento_${g}`, rain: 0.3, mist: 0.3, cover: true });
+    const portrait = (g: Gender): Slide => ({ id: `enlistamiento_${g}`, rain: 0.3, cover: true });
     this.startCinematic([portrait(this.playerGender)]);
     // más suave que en la portada: acá arriba solo hay botones, no un título
     // grande — con el degradé fuerte la franja de arriba quedaba negra
     this.renderShade(0, 150, 'top', 0.55);
     this.renderShade(VIEW.height - 110, 110, 'bottom');
     const top = 18;
-    this.track(this.renderDomText(cx, top, '¿Quién sos?', { size: 13, color: '#D9A845', align: 'center' }));
+    this.track(this.stepTitle(top, '¿Quién sos?'));
 
     // género: dos botones lado a lado, el elegido resaltado
     const pick = (g: Gender) => {
@@ -592,8 +573,10 @@ export class BootScene extends Phaser.Scene {
       paint();
     };
     const rowG = top + 34;
-    const btnM = this.renderDomButton(cx - 54, rowG, 'Varón', () => pick('m'), 100, 24);
-    const btnF = this.renderDomButton(cx + 54, rowG, 'Mujer', () => pick('f'), 100, 24);
+    const btnM = this.renderDomButton(cx - 50, rowG, 'Varón', () => pick('m'), 92, 21);
+    const btnF = this.renderDomButton(cx + 50, rowG, 'Mujer', () => pick('f'), 92, 21);
+    this.glassButton(btnM);
+    this.glassButton(btnF);
     this.track(btnM);
     this.track(btnF);
     const paint = () => {
@@ -601,15 +584,9 @@ export class BootScene extends Phaser.Scene {
         [btnM, 'm'],
         [btnF, 'f'],
       ] as const) {
-        const b = el.node as HTMLButtonElement;
-        const on = this.playerGender === g;
-        // se reescribe solo el "look" (fondo, borde, sombras), no el estilo entero:
-        // Phaser maneja la posición del botón con su propio transform
-        const look = on ? BUTTON_3D_ACTIVE_CSS : BUTTON_3D_CSS + ' color:#D8E4E7;';
-        for (const decl of look.split(';')) {
-          const [prop, ...val] = decl.split(':');
-          if (prop?.trim() && val.length) b.style.setProperty(prop.trim(), val.join(':').trim());
-        }
+        const b = el.node as HTMLButtonElement & { repaint?: () => void };
+        b.dataset.selected = this.playerGender === g ? '1' : '';
+        b.repaint?.();
       }
     };
 
@@ -620,8 +597,9 @@ export class BootScene extends Phaser.Scene {
       cx - 46,
       rowN,
       'input',
-      `width:120px; height:24px; box-sizing:border-box; padding:4px; text-align:center; font-family: ${RETRO_FONT}; ` +
-        'font-size:9px; background:#18262A; color:#EAE8E0; border:1px solid #2E464F; outline:none;',
+      `width:120px; height:21px; box-sizing:border-box; padding:4px; text-align:center; font-family: ${RETRO_FONT}; ` +
+        'font-size:8px; letter-spacing:1px; background:rgba(14,20,22,0.7); color:#F2EDE0; border:1px solid rgba(217,168,69,0.55); ' +
+        'border-radius:0; outline:none; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);',
     );
     const inputEl = this.nameInput.node as HTMLInputElement;
     inputEl.value = this.playerName || defaultName; // el 5to arg de add.dom() no sirve para el value de un <input>
@@ -638,18 +616,24 @@ export class BootScene extends Phaser.Scene {
       setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
       setTimeout(() => window.dispatchEvent(new Event('resize')), 400);
     });
-    this.track(this.renderDomButton(cx + 66, rowN, 'Empezar ›', () => this.confirmName(), 96, 24));
-    this.track(this.renderDomButton(cx, rowN + 34, '‹ Volver', () => this.renderTitle(), 90, 20));
+    const start = this.renderDomButton(cx + 66, rowN, 'Empezar', () => this.confirmName(), 92, 21);
+    this.glassButton(start, true);
+    this.track(start);
+    const back = this.renderDomButton(cx, rowN + 30, 'Volver', () => this.renderTitle(), 80, 18);
+    this.glassButton(back);
+    (back.node as HTMLButtonElement).style.fontSize = '7px';
+    this.track(back);
     paint();
 
     // contexto narrativo abajo, como cualquier línea de narrador
     this.track(
-      this.renderDomText(16, VIEW.height - 64, 'Vas a enlistarte para viajar en el Mimosa junto a tu madre.', {
-        size: 9,
+      this.renderDomText(cx, VIEW.height - 56, '', {
+        size: 8,
         color: '#EAE8E0',
-        width: VIEW.width - 32,
+        align: 'center',
         retro: true,
-        lineHeight: 1.5,
+        lineHeight: 1.7,
+        html: '<span style="text-shadow:0 1px 0 #0E1416;">Vas a enlistarte para viajar<br>en el Mimosa junto a tu madre.</span>',
       }),
     );
   }
@@ -669,7 +653,7 @@ export class BootScene extends Phaser.Scene {
     this.setChrome(true);
     this.renderImage(`enlistamiento_${this.playerGender}`);
     this.track(
-      this.renderDomText(16, TRAY_Y + 10, 'Se pierde la partida guardada.', { size: 9, color: '#DE7050', width: VIEW.width - 32 }),
+      this.renderDomText(VIEW.width / 2, TRAY_Y + 12, 'Se pierde la partida guardada.', { size: 8, color: '#DE7050', align: 'center' }),
     );
     this.renderOptions(
       [
@@ -793,7 +777,59 @@ export class BootScene extends Phaser.Scene {
 
   private renderOptions(options: Array<{ label: string; onPick: () => void }>, startY: number): void {
     options.forEach((o, i) => {
-      this.track(this.renderDomButton(VIEW.width / 2, startY + i * 24 + 10, o.label, o.onPick, VIEW.width - 32));
+      const el = this.renderDomButton(VIEW.width / 2, startY + i * 25 + 10, o.label, o.onPick, 190, 21);
+      this.glassButton(el, i === 0);
+      this.track(el);
+    });
+  }
+
+  /** Botón "de portada": vidrio oscuro con filete dorado fino (el estilo de todo el
+   * arranque, no el bloque con volumen de los menús del juego). `primary` lo marca
+   * un poco más; `selected` lo deja resaltado fijo (ej. el género elegido). Al
+   * pasar por encima se pone dorado con "› ‹" a los costados. */
+  private glassButton(el: Phaser.GameObjects.DOMElement, primary = false): HTMLButtonElement {
+    const b = el.node as HTMLButtonElement;
+    const label = b.textContent ?? '';
+    b.dataset.label = label;
+    b.style.cssText +=
+      '; box-shadow:0 2px 8px rgba(0,0,0,0.35); font-size:8px; letter-spacing:1px; white-space:nowrap;' +
+      ' backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);';
+    const paint = (): void => {
+      const hover = b.dataset.hover === '1';
+      const sel = b.dataset.selected === '1';
+      const strong = primary || sel;
+      b.style.background = strong ? 'linear-gradient(rgba(46,70,79,0.85), rgba(24,38,42,0.85))' : 'rgba(14,20,22,0.55)';
+      b.style.border = `1px solid ${hover || sel ? '#D9A845' : strong ? 'rgba(217,168,69,0.85)' : 'rgba(217,168,69,0.35)'}`;
+      b.style.color = hover || sel ? '#D9A845' : strong ? '#F2EDE0' : '#BFD3D8';
+      b.textContent = hover ? `› ${b.dataset.label} ‹` : b.dataset.label!;
+    };
+    const set = (k: 'hover', v: boolean) => {
+      b.dataset[k] = v ? '1' : '';
+      paint();
+    };
+    b.addEventListener('pointerenter', () => set('hover', true));
+    b.addEventListener('pointerleave', () => set('hover', false));
+    b.addEventListener('focus', () => set('hover', true));
+    b.addEventListener('blur', () => set('hover', false));
+    (b as HTMLButtonElement & { repaint?: () => void }).repaint = paint;
+    paint();
+    return b;
+  }
+
+  /** Título chico de un paso del arranque, con el ornamento de la portada (filete y rombo). */
+  private stepTitle(y: number, text: string): Phaser.GameObjects.DOMElement {
+    const outline = 'text-shadow: 1px 0 0 #0E1416, -1px 0 0 #0E1416, 0 1px 0 #0E1416, 0 -1px 0 #0E1416, 0 2px 0 rgba(14,20,22,0.85);';
+    const rule = (side: 'l' | 'r') =>
+      `<span style="display:inline-block; width:24px; height:1px; vertical-align:middle; ` +
+      `background:linear-gradient(to ${side === 'l' ? 'left' : 'right'}, #D9A845, rgba(217,168,69,0));"></span>`;
+    const diamond = '<span style="display:inline-block; width:3px; height:3px; margin:0 5px; vertical-align:middle; background:#9C3A24; transform:rotate(45deg);"></span>';
+    return this.renderDomText(VIEW.width / 2, y, '', {
+      size: 10,
+      color: '#D9A845',
+      align: 'center',
+      retro: true,
+      lineHeight: 1,
+      html: `<span style="white-space:nowrap;">${rule('l')}${diamond}<span style="vertical-align:middle; ${outline}">${text}</span>${diamond}${rule('r')}</span>`,
     });
   }
 
