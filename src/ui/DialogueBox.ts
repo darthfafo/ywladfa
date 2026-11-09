@@ -104,7 +104,7 @@ export class DialogueBox {
     );
     this.hint = crisp(
       scene.add
-        .text(TRAY.w - 8, TRAY.h - 13, '▼', { fontFamily: RETRO_FONT, fontSize: FONT.tiny, color: '#7FB0B8' })
+        .text(TRAY.w - 12, TRAY.h - 17, '▼', { fontFamily: RETRO_FONT, fontSize: FONT.tiny, color: '#7FB0B8' })
         .setOrigin(1, 0)
         .setResolution(8),
     );

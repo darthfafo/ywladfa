@@ -2,21 +2,49 @@ import Phaser from 'phaser';
 import { PAL } from '@/config';
 
 /**
- * Panel con volumen para toda la UI (HUD, bandeja, diálogo, decisiones): en vez
- * de un rectángulo plano con una línea de borde, un degradé con luz arriba,
- * canto claro arriba/izquierda y sombra abajo/derecha, un filete dorado
- * interior y cuatro remaches en las esquinas — como una placa de madera y
- * bronce. Mismo lenguaje en toda la UI, mismos colores de PAL.
+ * Panel de toda la UI (HUD, bandeja, diálogo, decisiones), con el mismo lenguaje
+ * que la portada: vidrio oscuro plano, un filete dorado fino en el borde que da al
+ * mundo, un rombo rojo al centro de ese borde y escuadras doradas en las esquinas
+ * (antes: placa con volumen, cantos biselados y remaches — se veía tosca).
  */
 export interface PanelOpts {
   /** color de arriba y de abajo del degradé */
   top?: number;
   bottom?: number;
   alpha?: number;
-  /** filete dorado interior + remaches */
+  /** filete interior + escuadras en las esquinas */
   trim?: boolean;
-  /** sombra proyectada hacia afuera (hacia arriba, para la bandeja; hacia abajo, para el HUD) */
+  /** de qué lado da al mundo: ahí va la sombra, el filete dorado y el rombo
+   * ('up' = bandeja, 'down' = HUD, 'around' = tarjeta flotante) */
   dropShadow?: 'up' | 'down' | 'around' | null;
+}
+
+/** rombo chico relleno, centrado en (cx, cy) */
+export function drawDiamond(g: Phaser.GameObjects.Graphics, cx: number, cy: number, r: number, color: number, alpha = 1): void {
+  g.fillStyle(color, alpha).fillPoints(
+    [
+      new Phaser.Math.Vector2(cx, cy - r),
+      new Phaser.Math.Vector2(cx + r, cy),
+      new Phaser.Math.Vector2(cx, cy + r),
+      new Phaser.Math.Vector2(cx - r, cy),
+    ],
+    true,
+  );
+}
+
+/** filete dorado que se desvanece hacia los costados, con un rombo en el medio */
+function drawRule(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, a: number): void {
+  const cx = x + w / 2;
+  const steps = 24;
+  for (let i = 0; i < steps; i++) {
+    const t = i / steps;
+    const fade = 0.25 + 0.6 * (1 - t);
+    const seg = w / 2 / steps;
+    g.fillStyle(PAL.wheat, fade * a).fillRect(cx + i * seg, y, seg + 0.5, 1);
+    g.fillStyle(PAL.wheat, fade * a).fillRect(cx - (i + 1) * seg, y, seg + 0.5, 1);
+  }
+  drawDiamond(g, cx, y + 0.5, 2.5, PAL.void, a);
+  drawDiamond(g, cx, y + 0.5, 2, PAL.barranca, a);
 }
 
 export function drawPanel(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number, o: PanelOpts = {}): void {
@@ -25,33 +53,36 @@ export function drawPanel(g: Phaser.GameObjects.Graphics, x: number, y: number, 
   const a = o.alpha ?? 1;
 
   // sombra proyectada: un degradé que se desvanece hacia afuera
-  const S = 10;
-  if (o.dropShadow === 'up' || o.dropShadow === 'around') g.fillGradientStyle(PAL.void, PAL.void, PAL.void, PAL.void, 0, 0, 0.55, 0.55).fillRect(x, y - S, w, S);
+  const S = 8;
+  if (o.dropShadow === 'up' || o.dropShadow === 'around') g.fillGradientStyle(PAL.void, PAL.void, PAL.void, PAL.void, 0, 0, 0.45, 0.45).fillRect(x, y - S, w, S);
   if (o.dropShadow === 'down' || o.dropShadow === 'around')
-    g.fillGradientStyle(PAL.void, PAL.void, PAL.void, PAL.void, 0.55, 0.55, 0, 0).fillRect(x, y + h, w, S);
+    g.fillGradientStyle(PAL.void, PAL.void, PAL.void, PAL.void, 0.45, 0.45, 0, 0).fillRect(x, y + h, w, S);
 
-  // cuerpo: degradé vertical, más claro arriba (la luz viene de arriba)
+  // cuerpo: degradé vertical suave, sin biselado
   g.fillGradientStyle(top, top, bottom, bottom, a, a, a, a).fillRect(x, y, w, h);
 
-  // cantos: claro arriba/izquierda, oscuro abajo/derecha → relieve
-  g.fillStyle(PAL.seaPale, 0.35 * a).fillRect(x, y, w, 1);
-  g.fillStyle(PAL.seaPale, 0.15 * a).fillRect(x, y, 1, h);
-  g.fillStyle(PAL.void, 0.9 * a).fillRect(x, y + h - 1, w, 1);
-  g.fillStyle(PAL.void, 0.6 * a).fillRect(x + w - 1, y, 1, h);
+  // el borde que da al mundo: filete dorado con rombo
+  if (o.dropShadow === 'up') drawRule(g, x, y, w, a);
+  else if (o.dropShadow === 'down') drawRule(g, x, y + h - 1, w, a);
+  else if (o.dropShadow === 'around') {
+    g.lineStyle(1, PAL.wheat, 0.55 * a).strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+    drawDiamond(g, x + w / 2, y + 0.5, 2.5, PAL.void, a);
+    drawDiamond(g, x + w / 2, y + 0.5, 2, PAL.barranca, a);
+  }
 
   if (o.trim) {
-    // filete dorado interior, partido en dos tonos para que se lea como metal
-    g.lineStyle(1, PAL.wheat, 0.45 * a).strokeRect(x + 3.5, y + 3.5, w - 7, h - 7);
-    g.lineStyle(1, PAL.void, 0.5 * a).strokeRect(x + 4.5, y + 4.5, w - 9, h - 9);
-    // remaches
-    for (const [rx, ry] of [
-      [x + 2, y + 2],
-      [x + w - 4, y + 2],
-      [x + 2, y + h - 4],
-      [x + w - 4, y + h - 4],
+    // filete interior apenas visible + escuadras doradas en las esquinas
+    g.lineStyle(1, PAL.wheat, 0.14 * a).strokeRect(x + 4.5, y + 4.5, w - 9, h - 9);
+    const L = 6;
+    g.fillStyle(PAL.wheat, 0.75 * a);
+    for (const [cx, cy, sx, sy] of [
+      [x + 4, y + 4, 1, 1],
+      [x + w - 5, y + 4, -1, 1],
+      [x + 4, y + h - 5, 1, -1],
+      [x + w - 5, y + h - 5, -1, -1],
     ] as const) {
-      g.fillStyle(PAL.wheat, 0.9 * a).fillRect(rx, ry, 2, 2);
-      g.fillStyle(PAL.bone, 0.8 * a).fillRect(rx, ry, 1, 1);
+      g.fillRect(sx > 0 ? cx : cx - L + 1, cy, L, 1);
+      g.fillRect(cx, sy > 0 ? cy : cy - L + 1, 1, L);
     }
   }
 }
@@ -62,22 +93,22 @@ export function addPanel(scene: Phaser.Scene, x: number, y: number, w: number, h
   return g;
 }
 
-/** Marco con volumen para un retrato: hundido (sombra adentro arriba, luz abajo) con filete dorado. */
+/** Marco de retrato: fondo oscuro con un filete dorado fino. */
 export function addInsetFrame(scene: Phaser.Scene, x: number, y: number, w: number, h: number): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics();
   g.fillStyle(PAL.void, 1).fillRect(x - 2, y - 2, w + 4, h + 4);
-  g.lineStyle(1, PAL.wheat, 0.6).strokeRect(x - 1.5, y - 1.5, w + 3, h + 3);
-  g.fillStyle(PAL.seaPale, 0.25).fillRect(x - 2, y + h + 1, w + 4, 1);
+  g.lineStyle(1, PAL.wheat, 0.55).strokeRect(x - 1.5, y - 1.5, w + 3, h + 3);
   return g;
 }
 
-/** Estilo CSS de botón con volumen (para los <button> HTML de la UI). */
+/** Botón de vidrio oscuro con filete dorado fino (el estilo de la portada). */
 export const BUTTON_3D_CSS =
-  'background: linear-gradient(to bottom, #3A5560 0%, #24363B 55%, #18262A 100%); ' +
-  'border:1px solid #7FB0B8; border-radius:2px; ' +
-  'box-shadow: inset 0 1px 0 rgba(191,211,216,0.35), inset 0 -2px 0 rgba(14,20,22,0.6), 0 2px 0 rgba(14,20,22,0.8); ' +
+  'background: rgba(14,20,22,0.6); ' +
+  'border:1px solid rgba(217,168,69,0.45); border-radius:0; ' +
+  'box-shadow: 0 2px 8px rgba(0,0,0,0.35); ' +
   'text-shadow: 0 1px 0 #0E1416;';
+/** La acción principal: mismo vidrio, filete y letra dorados, con un brillo suave. */
 export const BUTTON_3D_ACTIVE_CSS =
-  'background: linear-gradient(to bottom, #E6BD62 0%, #D9A845 55%, #A9791F 100%); ' +
-  'border:1px solid #F2E2B0; color:#18262A; text-shadow:none; ' +
-  'box-shadow: inset 0 1px 0 rgba(255,245,220,0.6), inset 0 -2px 0 rgba(90,60,20,0.5), 0 2px 0 rgba(14,20,22,0.8);';
+  'background: linear-gradient(rgba(46,70,79,0.88), rgba(24,38,42,0.88)); ' +
+  'border:1px solid #D9A845; color:#D9A845; text-shadow: 0 1px 0 #0E1416; ' +
+  'box-shadow: 0 0 8px rgba(217,168,69,0.25), 0 2px 8px rgba(0,0,0,0.4);';

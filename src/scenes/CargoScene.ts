@@ -97,16 +97,16 @@ export class CargoScene extends Phaser.Scene {
         .setResolution(8),
     );
     // línea divisoria sutil entre el encabezado y la grilla — mismo color/alpha que
-    // ya usa el borde y la regla de UiScene.openOverlay (PAL.seaPale), para que se
+    // ya usa el borde y la regla de UiScene.openOverlay (filete dorado), para que se
     // lea como parte de la misma familia de pantallas importantes, no una aparte.
-    this.add.rectangle(0, GRID_Y - 6, VIEW.width, 1, PAL.seaPale, 0.35).setOrigin(0, 0);
+    this.add.rectangle(0, GRID_Y - 6, VIEW.width, 1, PAL.wheat, 0.4).setOrigin(0, 0);
     // marco sutil en el borde de toda la pantalla — mismo lenguaje que las cajas
-    // del arranque y el panel de openOverlay (borde PAL.seaPale), para que esta
+    // del arranque y el panel de openOverlay (filete dorado), para que esta
     // pantalla completa no se sienta "pelada" al lado de esas.
     this.add
       .rectangle(2, 2, VIEW.width - 4, VIEW.height - 4, 0, 0)
       .setOrigin(0, 0)
-      .setStrokeStyle(1, PAL.seaPale, 0.35);
+      .setStrokeStyle(1, PAL.wheat, 0.4);
 
     registry.bultos.forEach((b, i) => this.buildCard(b, i));
     this.refreshCounter();
@@ -128,11 +128,11 @@ export class CargoScene extends Phaser.Scene {
     const y = GRID_Y + row * (CARD_H + GAP);
 
     // tarjeta con volumen (ui/panel.ts) debajo; el rectángulo de encima da el borde y recibe el toque
-    addPanel(this, x, y, CARD_W, CARD_H, { top: PAL.slate, bottom: PAL.ink, alpha: 0.95 });
+    addPanel(this, x, y, CARD_W, CARD_H, { top: PAL.ink2, bottom: PAL.void, alpha: 0.85 });
     const bg = this.add
       .rectangle(x, y, CARD_W, CARD_H, PAL.ink2, 0.001)
       .setOrigin(0, 0)
-      .setStrokeStyle(1, PAL.slate)
+      .setStrokeStyle(1, PAL.wheat, 0.35)
       .setInteractive({ useHandCursor: true });
 
     // ícono real, si ya existe el PNG — FONDO de casi toda la tarjeta, no un
@@ -257,7 +257,7 @@ export class CargoScene extends Phaser.Scene {
       card.check.setVisible(true);
     } else {
       this.taken.delete(card.bulto.id);
-      card.bg.setFillStyle(PAL.ink2, 0.001).setStrokeStyle(1, PAL.slate);
+      card.bg.setFillStyle(PAL.ink2, 0.001).setStrokeStyle(1, PAL.wheat, 0.35);
       card.iconTint?.setFillStyle(PAL.moss, 0);
       card.checkBg.setVisible(false);
       card.check.setVisible(false);

@@ -175,7 +175,7 @@ export class UiScene extends Phaser.Scene {
     // que liberó la etiqueta.
     // barra de carga hundida: fondo oscuro con canto de luz abajo
     track(this.add.rectangle(LOADBAR_X - 1, 19, LOADBAR_W + 2, 7, PAL.void).setOrigin(0, 0).setDepth(62));
-    track(this.add.rectangle(LOADBAR_X - 1, 25, LOADBAR_W + 2, 1, PAL.seaPale, 0.3).setOrigin(0, 0).setDepth(62));
+    track(this.add.rectangle(LOADBAR_X - 1, 25, LOADBAR_W + 2, 1, PAL.wheat, 0.4).setOrigin(0, 0).setDepth(62));
     this.loadBar = this.add.rectangle(LOADBAR_X, 20, 0, 5, PAL.moss).setOrigin(0, 0).setDepth(63);
     track(this.loadBar);
   }
@@ -228,8 +228,11 @@ export class UiScene extends Phaser.Scene {
           fontFamily: RETRO_FONT,
           fontSize: FONT.tiny,
           color: '#D9A845',
-          backgroundColor: '#18262A',
-          padding: { x: 4, y: 2 },
+          // sin caja: contorno fino y sombra corta, como los textos de la portada
+          stroke: '#0E1416',
+          strokeThickness: 2,
+          shadow: { offsetX: 0, offsetY: 2, color: 'rgba(14,20,22,0.85)', blur: 0, fill: true, stroke: true },
+          lineSpacing: 3,
           align: 'center',
           wordWrap: { width: VIEW.width - 24 },
         })
@@ -249,7 +252,8 @@ export class UiScene extends Phaser.Scene {
     // andado el día, no solo en qué turno está parado ahora mismo.
     const dots = TURNS.map(
       (_, i) =>
-        `<span style="width:5px; height:5px; display:inline-block; background:${
+        // rombos, como el ornamento de la portada
+        `<span style="width:4px; height:4px; display:inline-block; transform:rotate(45deg); background:${
           i <= game.time.turnIndex ? '#D9A845' : '#3A4A50'
         };"></span>`,
     ).join('');
@@ -515,8 +519,8 @@ export class UiScene extends Phaser.Scene {
       b.style.cssText =
         'display:flex; gap:4px; width:100%; box-sizing:border-box; margin:0; padding:7px 8px; text-align:left; ' +
         `font-family:${RETRO_FONT}; font-size:8px; line-height:1.6; cursor:pointer; ` +
-        'background:linear-gradient(#2E464F, #18262A); border:1px solid #2E464F; ' +
-        'box-shadow: inset 0 1px 0 rgba(234,232,224,0.08); -webkit-tap-highlight-color:transparent;';
+        'background:rgba(14,20,22,0.55); border:1px solid rgba(217,168,69,0.35); ' +
+        'box-shadow:0 2px 6px rgba(0,0,0,0.3); -webkit-tap-highlight-color:transparent;';
       const cur = document.createElement('span');
       cur.textContent = '›';
       cur.style.cssText = 'flex:none; width:8px;';
@@ -543,7 +547,8 @@ export class UiScene extends Phaser.Scene {
       buttons.forEach(({ b, cur }, i) => {
         const on = i === focused;
         b.style.color = on ? '#D9A845' : '#BFD3D8';
-        b.style.borderColor = on ? '#D9A845' : '#2E464F';
+        b.style.borderColor = on ? '#D9A845' : 'rgba(217,168,69,0.35)';
+        b.style.background = on ? 'linear-gradient(rgba(46,70,79,0.85), rgba(24,38,42,0.85))' : 'rgba(14,20,22,0.55)';
         cur.style.visibility = on ? 'visible' : 'hidden';
         cur.style.animation = on ? 'dlg-cursor-blink 0.9s step-end infinite' : '';
       });

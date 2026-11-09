@@ -51,10 +51,10 @@ export class TransitionScene extends Phaser.Scene {
     );
     const w = text.width + 32;
     const h = text.height + 16;
-    addPanel(this, cx - w / 2, y - h / 2, w, h, { top: PAL.slate, bottom: PAL.ink, alpha: 0.95 }).setDepth(-2);
+    addPanel(this, cx - w / 2, y - h / 2, w, h, { top: PAL.ink2, bottom: PAL.void, alpha: 0.85 }).setDepth(-2);
     const box = this.add
       .rectangle(cx, y, w, h, PAL.ink2, 0.001)
-      .setStrokeStyle(1, PAL.slate)
+      .setStrokeStyle(1, PAL.wheat, 0.35)
       .setInteractive({ useHandCursor: true })
       .setDepth(-1);
     box.on('pointerover', () => {
@@ -62,7 +62,7 @@ export class TransitionScene extends Phaser.Scene {
       text.setColor('#D9A845');
     });
     box.on('pointerout', () => {
-      box.setStrokeStyle(1, PAL.slate);
+      box.setStrokeStyle(1, PAL.wheat, 0.35);
       text.setColor('#BFD3D8');
     });
     const shownAt = performance.now();

@@ -69,7 +69,7 @@ export class TouchControls {
           'display:inline-flex; align-items:center; justify-content:center; white-space:nowrap; ' +
           // mismo botón con volumen que el resto de la UI (ui/panel.ts), en dorado: es LA acción
           BUTTON_3D_ACTIVE_CSS +
-          ' border-radius:12px; ' +
+          ' border-radius:12px; letter-spacing:1px; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); ' +
           `font-family: ${RETRO_FONT}; font-size:8px; text-align:center; ` +
           'cursor:pointer; -webkit-tap-highlight-color:transparent;',
       )
@@ -89,8 +89,9 @@ export class TouchControls {
 
     // el joystick arranca invisible: sin toque activo no hay nada que mostrar —
     // recién se posiciona y se muestra en el pointerdown, ver más abajo.
-    this.base = scene.add.circle(0, 0, CFG.baseRadius, PAL.bone, 0.16).setDepth(50).setStrokeStyle(1, PAL.bone, 0.3).setVisible(false);
-    this.thumb = scene.add.circle(0, 0, CFG.thumbRadius, PAL.bone, 0.45).setDepth(51).setVisible(false);
+    // vidrio oscuro con aro dorado fino, como el resto de la UI
+    this.base = scene.add.circle(0, 0, CFG.baseRadius, PAL.void, 0.3).setDepth(50).setStrokeStyle(1, PAL.wheat, 0.55).setVisible(false);
+    this.thumb = scene.add.circle(0, 0, CFG.thumbRadius, PAL.wheat, 0.45).setDepth(51).setStrokeStyle(1, PAL.bone, 0.5).setVisible(false);
 
     // sin hit-area fija: cualquier toque dentro de la franja del mundo (no el HUD,
     // no la bandeja) arranca el joystick ahí mismo. Un solo dedo a la vez — si ya
