@@ -196,6 +196,30 @@ export class World3D {
   /** giro de los sprites hacia la cámara (en la vista de arriba, 0) */
   private spriteYaw = 0;
 
+  private talkAngle = 0;
+
+  /** Giro (radianes) de la cámara alrededor del jugador para el plano de
+   * conversación: prueba desde CAM_TALK.minAngle hacia arriba hasta que, vistos
+   * desde la cámara, el jugador y el otro quedan separados al menos la mitad del
+   * ancho de cada uno más un margen. `b` = dirección del otro al jugador. */
+  private talkAngleFor(px: number, pz: number, ox: number, oz: number, bx: number, bz: number, pw: number, ow: number): number {
+    const D2R = Math.PI / 180;
+    const R = CAM_TALK.distance;
+    for (let deg = CAM_TALK.minAngle; deg <= CAM_TALK.maxAngle; deg += 2) {
+      const a = deg * D2R;
+      const cx = px + R * (Math.cos(a) * bx + Math.sin(a) * bz);
+      const cz = pz + R * (Math.cos(a) * bz - Math.sin(a) * bx);
+      const dP = Math.hypot(px - cx, pz - cz);
+      const dO = Math.hypot(ox - cx, oz - cz);
+      let sep = Math.abs(Math.atan2(px - cx, pz - cz) - Math.atan2(ox - cx, oz - cz));
+      if (sep > Math.PI) sep = 2 * Math.PI - sep;
+      const need =
+        Math.atan((pw * CAM_TALK.bodyWidth) / 2 / dP) + Math.atan((ow * CAM_TALK.bodyWidth) / 2 / dO) + CAM_TALK.gapAngle * D2R;
+      if (sep >= need) return a;
+    }
+    return CAM_TALK.maxAngle * D2R;
+  }
+
   /** Plano de conversación: la cámara baja detrás del jugador mirando a `other`
    * (null vuelve a la vista de arriba). La transición es suave en los dos sentidos. */
   setTalk(other: Phaser.GameObjects.Image | null): void {
@@ -945,10 +969,18 @@ export class World3D {
       bx /= len;
       bz /= len;
       if (len < 0.01) bz = 1;
+      // el giro: el menor (desde minAngle) con el que las dos figuras no se
+      // pisan en pantalla, según dónde estén y qué tan cerca. Suavizado, para
+      // que la cámara no salte si alguien se mueve un poco.
+      const want = this.talkAngleFor(px, pz, ox, oz, bx, bz, p.displayWidth * PX, o.displayWidth * PX);
+      if (this.talkK < 0.05) this.talkAngle = want;
+      else this.talkAngle += (want - this.talkAngle) * (1 - Math.exp(-dt * CAM_TALK.blend));
+      const ca = Math.cos(this.talkAngle);
+      const sa = Math.sin(this.talkAngle);
       const camT = this.tmpCam.set(
-        px + bx * CAM_TALK.back + bz * CAM_TALK.shoulder,
+        px + CAM_TALK.distance * (ca * bx + sa * bz),
         CAM_TALK.height,
-        pz + bz * CAM_TALK.back - bx * CAM_TALK.shoulder,
+        pz + CAM_TALK.distance * (ca * bz - sa * bx),
       );
       const lookT = this.tmpLookT.set(px + (ox - px) * CAM_TALK.lookAt, CAM_TALK.lookHeight, pz + (oz - pz) * CAM_TALK.lookAt);
       this.camera.position.lerp(camT, e);

@@ -92,12 +92,21 @@ export const CAM_3D = {
  * y, enfrente, a quien le habla. Unidades en tiles.
  */
 export const CAM_TALK = {
-  /** cuánto detrás del jugador (sobre la línea que lo une con el otro) */
-  back: 3.4,
+  /** distancia de la cámara al jugador (sobre el piso) */
+  distance: 5.7,
   /** alto de la cámara */
   height: 3.8,
-  /** corrimiento de costado: el jugador queda a un lado del cuadro, no tapando al otro */
-  shoulder: 4.6,
+  /** giro de la cámara alrededor del jugador (grados; 0 = justo detrás, mirando al
+   * otro). Arranca en `minAngle` y gira lo que haga falta, hasta `maxAngle`, para
+   * que el otro no quede tapado por el jugador. */
+  minAngle: 50,
+  maxAngle: 82,
+  /** aire entre las dos figuras en pantalla (grados) */
+  gapAngle: 3,
+  /** parte del ancho del sprite que ocupa la figura (el resto es transparente) */
+  bodyWidth: 0.55,
+  /** más cerca que esto (tiles), el jugador da un paso atrás antes del plano */
+  minGap: 2.2,
   /** a qué punto mira, de 0 (el jugador) a 1 (el otro) */
   lookAt: 0.7,
   /** a qué altura mira */

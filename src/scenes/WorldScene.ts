@@ -398,6 +398,22 @@ export class WorldScene extends Phaser.Scene {
     if (!this.world3d || !sp?.visible) return;
     if (Math.hypot(sp.x - this.player.x, sp.y - this.player.y) > CAM_TALK.maxTiles * VIEW.tile) return;
     this.talking = sp;
+    // pegados uno al otro no hay giro de cámara que los separe: el jugador da
+    // un paso atrás (si ahí se puede pisar)
+    const dx = this.player.x - sp.x;
+    const dy = this.player.y - sp.y;
+    const dist = Math.hypot(dx, dy);
+    const minPx = CAM_TALK.minGap * VIEW.tile;
+    if (dist < minPx) {
+      const ux = dist > 0.5 ? dx / dist : 0;
+      const uy = dist > 0.5 ? dy / dist : 1;
+      const tx = sp.x + ux * minPx;
+      const ty = sp.y + uy * minPx;
+      const tile = this.terrain[toTile(ty + 8)]?.[toTile(tx)];
+      if (tile !== undefined && !COLLIDES.includes(tile)) {
+        this.tweens.add({ targets: this.player, x: tx, y: ty, duration: 220, ease: 'Sine.easeOut' });
+      }
+    }
     this.player.setFrame(FACING_FRAME.north);
     sp.setFrame(FACING_FRAME.south);
     this.world3d.setTalk(sp);
