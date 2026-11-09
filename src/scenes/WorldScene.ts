@@ -1067,7 +1067,7 @@ export class WorldScene extends Phaser.Scene {
         break;
       }
       case 'guanaco':
-        bus.emit('ui:pc-says', { text: 'Guanacos. Mejor no acercarse: escupen.' });
+        bus.emit('ui:pc-says', { text: 'Guarda que escupen.' });
         break;
       case 'algas':
         bus.emit('ui:pc-says', { text: 'Cuántas algas hay en esta costa.' });
