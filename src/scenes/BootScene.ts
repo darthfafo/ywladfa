@@ -475,7 +475,7 @@ export class BootScene extends Phaser.Scene {
     const rowH = 25;
     const top = VIEW.height - 30 - options.length * rowH;
     options.forEach((o, i) => {
-      const el = this.renderDomButton(cx, top + i * rowH + rowH / 2, o.label, o.onPick, 172, 21);
+      const el = this.renderDomButton(cx, top + i * rowH + rowH / 2, o.label, o.onPick, 196, 21);
       const b = this.glassButton(el, i === 0);
       b.classList.add('ttl-up', 'ttl-d3');
       this.track(el);
@@ -790,9 +790,22 @@ export class BootScene extends Phaser.Scene {
   private glassButton(el: Phaser.GameObjects.DOMElement, primary = false): HTMLButtonElement {
     const b = el.node as HTMLButtonElement;
     const label = b.textContent ?? '';
-    b.dataset.label = label;
+    // los "› ‹" van en los márgenes del botón, aparte del texto: antes se sumaban
+    // al texto al pasar por encima y lo hacían más ancho que el botón
+    b.textContent = '';
+    const mk = (side: 'left' | 'right', ch: string): HTMLSpanElement => {
+      const m = document.createElement('span');
+      m.textContent = ch;
+      m.style.cssText = `position:absolute; ${side}:4px; top:50%; transform:translateY(-50%); visibility:hidden;`;
+      return m;
+    };
+    const left = mk('left', '›');
+    const right = mk('right', '‹');
+    const text = document.createElement('span');
+    text.textContent = label;
+    b.append(left, text, right);
     b.style.cssText +=
-      '; box-shadow:0 2px 8px rgba(0,0,0,0.35); font-size:8px; letter-spacing:1px; white-space:nowrap;' +
+      '; position:relative; padding:0 12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.35); font-size:8px; letter-spacing:1px; white-space:nowrap;' +
       ' backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);';
     const paint = (): void => {
       const hover = b.dataset.hover === '1';
@@ -801,7 +814,7 @@ export class BootScene extends Phaser.Scene {
       b.style.background = strong ? 'linear-gradient(rgba(46,70,79,0.85), rgba(24,38,42,0.85))' : 'rgba(14,20,22,0.55)';
       b.style.border = `1px solid ${hover || sel ? '#D9A845' : strong ? 'rgba(217,168,69,0.85)' : 'rgba(217,168,69,0.35)'}`;
       b.style.color = hover || sel ? '#D9A845' : strong ? '#F2EDE0' : '#BFD3D8';
-      b.textContent = hover ? `› ${b.dataset.label} ‹` : b.dataset.label!;
+      left.style.visibility = right.style.visibility = hover ? 'visible' : 'hidden';
     };
     const set = (k: 'hover', v: boolean) => {
       b.dataset[k] = v ? '1' : '';
@@ -813,6 +826,7 @@ export class BootScene extends Phaser.Scene {
     b.addEventListener('blur', () => set('hover', false));
     (b as HTMLButtonElement & { repaint?: () => void }).repaint = paint;
     paint();
+    fitButtonText(b);
     return b;
   }
 
@@ -966,4 +980,23 @@ export class BootScene extends Phaser.Scene {
       setTimeout(() => window.dispatchEvent(new Event('resize')), 400);
     }
   }
+}
+
+/** Achica la letra de un botón de ancho fijo hasta que el texto entre (primero el
+ * espaciado entre letras, después el tamaño). Se repite cuando termina de cargar
+ * la fuente retro: medido con la de reserva, el texto parece más angosto. */
+export function fitButtonText(b: HTMLElement, minSize = 6): void {
+  const fit = (): void => {
+    b.style.letterSpacing = '1px';
+    b.style.fontSize = '8px';
+    if (b.scrollWidth <= b.clientWidth) return;
+    b.style.letterSpacing = '0px';
+    let size = 8;
+    while (b.scrollWidth > b.clientWidth && size > minSize) {
+      size -= 0.5;
+      b.style.fontSize = `${size}px`;
+    }
+  };
+  fit();
+  document.fonts?.ready.then(fit);
 }

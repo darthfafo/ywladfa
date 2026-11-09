@@ -76,10 +76,15 @@ export class TransitionScene extends Phaser.Scene {
     );
     const b = el.node as HTMLButtonElement;
     b.type = 'button';
-    b.textContent = label;
+    // "› ‹" en los márgenes, aparte del texto: sumados al texto lo sacaban del botón
+    b.style.position = 'relative';
+    b.innerHTML =
+      '<span data-mk style="position:absolute; left:5px; top:50%; transform:translateY(-50%); visibility:hidden;">›</span>' +
+      `<span>${label}</span>` +
+      '<span data-mk style="position:absolute; right:5px; top:50%; transform:translateY(-50%); visibility:hidden;">‹</span>';
     setTimeout(() => (b.style.opacity = '1'), 1400);
     const on = (yes: boolean) => {
-      b.textContent = yes ? `› ${label} ‹` : label;
+      b.querySelectorAll<HTMLElement>('[data-mk]').forEach((m) => (m.style.visibility = yes ? 'visible' : 'hidden'));
       b.style.color = yes ? '#D9A845' : '#F2EDE0';
       b.style.borderColor = yes ? '#D9A845' : 'rgba(217,168,69,0.85)';
     };
