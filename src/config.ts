@@ -93,13 +93,13 @@ export const CAM_3D = {
  */
 export const CAM_TALK = {
   /** cuánto detrás del jugador (sobre la línea que lo une con el otro) */
-  back: 4.2,
+  back: 3.4,
   /** alto de la cámara */
-  height: 3.6,
+  height: 3.8,
   /** corrimiento de costado: el jugador queda a un lado del cuadro, no tapando al otro */
-  shoulder: 3.4,
+  shoulder: 4.6,
   /** a qué punto mira, de 0 (el jugador) a 1 (el otro) */
-  lookAt: 1,
+  lookAt: 0.7,
   /** a qué altura mira */
   lookHeight: 1.5,
   /** campo visual (grados): más abierto que el de arriba, como una toma de cerca */
