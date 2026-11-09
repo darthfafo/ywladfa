@@ -9,7 +9,6 @@ import { playCinematic, type Cinematic } from '@/ui/cinematic';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { TouchControls } from '@/ui/TouchControls';
 import { input } from '@/util/input';
-import { SelectList } from '@/util/selectList';
 import { crisp, FONT, RETRO_FONT } from '@/util/text';
 import { TURNS } from '@/systems/TimeSystem';
 import { addPanel } from '@/ui/panel';
@@ -59,7 +58,7 @@ export class UiScene extends Phaser.Scene {
   private dialogue!: DialogueBox;
   private touch!: TouchControls;
   private overlay: Phaser.GameObjects.Container | null = null;
-  private overlayNav: SelectList | null = null;
+  private overlayCleanup: (() => void) | null = null;
   private hudObjects: Array<
     Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle | Phaser.GameObjects.DOMElement | Phaser.GameObjects.Graphics
   > = [];
@@ -448,17 +447,13 @@ export class UiScene extends Phaser.Scene {
     );
   }
 
-  /** Panel confinado al cuadro de mapa (VIEW.world: la franja del medio, entre HUD y
-   * bandeja) — no a la pantalla entera. El HUD y la bandeja se quedan a la vista
-   * alrededor, no hace falta ocultarlos ni ganan sentido las "ventanas flotantes"
-   * que evita GDD §8: esto sigue siendo un panel fijo, solo que del tamaño de la
-   * franja que le corresponde en las tres bandas del layout (docs/00-GDD.md §8),
-   * con el mismo marco con borde que las cajas del arranque (BootScene.renderMenu).
-   * Todo el panel en RETRO_FONT — misma fuente en todos lados, ver util/text.ts.
-   * `footer` (opcional) es la aclaración técnica o el consejo de juego de
-   * `hint` en los datos (choices/tutoriales) — va anclado abajo del todo del
-   * panel, separado por su propia línea, para no dejar vacío el resto de la
-   * franja cuando el cuerpo y las opciones son cortos (que es casi siempre). */
+  /** Cartel del medio de la pantalla (tutoriales y decisiones): una tarjeta
+   * compacta, centrada en la franja del mundo y del alto de lo que dice — el
+   * mundo se sigue viendo alrededor. Texto en HTML real (como el HUD), no Phaser
+   * Text: a 8-9 px internos el Text de Phaser queda horneado a baja resolución y
+   * se ve borroso en el celular, y sin interlineado propio las opciones de dos
+   * líneas se pisaban. Misma fuente (RETRO_FONT), colores y cursor "›" que el
+   * resto del juego. `footer` es el `hint` de los datos: va abajo, más apagado. */
   private openOverlay(
     title: string,
     body: string,
@@ -469,122 +464,112 @@ export class UiScene extends Phaser.Scene {
     input.locked = true;
     this.touch.setVisible(false);
 
-    // las opciones recién aparecidas no se pueden elegir (ver INPUT_GUARD)
+    const margin = 14;
+    const pad = 12;
+    const w = VIEW.width - margin * 2;
+    const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // display lo pisa Phaser en el div que crea: el layout real vive en un hijo
+    const el = this.add.dom(margin, 0, 'div', `width:${w}px; pointer-events:auto;`).setOrigin(0, 0).setDepth(121);
+    const root = el.node as HTMLDivElement;
+    // comillas simples: RETRO_FONT trae comillas dobles y cortaría el atributo style
+    const font = RETRO_FONT.replace(/"/g, "'");
+    root.innerHTML =
+      `<div style="box-sizing:border-box; width:${w}px; padding:${pad}px; font-family:${font}; color:#EAE8E0; text-align:left;">` +
+      `<div style="display:flex; align-items:center; gap:6px; font-size:10px; color:#D9A845; line-height:1;">` +
+      `<span style="width:4px; height:4px; background:#9C3A24; display:inline-block;"></span>${esc(title)}</div>` +
+      `<div style="height:1px; background:rgba(127,176,184,0.35); margin:8px 0 9px;"></div>` +
+      `<div style="font-size:8px; line-height:1.75;">${esc(body)}</div>` +
+      `<div data-opts style="display:flex; flex-direction:column; gap:5px; margin-top:11px;"></div>` +
+      (footer
+        ? `<div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(127,176,184,0.22); ` +
+          `font-size:7px; line-height:1.8; color:#7FB0B8;">${esc(footer)}</div>`
+        : '') +
+      `</div>`;
+    const optsEl = root.querySelector('[data-opts]') as HTMLDivElement;
+
     const openedAt = performance.now();
-    options = options.map((o) => ({
-      ...o,
-      onPick: () => {
-        if (performance.now() - openedAt < INPUT_GUARD.choiceMs) return;
-        o.onPick();
-      },
-    }));
-    const top = VIEW.world.y;
-    const margin = 10;
-    const bg = addPanel(this, margin, top + margin, VIEW.width - margin * 2, VIEW.world.h - margin * 2, {
+    let focused = 0;
+    const pick = (i: number): void => {
+      // las opciones recién aparecidas no se pueden elegir (ver INPUT_GUARD)
+      if (performance.now() - openedAt < INPUT_GUARD.choiceMs) return;
+      sfx.select();
+      options[i]!.onPick();
+    };
+    const buttons = options.map((o, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.style.cssText =
+        'display:flex; gap:4px; width:100%; box-sizing:border-box; margin:0; padding:7px 8px; text-align:left; ' +
+        `font-family:${RETRO_FONT}; font-size:8px; line-height:1.6; cursor:pointer; ` +
+        'background:linear-gradient(#2E464F, #18262A); border:1px solid #2E464F; ' +
+        'box-shadow: inset 0 1px 0 rgba(234,232,224,0.08); -webkit-tap-highlight-color:transparent;';
+      const cur = document.createElement('span');
+      cur.textContent = '›';
+      cur.style.cssText = 'flex:none; width:8px;';
+      const label = document.createElement('span');
+      label.textContent = o.label;
+      b.append(cur, label);
+      b.addEventListener('click', () => pick(i));
+      b.addEventListener('pointerenter', () => {
+        focused = i;
+        paint();
+      });
+      optsEl.appendChild(b);
+      return { b, cur };
+    });
+    const paint = (): void =>
+      buttons.forEach(({ b, cur }, i) => {
+        const on = i === focused;
+        b.style.color = on ? '#D9A845' : '#BFD3D8';
+        b.style.borderColor = on ? '#D9A845' : '#2E464F';
+        cur.style.visibility = on ? 'visible' : 'hidden';
+        cur.style.animation = on ? 'dlg-cursor-blink 0.9s step-end infinite' : '';
+      });
+    paint();
+
+    // alto según el contenido, centrado en la franja del mundo
+    const h = Math.min(root.offsetHeight, VIEW.world.h - 16);
+    const y = VIEW.world.y + Math.round((VIEW.world.h - h) / 2);
+    el.setY(y);
+    const bg = addPanel(this, margin, y, w, h, {
       top: PAL.ink2,
       bottom: PAL.void,
       alpha: 0.97,
       trim: true,
       dropShadow: 'around',
-    });
-    const titleT = crisp(
-      this.add
-        .text(16, top + 24, title, {
-          fontFamily: RETRO_FONT,
-          fontSize: '11px',
-          color: '#D9A845',
-        })
-        .setResolution(8),
-    );
-    const rule = this.add.rectangle(16, top + 42, VIEW.width - 32, 1, PAL.seaPale, 0.35).setOrigin(0, 0);
-    // FONT.tiny (9px), no FONT.body: este panel tiene alto FIJO, sin paginado ni
-    // scroll (a diferencia de DialogueBox) — a 11px el cuerpo + opciones + footer de
-    // "Carga" o "¿Qué elegís primero?" se salían del panel por abajo, superpuestos
-    // con el mundo. Medido con las 6 pantallas reales del juego (4 tutoriales, 2
-    // decisiones) contra el alto real disponible: a 9px todas entran con margen.
-    const bodyT = crisp(
-      this.add
-        .text(16, top + 48, body, {
-          fontFamily: RETRO_FONT,
-          fontSize: FONT.tiny,
-          color: '#EAE8E0',
-          wordWrap: { width: VIEW.width - 32 },
-          lineSpacing: 4,
-        })
-        .setResolution(8),
-    );
+    }).setDepth(120);
+    // fundido suave del mundo detrás, para que la tarjeta mande
+    const dim = this.add.rectangle(0, VIEW.world.y, VIEW.width, VIEW.world.h, PAL.void, 0.35).setOrigin(0, 0).setDepth(119);
+    this.overlay = this.add.container(0, 0, [dim, bg, el]).setDepth(120);
 
-    const items: Phaser.GameObjects.GameObject[] = [bg, titleT, rule, bodyT];
-    let y = top + 48 + bodyT.height + 22;
-    // opciones como cajas con borde, no texto plano — mismo lenguaje visual que los
-    // botones del arranque (BootScene.renderMenu) y las cartas de CargoScene, para
-    // que el selector se sienta parte del mismo juego.
-    const navItems = options.map((o) => {
-      const label = crisp(
-        this.add
-          .text(28, y + 8, o.label, {
-            fontFamily: RETRO_FONT,
-            fontSize: FONT.tiny,
-            color: '#BFD3D8',
-            wordWrap: { width: VIEW.width - 72 },
-          })
-          .setResolution(8),
-      );
-      const boxH = label.height + 16;
-      // botón con volumen debajo; el rectángulo de encima solo marca el borde y recibe el toque
-      const face = addPanel(this, 16, y, VIEW.width - 32, boxH, { top: PAL.slate, bottom: PAL.ink });
-      items.push(face);
-      const box = this.add
-        .rectangle(16, y, VIEW.width - 32, boxH, PAL.ink2, 0.001)
-        .setOrigin(0, 0)
-        .setStrokeStyle(1, PAL.slate)
-        .setInteractive({ useHandCursor: true });
-      box.on('pointerover', () => {
-        box.setStrokeStyle(1, PAL.wheat);
-        label.setColor('#D9A845');
-      });
-      box.on('pointerout', () => {
-        box.setStrokeStyle(1, PAL.slate);
-        label.setColor('#BFD3D8');
-      });
-      box.on('pointerdown', () => {
-        sfx.select();
-        o.onPick();
-      });
-      items.push(box, label);
-      y += boxH + 8;
-      return { text: label, onPick: o.onPick };
-    });
-
-    if (footer) {
-      const panelBottom = top + VIEW.world.h - margin;
-      const footerT = crisp(
-        this.add
-          .text(16, 0, footer, {
-            fontFamily: RETRO_FONT,
-            fontSize: FONT.tiny,
-            color: '#7FB0B8',
-            wordWrap: { width: VIEW.width - 32 },
-            lineSpacing: 3,
-          })
-          .setResolution(8),
-      );
-      // anclado abajo del todo salvo que las opciones ya lleguen tan abajo que se
-      // pisarían — en ese caso, se corre justo debajo de la última opción.
-      const footerY = Math.max(y + 4, panelBottom - footerT.height - 12);
-      footerT.setPosition(16, footerY);
-      const footerRule = this.add.rectangle(16, footerY - 8, VIEW.width - 32, 1, PAL.seaPale, 0.25).setOrigin(0, 0);
-      items.push(footerRule, footerT);
-    }
-
-    this.overlay = this.add.container(0, 0, items).setDepth(120);
-    // abajo/arriba + botón de acción, además del click/tap (GDD §8)
-    this.overlayNav = new SelectList(this, navItems, { normal: '#BFD3D8', selected: '#D9A845' }, this.overlay);
+    // abajo/arriba + botón de acción, además del toque (GDD §8)
+    const kb = this.input.keyboard;
+    const move = (d: number) => (): void => {
+      focused = Math.max(0, Math.min(buttons.length - 1, focused + d));
+      paint();
+    };
+    const down = move(1);
+    const up = move(-1);
+    const ok = (): void => pick(focused);
+    const binds: Array<[string, () => void]> = [
+      ['keydown-DOWN', down],
+      ['keydown-S', down],
+      ['keydown-UP', up],
+      ['keydown-W', up],
+      ['keydown-SPACE', ok],
+      ['keydown-E', ok],
+      ['keydown-ENTER', ok],
+    ];
+    for (const [ev, fn] of binds) kb?.on(ev, fn);
+    this.overlayCleanup = () => {
+      for (const [ev, fn] of binds) kb?.off(ev, fn);
+    };
   }
 
   private closeOverlay(): void {
-    this.overlayNav?.destroy();
-    this.overlayNav = null;
+    this.overlayCleanup?.();
+    this.overlayCleanup = null;
     this.overlay?.destroy(true);
     this.overlay = null;
     input.locked = false;

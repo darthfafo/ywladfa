@@ -6,7 +6,7 @@ import { registry } from '@/core/Registry';
 import { DialogueSystem, type RenderedLine } from '@/systems/DialogueSystem';
 import { portraitIdForSpeaker, portraitTextureKey } from '@/util/assets';
 import { input } from '@/util/input';
-import { crisp, FONT, FONT_FAMILY, RETRO_FONT } from '@/util/text';
+import { crisp, FONT, RETRO_FONT } from '@/util/text';
 import { addInsetFrame, addPanel } from '@/ui/panel';
 import { sfx } from '@/audio/Sfx';
 
@@ -368,7 +368,7 @@ export class DialogueBox {
     // Depth por encima del tapCatcher (1): si no, el tap para "avanzar" de la
     // bandeja tapa los botones.
     const wrap = this.scene.add
-      .dom(70, 26, 'div', `display:flex; flex-direction:column; gap:3px; width:${TRAY.w - 80}px;`)
+      .dom(70, 26, 'div', `display:flex; flex-direction:column; gap:2px; width:${TRAY.w - 80}px;`)
       .setOrigin(0, 0)
       .setDepth(10);
     this.root.add(wrap);
@@ -385,25 +385,19 @@ export class DialogueBox {
       this.show(this.sys.choose(line.choices[i]!.id));
     };
 
-    // las opciones usan FONT_FAMILY (monoespaciada normal del sistema), no
-    // RETRO_FONT: Press Start 2P es muy ancha por glifo (pensada para
-    // títulos/HUD/nombres cortos) y una opción de una frase entera terminaba
-    // en un salto de línea feo, a veces con una sola palabra colgando en la
-    // segunda línea. Ya se había probado separar el cuerpo narrado en una
-    // fuente más angosta (ver util/text.ts) y se descartó porque a un tamaño
-    // en px comparable se veía más chica/fina que el resto de la UI — acá el
-    // tamaño sube (11 en vez de 9) para compensar eso, y como las opciones ya
-    // son un elemento aparte (botones, no prosa), que se lean con una fuente
-    // distinta no rompe nada visualmente.
-    const BTN_BASE_SIZE = 11;
-    const BTN_MIN_SIZE = 9;
+    // misma RETRO_FONT que el nombre y el cuerpo (antes iban en la monoespaciada
+    // del sistema y desentonaban con el resto del juego). Press Start 2P es ancha,
+    // así que va más chica que el cuerpo y con interlineado propio: una opción de
+    // dos líneas se lee como un bloque, no como dos renglones sueltos.
+    const BTN_BASE_SIZE = 8;
+    const BTN_MIN_SIZE = 7;
     const buttons: HTMLButtonElement[] = line.choices.map((c) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.style.cssText =
-        'display:block; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
-        `text-align:left; color:#BFD3D8; font-family: ${FONT_FAMILY}; ` +
-        `font-size:${BTN_BASE_SIZE}px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;`;
+        'display:flex; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
+        `text-align:left; color:#BFD3D8; font-family: ${RETRO_FONT}; ` +
+        `font-size:${BTN_BASE_SIZE}px; line-height:1.6; cursor:pointer; -webkit-tap-highlight-color:transparent;`;
       btn.textContent = c.text; // contenido real puesto ya, para medir el wrap de verdad
       container.appendChild(btn);
       return btn;
@@ -421,8 +415,8 @@ export class DialogueBox {
     moreBtn.type = 'button';
     moreBtn.style.cssText =
       'display:none; width:100%; background:transparent; border:none; margin:0; padding:2px 0; ' +
-      `text-align:left; color:#7FB0B8; font-family: ${FONT_FAMILY}; ` +
-      `font-size:${BTN_BASE_SIZE}px; line-height:1.3; cursor:pointer; -webkit-tap-highlight-color:transparent;`;
+      `text-align:left; color:#7FB0B8; font-family: ${RETRO_FONT}; ` +
+      `font-size:${BTN_BASE_SIZE}px; line-height:1.6; cursor:pointer; -webkit-tap-highlight-color:transparent;`;
     moreBtn.textContent = '▼ más';
     container.appendChild(moreBtn);
 
@@ -430,7 +424,7 @@ export class DialogueBox {
     // borde inferior de la bandeja (mismo espíritu que el resto de la UI, no
     // pegado al filo).
     const maxH = TRAY.h - 26 - 6;
-    const GAP = 3;
+    const GAP = 2;
 
     const sumH = (): number => buttons.reduce((acc, b, i) => acc + b.offsetHeight + (i > 0 ? GAP : 0), 0);
 
@@ -486,7 +480,7 @@ export class DialogueBox {
       const to = pageEnd(page);
       const hasMore = page < pageStart.length - 1;
       buttons.forEach((b, i) => {
-        b.style.display = i >= from && i <= to ? 'block' : 'none';
+        b.style.display = i >= from && i <= to ? 'flex' : 'none';
         const on = i === focused;
         b.style.color = on ? '#D9A845' : '#BFD3D8';
         // reconstruido con nodos, no un textContent con "› "/"  " al frente: así el
@@ -497,10 +491,11 @@ export class DialogueBox {
         const cursor = document.createElement('span');
         cursor.textContent = '›';
         cursor.style.cssText = on
-          ? 'display:inline-block; width:10px; animation: dlg-cursor-blink 0.9s step-end infinite;'
-          : 'display:inline-block; width:10px; visibility:hidden;';
-        b.appendChild(cursor);
-        b.appendChild(document.createTextNode(line.choices[i]!.text));
+          ? 'flex:none; width:10px; animation: dlg-cursor-blink 0.9s step-end infinite;'
+          : 'flex:none; width:10px; visibility:hidden;';
+        const label = document.createElement('span');
+        label.textContent = line.choices[i]!.text;
+        b.append(cursor, label);
       });
       moreBtn.style.display = hasMore ? 'block' : 'none';
       this.hint.setVisible(hasMore);

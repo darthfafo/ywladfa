@@ -1080,7 +1080,7 @@
       "id": "ch_n1_cueva",
       "prompt": "Hay tres cuevas libres. Elegí la de tu familia.",
       "turnCost": 1,
-      "hint": "No hay opción sin costo: cada cueva mueve la salud y el ánimo de tu madre para un lado distinto, no solo la comodidad.",
+      "hint": "Cada cueva mueve distinto la salud y el ánimo de tu madre.",
       "options": [
         {
           "id": "cueva_alta",
@@ -1142,11 +1142,11 @@
       "id": "ch_n1_tareas",
       "prompt": "Lewis reparte el día. Solo alcanza para una cosa.",
       "turnCost": 0,
-      "hint": "Cada tarea deja algo más que la excusa para moverte: la leña suma al instante, quedarte ayuda a tu madre, y el agua depende de si subís a la meseta o bajás al cañadón.",
+      "hint": "Agua: en la meseta o el cañadón. Leña: suma al instante. Cuevas: ayudan a tu madre.",
       "options": [
         {
           "id": "t_agua",
-          "text": "Buscar agua. (meseta y cañadón)",
+          "text": "Buscar agua.",
           "effects": [
             {
               "setFlag": {
@@ -1160,7 +1160,7 @@
         },
         {
           "id": "t_lena",
-          "text": "Juntar leña. (el monte)",
+          "text": "Juntar leña.",
           "effects": [
             {
               "setFlag": {
@@ -1178,7 +1178,7 @@
         },
         {
           "id": "t_cuevas",
-          "text": "Quedarse a arreglar las cuevas.",
+          "text": "Arreglar las cuevas.",
           "effects": [
             {
               "setFlag": {
@@ -1203,26 +1203,26 @@
     {
       "id": "tut_carga",
       "title": "Carga",
-      "text": "Todo lo que levantás pesa: la barra de la derecha es tu carga, y al pasar el límite no te bloqueás, solo caminás más lento. Llevá los 8 cajones desde la orilla hasta la pila de tierra para descargarlos.",
-      "hint": "Consejo: conviene explorar el resto de la playa antes de cargar el primer cajón — vas a caminar mucho más lento en cuanto empieces."
+      "text": "Llevá los 8 cajones de la orilla a la pila de tierra. La barra de arriba a la derecha es tu carga: si te pasás, caminás más lento.",
+      "hint": "Explorá la playa antes de cargar el primero."
     },
     {
       "id": "tut_peso",
       "title": "Sobrecarga",
-      "text": "Estás sobre tu capacidad. Podés seguir así, o dejar algo y volver a buscarlo. Volver cuesta tiempo, y el tiempo es lo único que no se recupera.",
-      "hint": "Consejo: la sobrecarga nunca te deja trabado, solo frena — si el tiempo apremia, a veces conviene aguantar el peso y no volver."
+      "text": "Te pasaste de peso: caminás más lento. Podés seguir así, o dejar algo y volver. Volver cuesta tiempo.",
+      "hint": "El peso nunca te traba, solo te frena."
     },
     {
       "id": "tut_turnos",
       "title": "La jornada",
-      "text": "El día tiene cuatro momentos. El reloj no corre solo: avanza cuando hacés algo que cuesta tiempo. Caminar y mirar es gratis.",
-      "hint": "Consejo: mirá bien antes de actuar. Ir y volver de un lugar sin hacer nada ahí no gasta turno — decidir mal sí."
+      "text": "El día tiene cuatro momentos. El tiempo avanza cuando hacés algo que cuesta. Caminar y mirar es gratis.",
+      "hint": "Mirá bien antes de actuar."
     },
     {
       "id": "tut_noche",
       "title": "La noche",
-      "text": "Cada noche el grupo come y bebe. Si hay leña, el fuego es grande y la gente se recupera. Si no, no.",
-      "hint": "Consejo: juntá algo de leña temprano en el día — de noche, con lo justo, el fuego sale chico aunque corras a buscar más."
+      "text": "Cada noche el grupo come y bebe. Con leña, el fuego es grande y la gente se recupera.",
+      "hint": "Juntá leña temprano: de noche ya no alcanza."
     }
   ]
 }
