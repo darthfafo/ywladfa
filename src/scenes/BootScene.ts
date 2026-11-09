@@ -152,7 +152,8 @@ export class BootScene extends Phaser.Scene {
     // aclaración de rigor histórico — blanca, más chica, no compite con el título.
     c(this.renderDomText(cx, 42, GAME_SUBTITLE, { size: 9, color: '#D9A845', align: 'center', retro: true }));
     c(
-      this.renderDomText(cx, 58, 'JUEGO CON RIGOR HISTÓRICO, ASÍ SUCEDIÓ', {
+      // en minúsculas: Press Start 2P no tiene mayúsculas acentuadas ("HISTóRICO")
+      this.renderDomText(cx, 58, 'Un juego con rigor histórico', {
         size: 6,
         color: '#EAE8E0',
         align: 'center',
@@ -400,39 +401,67 @@ export class BootScene extends Phaser.Scene {
     const cx = VIEW.width / 2;
     this.setChrome(false);
     if (!this.cine || this.cine.slides !== TITLE_SLIDES) this.startCinematic(TITLE_SLIDES);
-    this.renderShade(0, 190, 'top');
-    this.renderShade(VIEW.height - 180, 180, 'bottom');
+    this.renderShade(0, 170, 'top', 0.8);
+    this.renderShade(VIEW.height - 150, 150, 'bottom', 0.85);
+    // viñeta suave en los bordes: encuadra la ilustración sin franjas duras
+    this.track(
+      this.add
+        .dom(0, 0, 'div', `width:${VIEW.width}px; height:${VIEW.height}px; pointer-events:none; ` +
+          'background:radial-gradient(ellipse at 50% 45%, rgba(14,20,22,0) 55%, rgba(14,20,22,0.55) 100%);')
+        .setOrigin(0, 0)
+        .setDepth(-2),
+    );
     // entrada del título: cada parte aparece después de la anterior (CSS, ver ensureTitleCss)
     this.ensureTitleCss();
-    const glow = 'text-shadow: 0 2px 0 #0E1416, 0 0 14px rgba(217,168,69,0.35), 0 0 4px rgba(14,20,22,0.9);';
+    // contorno fino de un píxel (pixel art) + una sombra corta: se lee sobre la
+    // foto sin el bloque grueso de antes
+    const outline =
+      'text-shadow: 1px 0 0 #0E1416, -1px 0 0 #0E1416, 0 1px 0 #0E1416, 0 -1px 0 #0E1416, 0 3px 0 rgba(14,20,22,0.85), 0 0 18px rgba(14,20,22,0.7);';
+    const [word, year] = GAME_TITLE.split(' ');
     this.track(
-      // en dos renglones (CHUBUT arriba, 1865 abajo): así quedaba durante la
-      // animación de entrada y se veía mejor que en una sola línea de borde a borde
-      this.renderDomText(cx, 34, '', {
-        size: 24,
+      this.renderDomText(cx, 30, '', {
+        size: 22,
         color: '#F2EDE0',
         align: 'center',
         retro: true,
-        lineHeight: 1.3,
-        html: `<span class="ttl-in" style="${glow}">${GAME_TITLE.replace(' ', '<br>')}</span>`,
+        lineHeight: 1,
+        html: `<span class="ttl-in" style="letter-spacing:2px; ${outline}">${word}</span>`,
       }),
     );
+    // año en dorado, entre dos filetes con un rombo: el ornamento de una portada de época
+    const rule = (side: 'l' | 'r') =>
+      `<span style="display:inline-block; width:34px; height:1px; vertical-align:middle; ` +
+      `background:linear-gradient(to ${side === 'l' ? 'left' : 'right'}, #D9A845, rgba(217,168,69,0));"></span>`;
+    const diamond = '<span style="display:inline-block; width:4px; height:4px; margin:0 6px; vertical-align:middle; background:#9C3A24; transform:rotate(45deg);"></span>';
     this.track(
-      this.renderDomText(cx, 104, '', {
-        size: 9,
+      this.renderDomText(cx, 62, '', {
+        size: 16,
         color: '#D9A845',
         align: 'center',
         retro: true,
-        html: `<span class="ttl-in ttl-d1" style="text-shadow: 0 1px 0 #0E1416;">${GAME_SUBTITLE}</span>`,
+        lineHeight: 1,
+        html:
+          `<span class="ttl-in" style="white-space:nowrap;">${rule('l')}${diamond}` +
+          `<span style="letter-spacing:4px; vertical-align:middle; ${outline}">${year}</span>${diamond}${rule('r')}</span>`,
       }),
     );
     this.track(
-      this.renderDomText(cx, 124, '', {
+      this.renderDomText(cx, 92, '', {
+        size: 8,
+        color: '#EAE8E0',
+        align: 'center',
+        retro: true,
+        html: `<span class="ttl-in ttl-d1" style="${outline}">${GAME_SUBTITLE}</span>`,
+      }),
+    );
+    // en minúsculas: Press Start 2P no tiene mayúsculas acentuadas ("HISTóRICO")
+    this.track(
+      this.renderDomText(cx, 110, '', {
         size: 6,
         color: '#BFD3D8',
         align: 'center',
         retro: true,
-        html: '<span class="ttl-in ttl-d2">JUEGO CON RIGOR HISTÓRICO, ASÍ SUCEDIÓ</span>',
+        html: '<span class="ttl-in ttl-d2" style="text-shadow:0 1px 0 #0E1416; opacity:0.9;">Un juego con rigor histórico</span>',
       }),
     );
 
@@ -440,23 +469,47 @@ export class BootScene extends Phaser.Scene {
     // exportar/importar como parte de la misma lista, no como links sueltos aparte
     const options: Array<{ label: string; onPick: () => void }> = [];
     const save = saveSystem.peek();
-    if (save) options.push({ label: `Continuar — Jornada ${save.day}`, onPick: () => this.continueGame() });
+    if (save) options.push({ label: `Continuar · Jornada ${save.day}`, onPick: () => this.continueGame() });
     options.push({ label: 'Nueva partida', onPick: () => this.renderCharacter() });
     options.push({ label: 'Importar partida', onPick: () => this.triggerImportFile() });
     if (save) options.push({ label: 'Exportar partida', onPick: () => this.exportCurrentSave() });
-    this.renderMenu(options, VIEW.height - 34 - (options.length * 26) / 2);
-    for (const o of this.stepObjects) {
-      if (o instanceof Phaser.GameObjects.DOMElement && o.node instanceof HTMLButtonElement) o.node.classList.add('ttl-up', 'ttl-d3');
-    }
+    const rowH = 25;
+    const top = VIEW.height - 30 - options.length * rowH;
+    options.forEach((o, i) => {
+      const el = this.renderDomButton(cx, top + i * rowH + rowH / 2, o.label, o.onPick, 172, 21);
+      const b = el.node as HTMLButtonElement;
+      const primary = i === 0;
+      // botón de portada: vidrio oscuro con filete dorado fino, no el bloque con
+      // volumen de los menús del juego; el principal, un poco más marcado
+      b.style.cssText +=
+        `; background:${primary ? 'linear-gradient(rgba(46,70,79,0.82), rgba(24,38,42,0.82))' : 'rgba(14,20,22,0.55)'};` +
+        ` border:1px solid ${primary ? 'rgba(217,168,69,0.85)' : 'rgba(217,168,69,0.35)'}; box-shadow:0 2px 8px rgba(0,0,0,0.35);` +
+        ` color:${primary ? '#F2EDE0' : '#BFD3D8'}; font-size:8px; letter-spacing:1px;` +
+        ' backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);';
+      const label = o.label;
+      const on = (yes: boolean) => {
+        b.textContent = yes ? `› ${label} ‹` : label;
+        b.style.color = yes ? '#D9A845' : primary ? '#F2EDE0' : '#BFD3D8';
+        b.style.borderColor = yes ? '#D9A845' : primary ? 'rgba(217,168,69,0.85)' : 'rgba(217,168,69,0.35)';
+      };
+      b.addEventListener('pointerenter', () => on(true));
+      b.addEventListener('pointerleave', () => on(false));
+      b.addEventListener('focus', () => on(true));
+      b.addEventListener('blur', () => on(false));
+      b.classList.add('ttl-up', 'ttl-d3');
+      this.track(el);
+    });
 
     // sonido sí/no, chiquito arriba a la derecha (queda guardado por jugador)
     const soundLabel = () => (sfx.isMuted ? 'Sonido: No' : 'Sonido: Sí');
-    const soundBtn = this.renderDomButton(VIEW.width - 52, 12, soundLabel(), () => {
+    const soundBtn = this.renderDomButton(VIEW.width - 40, 12, soundLabel(), () => {
       sfx.toggleMute();
       (soundBtn.node as HTMLButtonElement).textContent = soundLabel();
-    }, 92, 18);
-    (soundBtn.node as HTMLButtonElement).style.fontSize = '7px';
-    (soundBtn.node as HTMLButtonElement).style.whiteSpace = 'nowrap';
+    }, 70, 15);
+    // discreto: texto chico sobre vidrio, sin el bloque de botón
+    (soundBtn.node as HTMLButtonElement).style.cssText +=
+      '; font-size:6px; white-space:nowrap; background:rgba(14,20,22,0.45); border:1px solid rgba(191,211,216,0.25);' +
+      ' box-shadow:none; color:#BFD3D8;';
     this.track(soundBtn);
 
     // input de archivo invisible, siempre presente: el botón "Importar partida" de
@@ -736,44 +789,6 @@ export class BootScene extends Phaser.Scene {
     if (!img) return null;
     this.track(img.setDepth(-5));
     return img;
-  }
-
-  /** Menú centrado sobre la imagen, con su propia caja — para las dos decisiones
-   * "de portada" (continuar/nueva partida, género), no para el resto de los pasos.
-   * `prompt` opcional: una pregunta como primera línea, ARRIBA de las opciones.
-   * Las opciones quedan siempre centradas en `centerY`, tengan o no prompt encima:
-   * antes el prompt sumaba su alto adentro de la misma caja centrada, empujando los
-   * botones hacia abajo — el género quedaba más bajo que el título aunque a los dos
-   * se los llamara con el mismo centerY. Ahora el prompt crece la caja hacia
-   * ARRIBA, no corre las opciones. */
-  private renderMenu(options: Array<{ label: string; onPick: () => void }>, centerY: number, prompt?: string): void {
-    const cx = VIEW.width / 2;
-    const rowH = 26;
-    const optionsTop = centerY - (options.length * rowH) / 2;
-
-    if (prompt) {
-      const promptH = 22;
-      const pad = 8;
-      const boxTop = optionsTop - promptH - pad;
-      const boxH = promptH + options.length * rowH + pad * 2;
-      // sin `prompt` (título: nada más que "Nueva partida"/"Continuar") la caja
-      // translúcida es puro relleno — los botones ya son opacos por su cuenta.
-      // Con `prompt` (género: hay una pregunta arriba de las opciones) sigue
-      // haciendo falta para que ese texto se lea contra la imagen.
-      this.track(
-        this.add
-          .rectangle(24, boxTop, VIEW.width - 48, boxH, PAL.ink, 0.8)
-          .setOrigin(0, 0)
-          .setStrokeStyle(1, PAL.seaPale, 0.5)
-          .setDepth(15),
-      );
-      this.track(this.renderDomText(cx, boxTop + pad, prompt, { size: 9, color: '#D9A845', align: 'center', retro: true }));
-    }
-
-    options.forEach((o, i) => {
-      const y = optionsTop + i * rowH + (rowH - 2) / 2;
-      this.track(this.renderDomButton(cx, y, o.label, o.onPick, VIEW.width - 64));
-    });
   }
 
   private renderOptions(options: Array<{ label: string; onPick: () => void }>, startY: number): void {
