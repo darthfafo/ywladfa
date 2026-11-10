@@ -142,7 +142,7 @@ props:
 | **T2 Mañana** | Sobrecargarte hace el segundo viaje obligatorio. Nadie te reta: simplemente tardás más | Peso | 3 min |
 | T2 | **Edwyn Roberts** aparece con la mala noticia: el depósito que él preparó tiene un tercio de lo prometido | Diálogo | 2 min |
 | **T3 Tarde** | Subida a la barranca. Elegís **qué cueva ocupa tu familia** entre tres (mejor abrigo / más seca / más cerca del fogón). Decisión con consecuencia en J2 | Elección | 4 min |
-| T3 | Cavar y apuntalar: minijuego simple de colocación de maderos. *Hoy (sin minijuego):* tocar la cueva propia la apuntala con un diálogo corto; eso cierra la tarde y trae la noche | Construcción base | 3 min |
+| T3 | Cavar y apuntalar: minijuego simple de colocación de maderos. Tocar la cueva propia abre el minijuego (una marca que va y viene: tocar sobre la zona dorada coloca cada madero); al terminar cierra la tarde y trae la noche | Construcción base | 3 min |
 | **T4 Noche** | **Primer fogón.** El HUD muestra el consumo nocturno en vivo: −1 ración por persona, −2 L agua. Quedan **4 días de agua** | Recursos | 2 min |
 | T4 | Rueda de diálogo en el fogón: Lewis, Matthews, Edwyn. Elegís a quién escuchar. Sube vínculo con uno | Vínculo | 3 min |
 | T4 | **Autoguardado.** Entrada de diario escrita sola | Guardado | 20 s |
@@ -323,22 +323,23 @@ y desbloquea que Edwyn te avise de la aguada en el Nivel 2.)*
 ## 10. Checklist de implementación del Nivel 1
 
 ```
-[ ] Tilemap nivel-01.tmj exportado desde Tiled con las 8 capas
-[ ] Tileset punta-cuevas.png (128 tiles) + json de propiedades
-[ ] Sprite PC 16×24, 4 dir × 4 frames caminata + 2 idle
-[ ] 6 sprites NPC + 8 retratos de diálogo 48×48
-[ ] TimeSystem: 4 turnos, avance por acción, evento onTurnChange
-[ ] ResourceSystem: 6 recursos, consumo nocturno, clamp a 0
-[ ] InventorySystem + carga por peso, penalidad de velocidad
-[ ] DialogueSystem: nodos, ramas, condiciones por flag, vínculo
-[ ] TriggerSystem: lee object layer, respeta once/requires/turn_cost
-[ ] Escena CargaDecision (pantalla dedicada, 8 bultos, elegir 5)
-[ ] Escena Fogon (rueda de diálogo nocturna)
-[ ] SaveSystem: localStorage, un solo slot, autoguardado en noche
-[ ] HUD progresivo: elementos aparecen cuando el sistema se usa por primera vez
-[ ] Sendero emergente: contador de pisadas por tile → cambia a tile `path`
-[ ] Diario: generación automática de entrada al cerrar jornada
-[ ] Códice con 4 fichas: Mimosa · Punta Cuevas · Michael D. Jones · Los tehuelches
+[x] TimeSystem: 4 turnos, avance por acción, evento de cambio de turno
+[x] ResourceSystem: recursos, consumo nocturno, clamp a 0
+[x] InventorySystem + carga por peso, penalidad de velocidad
+[x] DialogueSystem: nodos, ramas, condiciones por flag, vínculo
+[x] TriggerSystem: respeta once/requires/turnCost (lee data/levels, no una capa de Tiled)
+[x] Escena de la carga (CargoScene: pantalla dedicada, 8 bultos, elegir 5)
+[x] Escena del fogón (CampScene: rueda de diálogo nocturna)
+[x] SaveSystem: localStorage, un solo slot, autoguardado en la noche
+[x] Diario: entrada automática por jornada (JournalSystem)
+[x] Códice: fichas del nivel desbloqueadas por trigger (Wladfa · Punta Cuevas · el agua · el Mimosa)
+[x] Minijuego de apuntalar, comida para juntar (molle, mejillones), salida si no se encuentra el manantial
+[x] Menú de pausa con recordatorio de objetivo y cierre con balance de salida
+[x] 8 retratos de diálogo y sprites de 4 direcciones (arte real donde existe)
+[~] Mapa: generado por código (mapgen.ts) y dibujado en 3D; no hay .tmj de Tiled ni tileset
+[ ] Sprite del PC con ciclo de caminata dibujado (hoy la caminata es procedural)
+[ ] HUD progresivo: elementos que aparecen cuando el sistema se usa por primera vez
+[ ] Sendero emergente: contador de pisadas por tile que cambia a tile `path`
 ```
 
 ---

@@ -4,7 +4,7 @@ Este repo es **Chubut 1865 — La Huella de los Rifleros** (antes "Y Wladfa": es
 sobre la colonización galesa del Chubut (1865–1902), en Phaser 3 + TypeScript.
 
 Pantalla **vertical 9:16 (270×480), mobile-first**. El repo ya tiene los documentos de diseño,
-los datos y un **prototipo jugable** (commits 1-8 del plan). El objetivo ahora es cerrar el Nivel 1.
+los datos y el **Nivel 1 jugable de punta a punta**. El objetivo ahora es el Nivel 2.
 
 ---
 
@@ -15,6 +15,7 @@ los datos y un **prototipo jugable** (commits 1-8 del plan). El objetivo ahora e
 3. `docs/02-arquitectura.md` — stack, carpetas, sistemas, contratos y el **plan de 12 commits** de §10.
 4. `docs/03-assets.md` — qué arte hace falta y qué se puede reemplazar por placeholder.
 5. `docs/04-guia-historica.md` — el marco histórico y las reglas de representación. **No es opcional.**
+6. `docs/08-plan-nivel-02.md` — el plan del nivel siguiente y la deuda técnica previa.
 
 Los datos de `/data/*.json` son la fuente de verdad del contenido. Si un número de balance
 está en `data/config/balance.json`, **no se hardcodea en `src/`**.
@@ -61,30 +62,31 @@ ni bloquea el avance. Ver `docs/01-nivel-01.md` §8.
 ## Estado actual
 
 ```
-✔ docs/           GDD, spec del Nivel 1, arquitectura, assets, guía histórica
+✔ docs/           GDD, spec del Nivel 1, arquitectura, assets, guía histórica, plan del Nivel 2
 ✔ data/           config, items, npcs, nivel-01, diálogos, quests, códice, schemas
-✔ src/            core + 7 sistemas + 3 escenas + UI táctil  (commits 1-8 del plan)
-✔ tests/          20 tests de sistemas en verde
+✔ src/            core + 10 sistemas + 7 escenas + UI táctil + mundo HD-2D (render3d)
+✔ tests/          33 tests en verde: sistemas, recorrido completo del nivel y caminos del mapa
 ✔ scripts/        validate-data.mjs (integridad referencial)
-◐ public/assets/  arte generado por código en src/util/textures.ts, con los tamaños finales
-✘ maps/           falta el nivel-01.tmj de Tiled — hoy el mapa se genera en src/util/mapgen.ts
+◐ arte            ilustraciones, retratos y sprites reales donde existen; el resto, por código
+✘ maps/           no hay .tmj de Tiled: el mapa se genera en src/util/mapgen.ts
 ```
 
-**Lo que ya se juega:** portada, playa, mapa vertical de 64×112 con las 6 zonas y los pasajes,
-movimiento con joystick táctil y teclado, cámara con viewport recortado, HUD de jornada/turno/recursos/carga,
-levantar y depositar cajones con peso y sobrecarga, cortar jarilla, diálogos con ramas y efectos,
-pantallas de elección, toasts, y los triggers del cold open, el manantial y los dos fogones.
+**El Nivel 1 se juega completo**, de la portada al cierre: desembarco y cajones, la barranca y
+la elección de cueva, el minijuego de apuntalar, los dos fogones (`CampScene`), la tarea de la
+mañana del J2, Dafydd y el manantial (con salida si no se lo encuentra), la decisión de la carga
+(`CargoScene`), la libreta con Diario y Códice (`JournalSystem`, `JournalScene`), el menú de pausa
+con el recordatorio de qué hacer (`level.goals`) y el cierre con el balance de salida
+(`level.exit.computeGrade`). Guarda sola al cerrar cada jornada (`SaveSystem`).
 
-**Lo que falta para cerrar el Nivel 1** (commits 9-12):
-`CampScene` real, `CargoScene` (la decisión de 5 de 8), `SaveSystem`, `JournalSystem`,
-el minijuego de apuntalar, el movimiento de Dafydd en la jornada 2 y la transición al Nivel 2.
+**Lo que falta:** el Nivel 2. Hoy el cierre es una pantalla de «Continuará…».
+Pendientes menores del Nivel 1: ciclo de caminata dibujado (hoy es procedural) y texto en bitmap font.
 
 ## Cómo correrlo
 
 ```bash
 npm install
 npm run dev            # http://localhost:5173  (abrilo angosto o con el emulador de móvil)
-npm test               # 20 tests de sistemas, sin navegador
+npm test               # 33 tests (sistemas, recorrido del nivel, caminos del mapa), sin navegador
 npm run validate:data  # integridad referencial de todo /data
 npm run build:single   # dist/index.html autocontenido, se abre con doble clic
 ```
@@ -94,13 +96,13 @@ La pantalla es **270×480 (9:16) fija**; en desktop se centra con banda a los co
 
 ## Próximo objetivo
 
-Commits 9 a 12 del plan de `docs/02-arquitectura.md` §10, en este orden:
+El **Nivel 2 — «La travesía: del golfo al río»**. El plan está en `docs/08-plan-nivel-02.md`:
+qué hereda del Nivel 1, el sistema nuevo (marcha, ruta, extravío), la deuda técnica a pagar
+antes (el código del mundo está atado al Nivel 1) y el orden de trabajo.
 
-1. **`CampScene`** — el fogón nocturno como escena propia, no como diálogo suelto.
-2. **`CargoScene`** — la decisión de 5 bultos de 8. Es el corazón del nivel: pantalla completa,
-   sin deshacer, sin confirmación doble. Guarda `flags.n1_carga` como array de ids.
-3. **`SaveSystem` + `JournalSystem`** — un solo slot en localStorage, autoguardado al cerrar jornada.
-4. **`TransitionScene`** — tarjeta de cierre y salto al Nivel 2.
+Antes de escribir contenido del Nivel 2 hay que resolver los `TODO(historia)` y las decisiones
+D1-D5 de ese documento. Los pasos 1 a 4 (separar el guion del Nivel 1, carga por nivel,
+transición real, terreno por franjas) no dependen de eso y se pueden empezar.
 
 ---
 
