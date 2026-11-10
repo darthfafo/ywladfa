@@ -52,7 +52,7 @@ export function tokenize(src: string): Tok[] {
 
 const num = (x: unknown): number => (x == null ? 0 : Number(x));
 
-function resolvePath(path: string, ctx: unknown): unknown {
+export function resolvePath(path: string, ctx: unknown): unknown {
   let cur: any = ctx;
   for (const seg of path.split('.')) {
     if (cur == null) return undefined;

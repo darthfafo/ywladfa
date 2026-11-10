@@ -204,6 +204,24 @@
     },
     "exit": {
       "type": "object"
+    },
+    "goals": {
+      "type": "array",
+      "description": "Recordatorio de qué hacer ahora (menú de pausa): el primero cuyo `requires` se cumple.",
+      "items": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "requires": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }

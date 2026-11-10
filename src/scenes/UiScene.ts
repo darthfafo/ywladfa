@@ -102,6 +102,7 @@ export class UiScene extends Phaser.Scene {
       if (this.dialogue.active || this.overlay) return;
       this.scene.launch('Journal', { tab, pause: ['World', 'Ui'] });
     });
+    this.input.keyboard?.on('keydown-ESC', () => (this.overlay ? null : this.openPause()));
     this.input.keyboard?.on('keydown-L', () => {
       if (!input.locked && game.flags.is('unlocked_sistema_diario')) bus.emit('ui:open-journal', { tab: 'diario' });
     });
@@ -200,6 +201,25 @@ export class UiScene extends Phaser.Scene {
     // quedaba apretada contra los recursos. La barra ya se explica sola (el
     // tutorial tut_carga la señala como "la barra de la derecha") y gana el ancho
     // que liberó la etiqueta.
+    // menú de pausa: tres rayitas arriba a la derecha (qué hacer ahora, sonido, salir)
+    const menu = this.add
+      .dom(
+        h.x + h.w - 5,
+        9,
+        'button',
+        'width:15px; height:13px; box-sizing:border-box; margin:0; padding:2px 3px; border-radius:0; cursor:pointer; ' +
+          'background:rgba(14,20,22,0.5); border:1px solid rgba(217,168,69,0.4); -webkit-tap-highlight-color:transparent;',
+      )
+      .setOrigin(1, 0.5)
+      .setDepth(64);
+    const menuEl = menu.node as HTMLButtonElement;
+    menuEl.type = 'button';
+    menuEl.setAttribute('aria-label', 'Pausa');
+    menuEl.innerHTML =
+      '<span style="display:block; height:1px; background:#D9A845; margin:1px 0 2px;"></span>'.repeat(3);
+    menuEl.addEventListener('click', () => this.openPause());
+    track(menu);
+
     // barra de carga hundida: fondo oscuro con canto de luz abajo
     track(this.add.rectangle(LOADBAR_X - 1, 19, LOADBAR_W + 2, 7, PAL.void).setOrigin(0, 0).setDepth(62));
     track(this.add.rectangle(LOADBAR_X - 1, 25, LOADBAR_W + 2, 1, PAL.wheat, 0.4).setOrigin(0, 0).setDepth(62));
@@ -466,6 +486,46 @@ export class UiScene extends Phaser.Scene {
     this.dialogue.refuse(npcId, () => this.touch.setVisible(true), text);
   }
 
+  /** Menú de pausa: recuerda qué hay que hacer ahora (data: level.goals), deja
+   * apagar el sonido, abrir la libreta y volver al inicio. */
+  private openPause(): void {
+    if (input.locked || this.dialogue.active || this.overlay) return;
+    sfx.select();
+    const options: Array<{ label: string; onPick: () => void }> = [{ label: 'Seguir', onPick: () => this.closeOverlay() }];
+    if (game.flags.is('unlocked_sistema_diario')) {
+      options.push({
+        label: 'Libreta',
+        onPick: () => {
+          this.closeOverlay();
+          bus.emit('ui:open-journal', { tab: 'diario' });
+        },
+      });
+    }
+    options.push({
+      label: sfx.isMuted ? 'Sonido: No' : 'Sonido: Sí',
+      onPick: () => {
+        sfx.toggleMute();
+        this.closeOverlay();
+        this.openPause();
+      },
+    });
+    options.push({
+      label: 'Salir al inicio',
+      onPick: () =>
+        this.openOverlay(
+          'Salir',
+          'Se pierde lo jugado desde la última noche.',
+          [
+            // recarga completa: no queda nada de esta partida en memoria (ver TransitionScene.playAgain)
+            { label: 'Sí, salir', onPick: () => window.location.reload() },
+            { label: 'Volver', onPick: () => this.closeOverlay() },
+          ],
+          'La partida se guarda sola al cerrar cada jornada.',
+        ),
+    });
+    this.openOverlay('Pausa', game.currentGoal(), options, 'La partida se guarda sola al cerrar cada jornada.');
+  }
+
   private openTutorial(id: string): void {
     const t = registry.tutorial(id);
     if (!t) return;
@@ -581,6 +641,7 @@ export class UiScene extends Phaser.Scene {
       marker.setX(barX + pos);
     };
     this.events.on('update', tick);
+    this.events.once('shutdown', () => this.events.off('update', tick));
 
     const shownAt = performance.now();
     const attempt = (): void => {

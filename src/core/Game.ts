@@ -1,7 +1,8 @@
 import { bus } from './EventBus';
-import { createInitialState } from './GameState';
+import { conditionContext, createInitialState } from './GameState';
 import { registry } from './Registry';
-import type { DialogueEffect, GameState } from './types';
+import { resolvePath } from './conditions';
+import type { DialogueEffect, ExitGradeRow, GameState } from './types';
 
 import { FlagSystem } from '@/systems/FlagSystem';
 import { InventorySystem } from '@/systems/InventorySystem';
@@ -62,6 +63,21 @@ export class Game {
 
   get level() {
     return registry.level(this.state.progress.level);
+  }
+
+  /** Qué hay que hacer ahora, en una línea (data: level.goals). Para el menú de pausa. */
+  currentGoal(): string {
+    for (const g of this.level.goals ?? []) if (!g.requires || this.flags.eval(g.requires)) return g.text;
+    return '';
+  }
+
+  /** Balance de salida del nivel (data: level.exit.computeGrade): con qué se va el grupo. */
+  exitGrade(): ExitGradeRow[] {
+    const ctx = conditionContext(this.state);
+    return Object.entries(this.level.exit?.computeGrade ?? {}).map(([id, g]) => {
+      const value = Math.round(Number(resolvePath(g.field, ctx) ?? 0));
+      return { id, value, grade: value >= g.good ? 'good' : value >= g.ok ? 'ok' : 'bad' };
+    });
   }
 
   /** Aplica un efecto de diálogo/elección. Único lugar donde se traduce data → sistemas. */

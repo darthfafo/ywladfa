@@ -204,6 +204,11 @@ describe('recorrido completo del Nivel 1', () => {
     expect(p.fired).toContain('trig_punta_final');
     expect(p.g.state.progress.day).toBe(3);
 
+    // balance de salida: un renglón por cada criterio del nivel, todos calificados
+    const grade = p.g.exitGrade();
+    expect(grade.map((r) => r.id)).toEqual(['agua', 'comida', 'mariHealth', 'morale', 'bonds']);
+    expect(grade.find((r) => r.id === 'agua')!.grade).toBe('good'); // encontró el manantial
+
     // el diario se escribió solo, con lo que pasó de verdad
     const diario = p.g.journal.entries();
     expect(diario.map((e) => e.day)).toEqual([1, 2, 3]);
@@ -231,6 +236,21 @@ describe('recorrido completo del Nivel 1', () => {
     expect(p.when).toBe('2-manana');
     return p;
   };
+
+  it('el recordatorio de qué hacer acompaña cada momento del nivel', () => {
+    const p = new Playthrough().choose('ch_n1_tareas', 't_lena');
+    p.settle();
+    expect(p.g.currentGoal()).toContain('8 cajones');
+    p.carryCrates();
+    expect(p.g.currentGoal()).toContain('barranca');
+    p.goTo('z2_barranca', [30, 60]);
+    expect(p.g.currentGoal()).toContain('Elegí una cueva');
+    p.stepOn('trig_eleccion_cueva');
+    expect(p.g.currentGoal()).toContain('Apuntalá');
+    p.use('trig_apuntalar').goTo('z2_barranca', [31, 60]);
+    expect(p.when).toBe('2-manana');
+    expect(p.g.currentGoal()).toContain('3 haces');
+  });
 
   it('la mañana del J2 no pasa sola: Lewis explica la tarea sin gastar turno', () => {
     const p = toJ2Morning('t_lena');

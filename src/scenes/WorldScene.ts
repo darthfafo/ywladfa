@@ -195,6 +195,12 @@ export class WorldScene extends Phaser.Scene {
     this.solids = this.physics.add.staticGroup();
     this.physics.add.collider(this.player, this.solids);
 
+    // al continuar una partida, lo que quedó cargado encima sigue en el inventario
+    // (se guarda) pero estos contadores no: sin esto, la leña que se llevaba al caer
+    // la noche pesaba para siempre y no se podía dejar en el fogón
+    this.carriedLena = game.inv.count('haz_lena');
+    this.carriedCajones = game.inv.count('cajon_provisiones');
+
     this.spawnProps(level);
     this.spawnDecor();
 
@@ -387,6 +393,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /** Reubica/activa el cuerpo de un sólido después de mover o esconder su sprite. */
+  private readonly hintsSaid = new Set<string>();
+
   /** Con quién es la charla que está por abrirse (talkTo / approach) */
   private talkPartner: string | null = null;
   /** sprite con el que se está hablando ahora, en plano de conversación */
@@ -1029,7 +1037,11 @@ export class WorldScene extends Phaser.Scene {
     if (it.kind !== 'cueva') return it.label;
     const chosen = game.flags.get('n1_cueva_elegida') as string | undefined;
     if (!chosen) return 'Elegir';
-    return it.id === chosen && !game.flags.is('n1_apuntalado') ? 'Apuntalar' : 'Mirar';
+    if (it.id !== chosen) return 'Mirar';
+    if (!game.flags.is('n1_apuntalado')) return 'Apuntalar';
+    // tarea de la mañana del J2 (ch_n1_tareas): tapar las grietas de la propia cueva
+    const task = game.level.triggers.find((x) => x.id === 'trig_tarea_cuevas');
+    return task && !this.triggers.hasFired(task.id) && game.flags.eval(task.requires) ? 'Arreglar' : 'Mirar';
   }
 
   private interact(): void {
@@ -1384,7 +1396,12 @@ export class WorldScene extends Phaser.Scene {
     this.talkPartner = null;
     if (out.dialogue && partner && registry.dialogue(out.dialogue).context !== 'camp') this.startTalk(partner);
     if (out.toast) bus.emit('ui:toast', { text: out.toast });
-    if (out.hint) bus.emit('ui:pc-says', { text: out.hint });
+    if (out.hint) {
+      // la primera vez lo dice el personaje (frena y se lee); las repeticiones, al
+      // volver a entrar a la zona, son solo un aviso que no corta el paso
+      bus.emit(this.hintsSaid.has(out.hint) ? 'ui:toast' : 'ui:pc-says', { text: out.hint });
+      this.hintsSaid.add(out.hint);
+    }
     if (out.tutorial) bus.emit('ui:tutorial', { id: out.tutorial });
     if (out.dialogue && registry.dialogue(out.dialogue).context === 'camp') {
       this.scene.launch('Camp', { dialogueId: out.dialogue, night: out.night });

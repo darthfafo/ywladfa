@@ -182,7 +182,18 @@ export interface LevelDef {
     pasajes: PasajeDef[];
   };
   objectives: Array<{ day: number; id: string; label: string; quest: string }>;
+  /** Recordatorio de qué hacer ahora (menú de pausa): el primero cuyo `requires` se cumple. */
+  goals?: Array<{ requires?: string; text: string }>;
   triggers: TriggerDef[];
+  /** Estado de salida del nivel: cada renglón se califica contra dos umbrales. */
+  exit?: { computeGrade?: Record<string, { field: string; good: number; ok: number }> };
+}
+
+/** Un renglón del balance de salida (Game.exitGrade). */
+export interface ExitGradeRow {
+  id: string;
+  value: number;
+  grade: 'good' | 'ok' | 'bad';
 }
 
 /* ---------- diálogos ---------- */

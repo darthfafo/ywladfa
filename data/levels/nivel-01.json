@@ -510,6 +510,75 @@
       "quest": "q_n1_carga"
     }
   ],
+  "goals": [
+    {
+      "requires": "progress.turn == 'noche'",
+      "text": "Se hizo de noche. Volvé al fogón."
+    },
+    {
+      "requires": "progress.day == 1 && flags.n1_cajones_bajados < 8",
+      "text": "Bajá los 8 cajones de la orilla a la pila de tierra."
+    },
+    {
+      "requires": "progress.day == 1 && flags.n1_cajones_bajados == null",
+      "text": "Bajá los 8 cajones de la orilla a la pila de tierra."
+    },
+    {
+      "requires": "progress.day == 1 && flags.n1_edwyn_deposito != true",
+      "text": "Hablá con Edwyn Roberts en la playa."
+    },
+    {
+      "requires": "progress.day == 1 && flags.n1_llego_barranca != true",
+      "text": "Subí a la barranca, al norte de la playa."
+    },
+    {
+      "requires": "progress.day == 1 && flags.n1_cueva_elegida == null",
+      "text": "Elegí una cueva para tu familia."
+    },
+    {
+      "requires": "progress.day == 1 && flags.n1_apuntalado != true",
+      "text": "Apuntalá tu cueva antes de que oscurezca."
+    },
+    {
+      "requires": "progress.day == 2 && progress.turn == 'amanecer'",
+      "text": "Lewis reparte las tareas en el campamento."
+    },
+    {
+      "requires": "progress.day == 2 && progress.turn == 'manana' && flags.n1_tarea == 'agua'",
+      "text": "Subí a la meseta, hasta el vigía del norte."
+    },
+    {
+      "requires": "progress.day == 2 && progress.turn == 'manana' && flags.n1_tarea == 'lena'",
+      "text": "Cortá jarilla en la estepa y llevá 3 haces al fogón."
+    },
+    {
+      "requires": "progress.day == 2 && progress.turn == 'manana' && flags.n1_tarea == 'cuevas'",
+      "text": "Tapá las grietas de tu cueva."
+    },
+    {
+      "requires": "progress.day == 2 && progress.turn == 'manana'",
+      "text": "Hablá con Lewis en el campamento."
+    },
+    {
+      "requires": "progress.day == 2 && flags.n1_dafydd_perdido != true",
+      "text": "Volvé al campamento."
+    },
+    {
+      "requires": "progress.day == 2 && flags.n1_encontro_manantial != true && flags.n1_agua_tardia != true",
+      "text": "Buscá a Dafydd. Las huellas van al noroeste."
+    },
+    {
+      "requires": "progress.day == 3 && flags.n1_carga == null",
+      "text": "Volvé al campamento: Lewis tiene algo que anunciar."
+    },
+    {
+      "requires": "progress.day == 3",
+      "text": "Buscá a tu madre en la punta, al este de la playa."
+    },
+    {
+      "text": "Volvé al campamento."
+    }
+  ],
   "triggers": [
     {
       "id": "trig_desembarco",
