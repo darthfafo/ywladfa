@@ -280,6 +280,9 @@ export function makeProps(scene: Phaser.Scene): void {
   // ovillo de algas varadas — mismo verde oscuro que la jarilla (es vegetación
   // también), franja baja y ancha, no una mata parada.
   makeRect(scene, 'prop_algas', 12, 6, PAL.scrubDark, PAL.scrub);
+  // comida: molle (mata con frutos rojos) y mejillones (piedra con valvas)
+  makeRect(scene, 'prop_molle', 14, 14, PAL.scrubDark, PAL.barranca);
+  makeRect(scene, 'prop_mejillones', 12, 7, PAL.ink, PAL.grey);
   makeShip(scene);
 }
 

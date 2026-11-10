@@ -91,6 +91,14 @@
           },
           "onComplete": {
             "type": "object"
+          },
+          "journalWhen": {
+            "type": "string",
+            "description": "condición (FlagSystem.eval) para que la línea aparezca en el diario"
+          },
+          "journalSuccessWhen": {
+            "type": "string",
+            "description": "si se cumple, va journalLineIfSuccess; si no, journalLineIfFail"
           }
         }
       }

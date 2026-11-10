@@ -67,6 +67,19 @@
       "tripsIfOverloaded": 2
     },
 
+    "apuntalar": {
+      "comment": "Minijuego de apuntalar la cueva (UiScene.openApuntalar). Nunca se pierde: los errores solo ensanchan la zona.",
+      "maderos": 3,
+      "zoneWidthPx": 44,
+      "zoneShrinkPerHitPx": 6,
+      "markerSpeedPxPerSec": 140,
+      "speedUpPerHitPxPerSec": 35,
+      "widenAfterMisses": 2,
+      "widenPx": 18,
+      "firmeMaxMisses": 1,
+      "firmeMariHealth": 3
+    },
+
     "cuevas": {
       "opciones": [
         { "id": "cueva_alta",   "label": "La más alta",     "pros": "seca",            "cons": "lejos del fuego", "healthMod": 4,  "moraleMod": -2 },

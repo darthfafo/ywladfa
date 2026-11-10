@@ -172,7 +172,8 @@ export interface LevelDef {
       /** Una vez que este flag está, el NPC deja de mostrarse en el mapa (ya se despidió y se fue). */
       hiddenAfterFlag?: string;
     }>;
-    gatherNodes: Array<{ id: string; type: ResourceId; x: number; y: number }>;
+    /** `window`: solo existe en ese turno (ej. los mejillones, con la marea baja de la mañana del J2) */
+    gatherNodes: Array<{ id: string; type: ResourceId; x: number; y: number; window?: { day: number; turn: TurnId } }>;
     cajones: Array<{ x: number; y: number }>;
     cuevas: Array<{ id: string; x: number; y: number }>;
     fogon: { x: number; y: number };

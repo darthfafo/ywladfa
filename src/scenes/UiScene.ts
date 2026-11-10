@@ -78,6 +78,7 @@ export class UiScene extends Phaser.Scene {
     const world = this.scene.get('World');
     world.events.on('request-dialogue', (p: { id: string; next?: string }) => this.openDialogue(p.id, p.next));
     world.events.on('request-choice', (id: string) => this.openChoice(id));
+    world.events.on('request-apuntalar', () => this.openApuntalar((misses) => (this.scene.get('World') as WorldScene).finishApuntalar(misses)));
     world.events.on('request-refusal', (npcId: string, text?: string) => this.openRefusal(npcId, text));
 
     bus.on('resource:changed', () => this.refreshResources());
@@ -90,6 +91,23 @@ export class UiScene extends Phaser.Scene {
     // correcto: cuando el jugador se despierta, no en medio de la noche anterior.
     bus.on('time:turn-advanced', () => this.refreshTime());
     bus.on('inventory:weight-changed', () => this.refreshLoad());
+    // la libreta (Diario y Códice): botón a la izquierda en cuanto Berwyn la da
+    const refreshBook = (): void => this.touch.setBookAvailable(game.flags.is('unlocked_sistema_diario'));
+    refreshBook();
+    // al disparar el trigger la libreta todavía no está desbloqueada (el aviso sale
+    // antes de aplicar la acción): se vuelve a mirar al cerrar el diálogo de Berwyn
+    bus.on('trigger:fired', refreshBook);
+    bus.on('dialogue:end', refreshBook);
+    bus.on('ui:open-journal', ({ tab }) => {
+      if (this.dialogue.active || this.overlay) return;
+      this.scene.launch('Journal', { tab, pause: ['World', 'Ui'] });
+    });
+    this.input.keyboard?.on('keydown-L', () => {
+      if (!input.locked && game.flags.is('unlocked_sistema_diario')) bus.emit('ui:open-journal', { tab: 'diario' });
+    });
+    bus.on('codex:unlocked', ({ title }) => {
+      if (game.flags.is('unlocked_sistema_codice')) this.showToast(`Nueva ficha en el Códice: ${title}`);
+    });
     bus.on('ui:pc-says', ({ text }) => {
       // con otra cosa abierta (diálogo, cartel) no se pisa: queda como aviso
       if (this.dialogue.active || this.overlay) {
@@ -303,7 +321,8 @@ export class UiScene extends Phaser.Scene {
 
   private showToast(text: string): void {
     if (!text) return;
-    this.toast.setText(text.toUpperCase()).setAlpha(1);
+    // sin pasar a mayúsculas: la fuente no tiene mayúsculas acentuadas ("CóDICE")
+    this.toast.setText(text).setAlpha(1);
     this.tweens.killTweensOf(this.toast);
     this.tweens.add({ targets: this.toast, alpha: 0, delay: 1800, duration: 400 });
     // el botón de acción es HTML aparte del canvas y queda SIEMPRE por encima
@@ -315,7 +334,7 @@ export class UiScene extends Phaser.Scene {
   }
 
   private showZone(label: string): void {
-    this.zoneLabel.setText(label.toUpperCase()).setAlpha(1);
+    this.zoneLabel.setText(label).setAlpha(1); // sin mayúsculas: "CAÑADóN" (la fuente no tiene Ó)
     this.tweens.killTweensOf(this.zoneLabel);
     this.tweens.add({ targets: this.zoneLabel, alpha: 0, delay: 1400, duration: 600 });
   }
@@ -414,7 +433,7 @@ export class UiScene extends Phaser.Scene {
       // tiene un lugar definido, lo deja fijo mientras dure.
       this.tweens.killTweensOf(this.zoneLabel);
       const location = CUTSCENE_LOCATIONS[id];
-      this.zoneLabel.setText(location ? location.toUpperCase() : '').setAlpha(location ? 1 : 0);
+      this.zoneLabel.setText(location ?? '').setAlpha(location ? 1 : 0);
       // solo contra el área sin bandeja (0-384, el HUD ya está oculto): cubrir la
       // pantalla 9:16 entera recortaba mucho más de una imagen pedida en 3:4.
       // con entrada animada, movimiento y ambiente (ui/cinematic.ts), no de golpe y quieta
@@ -471,6 +490,152 @@ export class UiScene extends Phaser.Scene {
       })),
       c.hint,
     );
+  }
+
+  /**
+   * Minijuego de apuntalar la cueva (docs/01-nivel-01.md, J1 T3): en la bandeja,
+   * una marca va y viene sobre una barra; tocar (o espacio / E) cuando está sobre
+   * la zona dorada coloca un madero. Hacen falta `maderos`. Errar no castiga
+   * (R7): después de `widenAfterMisses` errores la zona se agranda. `onDone`
+   * recibe cuántas veces se erró. Números en balance.json (nivel01.apuntalar).
+   */
+  openApuntalar(onDone: (misses: number) => void): void {
+    const cfg = registry.levelBalance(game.state.progress.level).apuntalar as Record<string, number>;
+    const T = VIEW.tray;
+    input.locked = true;
+    this.touch.setVisible(false);
+
+    const objs: Phaser.GameObjects.GameObject[] = [];
+    const add = <O extends Phaser.GameObjects.GameObject>(o: O): O => {
+      objs.push(o);
+      return o;
+    };
+    add(addPanel(this, T.x, T.y, T.w, T.h, { top: PAL.ink2, bottom: PAL.void, trim: true, dropShadow: 'up' }).setDepth(85));
+    const title = add(
+      this.add
+        .dom(T.x + 14, T.y + 12, 'div', `font-family:${RETRO_FONT}; font-size:9px; color:#D9A845; white-space:nowrap; pointer-events:none;`)
+        .setOrigin(0, 0)
+        .setDepth(86),
+    );
+    title.setText('Apuntalá la entrada');
+    const hint = add(
+      this.add
+        .dom(T.x + T.w / 2, T.y + T.h - 22, 'div', `width:${T.w - 28}px; text-align:center; font-family:${RETRO_FONT}; font-size:7px; color:#7FB0B8; pointer-events:none;`)
+        .setOrigin(0.5, 0)
+        .setDepth(86),
+    );
+    hint.setText('Tocá cuando esté sobre lo dorado.');
+
+    // los maderos colocados, arriba a la derecha
+    const slots: Phaser.GameObjects.Rectangle[] = [];
+    for (let i = 0; i < cfg.maderos!; i++) {
+      slots.push(
+        add(
+          this.add
+            .rectangle(T.x + T.w - 18 - (cfg.maderos! - 1 - i) * 12, T.y + 17, 8, 12, PAL.void, 0.6)
+            .setStrokeStyle(1, PAL.wheat, 0.5)
+            .setDepth(86),
+        ),
+      );
+    }
+
+    const barX = T.x + 20;
+    const barW = T.w - 40;
+    const barY = T.y + 46;
+    const bar = add(this.add.graphics().setDepth(86));
+    const marker = add(this.add.rectangle(barX, barY, 3, 18, PAL.bone).setDepth(87));
+    let placed = 0;
+    let misses = 0;
+    let missesSinceHit = 0;
+    let zoneW = cfg.zoneWidthPx!;
+    let zoneX = 0;
+    let speed = cfg.markerSpeedPxPerSec!;
+    let pos = 0;
+    let dir = 1;
+    let busy = false;
+    const placeZone = (): void => {
+      // lejos de donde está la marca ahora, para que haya que esperarla
+      const far = pos < barW / 2 ? barW * 0.55 : barW * 0.05;
+      zoneX = Math.round(far + Math.random() * (barW * 0.4 - zoneW));
+      zoneX = Phaser.Math.Clamp(zoneX, 0, barW - zoneW);
+    };
+    const drawBar = (flash?: number): void => {
+      bar.clear();
+      bar.fillStyle(PAL.void, 0.8).fillRect(barX, barY - 6, barW, 12);
+      bar.lineStyle(1, PAL.wheat, 0.35).strokeRect(barX - 0.5, barY - 6.5, barW + 1, 13);
+      bar.fillStyle(flash ?? PAL.wheat, flash ? 0.9 : 0.55).fillRect(barX + zoneX, barY - 5, zoneW, 10);
+    };
+    placeZone();
+    drawBar();
+
+    const tick = (_t: number, dtMs: number): void => {
+      if (busy) return;
+      pos += dir * speed * (dtMs / 1000);
+      if (pos >= barW) {
+        pos = barW;
+        dir = -1;
+      } else if (pos <= 0) {
+        pos = 0;
+        dir = 1;
+      }
+      marker.setX(barX + pos);
+    };
+    this.events.on('update', tick);
+
+    const shownAt = performance.now();
+    const attempt = (): void => {
+      if (busy || performance.now() - shownAt < INPUT_GUARD.choiceMs) return;
+      const hit = pos >= zoneX - 1 && pos <= zoneX + zoneW + 1;
+      busy = true;
+      if (hit) {
+        sfx.knock();
+        slots[placed]!.setFillStyle(PAL.clayLight, 1).setStrokeStyle(1, PAL.wheat, 1);
+        placed++;
+        missesSinceHit = 0;
+        drawBar(PAL.moss);
+        if (placed >= cfg.maderos!) {
+          hint.setText('¡Listo! La entrada aguanta.');
+          this.time.delayedCall(700, finish);
+          return;
+        }
+        speed += cfg.speedUpPerHitPxPerSec!;
+        zoneW = Math.max(cfg.zoneWidthPx! - cfg.zoneShrinkPerHitPx! * placed, 20);
+        hint.setText(`Bien. Van ${placed} de ${cfg.maderos}.`);
+      } else {
+        sfx.drop();
+        misses++;
+        missesSinceHit++;
+        drawBar(PAL.barranca);
+        hint.setText('Se resbaló. Probá de nuevo.');
+        if (missesSinceHit >= cfg.widenAfterMisses!) {
+          zoneW = Math.min(zoneW + cfg.widenPx!, barW * 0.5);
+          missesSinceHit = 0;
+        }
+      }
+      this.time.delayedCall(380, () => {
+        if (hit) placeZone();
+        drawBar();
+        busy = false;
+      });
+    };
+
+    // tocar en cualquier lugar de la pantalla
+    const catcher = add(
+      this.add.dom(0, 0, 'div', `width:${VIEW.width}px; height:${VIEW.height}px; cursor:pointer;`).setOrigin(0, 0).setDepth(88),
+    );
+    (catcher.node as HTMLDivElement).addEventListener('pointerdown', attempt);
+    const kb = this.input.keyboard;
+    kb?.on('keydown-SPACE', attempt);
+    kb?.on('keydown-E', attempt);
+
+    const finish = (): void => {
+      this.events.off('update', tick);
+      kb?.off('keydown-SPACE', attempt);
+      kb?.off('keydown-E', attempt);
+      for (const o of objs) o.destroy();
+      input.locked = false;
+      onDone(misses);
+    };
   }
 
   /** Cartel del medio de la pantalla (tutoriales y decisiones): una tarjeta

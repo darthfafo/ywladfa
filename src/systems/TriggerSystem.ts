@@ -107,6 +107,7 @@ export class TriggerSystem {
     }
     if (a.giveItem) this.game.inv.add(a.giveItem, 1);
     if (a.unlock) for (const u of a.unlock as string[]) this.game.flags.set(`unlocked_${u}`, true);
+    this.game.journal.unlockCodexFor(t.id);
     if (t.turnCost > 0) this.game.spendTurns(t.turnCost);
 
     return {

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { INPUT_GUARD, PAL, VIEW } from '@/config';
+import { game } from '@/core/Game';
 import { saveSystem } from '@/systems/SaveSystem';
 import { RETRO_FONT } from '@/util/text';
 import { sceneTextureKey } from '@/util/assets';
@@ -59,19 +60,27 @@ export class TransitionScene extends Phaser.Scene {
       `</div>`,
     );
 
-    this.renderButton(cx, cy + 48, 'Jugar otra vez', () => this.playAgain());
+    // el diario de la partida, escrito solo (JournalSystem): cierra el nivel con lo que pasó
+    if (game.journal.entries().length) {
+      this.renderButton(cx, cy + 48, 'Leer el diario', () => this.scene.launch('Journal', { tab: 'diario' }));
+      this.renderButton(cx, cy + 74, 'Jugar otra vez', () => this.playAgain(), false);
+    } else {
+      this.renderButton(cx, cy + 48, 'Jugar otra vez', () => this.playAgain());
+    }
   }
 
   /** Botón de vidrio con filete dorado, el mismo de la portada (BootScene.glassButton). */
-  private renderButton(cx: number, y: number, label: string, onPick: () => void): void {
+  private renderButton(cx: number, y: number, label: string, onPick: () => void, primary = true): void {
     const el = this.add.dom(
       cx,
       y,
       'button',
       `width:150px; height:21px; box-sizing:border-box; margin:0; padding:0 6px; border-radius:0; ` +
         `font-family: ${RETRO_FONT}; font-size:8px; letter-spacing:1px; cursor:pointer; ` +
-        'background:linear-gradient(rgba(46,70,79,0.85), rgba(24,38,42,0.85)); border:1px solid rgba(217,168,69,0.85); ' +
-        'color:#F2EDE0; text-shadow:0 1px 0 #0E1416; box-shadow:0 2px 8px rgba(0,0,0,0.35); ' +
+        (primary
+          ? 'background:linear-gradient(rgba(46,70,79,0.85), rgba(24,38,42,0.85)); border:1px solid rgba(217,168,69,0.85); color:#F2EDE0; '
+          : 'background:rgba(14,20,22,0.55); border:1px solid rgba(217,168,69,0.35); color:#BFD3D8; ') +
+        'text-shadow:0 1px 0 #0E1416; box-shadow:0 2px 8px rgba(0,0,0,0.35); ' +
         'opacity:0; transition:opacity .8s; -webkit-tap-highlight-color:transparent;',
     );
     const b = el.node as HTMLButtonElement;
@@ -86,8 +95,8 @@ export class TransitionScene extends Phaser.Scene {
     setTimeout(() => (b.style.opacity = '1'), 1400);
     const on = (yes: boolean) => {
       b.querySelectorAll<HTMLElement>('[data-mk]').forEach((m) => (m.style.visibility = yes ? 'visible' : 'hidden'));
-      b.style.color = yes ? '#D9A845' : '#F2EDE0';
-      b.style.borderColor = yes ? '#D9A845' : 'rgba(217,168,69,0.85)';
+      b.style.color = yes ? '#D9A845' : primary ? '#F2EDE0' : '#BFD3D8';
+      b.style.borderColor = yes ? '#D9A845' : primary ? 'rgba(217,168,69,0.85)' : 'rgba(217,168,69,0.35)';
     };
     b.addEventListener('pointerenter', () => on(true));
     b.addEventListener('pointerleave', () => on(false));
@@ -97,9 +106,14 @@ export class TransitionScene extends Phaser.Scene {
       onPick();
     };
     b.addEventListener('click', pick);
+    // teclado solo para el botón principal, y no con la libreta abierta encima
+    if (!primary) return;
     const kb = this.input.keyboard;
-    kb?.on('keydown-SPACE', pick);
-    kb?.on('keydown-E', pick);
+    const key = (): void => {
+      if (!this.scene.isActive('Journal')) pick();
+    };
+    kb?.on('keydown-SPACE', key);
+    kb?.on('keydown-E', key);
   }
 
   /** Borra la partida guardada — sin esto, "jugar otra vez" volvía a la portada

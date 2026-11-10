@@ -16,7 +16,7 @@ import { FACING_FRAME, makeProps, makeTileset, NPC_COLORS, PC_COLORS, resolveCha
 
 interface Interactable {
   sprite: Phaser.GameObjects.Image;
-  kind: 'cajon' | 'npc' | 'jarilla' | 'pila' | 'cueva' | 'fogon' | 'guanaco' | 'algas' | 'bote';
+  kind: 'cajon' | 'npc' | 'jarilla' | 'comida' | 'pila' | 'cueva' | 'fogon' | 'guanaco' | 'algas' | 'bote';
   id: string;
   label: string;
 }
@@ -257,6 +257,7 @@ export class WorldScene extends Phaser.Scene {
       this.updateGates();
       this.updateNpcVisibility();
       this.regrowJarilla();
+      this.updateFoodVisibility();
     });
     // los triggers sin `zone`/`rect` (ej. trig_pantalla_carga, trig_reacciones_carga)
     // no dependen de dónde estás parado — solo de un flag — pero checkTriggers()
@@ -433,6 +434,33 @@ export class WorldScene extends Phaser.Scene {
     sp.setFrame(FACING_FRAME[horiz ? (dx > 0 ? 'west' : 'east') : dy > 0 ? 'north' : 'south']);
   }
 
+  /** Cierre del minijuego de apuntalar: casi sin errores, la entrada queda firme
+   * (Mari duerme mejor y la narración cambia); después, el trigger de siempre,
+   * que trae la noche. */
+  finishApuntalar(misses: number): void {
+    const cfg = registry.levelBalance(game.state.progress.level).apuntalar as Record<string, number>;
+    const firme = misses <= cfg.firmeMaxMisses!;
+    game.applyEffects([
+      { setFlag: { n1_apuntalado_firme: firme } },
+      ...(firme ? [{ partyStat: { npc: 'npc_mari', health: cfg.firmeMariHealth! } }] : []),
+    ]);
+    this.runTriggerById('trig_apuntalar');
+  }
+
+  /** Comida: se ve si no se juntó todavía y, si tiene ventana, solo en ese turno. */
+  private updateFoodVisibility(): void {
+    const p = game.state.progress;
+    for (const n of game.level.spawns.gatherNodes) {
+      if (n.type !== 'comida') continue;
+      const it = this.interactables.find((x) => x.kind === 'comida' && x.id === n.id);
+      if (!it) continue;
+      const inWindow = !n.window || (n.window.day === p.day && n.window.turn === p.turn);
+      const visible = inWindow && !game.flags.is(`_juntado_${n.id}`);
+      it.sprite.setVisible(visible).setActive(visible);
+      this.syncSolid(it.sprite, visible);
+    }
+  }
+
   /** jarilla cortada → jornada en que se cortó */
   private readonly cutJarilla = new Map<Phaser.GameObjects.Image, number>();
 
@@ -509,6 +537,20 @@ export class WorldScene extends Phaser.Scene {
       this.solid(s, SOLID.jarilla.w, SOLID.jarilla.h);
       this.interactables.push({ sprite: s, kind: 'jarilla', id: n.id, label: 'Cortar' });
     }
+    // comida: fruto de molle (una sola vez) y mejillones (solo con la marea baja de
+    // la mañana del J2) — docs/01-nivel-01.md §6. Lo ya juntado no vuelve (flag
+    // _juntado_<id>, queda en la partida guardada).
+    for (const n of level.spawns.gatherNodes) {
+      if (n.type !== 'comida') continue;
+      const tex = n.id.startsWith('mejillon') ? 'mejillones' : 'molle';
+      const s =
+        addPropImage(this, tex, tileCenter(n.x), tileCenter(n.y)) ?? this.add.image(tileCenter(n.x), tileCenter(n.y), `prop_${tex}`);
+      s.setDepth(10);
+      this.solid(s, SOLID.jarilla.w, SOLID.jarilla.h);
+      this.interactables.push({ sprite: s, kind: 'comida', id: n.id, label: 'Juntar' });
+    }
+    this.updateFoodVisibility();
+
     // fogón y cuevas — arte real si ya existe (src/assets/props/fogon.png, cueva.png)
     const f = level.spawns.fogon;
     const fs =
@@ -1028,6 +1070,17 @@ export class WorldScene extends Phaser.Scene {
         bus.emit('ui:toast', { text: `+${amount} haz de leña (a cargar hasta el fogón)` });
         break;
       }
+      case 'comida': {
+        const mussels = it.id.startsWith('mejillon');
+        const gain = registry.levelBalance(game.state.progress.level).gains[mussels ? 'mejillones' : 'molle'];
+        const amount = gain.amount as number;
+        game.res.change('comida', amount, it.id);
+        game.flags.set(`_juntado_${it.id}`, true);
+        sfx.pickup();
+        this.updateFoodVisibility();
+        bus.emit('ui:toast', { text: `+${amount} raciones: ${mussels ? 'mejillones' : 'fruto de molle'}` });
+        break;
+      }
       case 'npc':
         this.talkTo(it.id);
         break;
@@ -1061,8 +1114,8 @@ export class WorldScene extends Phaser.Scene {
         }
         else if (game.flags.is('n1_apuntalado')) bus.emit('ui:pc-says', { text: 'Ya está apuntalada. Aguanta.' });
         else {
-          sfx.knock();
-          this.runTriggerById('trig_apuntalar');
+          // minijuego de los maderos (UiScene.openApuntalar); al terminar, finishApuntalar
+          this.events.emit('request-apuntalar');
         }
         break;
       }

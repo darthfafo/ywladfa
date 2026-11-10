@@ -4,6 +4,7 @@ import { game as coreGame } from './core/Game';
 import { BootScene } from './scenes/BootScene';
 import { CampScene } from './scenes/CampScene';
 import { CargoScene } from './scenes/CargoScene';
+import { JournalScene } from './scenes/JournalScene';
 import { saveSystem } from './systems/SaveSystem';
 import { TransitionScene } from './scenes/TransitionScene';
 import { UiScene } from './scenes/UiScene';
@@ -40,7 +41,7 @@ window.addEventListener('unhandledrejection', (e) => {
 
 const game = new Phaser.Game({
   ...GAME_CONFIG,
-  scene: [BootScene, WorldScene, UiScene, CampScene, CargoScene, TransitionScene],
+  scene: [BootScene, WorldScene, UiScene, CampScene, CargoScene, TransitionScene, JournalScene],
 });
 
 applyIntegerScale(game);

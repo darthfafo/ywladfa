@@ -29,6 +29,9 @@ export type GameEvents = {
 
   'flag:set': { key: string; value: unknown };
   'journal:entry': { entry: JournalEntry };
+  'codex:unlocked': { id: string; title: string };
+  /** abrir la libreta (Diario / Códice) */
+  'ui:open-journal': { tab: 'diario' | 'codice' };
   'save:written': { slot: number };
   'ui:toast': { text: string; icon?: string };
   /** algo que el propio personaje dice u observa: va en la bandeja con su retrato */

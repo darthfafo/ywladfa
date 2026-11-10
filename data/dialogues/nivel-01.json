@@ -570,6 +570,80 @@
       }
     },
     {
+      "id": "d_n1_pedir_ayuda",
+      "npc": "npc_lewis",
+      "lang": "cym",
+      "start": "pa1",
+      "note": "J2 tarde, Dafydd perdido y sin encontrar: hablarle a Lewis deja pedir ayuda. Es la salida del fracaso suave (docs/01-nivel-01.md §8): si se pide, trig_manantial_tardio cierra la tarde con Berwyn trayendo a Dafydd.",
+      "nodes": {
+        "pa1": {
+          "speaker": "npc_lewis",
+          "portrait": "tenso",
+          "text": "¿Y? ¿Nada todavía? Las huellas van al noroeste, para el lado del cañadón.",
+          "choices": [
+            {
+              "id": "pa_seguir",
+              "text": "Sigo buscando.",
+              "next": "pa_seguir"
+            },
+            {
+              "id": "pa_ayuda",
+              "text": "No lo encuentro. Necesito ayuda.",
+              "next": "pa_ayuda"
+            }
+          ]
+        },
+        "pa_seguir": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "text": "Andá. Antes de que se haga de noche.",
+          "end": true
+        },
+        "pa_ayuda": {
+          "speaker": "npc_lewis",
+          "portrait": "tenso",
+          "text": "Berwyn, vení. Salimos todos.",
+          "effects": [
+            {
+              "setFlag": {
+                "n1_pide_ayuda": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n1_manantial_tardio",
+      "lang": "cym",
+      "start": "mt1",
+      "note": "Fracaso suave del J2: Berwyn encuentra a Dafydd y el agua (12 L en vez de 30). Cierra la tarde.",
+      "nodes": {
+        "mt1": {
+          "speaker": "narrator",
+          "text": "Salen todos a buscar. Ya es de noche cuando Berwyn vuelve con Dafydd de la mano.",
+          "next": "mt2"
+        },
+        "mt2": {
+          "speaker": "npc_berwyn",
+          "portrait": "neutral",
+          "text": "Estaba en el fondo del cañadón, sentado al lado de un hilo de agua. Poca, pero sale.",
+          "next": "mt3"
+        },
+        "mt3": {
+          "speaker": "narrator",
+          "text": "Doce litros. Nadie te dice nada, pero el agua la encontró otro.",
+          "effects": [
+            {
+              "morale": -4
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
       "id": "d_n1_fogon_j2",
       "context": "camp",
       "lang": "cym",
@@ -771,12 +845,18 @@
     {
       "id": "d_n1_apuntalar",
       "lang": "none",
-      "start": "a1",
-      "note": "Apuntalar la cueva elegida (trig_apuntalar, a mano): cierra la tarde del J1. Su turnCost lleva a la noche; el atardecer lo muestra WorldScene al cerrar este diálogo.",
+      "start": "a_firme",
+      "note": "Apuntalar la cueva elegida (trig_apuntalar, a mano): cierra la tarde del J1. Su turnCost lleva a la noche; el atardecer lo muestra WorldScene al cerrar este diálogo. Lo abre el minijuego (UiScene.openApuntalar): a_firme si se apuntaló casi sin errores (n1_apuntalado_firme), si no a1.",
       "nodes": {
+        "a_firme": {
+          "speaker": "narrator",
+          "condition": "flags.n1_apuntalado_firme == true",
+          "text": "Los maderos encajan a la primera. La arcilla cruje, pero la entrada queda firme. Ya está cayendo el sol.",
+          "end": true
+        },
         "a1": {
           "speaker": "narrator",
-          "text": "Apuntalás la boca de la cueva con piedras y las tablas de un cajón roto. La arcilla cruje, pero aguanta. Ya está cayendo el sol.",
+          "text": "Se te resbalan un par de maderos, pero al final la entrada aguanta. La arcilla cruje. Ya está cayendo el sol.",
           "end": true
         }
       }

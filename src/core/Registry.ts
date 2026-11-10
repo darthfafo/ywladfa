@@ -28,7 +28,7 @@ class GameRegistry {
   private tutorials = new Map<string, TutorialDef>();
 
   readonly bultos = (itemsJson as any).bultos_nivel01 as BultoDef[];
-  readonly codex = (codexJson as any).entries as Array<{ id: string; title: string; documented: string; dramatized: string }>;
+  readonly codex = (codexJson as any).entries as Array<{ id: string; title: string; unlockedBy?: string; documented: string; dramatized: string }>;
   readonly quests = (quests01Json as any).quests as Array<any>;
 
   constructor() {

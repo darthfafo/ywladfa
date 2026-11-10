@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BUTTON_3D_ACTIVE_CSS } from '@/ui/panel';
+import { BUTTON_3D_ACTIVE_CSS, BUTTON_3D_CSS } from '@/ui/panel';
 import { RETRO_FONT } from '@/util/text';
 import { PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
@@ -48,6 +48,10 @@ export class TouchControls {
    * mostrándose (ver UiScene.showToast) el botón se oculta un momento — el
    * joystick sigue andando, solo se apaga la acción de "Mirar"/etc. */
   private toastShowing = false;
+  /** "Libreta" (Diario y Códice): a la izquierda, a la altura del botón de acción,
+   * recién cuando Berwyn la da (flag unlocked_sistema_diario) */
+  private book: Phaser.GameObjects.DOMElement;
+  private bookAvailable = false;
 
   constructor(scene: Phaser.Scene) {
     const by = VIEW.tray.y - CFG.btnAboveTray;
@@ -86,6 +90,28 @@ export class TouchControls {
     // Arranca oculto (setContext(null) al final del constructor lo confirma): sin
     // nada cerca no hay botón que mostrar, no un punto "·" sin función.
     this.button.setText('·').setDepth(52).setVisible(false);
+
+    // origen (0, 0.5): crece hacia la derecha desde el margen izquierdo
+    this.book = scene.add
+      .dom(
+        VIEW.width - CFG.rightEdge,
+        by,
+        'button',
+        'height:20px; box-sizing:border-box; margin:0; padding:0 8px; white-space:nowrap; ' +
+          BUTTON_3D_CSS +
+          ` color:#D9A845; font-family: ${RETRO_FONT}; font-size:7px; letter-spacing:1px; cursor:pointer; ` +
+          'backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); -webkit-tap-highlight-color:transparent;',
+      )
+      .setOrigin(0, 0.5)
+      .setDepth(52);
+    const bookEl = this.book.node as HTMLButtonElement;
+    bookEl.type = 'button';
+    bookEl.addEventListener('click', () => {
+      if (input.locked) return;
+      bus.emit('ui:open-journal', { tab: 'diario' });
+    });
+    (this.book.node as HTMLElement).style.display = 'block';
+    this.book.setText('LIBRETA').setVisible(false);
 
     // el joystick arranca invisible: sin toque activo no hay nada que mostrar —
     // recién se posiciona y se muestra en el pointerdown, ver más abajo.
@@ -180,6 +206,13 @@ export class TouchControls {
 
   private refreshButton(): void {
     this.button.setVisible(this.enabled && this.contextLabel !== null && !this.toastShowing);
+    this.book.setVisible(this.enabled && this.bookAvailable && !this.toastShowing);
+  }
+
+  /** Muestra el botón de la libreta (cuando ya se desbloqueó el Diario). */
+  setBookAvailable(available: boolean): void {
+    this.bookAvailable = available;
+    this.refreshButton();
   }
 
   /** Ver el comentario de `toastShowing` más arriba. */
@@ -209,5 +242,6 @@ export class TouchControls {
     this.base.destroy();
     this.thumb.destroy();
     this.button.destroy();
+    this.book.destroy();
   }
 }

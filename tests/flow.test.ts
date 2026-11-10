@@ -204,6 +204,19 @@ describe('recorrido completo del Nivel 1', () => {
     expect(p.fired).toContain('trig_punta_final');
     expect(p.g.state.progress.day).toBe(3);
 
+    // el diario se escribió solo, con lo que pasó de verdad
+    const diario = p.g.journal.entries();
+    expect(diario.map((e) => e.day)).toEqual([1, 2, 3]);
+    const txt = diario.flatMap((e) => e.lines).join(' ');
+    expect(txt).toContain('Elegimos cueva: la del fogón.');
+    expect(txt).toContain('Encontramos agua en el cañadón');
+    expect(txt).toMatch(/Dejamos .+ en la playa/);
+    expect(txt).not.toMatch(/\{\w+\}/); // sin marcadores sin reemplazar
+    // y las dos noches quedaron guardadas en el estado
+    expect(p.g.state.journal.map((e) => e.day)).toEqual([1, 2]);
+    // fichas del Códice de este nivel
+    for (const id of ['cod_wladfa', 'cod_punta_cuevas', 'cod_agua_patagonia', 'cod_mimosa']) expect(p.g.state.codex).toContain(id);
+
     // el jugador tuvo el control en todos los turnos de día de las tres jornadas
     for (const t of ['1-amanecer', '1-manana', '1-tarde', '2-manana', '2-tarde', '3-manana']) {
       expect(p.played, `turno ${t} sin jugar`).toContain(t);
@@ -244,6 +257,28 @@ describe('recorrido completo del Nivel 1', () => {
     const p = toJ2Morning('t_cuevas');
     p.use('trig_tarea_cuevas');
     expect(p.when).toBe('2-tarde');
+  });
+
+  it('si no encuentra el manantial, pedir ayuda a Lewis cierra la tarde (fracaso suave, sin trabarse)', () => {
+    const p = toJ2Morning('t_agua');
+    p.stepOn('trig_vigia_mimosa');
+    expect(p.when).toBe('2-tarde');
+    p.goTo('z2_barranca', [30, 60]);
+    expect(p.g.flags.is('n1_dafydd_perdido')).toBe(true);
+    const agua = p.g.res.get('agua');
+    // seguir buscando no cierra nada
+    p.talkTo('npc_lewis', 'pa_seguir');
+    expect(p.when).toBe('2-tarde');
+    p.talkTo('npc_lewis', 'pa_ayuda');
+    expect(p.fired).toContain('trig_manantial_tardio');
+    expect(p.g.flags.is('n1_agua_tardia')).toBe(true);
+    expect(p.g.res.get('agua')).toBeGreaterThan(agua);
+    // ya no se puede encontrar el manantial después
+    expect(p.g.flags.eval(registry.level('nivel-01').triggers.find((t) => t.id === 'trig_manantial')!.requires)).toBe(false);
+    // la noche llega y el fogón del J2 dispara: el nivel sigue
+    p.goTo('z2_barranca', [30, 60]);
+    expect(p.fired).toContain('trig_fogon_j2');
+    expect(p.g.state.progress.day).toBe(3);
   });
 
   it('tarea de agua: termina subiendo al vigía', () => {

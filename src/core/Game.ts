@@ -5,6 +5,7 @@ import type { DialogueEffect, GameState } from './types';
 
 import { FlagSystem } from '@/systems/FlagSystem';
 import { InventorySystem } from '@/systems/InventorySystem';
+import { JournalSystem } from '@/systems/JournalSystem';
 import { LanguageSystem } from '@/systems/LanguageSystem';
 import { PartySystem } from '@/systems/PartySystem';
 import { ResourceSystem } from '@/systems/ResourceSystem';
@@ -23,6 +24,7 @@ export class Game {
   party!: PartySystem;
   flags!: FlagSystem;
   lang!: LanguageSystem;
+  journal!: JournalSystem;
 
   constructor(state?: GameState) {
     this.state = state ?? createInitialState();
@@ -36,6 +38,7 @@ export class Game {
     this.party = new PartySystem(this.state);
     this.flags = new FlagSystem(this.state);
     this.lang = new LanguageSystem(this.state);
+    this.journal = new JournalSystem(this);
   }
 
   replaceState(next: GameState): void {
@@ -72,7 +75,11 @@ export class Game {
       if (typeof e.partyStat.morale === 'number') this.party.memberMorale(e.partyStat.npc, e.partyStat.morale);
     }
     if (e.giveItem) this.inv.add(e.giveItem, 1);
-    if (e.codex && !this.state.codex.includes(e.codex)) this.state.codex.push(e.codex);
+    if (e.codex && !this.state.codex.includes(e.codex)) {
+      this.state.codex.push(e.codex);
+      const c = registry.codex.find((x) => x.id === e.codex);
+      if (c) bus.emit('codex:unlocked', { id: c.id, title: c.title });
+    }
     if (e.unlock) for (const u of e.unlock) this.flags.set(`unlocked_${u}`, true);
     if (e.objective) this.flags.set(`obj_activo_${e.objective}`, true);
     if (e.unlockHint) this.flags.set(`hint_${e.unlockHint}`, true);
@@ -87,8 +94,13 @@ export class Game {
   spendTurns(cost: number): void {
     if (cost <= 0) return;
     const wasNight = this.state.progress.turn === 'noche';
+    const closingDay = this.state.progress.day;
     const days = this.time.advance(cost);
-    if (days > 0 || wasNight) this.runNight();
+    if (days > 0 || wasNight) {
+      // el diario de la jornada que termina se escribe solo, antes del autoguardado
+      this.journal.write(closingDay);
+      this.runNight();
+    }
   }
 
   private runNight(): void {

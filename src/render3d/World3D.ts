@@ -690,6 +690,8 @@ export class World3D {
     }
     if (key === 'prop_cajon') return { kind: 'model', obj: crate() };
     if (key === 'prop_jarilla') return { kind: 'model', obj: bush() };
+    if (key === 'prop_molle') return { kind: 'model', obj: molle() };
+    if (key === 'prop_mejillones') return { kind: 'model', obj: mussels() };
     if (key === 'prop_fogon') {
       const f = fire();
       return { kind: 'model', obj: f.group, update: f.update };
@@ -1061,6 +1063,54 @@ function bush(): THREE.Group {
     m.castShadow = true;
     g.add(m);
   });
+  return g;
+}
+
+/** Molle: mata más oscura y apretada que la jarilla, salpicada de frutos rojos. */
+function molle(): THREE.Group {
+  const g = new THREE.Group();
+  const mats = [PAL.scrubDark, PAL.moss].map((c) => new THREE.MeshLambertMaterial({ color: c, flatShading: true }));
+  const blobs: Array<[number, number, number, number]> = [
+    [0, 0.5, 0, 0.55],
+    [-0.42, 0.35, 0.1, 0.38],
+    [0.42, 0.38, -0.05, 0.4],
+  ];
+  blobs.forEach(([x, y, z, r], i) => {
+    const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), mats[i % mats.length]!);
+    m.position.set(x, y, z);
+    m.rotation.set(i * 1.3, i, 0);
+    m.castShadow = true;
+    g.add(m);
+  });
+  const berry = new THREE.MeshLambertMaterial({ color: PAL.barranca, emissive: PAL.blood, emissiveIntensity: 0.4 });
+  for (let i = 0; i < 9; i++) {
+    const a = i * 2.4;
+    const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.08, 0), berry);
+    b.position.set(Math.cos(a) * 0.45, 0.35 + (i % 3) * 0.18, Math.sin(a) * 0.3 + 0.2);
+    g.add(b);
+  }
+  return g;
+}
+
+/** Mejillones: una piedra baja en la orilla cubierta de valvas oscuras. */
+function mussels(): THREE.Group {
+  const g = new THREE.Group();
+  const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.45, 0), new THREE.MeshLambertMaterial({ color: PAL.grey, flatShading: true }));
+  rock.scale.set(1.3, 0.45, 1);
+  rock.position.y = 0.12;
+  rock.receiveShadow = true;
+  g.add(rock);
+  const shell = new THREE.MeshLambertMaterial({ color: PAL.ink, flatShading: true });
+  for (let i = 0; i < 11; i++) {
+    const a = i * 2.1;
+    const s = new THREE.Mesh(new THREE.SphereGeometry(0.11, 5, 3), shell);
+    s.scale.set(1, 0.5, 1.8);
+    s.position.set(Math.cos(a) * 0.35 * (0.5 + (i % 3) * 0.25), 0.28, Math.sin(a) * 0.25);
+    s.rotation.y = a;
+    g.add(s);
+  }
+  // un poco más grande que el resto de las piedras: tiene que leerse como "algo para juntar"
+  g.scale.setScalar(1.5);
   return g;
 }
 

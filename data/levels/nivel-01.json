@@ -799,7 +799,7 @@
       "id": "trig_huellas_dafydd",
       "type": "trail",
       "zone": "z3_monte",
-      "requires": "flags.n1_dafydd_perdido == true && flags.n1_encontro_manantial != true",
+      "requires": "flags.n1_dafydd_perdido == true && flags.n1_encontro_manantial != true && flags.n1_agua_tardia != true",
       "once": false,
       "turnCost": 0,
       "action": {
@@ -816,7 +816,7 @@
         3,
         3
       ],
-      "requires": "flags.n1_dafydd_perdido == true",
+      "requires": "flags.n1_dafydd_perdido == true && flags.n1_agua_tardia != true",
       "once": true,
       "turnCost": 1,
       "action": {
@@ -827,6 +827,36 @@
           "n1_encontro_manantial": true
         },
         "dialogue": "d_n1_manantial"
+      }
+    },
+    {
+      "id": "trig_pedir_ayuda",
+      "type": "dialogue",
+      "requires": "progress.day == 2 && progress.turn == 'tarde' && flags.n1_dafydd_perdido == true && flags.n1_encontro_manantial != true && flags.n1_pide_ayuda != true",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "note": "hablarle a Lewis mientras se busca a Dafydd: deja pedir ayuda (fracaso suave, docs/01 §8). Va antes que trig_lewis_flavor para ganarle al talkTo.",
+      "action": {
+        "dialogue": "d_n1_pedir_ayuda"
+      }
+    },
+    {
+      "id": "trig_manantial_tardio",
+      "type": "scene",
+      "requires": "progress.day == 2 && progress.turn == 'tarde' && flags.n1_pide_ayuda == true && flags.n1_encontro_manantial != true",
+      "once": true,
+      "turnCost": 1,
+      "note": "Berwyn encuentra a Dafydd y el agua: 12 L (balance.nivel01.gains.manantial_tardio). Cierra la tarde del J2.",
+      "action": {
+        "dialogue": "d_n1_manantial_tardio",
+        "grant": {
+          "agua": 12
+        },
+        "setFlag": {
+          "n1_agua_tardia": true,
+          "_dafydd_se_fue": true
+        }
       }
     },
     {
