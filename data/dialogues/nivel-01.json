@@ -909,15 +909,24 @@
         "m3": {
           "speaker": "narrator",
           "text": "Mari está un poco más allá, mirando el mismo punto. No se movió de ahí desde que empezaste a subir.",
-          "next": "m4"
+          "next": "m4",
+          "condition": "flags.n1_tarea != 'cuevas'"
         },
         "m4": {
           "speaker": "npc_mari",
           "portrait": "neutral",
           "text": "Ya está. Andá bajando, que hace frío.",
+          "end": true,
+          "condition": "flags.n1_tarea != 'cuevas'"
+        },
+        "m3_cuevas": {
+          "speaker": "narrator",
+          "condition": "flags.n1_tarea == 'cuevas'",
+          "text": "Desde acá arriba las cuevas se ven chiquitas. Tu madre te espera allá abajo, con las grietas sin tapar.",
           "end": true
         }
-      }
+      },
+      "note": "Mari sube al vigía en la mañana del J2 (npcs.movesTo de npc_mari) salvo que la tarea sea arreglar la cueva: ahí se queda abajo y la escena no la nombra (m3_cuevas)."
     },
     {
       "id": "d_n1_final",

@@ -22,7 +22,7 @@ export class JournalSystem {
   /** Entrada de una jornada, o null si todavía no pasó nada que contar. */
   entry(day: number): JournalEntry | null {
     const lines: string[] = [];
-    for (const q of registry.quests) {
+    for (const q of registry.questsFor(this.game.state.progress.level)) {
       if (q.day !== day || !q.journalLine) continue;
       if (q.journalWhen && !this.game.flags.eval(q.journalWhen)) continue;
       let line: string = q.journalLine;
@@ -32,12 +32,15 @@ export class JournalSystem {
       }
       lines.push(this.fill(line));
     }
-    return lines.length ? { day, title: `Jornada ${day}`, lines } : null;
+    return lines.length ? { level: this.game.state.progress.level, day, title: `Jornada ${day}`, lines } : null;
   }
 
   /** Todas las jornadas hasta la actual, en orden. */
   entries(): JournalEntry[] {
-    const out: JournalEntry[] = [];
+    // lo escrito en niveles anteriores queda guardado tal cual; el nivel actual se
+    // arma en vivo (así la jornada de hoy ya aparece antes de que caiga la noche)
+    const level = this.game.state.progress.level;
+    const out: JournalEntry[] = this.game.state.journal.filter((e) => (e.level ?? level) !== level);
     for (let d = 1; d <= this.game.state.progress.day; d++) {
       const e = this.entry(d);
       if (e) out.push(e);
@@ -50,7 +53,7 @@ export class JournalSystem {
     const e = this.entry(day);
     if (!e) return;
     const list = this.game.state.journal;
-    const i = list.findIndex((x) => x.day === day);
+    const i = list.findIndex((x) => x.day === day && (x.level ?? e.level) === e.level);
     if (i >= 0) list[i] = e;
     else list.push(e);
     bus.emit('journal:entry', { entry: e });

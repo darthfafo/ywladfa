@@ -1,7 +1,53 @@
 import { registry } from './Registry';
 import type { GameState, LangId, LangLevel, PartyMember, ResourceId } from './types';
 
-export const SAVE_VERSION = '0.1.0';
+export const SAVE_VERSION = '0.2.0';
+
+/**
+ * Pone al día una partida guardada con una versión anterior del juego: completa
+ * lo que el formato nuevo espera y no estaba. Nunca borra nada del jugador.
+ *  0.1.0 → 0.2.0: las entradas del diario guardan de qué nivel son.
+ */
+export function migrateState(s: GameState): GameState {
+  s.meta ??= { version: '0.1.0', seed: 0, createdAt: Date.now(), playtimeMs: 0 };
+  s.journal ??= [];
+  s.codex ??= ['cod_wladfa'];
+  s.flags ??= {};
+  s.triggersFired ??= [];
+  for (const e of s.journal) e.level ??= s.progress.level;
+  s.meta.version = SAVE_VERSION;
+  return s;
+}
+
+/**
+ * Estado con el que arranca el nivel siguiente: lo que dice `exit.carryOver` del
+ * nivel que termina (recursos, inventario, grupo, flags, idiomas, diario, códice)
+ * pasa tal cual; el resto vuelve a empezar (jornada 1 al amanecer, sin triggers
+ * disparados). Si el nivel nuevo trae gente que no estaba en el grupo, se suma.
+ */
+export function stateForNextLevel(prev: GameState, nextLevel: string): GameState {
+  const fresh = createInitialState(nextLevel, prev.player.name, prev.player.gender);
+  const carry = new Set(registry.level(prev.progress.level).exit?.carryOver ?? []);
+  const keep = <K extends keyof GameState>(k: K): GameState[K] =>
+    carry.has(k as string) ? structuredClone(prev[k]) : fresh[k];
+  const party = keep('party');
+  if (carry.has('party')) for (const m of fresh.party) if (!party.some((p) => p.id === m.id)) party.push(m);
+  return {
+    ...fresh,
+    meta: { ...prev.meta, version: SAVE_VERSION },
+    player: { ...prev.player },
+    resources: keep('resources'),
+    inventory: keep('inventory'),
+    party,
+    morale: carry.has('party') ? prev.morale : fresh.morale,
+    languages: keep('languages'),
+    flags: keep('flags'),
+    journal: keep('journal'),
+    codex: keep('codex'),
+    progress: { level: nextLevel, day: 1, turn: 'amanecer', zone: '' },
+    triggersFired: [],
+  };
+}
 
 /** Crea el estado inicial de una partida nueva a partir de /data (nunca hardcodeado). */
 export function createInitialState(levelId = 'nivel-01', name = 'Elin', gender: 'f' | 'm' = 'f'): GameState {

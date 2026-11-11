@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { busOn } from '@/util/scoped';
 import { BUTTON_3D_ACTIVE_CSS, BUTTON_3D_CSS } from '@/ui/panel';
 import { RETRO_FONT } from '@/util/text';
 import { PAL, VIEW } from '@/config';
@@ -148,7 +149,7 @@ export class TouchControls {
     scene.input.on('pointerup', release);
     scene.input.on('pointerupoutside', release);
 
-    bus.on('ui:action-context', ({ label }) => this.setContext(label));
+    busOn(scene, 'ui:action-context', ({ label }) => this.setContext(label));
     this.setContext(null);
   }
 

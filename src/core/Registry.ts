@@ -3,9 +3,15 @@ import balanceJson from '@data/config/balance.json';
 import itemsJson from '@data/items.json';
 import npcsJson from '@data/npcs.json';
 import codexJson from '@data/codex.json';
-import level01Json from '@data/levels/nivel-01.json';
-import dlg01Json from '@data/dialogues/nivel-01.json';
-import quests01Json from '@data/quests/nivel-01.json';
+
+// cada nivel son tres archivos con el mismo nombre (nivel-NN.json): el mapa y los
+// triggers, los diálogos y las quests. Se cargan todos los que haya: sumar un
+// nivel es sumar sus archivos, no tocar este código.
+const levelFiles = import.meta.glob('../../data/levels/*.json', { eager: true, import: 'default' });
+const dialogueFiles = import.meta.glob('../../data/dialogues/*.json', { eager: true, import: 'default' });
+const questFiles = import.meta.glob('../../data/quests/*.json', { eager: true, import: 'default' });
+const byName = (files: Record<string, unknown>): Map<string, any> =>
+  new Map(Object.entries(files).map(([path, json]) => [path.split('/').pop()!.replace('.json', ''), json]));
 
 import type {
   BultoDef, ChoiceScreenDef, DialogueDef, ItemDef, LevelDef, NpcDef, ResourceDef, TutorialDef,
@@ -29,15 +35,28 @@ class GameRegistry {
 
   readonly bultos = (itemsJson as any).bultos_nivel01 as BultoDef[];
   readonly codex = (codexJson as any).entries as Array<{ id: string; title: string; unlockedBy?: string; documented: string; dramatized: string }>;
-  readonly quests = (quests01Json as any).quests as Array<any>;
+  private questsByLevel = new Map<string, Array<any>>();
 
   constructor() {
     for (const i of (itemsJson as any).items as ItemDef[]) this.items.set(i.id, i);
     for (const n of (npcsJson as any).npcs as NpcDef[]) this.npcs.set(n.id, n);
-    this.levels.set('nivel-01', level01Json as unknown as LevelDef);
-    for (const d of (dlg01Json as any).dialogues as DialogueDef[]) this.dialogues.set(d.id, d);
-    for (const c of (dlg01Json as any).choices as ChoiceScreenDef[]) this.choices.set(c.id, c);
-    for (const t of (dlg01Json as any).tutorials as TutorialDef[]) this.tutorials.set(t.id, t);
+    for (const [id, json] of byName(levelFiles)) this.levels.set(id, json as LevelDef);
+    for (const [, json] of byName(dialogueFiles)) {
+      for (const d of (json.dialogues ?? []) as DialogueDef[]) this.dialogues.set(d.id, d);
+      for (const c of (json.choices ?? []) as ChoiceScreenDef[]) this.choices.set(c.id, c);
+      for (const t of (json.tutorials ?? []) as TutorialDef[]) this.tutorials.set(t.id, t);
+    }
+    for (const [id, json] of byName(questFiles)) this.questsByLevel.set(id, json.quests ?? []);
+  }
+
+  /** ¿Existe un nivel con este id (data/levels/<id>.json)? */
+  hasLevel(id: string): boolean {
+    return this.levels.has(id);
+  }
+
+  /** Quests de un nivel (data/quests/<id>.json); vacío si no tiene. */
+  questsFor(levelId: string): Array<any> {
+    return this.questsByLevel.get(levelId) ?? [];
   }
 
   item(id: string): ItemDef {

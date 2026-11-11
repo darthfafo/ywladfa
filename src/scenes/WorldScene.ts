@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { busOn } from '@/util/scoped';
 import { AUDIO, CAM_TALK, DUSK_MS, INPUT_GUARD, NPC_SCRIPT, PAL, RENDER_3D, TURN_LIGHT_MS, TURN_TINT, VIEW } from '@/config';
 import { sfx, type Surface } from '@/audio/Sfx';
 import { World3D } from '@/render3d/World3D';
@@ -17,7 +18,9 @@ import { FACING_FRAME, makeProps, makeTileset, NPC_COLORS, PC_COLORS, resolveCha
 
 interface Interactable {
   sprite: Phaser.GameObjects.Image;
-  kind: 'cajon' | 'npc' | 'jarilla' | 'comida' | 'pila' | 'cueva' | 'fogon' | 'guanaco' | 'algas' | 'bote';
+  kind: 'cajon' | 'npc' | 'jarilla' | 'comida' | 'pila' | 'cueva' | 'fogon' | 'mirar';
+  /** kind 'mirar': lo que dice el personaje al mirarlo (data: spawns.decor[].look) */
+  look?: string;
   id: string;
   label: string;
 }
@@ -47,17 +50,6 @@ const STEP_SURFACE: Record<number, Surface> = {
   [TERRAIN.MESA]: 'earth',
   [TERRAIN.SCRUB]: 'earth',
   [TERRAIN.PATH]: 'path',
-};
-
-/** Ambiente por zona (0..1): el mar se oye en la costa y la punta, y algo desde
- * la meseta, que mira al golfo; el viento pega más arriba. */
-const ZONE_AMBIENCE: Record<string, { wind?: number; sea?: number }> = {
-  z1_playa: { wind: 0.6, sea: 1 },
-  z6_punta: { wind: 0.8, sea: 0.8 },
-  z2_barranca: { wind: 0.5, sea: 0.3 },
-  z4_meseta: { wind: 1, sea: 0.25 },
-  z3_monte: { wind: 0.7 },
-  z5_canadon: { wind: 0.4 },
 };
 
 /** Cómo cambian de lugar los NPC entre turnos (ver updateNpcVisibility). */
@@ -101,7 +93,18 @@ export class WorldScene extends Phaser.Scene {
   private carriedCajones = 0;
   private carriedLena = 0;
   private gateOpen = new Map<string, boolean>();
-  private mimosa: Phaser.GameObjects.Image | null = null;
+  /** el barco anclado (data: spawns.ship), hasta que zarpa */
+  private ship: Phaser.GameObjects.Image | null = null;
+
+  /** ¿Ya zarpó el barco? Al verlo zarpar (hideAfterFlag) o, aunque nadie lo vea, desde `goneFrom`. */
+  private shipGone(): boolean {
+    const sh = game.level.spawns.ship;
+    if (!sh) return true;
+    if (sh.hideAfterFlag && game.flags.is(sh.hideAfterFlag)) return true;
+    if (!sh.goneFrom) return false;
+    const p = game.state.progress;
+    return p.day > sh.goneFrom.day || (p.day === sh.goneFrom.day && TURNS.indexOf(p.turn) >= TURNS.indexOf(sh.goneFrom.turn));
+  }
   private gaviotas: { sprite: Phaser.GameObjects.Sprite; speedPxPerSec: number }[] = [];
   /** Dafydd, de vuelta del manantial: no es un tween a un punto fijo (cruzaba
    * paredes y props en línea recta, "volando" por encima de todo) — sigue el
@@ -133,7 +136,40 @@ export class WorldScene extends Phaser.Scene {
     super('World');
   }
 
+  /** Phaser reutiliza esta instancia al volver a arrancar la escena (otra partida,
+   * el nivel siguiente): todo lo que se acumula durante el juego vuelve a cero
+   * acá. Sin esto, al reiniciar se duplicaban los objetos del mapa. */
+  private resetRunState(): void {
+    this.terrain = [];
+    this.interactables = [];
+    this.lastTile = { x: -1, y: -1 };
+    this.facing = 'north';
+    this.nearest = null;
+    this.nearestLabel = null;
+    this.carriedCajones = 0;
+    this.carriedLena = 0;
+    this.gateOpen = new Map();
+    this.ship = null;
+    this.gaviotas = [];
+    this.dafyddFollow = null;
+    this.playerTrail = [];
+    this.terrainVersion = 0;
+    this.holdTriggersUntil = 0;
+    this.npcsPlaced = false;
+    this.stepAcc = 0;
+    this.lastTriggerZone = '';
+    this.holdTimer = null;
+    this.duskPending = false;
+    this.hintsSaid.clear();
+    this.talkPartner = null;
+    this.talking = null;
+    this.cutJarilla.clear();
+    this.lockedIdleMs = 0;
+    this.approaching.clear();
+  }
+
   create(): void {
+    this.resetRunState();
     const level = game.level;
     makeTileset(this);
     makeProps(this);
@@ -230,7 +266,7 @@ export class WorldScene extends Phaser.Scene {
     // cuando cambia el reloj (eso suele pasar en el medio de un diálogo): queda
     // pendiente y el atardecer se ve recién cuando el jugador vuelve a tener el
     // control — ver checkTriggers().
-    bus.on('time:turn-advanced', () => {
+    busOn(this, 'time:turn-advanced', () => {
       this.duskPending = game.state.progress.turn === 'noche';
       if (!this.duskPending) this.applyTurnLight(TURN_LIGHT_MS);
     });
@@ -258,9 +294,9 @@ export class WorldScene extends Phaser.Scene {
 
     // ---- triggers
     this.triggers = new TriggerSystem(game, level.triggers as TriggerDef[]);
-    bus.on('inventory:added', (p) => this.fireEventTriggers('inventory:added', p as never));
-    bus.on('inventory:overloaded', (p) => this.fireEventTriggers('inventory:overloaded', p as never));
-    bus.on('time:turn-advanced', () => {
+    busOn(this, 'inventory:added', (p) => this.fireEventTriggers('inventory:added', p as never));
+    busOn(this, 'inventory:overloaded', (p) => this.fireEventTriggers('inventory:overloaded', p as never));
+    busOn(this, 'time:turn-advanced', () => {
       this.updateGates();
       this.updateNpcVisibility();
       this.regrowJarilla();
@@ -275,14 +311,14 @@ export class WorldScene extends Phaser.Scene {
     // de que DialogueBox termine de poner input.locked en false, así que
     // checkTriggers() en el mismo instante se encontraba con el juego todavía
     // "bloqueado" y no hacía nada — un tick después ya está desbloqueado.
-    bus.on('dialogue:end', () => {
+    busOn(this, 'dialogue:end', () => {
       this.endTalk();
       this.time.delayedCall(0, () => this.checkTriggers());
     });
 
     this.lastStepPos = { x: this.player.x, y: this.player.y };
     this.refreshAmbience();
-    bus.on('time:turn-advanced', () => this.refreshAmbience());
+    busOn(this, 'time:turn-advanced', () => this.refreshAmbience());
     this.setupKeyboard();
     this.scene.launch('Ui');
     this.time.delayedCall(120, () => this.checkTriggers());
@@ -332,7 +368,8 @@ export class WorldScene extends Phaser.Scene {
   refreshAmbience(): void {
     const zone = game.state.progress.zone;
     const night = game.state.progress.turn === 'noche';
-    const amb = ZONE_AMBIENCE[zone] ?? { wind: 0.6 };
+    // ambiente por zona en los datos del nivel (zones[].ambience)
+    const amb = game.level.zones.find((z) => z.id === zone)?.ambience ?? { wind: 0.6 };
     sfx.setAmbience({ wind: (amb.wind ?? 0.6) * (night ? 0.6 : 1), sea: amb.sea ?? 0 });
   }
 
@@ -493,25 +530,13 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private spawnProps(level: typeof game.level): void {
-    // el Mimosa, anclado frente a la costa hasta que zarpa (trig_vigia_mimosa) —
-    // arte real si ya existe (src/assets/props/mimosa.png), si no el placeholder
-    // de siempre (util/textures.ts).
-    // OJO con este número: la cámara SIGUE AL JUGADOR (startFollow), no mira fijo
-    // al barco — "más profundo = más grande" solo sirve si además entra en la
-    // ventana que la cámara REALMENTE muestra parada en el spawn (27,104), no en
-    // cualquier centrado manual. Esa ventana (viewport 352px, jugador arriba)
-    // cubre y≈1496-1848px. La vez anterior medí márgenes contra los bordes del
-    // MAPA (heightTiles) en vez de contra esa ventana real, así que "verifiqué"
-    // un encuadre que el juego nunca muestra — el barco quedaba con la mitad de
-    // abajo cortada por el borde de la franja del mundo. 110px + fila 112 entra
-    // completo en esa ventana real con margen (~15px arriba y abajo), medido
-    // esta vez con el mismo startFollow/bounds que usa el juego, no con
-    // cam.centerOn() a mano.
-    if (!game.flags.is('n1_vio_zarpar')) {
-      this.mimosa =
-        addPropImage(this, 'mimosa', tileCenter(27), tileCenter(112)) ??
-        this.add.image(tileCenter(27), tileCenter(112), 'prop_mimosa');
-      this.mimosa.setDepth(7);
+    // el barco anclado frente a la costa (data: spawns.ship), hasta que zarpa
+    const ship = level.spawns.ship;
+    if (ship && !this.shipGone()) {
+      this.ship =
+        addPropImage(this, ship.prop, tileCenter(ship.x), tileCenter(ship.y)) ??
+        this.add.image(tileCenter(ship.x), tileCenter(ship.y), `prop_${ship.prop}`);
+      this.ship.setDepth(7);
     }
     // cajones a bajar — si ya se entregaron los 8 (ej. se retomó una partida guardada
     // en J2/J3, donde WorldScene.create() corre de cero otra vez) no hay que volver a
@@ -531,38 +556,31 @@ export class WorldScene extends Phaser.Scene {
     }
     // la pila donde se dejan: tierra adentro, lejos de la marea — por eso hay que
     // bajarlos ahí y no dejarlos donde el bote los tiró, cerca del agua
-    const pila = this.add
-      .rectangle(tileCenter(27), tileCenter(97), 26, 14, PAL.soil2, 0.55)
-      .setStrokeStyle(1, PAL.sandLight, 0.8)
-      .setDepth(9);
-    this.interactables.push({ sprite: pila as unknown as Phaser.GameObjects.Image, kind: 'pila', id: 'pila', label: 'Dejar' });
-
-    // jarilla — arte real si ya existe (src/assets/props/jarilla.png)
-    for (const n of level.spawns.gatherNodes) {
-      if (n.type !== 'lena') continue;
-      const s =
-        addPropImage(this, 'jarilla', tileCenter(n.x), tileCenter(n.y)) ??
-        this.add.image(tileCenter(n.x), tileCenter(n.y), 'prop_jarilla');
-      s.setDepth(10);
-      this.solid(s, SOLID.jarilla.w, SOLID.jarilla.h);
-      this.interactables.push({ sprite: s, kind: 'jarilla', id: n.id, label: 'Cortar' });
+    const dep = level.spawns.deposit;
+    if (dep) {
+      const pila = this.add
+        .rectangle(tileCenter(dep.x), tileCenter(dep.y), 26, 14, PAL.soil2, 0.55)
+        .setStrokeStyle(1, PAL.sandLight, 0.8)
+        .setDepth(9);
+      this.interactables.push({ sprite: pila as unknown as Phaser.GameObjects.Image, kind: 'pila', id: 'pila', label: 'Dejar' });
     }
-    // comida: fruto de molle (una sola vez) y mejillones (solo con la marea baja de
-    // la mañana del J2) — docs/01-nivel-01.md §6. Lo ya juntado no vuelve (flag
-    // _juntado_<id>, queda en la partida guardada).
+
+    // lo que se junta (data: spawns.gatherNodes): leña que hay que llevar al fogón,
+    // o comida que suma al toque. `prop` es el dibujo, `gain` la entrada de
+    // balance.json con la cantidad. Arte real si ya existe (src/assets/props/).
     for (const n of level.spawns.gatherNodes) {
-      if (n.type !== 'comida') continue;
-      const tex = n.id.startsWith('mejillon') ? 'mejillones' : 'molle';
+      const prop = n.prop ?? (n.type === 'lena' ? 'jarilla' : 'molle');
       const s =
-        addPropImage(this, tex, tileCenter(n.x), tileCenter(n.y)) ?? this.add.image(tileCenter(n.x), tileCenter(n.y), `prop_${tex}`);
+        addPropImage(this, prop, tileCenter(n.x), tileCenter(n.y)) ?? this.add.image(tileCenter(n.x), tileCenter(n.y), `prop_${prop}`);
       s.setDepth(10);
       this.solid(s, SOLID.jarilla.w, SOLID.jarilla.h);
-      this.interactables.push({ sprite: s, kind: 'comida', id: n.id, label: 'Juntar' });
+      this.interactables.push({ sprite: s, kind: n.type === 'lena' ? 'jarilla' : 'comida', id: n.id, label: n.type === 'lena' ? 'Cortar' : 'Juntar' });
     }
     this.updateFoodVisibility();
 
     // fogón y cuevas — arte real si ya existe (src/assets/props/fogon.png, cueva.png)
     const f = level.spawns.fogon;
+    if (f) {
     const fs =
       addPropImage(this, 'fogon', tileCenter(f.x), tileCenter(f.y)) ??
       this.add.image(tileCenter(f.x), tileCenter(f.y), 'prop_fogon');
@@ -570,6 +588,7 @@ export class WorldScene extends Phaser.Scene {
     // centrado en el fogón (el 3D dibuja el aro de piedras alrededor del centro)
     this.solid(fs, SOLID.fogon.w, SOLID.fogon.h, SOLID.fogon.h / 2 - fs.displayHeight / 2);
     this.interactables.push({ sprite: fs, kind: 'fogon', id: 'fogon', label: 'Fogón' });
+    }
     for (const c of level.spawns.cuevas) {
       const s =
         addPropImage(this, 'cueva', tileCenter(c.x), tileCenter(c.y)) ??
@@ -602,143 +621,26 @@ export class WorldScene extends Phaser.Scene {
    * acercarse, no ser un detalle que se pierde contra el terreno.
    */
   private spawnDecor(): void {
-    // guanaco a la distancia — vida silvestre de la estepa, mismo espíritu que
-    // hint_agua_3 (huella de guanaco → agua), pero lejos de los nodos de jarilla.
-    // 42, no 28: a 28 no se distinguía la silueta. Interactuable con una línea de
-    // sabor nada más (no da ni pide nada) — que el jugador se acerque a mirarlo
-    // tiene que valer la pena con algo, aunque sea un chiste.
-    const guanaco = addPropImage(this, 'guanaco', tileCenter(9), tileCenter(59))?.setDepth(6);
-    if (guanaco) {
-      this.solidAnimal(guanaco);
-      this.interactables.push({ sprite: guanaco, kind: 'guanaco', id: 'guanaco', label: 'Mirar' });
-    }
-
-    // coirón disperso por la estepa — decoración de terreno, no interactuable
-    // (distinto de la jarilla, que sí se corta).
-    for (const [tx, ty] of [
-      [4, 47],
-      [20, 51],
-      [12, 73],
-    ] as const) {
-      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty))?.setDepth(6);
-    }
-
-    // restos de costa, algas varadas y botes menores — la playa se siente usada,
-    // no vacía. Lejos de los cajones y la pila para no confundir qué se puede
-    // levantar.
-    const restos = addPropImage(this, 'restos_costa', tileCenter(10), tileCenter(103))?.setDepth(6);
-    if (restos) this.solidHull(restos);
-
-    // algas: varios ovillos esparcidos por la arena húmeda (donde de verdad las
-    // deja la marea, no en la seca) — cada uno interactuable, mismo criterio que
-    // el guanaco (una línea de sabor, no da ni pide nada).
-    // (42,107), no (33,107): ahí quedaba a ~35px de dos cajones a la vez y
-    // competía por el "más cercano" con ellos — no se podía interactuar con el
-    // cajón sin que el alga se lo robara. 40px+ de cualquier otro interactuable.
-    ([
-      [7, 106],
-      [42, 107],
-      [48, 106],
-    ] as const).forEach(([ax, ay], i) => {
+    // paisaje del nivel (data: spawns.decor): animales, matas, restos, botes. Solo
+    // con arte real (src/assets/props/), salvo los marcados `fallback`, que tienen
+    // un dibujo de código. Con `look`, se pueden mirar: el personaje dice esa línea.
+    for (const dc of game.level.spawns.decor ?? []) {
       const s =
-        addPropImage(this, 'algas', tileCenter(ax), tileCenter(ay)) ??
-        this.add.image(tileCenter(ax), tileCenter(ay), 'prop_algas');
-      s.setDepth(6);
-      this.interactables.push({ sprite: s, kind: 'algas', id: `algas_${i}`, label: 'Mirar' });
-    });
-
-    // botes menores: varados en la arena SECA, no en la húmeda — un bote de
-    // verdad no se deja donde lo agarra la marea. Uno cerca del otro (como
-    // quedan de verdad, arrastrados juntos) más uno solo hacia el medio de la
-    // orilla. 60, no 52: angosto (2:1), a 52 se perdía contra la arena.
-    ([
-      [44, 103],
-      [40, 105],
-      [22, 102],
-    ] as const).forEach(([bx, by], i) => {
-      const s = addPropImage(this, 'bote_menor', tileCenter(bx), tileCenter(by))?.setDepth(6);
-      if (s) {
-        this.solidHull(s);
-        this.interactables.push({ sprite: s, kind: 'bote', id: `bote_${i}`, label: 'Mirar' });
-      }
-    });
-
-    // fauna del cañadón: es un espacio abierto y grande, no tiene sentido que esté
-    // vacío de vida — mismo guanaco que ya se usa en la estepa (roamea Patagonia
-    // entera, no es exclusivo de una zona) y un par de matas de coirón, lejos de
-    // los afloramientos de roca nuevos y del propio manantial.
-    const guanacoCanadon = addPropImage(this, 'guanaco', tileCenter(21), tileCenter(30))?.setDepth(6);
-    if (guanacoCanadon) {
-      this.solidAnimal(guanacoCanadon);
-      this.interactables.push({ sprite: guanacoCanadon, kind: 'guanaco', id: 'guanaco_canadon', label: 'Mirar' });
-    }
-    for (const [tx, ty] of [
-      [6, 11],
-      [23, 36],
-    ] as const) {
-      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty))?.setDepth(6);
+        addPropImage(this, dc.prop, tileCenter(dc.x), tileCenter(dc.y)) ??
+        (dc.fallback ? this.add.image(tileCenter(dc.x), tileCenter(dc.y), `prop_${dc.prop}`) : null);
+      if (!s) continue;
+      s.setDepth(dc.depth ?? 6);
+      if (dc.solid === 'animal') this.solidAnimal(s);
+      else if (dc.solid === 'hull') this.solidHull(s);
+      if (dc.look) this.interactables.push({ sprite: s, kind: 'mirar', id: dc.id ?? `${dc.prop}_${dc.x}_${dc.y}`, label: 'Mirar', look: dc.look });
     }
 
-    // la meseta: pasto y agua en algún lado (por algo baja Lewis a buscarla ahí) —
-    // dos tropillas de guanaco (3-4 juntos, que es como se los ve de verdad, no de
-    // a uno suelto como en la estepa o el cañadón) y varios juncos dispersos. Cada
-    // tropilla registra un solo guanaco como interactuable ("Mirar"); el resto es
-    // decoración — se lee igual como grupo, no hace falta que los cuatro respondan.
-    const mesetaGroups: Array<{ id: string; spots: ReadonlyArray<readonly [number, number]> }> = [
-      {
-        id: 'guanaco_meseta_1',
-        spots: [
-          [35, 15],
-          [37, 16.5],
-          [34, 17],
-          [36, 18.5],
-        ],
-      },
-      {
-        id: 'guanaco_meseta_2',
-        spots: [
-          [48, 25],
-          [50, 26.5],
-          [47, 27],
-        ],
-      },
-    ];
-    for (const group of mesetaGroups) {
-      group.spots.forEach(([gx, gy], i) => {
-        const s = addPropImage(this, 'guanaco', tileCenter(gx), tileCenter(gy))?.setDepth(6);
-        if (s) this.solidAnimal(s);
-        if (s && i === 0) this.interactables.push({ sprite: s, kind: 'guanaco', id: group.id, label: 'Mirar' });
-      });
-    }
-    for (const [tx, ty] of [
-      [33, 10],
-      [42, 12],
-      [55, 18],
-      [38, 29],
-      [52, 30],
-      [44, 21],
-    ] as const) {
-      addPropImage(this, 'coiron', tileCenter(tx), tileCenter(ty))?.setDepth(6);
-    }
-
-    // el manantial: centrado en el mismo bloque de tiles que ya pinta buildTerrain()
-    // (TERRAIN.SPRING, un bloque angosto de 2×2 = 32px). La imagen del pozo tiene
-    // bastante margen transparente alrededor de la forma orgánica de las piedras
-    // (no es un cuadrado sólido), así que se pone bien más grande (96) que ese
-    // bloque — el borde de piedras del dibujo lo tapa entero contra el terreno del
-    // cañadón alrededor, que combina mejor que un cuadrado de agua lisa asomando.
-    addPropImage(this, 'manantial', tileCenter(9.5), tileCenter(7.5))?.setDepth(5);
-
-    // gaviotas: 2-3 frames animados (ver util/assets.ts PROP_SPRITESHEETS), planeando
-    // de izquierda a derecha sobre la playa. No van con un tween de coordenadas fijas
-    // del mapa: eso las hacía "aparecer" en cualquier punto en cuanto ese tramo del
-    // mapa entraba en cámara, en vez de entrar volando desde el borde. Se mueven a
-    // velocidad constante en updateGaviotas() (llamado desde update()) y se
-    // reposicionan just fuera del borde IZQUIERDO de lo que la cámara esté mostrando
-    // en ese momento apenas cruzan el borde derecho — así siempre entran por donde
-    // corresponde, dondequiera que esté mirando la cámara.
-    if (hasPropArt('gaviotas')) {
-      const key = propTextureKey('gaviotas');
+    // pájaros (data: spawns.birds), planeando de izquierda a derecha. No van con un
+    // tween de coordenadas fijas: se mueven a velocidad constante (updateGaviotas)
+    // y vuelven a entrar por el borde izquierdo de lo que muestra la cámara.
+    const birds = game.level.spawns.birds ?? [];
+    if (birds.length && hasPropArt(birds[0]!.prop)) {
+      const key = propTextureKey(birds[0]!.prop);
       if (!this.anims.exists('gaviota_vuelo')) {
         this.anims.create({
           key: 'gaviota_vuelo',
@@ -748,17 +650,12 @@ export class WorldScene extends Phaser.Scene {
         });
       }
       const viewLeft = this.player.x - VIEW.world.w / 2;
-      for (const [ty, offset, speedPxPerSec] of [
-        [96, 0, 16],
-        [94, 90, 12],
-      ] as const) {
-        // sin setDisplaySize: gaviotas.png ya viene a 22×22 por cuadro (ver
-        // scripts/resize-assets.py) — escala 1, nada que reinterpolar.
+      for (const b of birds) {
         const sprite = this.add
-          .sprite(viewLeft - 24 - offset, tileCenter(ty), key)
+          .sprite(viewLeft - 24 - b.offsetPx, tileCenter(b.y), key)
           .setDepth(11)
           .play('gaviota_vuelo');
-        this.gaviotas.push({ sprite, speedPxPerSec });
+        this.gaviotas.push({ sprite, speedPxPerSec: b.speedPxPerSec });
       }
     }
   }
@@ -821,7 +718,11 @@ export class WorldScene extends Phaser.Scene {
       // playa → barranca en J2 → playa de vuelta en J3) — de las que ya pasaron
       // su umbral, la última declarada gana.
       const stops = n.movesTo ? (Array.isArray(n.movesTo) ? n.movesTo : [n.movesTo]) : [];
-      const reached = stops.filter((m) => day > m.day || (day === m.day && turnIdx >= TURNS.indexOf(m.turn)));
+      // `requires`: la parada solo vale si se cumple (ej. Mari sube al vigía salvo
+      // que la tarea del día sea arreglar la cueva)
+      const reached = stops.filter(
+        (m) => (day > m.day || (day === m.day && turnIdx >= TURNS.indexOf(m.turn))) && (!m.requires || game.flags.eval(m.requires)),
+      );
       const pos = reached.length ? reached[reached.length - 1]! : n;
       const tx = tileCenter(pos.x);
       const ty = tileCenter(pos.y);
@@ -1100,21 +1001,21 @@ export class WorldScene extends Phaser.Scene {
         it.sprite.setVisible(false).setActive(false);
         this.syncSolid(it.sprite, false);
         this.cutJarilla.set(it.sprite, game.state.progress.day);
-        const amount = registry.levelBalance(game.state.progress.level).gains.jarilla.amount as number;
+        const gainKey = game.level.spawns.gatherNodes.find((n) => n.id === it.id)?.gain ?? 'jarilla';
+        const amount = registry.levelBalance(game.state.progress.level).gains[gainKey].amount as number;
         this.carriedLena += amount;
         game.inv.add('haz_lena', amount);
         bus.emit('ui:toast', { text: `+${amount} haz de leña (a cargar hasta el fogón)` });
         break;
       }
       case 'comida': {
-        const mussels = it.id.startsWith('mejillon');
-        const gain = registry.levelBalance(game.state.progress.level).gains[mussels ? 'mejillones' : 'molle'];
-        const amount = gain.amount as number;
+        const node = game.level.spawns.gatherNodes.find((n) => n.id === it.id);
+        const amount = registry.levelBalance(game.state.progress.level).gains[node?.gain ?? 'molle'].amount as number;
         game.res.change('comida', amount, it.id);
         game.flags.set(`_juntado_${it.id}`, true);
         sfx.pickup();
         this.updateFoodVisibility();
-        bus.emit('ui:toast', { text: `+${amount} raciones: ${mussels ? 'mejillones' : 'fruto de molle'}` });
+        bus.emit('ui:toast', { text: `+${amount} raciones: ${node?.name ?? 'comida'}` });
         break;
       }
       case 'npc':
@@ -1155,17 +1056,8 @@ export class WorldScene extends Phaser.Scene {
         }
         break;
       }
-      case 'guanaco':
-        bus.emit('ui:pc-says', { text: 'Guarda que escupen.' });
-        break;
-      case 'algas':
-        bus.emit('ui:pc-says', { text: 'Cuántas algas hay en esta costa.' });
-        break;
-      case 'bote':
-        // no son botes de pesca cualquiera: son los que bajaron a los 150
-        // colonos del Mimosa a remo, como el del cold open ("El bote toca la
-        // playa y nadie baja primero") — varios viajes, no cupo todos de una.
-        bus.emit('ui:pc-says', { text: 'Uno de los botes en los que bajamos del Mimosa.' });
+      case 'mirar':
+        if (it.look) bus.emit('ui:pc-says', { text: it.look });
         break;
     }
   }
@@ -1266,12 +1158,9 @@ export class WorldScene extends Phaser.Scene {
     }
     if (changed) this.layer.setCollision(COLLIDES);
 
-    // el Mimosa zarpa en la mañana de J2, lo haya visto el jugador o no
-    const p = game.state.progress;
-    const sailed = p.day > 2 || (p.day === 2 && TURNS.indexOf(p.turn) > TURNS.indexOf('manana'));
-    if (this.mimosa && (game.flags.is('n1_vio_zarpar') || sailed)) {
-      this.mimosa.destroy();
-      this.mimosa = null;
+    if (this.ship && this.shipGone()) {
+      this.ship.destroy();
+      this.ship = null;
     }
   }
 

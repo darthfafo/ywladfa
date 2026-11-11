@@ -71,7 +71,23 @@ const ZONE_TERRAIN: Record<string, number> = {
  * true siempre) el mapa queda como antes. Un pasaje cerrado se pinta como acantilado:
  * mismo lenguaje visual que ya usa la pared de la barranca, nada de carteles.
  */
+/**
+ * Arma la grilla del nivel con el generador que pide su `map.generator`. Cada
+ * nivel tiene el suyo (el del Nivel 1 arma Punta Cuevas a partir de sus seis
+ * zonas); sumar un nivel con un paisaje distinto es sumar un generador acá.
+ */
+const GENERATORS: Record<string, (level: LevelDef, isOpen: (pasajeId: string) => boolean) => number[][]> = {
+  punta_cuevas: buildPuntaCuevas,
+};
+
 export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => boolean = () => true): number[][] {
+  const id = level.map.generator ?? 'punta_cuevas';
+  const gen = GENERATORS[id];
+  if (!gen) throw new Error(`[mapgen] generador de mapa desconocido: ${id} (nivel ${level.id})`);
+  return gen(level, isOpen);
+}
+
+function buildPuntaCuevas(level: LevelDef, isOpen: (pasajeId: string) => boolean = () => true): number[][] {
   const { widthTiles: W, heightTiles: H } = level.map;
   // roca genérica, no acantilado: el relleno por default es el borde exterior del mapa
   // jugable (estepa, el resto de la meseta) y tiene que leerse como límite natural sin

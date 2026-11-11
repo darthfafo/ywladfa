@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { INPUT_GUARD, PAL, VIEW } from '@/config';
 import { game } from '@/core/Game';
+import { stateForNextLevel } from '@/core/GameState';
+import { registry } from '@/core/Registry';
 import { saveSystem } from '@/systems/SaveSystem';
 import { RETRO_FONT } from '@/util/text';
 import { sceneTextureKey } from '@/util/assets';
@@ -23,7 +25,7 @@ export class TransitionScene extends Phaser.Scene {
     super('Transition');
   }
 
-  create(_data: TransitionData): void {
+  create(data: TransitionData): void {
     this.scene.stop('World');
     this.scene.stop('Ui');
     const cx = VIEW.width / 2;
@@ -88,7 +90,12 @@ export class TransitionScene extends Phaser.Scene {
 
     // el diario de la partida, escrito solo (JournalSystem): cierra el nivel con lo que pasó
     const by = rows.length ? 304 : cy + 48;
-    if (game.journal.entries().length) {
+    // si el nivel siguiente ya existe (data/levels/<next>.json), se sigue viaje con
+    // lo que hereda; si no, este cierre es el final de lo que hay por ahora
+    if (data.next && registry.hasLevel(data.next)) {
+      this.renderButton(cx, by, 'Seguir viaje', () => this.goNext(data.next));
+      this.renderButton(cx, by + 26, 'Leer el diario', () => this.scene.launch('Journal', { tab: 'diario' }), false);
+    } else if (game.journal.entries().length) {
       this.renderButton(cx, by, 'Leer el diario', () => this.scene.launch('Journal', { tab: 'diario' }));
       this.renderButton(cx, by + 26, 'Jugar otra vez', () => this.playAgain(), false);
     } else {
@@ -141,6 +148,16 @@ export class TransitionScene extends Phaser.Scene {
     };
     kb?.on('keydown-SPACE', key);
     kb?.on('keydown-E', key);
+  }
+
+  /** Pasa al nivel siguiente: escribe la última jornada en el diario, arma el
+   * estado con lo que hereda (exit.carryOver) y lo guarda antes de arrancar. */
+  private goNext(next: string): void {
+    game.journal.write(game.state.progress.day);
+    const s = stateForNextLevel(game.state, next);
+    game.replaceState(s);
+    saveSystem.save(s);
+    this.scene.start('World');
   }
 
   /** Borra la partida guardada — sin esto, "jugar otra vez" volvía a la portada

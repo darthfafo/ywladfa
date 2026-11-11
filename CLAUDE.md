@@ -65,7 +65,7 @@ ni bloquea el avance. Ver `docs/01-nivel-01.md` §8.
 ✔ docs/           GDD, spec del Nivel 1, arquitectura, assets, guía histórica, plan del Nivel 2
 ✔ data/           config, items, npcs, nivel-01, diálogos, quests, códice, schemas
 ✔ src/            core + 10 sistemas + 7 escenas + UI táctil + mundo HD-2D (render3d)
-✔ tests/          33 tests en verde: sistemas, recorrido completo del nivel y caminos del mapa
+✔ tests/          38 tests en verde: sistemas, recorrido del nivel, caminos del mapa y encadenar niveles
 ✔ scripts/        validate-data.mjs (integridad referencial)
 ◐ arte            ilustraciones, retratos y sprites reales donde existen; el resto, por código
 ✘ maps/           no hay .tmj de Tiled: el mapa se genera en src/util/mapgen.ts
@@ -86,7 +86,7 @@ Pendientes menores del Nivel 1: ciclo de caminata dibujado (hoy es procedural) y
 ```bash
 npm install
 npm run dev            # http://localhost:5173  (abrilo angosto o con el emulador de móvil)
-npm test               # 33 tests (sistemas, recorrido del nivel, caminos del mapa), sin navegador
+npm test               # 38 tests (sistemas, recorrido, caminos, encadenar niveles), sin navegador
 npm run validate:data  # integridad referencial de todo /data
 npm run build:single   # dist/index.html autocontenido, se abre con doble clic
 ```

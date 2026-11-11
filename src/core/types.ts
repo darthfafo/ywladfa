@@ -23,6 +23,8 @@ export interface PartyMember {
 }
 
 export interface JournalEntry {
+  /** nivel de la entrada: los días vuelven a empezar en cada nivel */
+  level?: string;
   day: number;
   title: string;
   lines: string[];
@@ -105,6 +107,8 @@ export interface ZoneDef {
   rect: [number, number, number, number];
   music: string | null;
   ambient: string[];
+  /** sonido de fondo de la zona (0..1) */
+  ambience?: { wind?: number; sea?: number };
   hub?: boolean;
   saveHere?: boolean;
   speedModifier?: number;
@@ -118,6 +122,9 @@ export interface NpcMove {
   x: number;
   y: number;
   exitDir?: 'north' | 'south' | 'east' | 'west';
+  /** condición (FlagSystem.eval): la parada solo vale si se cumple */
+  requires?: string;
+  note?: string;
 }
 
 export interface TriggerDef {
@@ -153,7 +160,7 @@ export interface LevelDef {
   subtitle: string;
   date: string;
   next: string | null;
-  map: { widthTiles: number; heightTiles: number; tileSize: number };
+  map: { widthTiles: number; heightTiles: number; tileSize: number; /** generador de src/util/mapgen.ts */ generator?: string };
   schedule: { days: number; turnsPerDay: number };
   zones: ZoneDef[];
   camera: { follow: { lerpX: number; lerpY: number } };
@@ -173,8 +180,30 @@ export interface LevelDef {
       hiddenAfterFlag?: string;
     }>;
     /** `window`: solo existe en ese turno (ej. los mejillones, con la marea baja de la mañana del J2) */
-    gatherNodes: Array<{ id: string; type: ResourceId; x: number; y: number; window?: { day: number; turn: TurnId } }>;
+    gatherNodes: Array<{
+      id: string;
+      type: ResourceId;
+      x: number;
+      y: number;
+      /** dibujo (src/assets/props/<prop>.png o prop_<prop> de código) */
+      prop?: string;
+      /** entrada de balance.json (nivelNN.gains) con la cantidad */
+      gain?: string;
+      /** nombre para el aviso ("+2 raciones: fruto de molle") */
+      name?: string;
+      /** vuelve a crecer cada jornada (la jarilla) */
+      regrows?: boolean;
+      window?: { day: number; turn: TurnId };
+    }>;
+    /** el barco anclado frente a la costa, hasta que zarpa */
+    ship?: { prop: string; x: number; y: number; hideAfterFlag?: string; goneFrom?: { day: number; turn: TurnId } };
+    /** paisaje: con `look` se puede mirar; `fallback` = tiene dibujo de código si falta el PNG */
+    decor?: Array<{ prop: string; x: number; y: number; id?: string; solid?: 'animal' | 'hull'; look?: string; depth?: number; fallback?: boolean }>;
+    /** pájaros que cruzan la pantalla */
+    birds?: Array<{ prop: string; y: number; offsetPx: number; speedPxPerSec: number }>;
     cajones: Array<{ x: number; y: number }>;
+    /** dónde se dejan los cajones (nivel 1: la pila) */
+    deposit?: { x: number; y: number };
     cuevas: Array<{ id: string; x: number; y: number }>;
     fogon: { x: number; y: number };
     /** dónde aparece el jugador al despertar / volver al campamento (no ENCIMA del fogón, que es sólido) */
@@ -186,7 +215,7 @@ export interface LevelDef {
   goals?: Array<{ requires?: string; text: string }>;
   triggers: TriggerDef[];
   /** Estado de salida del nivel: cada renglón se califica contra dos umbrales. */
-  exit?: { computeGrade?: Record<string, { field: string; good: number; ok: number }> };
+  exit?: { carryOver?: string[]; computeGrade?: Record<string, { field: string; good: number; ok: number }> };
 }
 
 /** Un renglón del balance de salida (Game.exitGrade). */

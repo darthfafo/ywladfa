@@ -1,3 +1,4 @@
+import { migrateState } from '@/core/GameState';
 import type { GameState } from '@/core/types';
 
 const KEY = 'wladfa_save';
@@ -24,7 +25,7 @@ export class SaveSystem {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     try {
-      return JSON.parse(raw) as GameState;
+      return migrateState(JSON.parse(raw) as GameState);
     } catch (e) {
       console.warn('[SaveSystem] partida guardada corrupta, se ignora', e);
       return null;
@@ -57,7 +58,7 @@ export class SaveSystem {
   /** Lee un archivo exportado con `exportToFile` y lo devuelve, o null si no es válido. */
   async importFromFile(file: File): Promise<GameState | null> {
     try {
-      return JSON.parse(await file.text()) as GameState;
+      return migrateState(JSON.parse(await file.text()) as GameState);
     } catch (e) {
       console.warn('[SaveSystem] archivo de partida inválido', e);
       return null;

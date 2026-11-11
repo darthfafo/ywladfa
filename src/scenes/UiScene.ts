@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { busOn, emitterOn } from '@/util/scoped';
 import { INPUT_GUARD, PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
@@ -76,6 +77,14 @@ export class UiScene extends Phaser.Scene {
   }
 
   create(): void {
+    // misma instancia al volver a arrancar (ver WorldScene.resetRunState)
+    this.resEls = new Map();
+    this.hudObjects = [];
+    this.toastHideTimer = null;
+    this.overlay = null;
+    this.minigameActive = false;
+    this.overlayCleanup = null;
+    this.cutsceneBg = null;
     this.buildHud();
     this.buildTray();
 
@@ -83,12 +92,12 @@ export class UiScene extends Phaser.Scene {
     this.touch = new TouchControls(this);
 
     const world = this.scene.get('World');
-    world.events.on('request-dialogue', (p: { id: string; next?: string }) => this.openDialogue(p.id, p.next));
-    world.events.on('request-choice', (id: string) => this.openChoice(id));
-    world.events.on('request-apuntalar', () => this.openApuntalar((misses) => (this.scene.get('World') as WorldScene).finishApuntalar(misses)));
-    world.events.on('request-refusal', (npcId: string, text?: string) => this.openRefusal(npcId, text));
+    emitterOn(this, world.events, 'request-dialogue', (p: { id: string; next?: string }) => this.openDialogue(p.id, p.next));
+    emitterOn(this, world.events, 'request-choice', (id: string) => this.openChoice(id));
+    emitterOn(this, world.events, 'request-apuntalar', () => this.openApuntalar((misses) => (this.scene.get('World') as WorldScene).finishApuntalar(misses)));
+    emitterOn(this, world.events, 'request-refusal', (npcId: string, text?: string) => this.openRefusal(npcId, text));
 
-    bus.on('resource:changed', () => this.refreshResources());
+    busOn(this, 'resource:changed', () => this.refreshResources());
     // OJO: la cutscene de amanecer NO se dispara desde acá (ver showSunrise): este
     // evento sale en medio de TriggerSystem.consume() (spendTurns corre ANTES de que
     // WorldScene.runTrigger() decida lanzar CampScene), así que llamar a
@@ -96,16 +105,16 @@ export class UiScene extends Phaser.Scene {
     // nadie llegara a verlo, y dejaba el fondo/título de la cutscene huérfanos (su
     // onClose nunca corría). CampScene.restoreOnShutdown() la llama en el momento
     // correcto: cuando el jugador se despierta, no en medio de la noche anterior.
-    bus.on('time:turn-advanced', () => this.refreshTime());
-    bus.on('inventory:weight-changed', () => this.refreshLoad());
+    busOn(this, 'time:turn-advanced', () => this.refreshTime());
+    busOn(this, 'inventory:weight-changed', () => this.refreshLoad());
     // la libreta (Diario y Códice): botón a la izquierda en cuanto Berwyn la da
     const refreshBook = (): void => this.touch.setBookAvailable(game.flags.is('unlocked_sistema_diario'));
     refreshBook();
     // al disparar el trigger la libreta todavía no está desbloqueada (el aviso sale
     // antes de aplicar la acción): se vuelve a mirar al cerrar el diálogo de Berwyn
-    bus.on('trigger:fired', refreshBook);
-    bus.on('dialogue:end', refreshBook);
-    bus.on('ui:open-journal', ({ tab }) => {
+    busOn(this, 'trigger:fired', refreshBook);
+    busOn(this, 'dialogue:end', refreshBook);
+    busOn(this, 'ui:open-journal', ({ tab }) => {
       if (this.dialogue.active || this.overlay) return;
       this.scene.launch('Journal', { tab, pause: ['World', 'Ui'] });
     });
@@ -113,10 +122,10 @@ export class UiScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-L', () => {
       if (!input.locked && game.flags.is('unlocked_sistema_diario')) bus.emit('ui:open-journal', { tab: 'diario' });
     });
-    bus.on('codex:unlocked', ({ title }) => {
+    busOn(this, 'codex:unlocked', ({ title }) => {
       if (game.flags.is('unlocked_sistema_codice')) this.showToast(`Nueva ficha en el Códice: ${title}`);
     });
-    bus.on('ui:pc-says', ({ text }) => {
+    busOn(this, 'ui:pc-says', ({ text }) => {
       // con otra cosa abierta (diálogo, cartel) no se pisa: queda como aviso
       if (this.dialogue.active || this.overlay) {
         this.showToast(text);
@@ -125,15 +134,15 @@ export class UiScene extends Phaser.Scene {
       this.touch.setVisible(false);
       this.dialogue.say(text, () => this.touch.setVisible(true));
     });
-    bus.on('ui:toast', ({ text }) => {
+    busOn(this, 'ui:toast', ({ text }) => {
       sfx.chime();
       this.showToast(text);
     });
-    bus.on('ui:tutorial', ({ id }) => this.openTutorial(id));
-    bus.on('zone:entered', ({ label }) => this.showZone(label));
+    busOn(this, 'ui:tutorial', ({ id }) => this.openTutorial(id));
+    busOn(this, 'zone:entered', ({ label }) => this.showZone(label));
     // CampScene/CargoScene pausan Ui pero no la ocultan: el HUD es HTML aparte del
     // canvas (ver buildHud) y se queda flotando arriba de esas escenas sin esto.
-    bus.on('ui:hud-visible', ({ visible }) => this.setHudVisible(visible));
+    busOn(this, 'ui:hud-visible', ({ visible }) => this.setHudVisible(visible));
 
     this.refreshResources();
     this.refreshTime();

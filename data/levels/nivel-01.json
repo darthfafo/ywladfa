@@ -54,7 +54,8 @@
         "name": "zones",
         "type": "object"
       }
-    ]
+    ],
+    "generator": "punta_cuevas"
   },
   "schedule": {
     "days": 3,
@@ -74,7 +75,11 @@
       "ambient": [
         "amb_mar",
         "amb_viento_bajo"
-      ]
+      ],
+      "ambience": {
+        "wind": 0.6,
+        "sea": 1
+      }
     },
     {
       "id": "z6_punta",
@@ -89,7 +94,11 @@
       "ambient": [
         "amb_mar",
         "amb_viento_alto"
-      ]
+      ],
+      "ambience": {
+        "wind": 0.8,
+        "sea": 0.8
+      }
     },
     {
       "id": "z2_barranca",
@@ -105,7 +114,11 @@
         "amb_viento_bajo"
       ],
       "hub": true,
-      "saveHere": true
+      "saveHere": true,
+      "ambience": {
+        "wind": 0.5,
+        "sea": 0.3
+      }
     },
     {
       "id": "z3_monte",
@@ -119,7 +132,10 @@
       "music": null,
       "ambient": [
         "amb_viento_bajo"
-      ]
+      ],
+      "ambience": {
+        "wind": 0.7
+      }
     },
     {
       "id": "z4_meseta",
@@ -134,7 +150,11 @@
       "ambient": [
         "amb_viento_alto"
       ],
-      "speedModifier": 0.7
+      "speedModifier": 0.7,
+      "ambience": {
+        "wind": 1,
+        "sea": 0.25
+      }
     },
     {
       "id": "z5_canadon",
@@ -148,7 +168,10 @@
       "music": "mus_silencio",
       "ambient": [
         "amb_agua_hilo"
-      ]
+      ],
+      "ambience": {
+        "wind": 0.4
+      }
     }
   ],
   "camera": {
@@ -275,12 +298,28 @@
         "x": 34,
         "y": 47,
         "day": "*",
-        "movesTo": {
-          "day": 3,
-          "turn": "amanecer",
-          "x": 58,
-          "y": 72
-        }
+        "movesTo": [
+          {
+            "day": 2,
+            "turn": "manana",
+            "x": 52,
+            "y": 6,
+            "requires": "flags.n1_tarea != 'cuevas'",
+            "note": "sube al vigía a ver zarpar el Mimosa (d_n1_mimosa_zarpa)"
+          },
+          {
+            "day": 2,
+            "turn": "tarde",
+            "x": 34,
+            "y": 47
+          },
+          {
+            "day": 3,
+            "turn": "amanecer",
+            "x": 58,
+            "y": 72
+          }
+        ]
       },
       {
         "id": "npc_dafydd",
@@ -305,43 +344,64 @@
         "id": "jarilla_1",
         "type": "lena",
         "x": 10,
-        "y": 50
+        "y": 50,
+        "prop": "jarilla",
+        "gain": "jarilla",
+        "regrows": true
       },
       {
         "id": "jarilla_2",
         "type": "lena",
         "x": 15,
-        "y": 56
+        "y": 56,
+        "prop": "jarilla",
+        "gain": "jarilla",
+        "regrows": true
       },
       {
         "id": "jarilla_3",
         "type": "lena",
         "x": 6,
-        "y": 61
+        "y": 61,
+        "prop": "jarilla",
+        "gain": "jarilla",
+        "regrows": true
       },
       {
         "id": "jarilla_4",
         "type": "lena",
         "x": 18,
-        "y": 64
+        "y": 64,
+        "prop": "jarilla",
+        "gain": "jarilla",
+        "regrows": true
       },
       {
         "id": "jarilla_5",
         "type": "lena",
         "x": 8,
-        "y": 70
+        "y": 70,
+        "prop": "jarilla",
+        "gain": "jarilla",
+        "regrows": true
       },
       {
         "id": "jarilla_6",
         "type": "lena",
         "x": 16,
-        "y": 74
+        "y": 74,
+        "prop": "jarilla",
+        "gain": "jarilla",
+        "regrows": true
       },
       {
         "id": "molle_1",
         "type": "comida",
         "x": 12,
-        "y": 66
+        "y": 66,
+        "prop": "molle",
+        "gain": "molle",
+        "name": "fruto de molle"
       },
       {
         "id": "mejillon_1",
@@ -351,7 +411,10 @@
         "window": {
           "day": 2,
           "turn": "manana"
-        }
+        },
+        "prop": "mejillones",
+        "gain": "mejillones",
+        "name": "mejillones"
       }
     ],
     "cajones": [
@@ -476,7 +539,216 @@
         "note": "entra cerca del fondo del cañadón, no a mitad de camino — antes caía casi al lado del manantial y se saltaba la mitad del laberinto (mapgen.ts buildTerrain); ahora las dos entradas arrancan del mismo lugar, abajo de todo.",
         "requires": "progress.day >= 2 && flags.n1_dafydd_perdido == true"
       }
-    ]
+    ],
+    "ship": {
+      "prop": "mimosa",
+      "x": 27,
+      "y": 112,
+      "hideAfterFlag": "n1_vio_zarpar",
+      "goneFrom": {
+        "day": 2,
+        "turn": "tarde"
+      },
+      "note": "El Mimosa anclado frente a la playa. y=112: entra entero en lo que muestra la cámara parada en el spawn (27,104). Zarpa en la mañana del J2: se va al verlo zarpar o, si nadie sube a mirar, desde la tarde."
+    },
+    "decor": [
+      {
+        "prop": "guanaco",
+        "x": 9,
+        "y": 59,
+        "solid": "animal",
+        "look": "Guarda que escupen.",
+        "id": "guanaco"
+      },
+      {
+        "prop": "coiron",
+        "x": 4,
+        "y": 47
+      },
+      {
+        "prop": "coiron",
+        "x": 20,
+        "y": 51
+      },
+      {
+        "prop": "coiron",
+        "x": 12,
+        "y": 73
+      },
+      {
+        "prop": "restos_costa",
+        "x": 10,
+        "y": 103,
+        "solid": "hull"
+      },
+      {
+        "prop": "algas",
+        "x": 7,
+        "y": 106,
+        "look": "Cuántas algas hay en esta costa.",
+        "id": "algas_0",
+        "fallback": true
+      },
+      {
+        "prop": "algas",
+        "x": 42,
+        "y": 107,
+        "look": "Cuántas algas hay en esta costa.",
+        "id": "algas_1",
+        "fallback": true
+      },
+      {
+        "prop": "algas",
+        "x": 48,
+        "y": 106,
+        "look": "Cuántas algas hay en esta costa.",
+        "id": "algas_2",
+        "fallback": true
+      },
+      {
+        "prop": "bote_menor",
+        "x": 44,
+        "y": 103,
+        "solid": "hull",
+        "look": "Uno de los botes en los que bajamos del Mimosa.",
+        "id": "bote_0"
+      },
+      {
+        "prop": "bote_menor",
+        "x": 40,
+        "y": 105,
+        "solid": "hull",
+        "look": "Uno de los botes en los que bajamos del Mimosa.",
+        "id": "bote_1"
+      },
+      {
+        "prop": "bote_menor",
+        "x": 22,
+        "y": 102,
+        "solid": "hull",
+        "look": "Uno de los botes en los que bajamos del Mimosa.",
+        "id": "bote_2"
+      },
+      {
+        "prop": "guanaco",
+        "x": 21,
+        "y": 30,
+        "solid": "animal",
+        "look": "Guarda que escupen.",
+        "id": "guanaco_canadon"
+      },
+      {
+        "prop": "coiron",
+        "x": 6,
+        "y": 11
+      },
+      {
+        "prop": "coiron",
+        "x": 23,
+        "y": 36
+      },
+      {
+        "prop": "guanaco",
+        "x": 35,
+        "y": 15,
+        "solid": "animal",
+        "look": "Guarda que escupen.",
+        "id": "guanaco_meseta_1"
+      },
+      {
+        "prop": "guanaco",
+        "x": 37,
+        "y": 16.5,
+        "solid": "animal"
+      },
+      {
+        "prop": "guanaco",
+        "x": 34,
+        "y": 17,
+        "solid": "animal"
+      },
+      {
+        "prop": "guanaco",
+        "x": 36,
+        "y": 18.5,
+        "solid": "animal"
+      },
+      {
+        "prop": "guanaco",
+        "x": 48,
+        "y": 25,
+        "solid": "animal",
+        "look": "Guarda que escupen.",
+        "id": "guanaco_meseta_2"
+      },
+      {
+        "prop": "guanaco",
+        "x": 50,
+        "y": 26.5,
+        "solid": "animal"
+      },
+      {
+        "prop": "guanaco",
+        "x": 47,
+        "y": 27,
+        "solid": "animal"
+      },
+      {
+        "prop": "coiron",
+        "x": 33,
+        "y": 10
+      },
+      {
+        "prop": "coiron",
+        "x": 42,
+        "y": 12
+      },
+      {
+        "prop": "coiron",
+        "x": 55,
+        "y": 18
+      },
+      {
+        "prop": "coiron",
+        "x": 38,
+        "y": 29
+      },
+      {
+        "prop": "coiron",
+        "x": 52,
+        "y": 30
+      },
+      {
+        "prop": "coiron",
+        "x": 44,
+        "y": 21
+      },
+      {
+        "prop": "manantial",
+        "x": 9.5,
+        "y": 7.5,
+        "depth": 5
+      }
+    ],
+    "birds": [
+      {
+        "prop": "gaviotas",
+        "y": 96,
+        "offsetPx": 0,
+        "speedPxPerSec": 16
+      },
+      {
+        "prop": "gaviotas",
+        "y": 94,
+        "offsetPx": 90,
+        "speedPxPerSec": 12
+      }
+    ],
+    "deposit": {
+      "x": 27,
+      "y": 97,
+      "note": "la pila donde se dejan los cajones: tierra adentro, lejos de la marea"
+    }
   },
   "objectives": [
     {

@@ -51,17 +51,21 @@ Regla: **ninguna consecuencia nueva que no esté ya prometida en los datos del N
 - Los tehuelches (aonikenk y gününa küne) habitaban el valle y la meseta; la relación fue de intercambio pacífico (`04` R1, ficha `cod_tehuelches`, que se desbloquea en este nivel).
 - El primer texto con bloques `▓` (idioma que el jugador no domina) aparece recién acá (GDD §14).
 
-### `TODO(historia)` — a confirmar con fuente antes de escribir una sola línea de diálogo
-Esto es lo que hace falta saber y **no está en `04-guia-historica.md`**. No se usa hasta verificarlo:
+### Resuelto (ver `04-guia-historica.md` §1.1, con fuentes)
 
-1. **Quién caminó.** `d_n1_final` dice que caminaron las ciento cincuenta personas. Hay que confirmar si la marcha fue de todo el grupo o si una parte (mujeres y niños) viajó después por mar, y en qué barco. Cambia quién está en la columna (¿Mari camina?).
-2. **Cómo se organizó la marcha**: en un solo grupo o en tandas, cuántos días llevó realmente, y si hubo grupos que se extraviaron o pasaron sed (es justo el sistema del nivel: conviene que el extravío sea histórico y no inventado).
-3. **Con qué iban**: si había carros, caballos o bueyes (el Nivel 1 ya habla de «los carros»), o si se cargó a hombro.
-4. **Dónde llegaron**: el nombre y el estado del lugar sobre el río (el fuerte viejo, Caer Antur) y qué había ahí.
-5. **Primer contacto con los tehuelches**: si ocurrió durante la marcha o más tarde. Si fue más tarde, en este nivel solo puede haber *señales* (una rastrillada, humo lejos), nunca un encuentro.
-6. **Nacimientos y muertes** durante esas semanas, si se van a mencionar.
+- **Caminaron todos** (decisión del proyecto). Mari va en la columna.
+- Salieron en **grupos de 15 a 20 con un par de caballos de carga**: la columna del jugador es uno de esos grupos, no las ciento cincuenta personas a la vez. Eso resuelve también *con qué iban* (no hace falta dibujar carros).
+- Unos **55 km de estepa sin agua en unos dos días**.
+- Llegaron a **un fuerte viejo abandonado** junto al río, de 1854. El nombre varía según la fuente (Caer Antur, «la vieja fortaleza», Fortín Viejo): el juego tiene que elegir uno.
+- Casi sin agua ni comida al llegar; hubo muertes en esas semanas (sin detalle: no se dramatizan casos puntuales).
 
-Fuentes a revisar: las de `04` §fuentes, más bibliografía específica de la colonia (Abraham Matthews, *Crónica de la colonia galesa de la Patagonia*; Lewis Jones, *Una nueva Gales en Sudamérica*).
+### `TODO(historia)` — todavía abierto
+
+1. **Distancia y días.** El Nivel 1 dice 65 km y «tres días si el viento afloja, cuatro si no»; la fuente dice ~55 km y ~2 días. Hay que elegir. Si se adoptan dos días, la estructura de §4.1 pasa a **dos jornadas, tres si te perdés**.
+2. **Nombre del fuerte** que se muestra al jugador.
+3. **Primer contacto con los tehuelches**: si fue durante la marcha o después. Hasta saberlo, en este nivel solo hay *señales* (una rastrillada, humo lejos), nunca un encuentro.
+
+Fuentes a revisar todavía: Abraham Matthews, *Crónica de la colonia galesa de la Patagonia*; Lewis Jones, *Una nueva Gales en Sudamérica*.
 
 ---
 
@@ -163,7 +167,7 @@ Cada paso deja algo verificable y el juego publicado sigue funcionando.
 
 | # | Paso | Se verifica con |
 |---|---|---|
-| 0 | Resolver los `TODO(historia)` y las decisiones D1-D4 | Guía histórica actualizada; este plan pasa a ser spec (`docs/09-nivel-02.md`) |
+| 0 | Resolver los `TODO(historia)` abiertos (distancia/días, nombre del fuerte, contacto) y las decisiones D1, D3-D5 | Guía histórica actualizada; este plan pasa a ser spec (`docs/09-nivel-02.md`) |
 | 1 | Separar `WorldScene` genérica + guion del Nivel 1 | Tests en verde; el Nivel 1 se juega igual de punta a punta |
 | 2 | `Registry`, diario y generador de mapa por nivel; versión de partida y migración | Una partida vieja del Nivel 1 continúa sin errores |
 | 3 | Transición real entre niveles con `carryOver` | Al cerrar el Nivel 1 se entra a un Nivel 2 vacío con el estado correcto |
@@ -176,6 +180,12 @@ Cada paso deja algo verificable y el juego publicado sigue funcionando.
 | 10 | Arte final, sonido y pasada de pulido en celular | Partida completa N1 → N2 en un teléfono |
 
 Los pasos 1 a 4 son base y no dependen de la investigación histórica: se pueden empezar ya.
+
+**Hecho (noviembre 2026):**
+- Paso 1, en parte: el paisaje, el barco anclado, los pájaros, el sonido por zona y lo que se junta salieron del código y son datos del nivel (`spawns.decor`, `ship`, `birds`, `gatherNodes[].prop/gain`, `zones[].ambience`); la pila y el fogón son opcionales. Quedan en `WorldScene` las mecánicas propias del Nivel 1 (cajones, cuevas, Dafydd), que no molestan a otro nivel porque solo actúan si sus datos existen.
+- Paso 2: `Registry` carga todos los niveles de `data/levels`, `data/dialogues` y `data/quests` por nombre de archivo; el mapa sale del generador que pide `map.generator`; la partida guardada tiene versión (`0.2.0`) y migración.
+- Paso 3: `stateForNextLevel` arma el estado del nivel siguiente según `exit.carryOver`, el diario guarda de qué nivel es cada entrada, y el cierre ofrece «Seguir viaje» en cuanto exista `data/levels/nivel-02.json`. Las escenas sueltan sus suscripciones al cerrarse y vuelven a cero al reiniciarse, así se pueden encadenar niveles sin recargar la página (probado encadenando el Nivel 1 consigo mismo).
+- Pendiente: paso 4 (terreno por franjas), que conviene hacer con el mapa del Nivel 2 ya definido.
 Los pasos 6 a 9 dependen del paso 0.
 
 ---
@@ -185,7 +195,7 @@ Los pasos 6 a 9 dependen del paso 0.
 | # | Decisión | Opciones | Recomendación |
 |---|---|---|---|
 | **D1** | Orientación del mapa. La marcha va al sur, y en el Nivel 1 el norte está arriba | (a) sur arriba: se avanza hacia arriba de la pantalla, como en el Nivel 1 · (b) norte arriba: se avanza hacia abajo | **(a)**. En vertical, avanzar es subir; una línea de Lewis al salir lo aclara. El viento del oeste pasa a cruzar de derecha a izquierda |
-| **D2** | Quién va en la columna | Depende de `TODO(historia)` 1 | Si una parte del grupo fue por mar, Mari se despide en la playa y la decisión de «alguien no puede seguir» recae en otro personaje |
+| **D2** | Quién va en la columna | — | **Resuelto: caminaron todos.** La columna es uno de los grupos de 15 a 20 con caballos de carga; van el jugador, Mari, Lewis y los personajes del Nivel 1 |
 | **D3** | Con quién es el primer `▓` | (a) castellano, al llegar al río · (b) aonikenk, una voz a lo lejos · (c) ninguno todavía | Depende de `TODO(historia)` 4 y 5. No inventar un encuentro que no ocurrió |
 | **D4** | Cierre del nivel | (a) la llegada al río · (b) el 15-IX-1865, con Murga y la bandera | **(a)**, y el 15-IX abre el Nivel 3: es el arranque natural de «El valle» |
 | **D5** | Mapa | (a) generado por datos · (b) dibujado en Tiled | **(a)**: el terreno 3D ya se arma desde una grilla y un corredor con hitos se describe bien con datos |

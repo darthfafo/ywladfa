@@ -13,6 +13,7 @@ de representación** que el equipo se compromete a respetar. La segunda parte no
 | 1863 | Lewis Jones y Love Jones-Parry exploran el Golfo Nuevo. Le ponen **Madryn** por la estancia galesa de Jones-Parry |
 | 28-V-1865 | El **Mimosa** zarpa de Liverpool con ~150 colonos (fuentes: 153 a 162) |
 | 28-VII-1865 | **Desembarco en Punta Cuevas**. Refugio en cuevas, sin agua dulce cerca |
+| VIII-IX-1865 | **La marcha al río.** Los colonos salen de la bahía en grupos de 15 a 20, con un par de caballos de carga, y cruzan unos 55 km de estepa sin agua en unos dos días. Llegan a un fuerte viejo abandonado junto al río. Para fines de septiembre están todos instalados ahí (ver §1.1) |
 | 15-IX-1865 | El comandante **Julián Murga** iza la bandera argentina y funda **Trerawson** (Rawson) |
 | 1866-67 | Hambruna. Trueque sostenido con los tehuelches: pan, harina, yerba y tela por carne y cuero |
 | ~1867 | **Aaron y Rachel Jenkins** abren la primera zanja de riego desde el río Chubut |
@@ -37,6 +38,25 @@ Elegir una versión y sostenerla en todo el juego. Las adoptadas por este proyec
 | Rifleros | 28 / 29 / 30 | **28 jinetes, 30 hombres con apoyo** |
 | Circuito de la expedición | 750 km (ida) / 1.200 km (circuito) | **~750 km a Trevelin, ~1.200 km el circuito completo** |
 | Profundidad del salto del Malacara | 3 a 5 m; algunas fuentes lo discuten como leyenda | **~4 m, declarado como discutido en el Códice** |
+| Distancia de la marcha al río | ~55 km (MercoPress) / 65 km (texto actual del Nivel 1) | **pendiente de decisión** — ver §1.1 |
+| Duración de la marcha | ~2 días (MercoPress) / «tres días si el viento afloja, cuatro si no» (Lewis, Nivel 1) | **pendiente de decisión** — ver §1.1 |
+
+### 1.1 La marcha del golfo al río (base del Nivel 2)
+
+| Hecho | Estado | Fuente |
+|---|---|---|
+| Caminaron todos: el contingente entero hizo la marcha por tierra | **Adoptado** (decisión del proyecto, noviembre 2026) | — |
+| Salieron en grupos de 15 a 20 personas, con un par de caballos de carga cada uno | Documentado | MercoPress, 30-VII-2005 |
+| Unos 55 km de estepa sin agua, en unos dos días | Documentado (una fuente) | MercoPress, 30-VII-2005 |
+| Llegaron a un fuerte viejo abandonado, levantado en 1854, dentro de lo que hoy es Rawson | Documentado. El nombre varía: *Caer Antur* (MercoPress), *Yr Hen Amddiffynfa*, «la vieja fortaleza» (Wikipedia en inglés, que advierte que Caer Antur sería otro lugar), «Fortín Viejo» (CONICET) | MercoPress; Wikipedia *Y Wladfa*; CONICET |
+| Para fines de septiembre de 1865 estaban todos instalados ahí | Documentado | MercoPress; CONICET |
+| «Casi sin agua y comida, estuvieron por bajar los brazos cuando alcanzaron el río» | Documentado (prensa) | Infobae, 28-VII-2020 |
+| Hubo muertes en esas semanas | Documentado sin detalle | Wikipedia *Y Wladfa* |
+| La mayoría de las mujeres y los chicos fue semanas después por mar | Una sola fuente, sin nombrar el barco. **Descartado para el juego** por la decisión de arriba | La Nación |
+
+**Pendiente:** el texto actual del Nivel 1 dice 65 km y tres o cuatro días (`d_n1_anuncio_marcha`) y
+el cierre dice «ciento cincuenta personas caminaron sesenta y cinco kilómetros» (`d_n1_final`). La fuente
+encontrada da ~55 km y ~2 días. Hay que elegir una versión y sostenerla en los dos niveles.
 
 ---
 
@@ -120,6 +140,12 @@ sobre su posición.
 - Canal 12 Web — «Un viaje a caballo desde Rawson a Trevelin»
 - Asociación Galesa de Puerto Madryn — sección Historia
 - SciELO Argentina — «Amigos, pero intrusos: los caciquillos del Chupat y sus negociaciones con el gobierno y la colonia galesa antes de la conquista (1865-1883)»
+
+- MercoPress, «Welsh community mark 140 years in Patagonia» (30-VII-2005) — la marcha: grupos, distancia, días, el fuerte viejo
+- Wikipedia en inglés, *Y Wladfa* — la marcha, «la vieja fortaleza», el nombre Caer Antur
+- CONICET, «La colonización galesa del Chubut y la necesidad de un puerto» — el contingente reunido en el «Fortín Viejo» a fines de septiembre de 1865
+- Infobae, «A 155 años de la llegada de los primeros galeses a la Patagonia» (28-VII-2020)
+- La Nación, «Desde Gales hasta la Patagonia» — versión de que mujeres y niños fueron por mar (descartada)
 
 **Pendiente para producción:** fuentes primarias. La crónica de Abraham Matthews (*Hanes y Wladfa Gymreig*),
 los diarios de Fontana y los registros de Richard Jones Berwyn no se consultaron en preproducción y

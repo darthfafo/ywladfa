@@ -301,6 +301,25 @@ describe('recorrido completo del Nivel 1', () => {
     expect(p.g.state.progress.day).toBe(3);
   });
 
+  it('el vigía nombra a Mari solo si ella subió (no con la tarea de la cueva)', () => {
+    const lines = (task: string): string[] => {
+      const g = new Game(createInitialState('nivel-01', 'Elin', 'f'));
+      g.flags.set('n1_tarea', task);
+      const d = new DialogueSystem(g);
+      const out: string[] = [];
+      for (let l = d.start('d_n1_mimosa_zarpa'), i = 0; l && i < 20; l = d.next(), i++) out.push(l.nodeId);
+      return out;
+    };
+    expect(lines('agua')).toEqual(['m1', 'm3', 'm4']);
+    expect(lines('cuevas')).toEqual(['m1', 'm3_cuevas']);
+    // y Mari tiene una parada en el vigía para esa mañana, salvo con la tarea de la cueva
+    const mari = registry.level('nivel-01').spawns.npcs.find((n) => n.id === 'npc_mari')!;
+    const stop = (Array.isArray(mari.movesTo) ? mari.movesTo : [mari.movesTo!]).find((m) => m.day === 2 && m.turn === 'manana')!;
+    const vigia = registry.level('nivel-01').triggers.find((t) => t.id === 'trig_vigia_mimosa')!.rect!;
+    expect(Math.abs(stop.x - (vigia[0] + vigia[2] / 2))).toBeLessThan(5);
+    expect(stop.requires).toContain('cuevas');
+  });
+
   it('tarea de agua: termina subiendo al vigía', () => {
     const p = toJ2Morning('t_agua');
     p.stepOn('trig_vigia_mimosa');
