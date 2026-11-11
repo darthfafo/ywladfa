@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
-import { AUDIO, CAM_TALK, DUSK_MS, NPC_SCRIPT, PAL, RENDER_3D, TURN_LIGHT_MS, TURN_TINT, VIEW } from '@/config';
+import { AUDIO, CAM_TALK, DUSK_MS, INPUT_GUARD, NPC_SCRIPT, PAL, RENDER_3D, TURN_LIGHT_MS, TURN_TINT, VIEW } from '@/config';
 import { sfx, type Surface } from '@/audio/Sfx';
 import { World3D } from '@/render3d/World3D';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
 import type { PasajeDef, TriggerDef } from '@/core/types';
+import type { UiScene } from '@/scenes/UiScene';
 import { TriggerSystem } from '@/systems/TriggerSystem';
 import { TURNS } from '@/systems/TimeSystem';
 import { addPropImage, hasPropArt, propTextureKey } from '@/util/assets';
@@ -418,8 +419,9 @@ export class WorldScene extends Phaser.Scene {
       const uy = dist > 0.5 ? dy / dist : 1;
       const tx = sp.x + ux * minPx;
       const ty = sp.y + uy * minPx;
-      const tile = this.terrain[toTile(ty + 8)]?.[toTile(tx)];
-      if (tile !== undefined && !COLLIDES.includes(tile)) {
+      // solo si ahí se puede estar parado: antes miraba un solo tile y podía dejar
+      // al jugador encimado a un sólido (el fogón, otro NPC, la cueva)
+      if (this.canStandAt(tx, ty, sp)) {
         this.tweens.add({ targets: this.player, x: tx, y: ty, duration: 220, ease: 'Sine.easeOut' });
       }
     }
@@ -789,6 +791,8 @@ export class WorldScene extends Phaser.Scene {
       // camina detrás tuyo, sin este corte lo hacía "saltar" de vuelta al manantial
       // (su posición de movesTo) en medio del camino.
       if (this.dafyddFollow && n.id === 'npc_dafydd') continue;
+      // quien viene caminando a hablarte termina su caminata (ver approach)
+      if (this.approaching.has(it.sprite)) continue;
 
       const dayOk = n.day === '*' || (Array.isArray(n.day) ? n.day.includes(day) : n.day === day);
       const flagOk = !n.afterFlag || game.flags.is(n.afterFlag);
@@ -899,8 +903,10 @@ export class WorldScene extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     if (input.locked) {
       body.setVelocity(0, 0);
+      this.watchStuckLock(delta);
       return;
     }
+    this.lockedIdleMs = 0;
 
     // teclado suma al vector táctil
     const kb = this.input.keyboard;
@@ -943,6 +949,24 @@ export class WorldScene extends Phaser.Scene {
     if (input.takeAction()) this.interact();
     this.updateDafyddFollow(delta);
     this.trackTile();
+  }
+
+  /** ms seguidos con el control bloqueado y nada en pantalla que lo explique */
+  private lockedIdleMs = 0;
+
+  /** Red de seguridad: si el control queda bloqueado sin diálogo, cartel,
+   * minijuego ni nadie caminando hacia el jugador, se libera solo y se vuelven a
+   * mirar los triggers. Nunca debería pasar; si pasa, no deja el juego trabado. */
+  private watchStuckLock(delta: number): void {
+    const ui = this.scene.get('Ui') as UiScene;
+    const busy = ui.isBusy() || this.approaching.size > 0 || ['Camp', 'CargoScene', 'Journal', 'Transition'].some((k) => this.scene.isActive(k));
+    this.lockedIdleMs = busy ? 0 : this.lockedIdleMs + delta;
+    if (this.lockedIdleMs < INPUT_GUARD.stuckUnlockMs) return;
+    console.warn('[WorldScene] control bloqueado sin nada en pantalla: se libera');
+    this.lockedIdleMs = 0;
+    input.locked = false;
+    ui.touch.setVisible(true);
+    this.checkTriggers();
   }
 
   /** Dafydd caminando detrás tuyo (ver sendDafyddHome): en vez de perseguir tu
@@ -1370,23 +1394,51 @@ export class WorldScene extends Phaser.Scene {
       sp.setFrame(FACING_FRAME[towardPlayer]);
       return done();
     }
+    // `done` corre una sola vez, pase lo que pase con la caminata: si algo corta la
+    // animación (un cambio de turno que reubica NPCs, la escena que se pausa), la
+    // charla igual arranca. Antes el control quedaba bloqueado para siempre.
+    let finished = false;
+    const finish = (): void => {
+      if (finished) return;
+      finished = true;
+      this.approaching.delete(sp);
+      sp.setPosition(tx, ty).setFrame(FACING_FRAME[towardPlayer]);
+      this.syncSolid(sp, true);
+      done();
+    };
+    this.approaching.add(sp);
     // viene a paso de jugador, no de paseo: trae una noticia
     const speed = registry.balance.global.playerBaseSpeedPxPerSec as number;
     const mx = tx - sp.x;
     const my = ty - sp.y;
     sp.setFrame(FACING_FRAME[Math.abs(mx) > Math.abs(my) ? (mx > 0 ? 'east' : 'west') : my > 0 ? 'south' : 'north']);
     this.tweens.killTweensOf(sp);
-    this.tweens.add({
-      targets: sp,
-      x: tx,
-      y: ty,
-      duration: (dist / speed) * 1000,
-      onComplete: () => {
-        sp.setFrame(FACING_FRAME[towardPlayer]);
-        this.syncSolid(sp, true);
-        done();
-      },
-    });
+    const ms = (dist / speed) * 1000;
+    this.tweens.add({ targets: sp, x: tx, y: ty, duration: ms, onComplete: finish, onStop: finish });
+    this.time.delayedCall(ms + INPUT_GUARD.stuckUnlockMs, finish);
+  }
+
+  /** NPCs caminando hacia el jugador (approach): updateNpcVisibility no los toca */
+  private readonly approaching = new Set<Phaser.GameObjects.Image>();
+
+  /** ¿Puede pararse el jugador con los pies en (x, y)? Mira el terreno debajo de
+   * toda su caja de colisión y los cuerpos sólidos (menos `except`). */
+  private canStandAt(x: number, y: number, except?: Phaser.GameObjects.Image): boolean {
+    const pb = this.player.body as Phaser.Physics.Arcade.Body;
+    const left = pb.x + (x - this.player.x);
+    const top = pb.y + (y - this.player.y);
+    const right = left + pb.width;
+    const bottom = top + pb.height;
+    for (const [cx, cy] of [[left, top], [right - 1, top], [left, bottom - 1], [right - 1, bottom - 1]] as const) {
+      const t = this.terrain[toTile(cy)]?.[toTile(cx)];
+      if (t === undefined || COLLIDES.includes(t)) return false;
+    }
+    for (const s of this.solids.getChildren() as Phaser.GameObjects.Image[]) {
+      const b = s.body as Phaser.Physics.Arcade.StaticBody;
+      if (!b.enable || s === except) continue;
+      if (left < b.right && right > b.x && top < b.bottom && bottom > b.y) return false;
+    }
+    return true;
   }
 
   private runTriggerNow(t: TriggerDef): void {

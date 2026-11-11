@@ -159,6 +159,10 @@ export const INPUT_GUARD = {
   actionAfterModalMs: 400,
   /** botones de menú, desde que aparecen */
   buttonMs: 300,
+  /** red de seguridad: el control bloqueado sin nada en pantalla que lo explique
+   * (ningún diálogo, cartel, minijuego ni nadie caminando hacia vos) se libera
+   * después de este tiempo, en vez de dejar el juego trabado */
+  stuckUnlockMs: 2500,
 } as const;
 
 /** Volumen del sonido sintetizado (src/audio/Sfx.ts), 0..1 por grupo. */

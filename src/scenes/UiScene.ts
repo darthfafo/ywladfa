@@ -56,8 +56,15 @@ export class UiScene extends Phaser.Scene {
   private toastHideTimer: Phaser.Time.TimerEvent | null = null;
   private zoneLabel!: Phaser.GameObjects.Text;
   private dialogue!: DialogueBox;
-  private touch!: TouchControls;
+  touch!: TouchControls;
   private overlay: Phaser.GameObjects.Container | null = null;
+  /** el minijuego de apuntalar está en pantalla */
+  private minigameActive = false;
+
+  /** ¿Hay algo en pantalla que justifique tener el control bloqueado? (WorldScene, red de seguridad) */
+  isBusy(): boolean {
+    return this.dialogue.active || !!this.overlay || this.minigameActive;
+  }
   private overlayCleanup: (() => void) | null = null;
   private hudObjects: Array<
     Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle | Phaser.GameObjects.DOMElement | Phaser.GameObjects.Graphics
@@ -563,6 +570,7 @@ export class UiScene extends Phaser.Scene {
     const cfg = registry.levelBalance(game.state.progress.level).apuntalar as Record<string, number>;
     const T = VIEW.tray;
     input.locked = true;
+    this.minigameActive = true;
     this.touch.setVisible(false);
 
     const objs: Phaser.GameObjects.GameObject[] = [];
@@ -695,6 +703,7 @@ export class UiScene extends Phaser.Scene {
       kb?.off('keydown-E', attempt);
       for (const o of objs) o.destroy();
       input.locked = false;
+      this.minigameActive = false;
       onDone(misses);
     };
   }
