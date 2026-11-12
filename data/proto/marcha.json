@@ -1,0 +1,127 @@
+{
+  "note": "Prototipo de la marcha del golfo al río en vista lateral. Un tramo corto de prueba: no es el nivel 2 definitivo.",
+  "lengthTiles": 230,
+  "from": "Punta Cuevas",
+  "to": "El río",
+  "profile": [
+    [
+      0,
+      0.2
+    ],
+    [
+      18,
+      0.5
+    ],
+    [
+      40,
+      1.6
+    ],
+    [
+      62,
+      1.1
+    ],
+    [
+      80,
+      1.7
+    ],
+    [
+      112,
+      1.4
+    ],
+    [
+      140,
+      2.0
+    ],
+    [
+      172,
+      1.6
+    ],
+    [
+      196,
+      1.2
+    ],
+    [
+      214,
+      0.4
+    ],
+    [
+      230,
+      -0.3
+    ]
+  ],
+  "obstacles": [
+    {
+      "id": "canadon",
+      "type": "canadon",
+      "at": 92,
+      "width": 14,
+      "depth": 2.6,
+      "prompt": "Un cañadón corta el paso. Los caballos cargados no bajan fácil.",
+      "options": [
+        {
+          "id": "bajar",
+          "text": "Bajar con cuidado.",
+          "detail": "Más tiempo: los caballos bajan de a uno.",
+          "slowFactor": 0.3
+        },
+        {
+          "id": "rodear",
+          "text": "Rodearlo.",
+          "detail": "Más camino: media legua de vuelta.",
+          "extraTiles": 45
+        }
+      ]
+    },
+    {
+      "id": "aguada",
+      "type": "aguada",
+      "at": 128,
+      "prompt": "Lewis señala unas matas verdes lejos del camino. Puede haber agua.",
+      "options": [
+        {
+          "id": "desviar",
+          "text": "Ir a ver.",
+          "detail": "Un rodeo de una hora. Si hay agua, se llenan los barriles.",
+          "extraTiles": 22,
+          "water": 9
+        },
+        {
+          "id": "seguir",
+          "text": "Seguir de largo.",
+          "detail": "El río está más cerca que ayer."
+        }
+      ]
+    },
+    {
+      "id": "medano",
+      "type": "medano",
+      "from": 160,
+      "to": 180,
+      "slowFactor": 0.6,
+      "staminaFactor": 2,
+      "note": "Arena suelta: los caballos se hunden y cuesta el doble."
+    }
+  ],
+  "lines": [
+    {
+      "at": 3,
+      "speaker": "npc_lewis",
+      "text": "Al sur, siempre al sur. El viento de la cara izquierda, y no nos perdemos."
+    },
+    {
+      "at": 60,
+      "speaker": "pc",
+      "text": "Ni un árbol. Ni una sombra."
+    },
+    {
+      "at": 158,
+      "speaker": "pc",
+      "text": "Arena. Los caballos se hunden hasta la rodilla."
+    },
+    {
+      "at": 200,
+      "speaker": "npc_lewis",
+      "text": "¿Ven la línea oscura abajo? Es el valle. Es el río."
+    }
+  ]
+}

@@ -132,6 +132,27 @@ export const NPC_SCRIPT = {
   exitTiles: 9,
 } as const;
 
+/**
+ * Marcha en vista lateral (prototipo del Nivel 2, src/render3d/MarchView3D.ts):
+ * la cámara mira de costado a la columna, que avanza hacia la derecha. En vertical
+ * entra poco ancho y mucho cielo, que es lo que se quiere mostrar. Unidad = 1 tile.
+ */
+export const CAM_MARCH = {
+  fov: 34,
+  /** distancia de la cámara al camino */
+  distance: 22,
+  /** alto de la cámara sobre el camino */
+  height: 5,
+  /** corrimiento del centro del cuadro respecto del jugador (negativo = hacia atrás, para ver la columna) */
+  lookAhead: -2.5,
+  /** a qué altura mira */
+  lookHeight: 2.6,
+  /** suavizado del seguimiento (1/s) */
+  follow: 3,
+  /** alto de los personajes en tiles (de costado se ven más chicos que desde arriba) */
+  spriteHeight: 2.3,
+} as const;
+
 /** Alto de cada terreno en el mundo 3D (tiles). Lo que no figura es piso (0). */
 export const TERRAIN_HEIGHT_3D: Record<string, number> = {
   ROCK: 2.6,

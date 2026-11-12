@@ -5,6 +5,7 @@ import { BootScene } from './scenes/BootScene';
 import { CampScene } from './scenes/CampScene';
 import { CargoScene } from './scenes/CargoScene';
 import { JournalScene } from './scenes/JournalScene';
+import { MarchScene } from './scenes/MarchScene';
 import { saveSystem } from './systems/SaveSystem';
 import { TransitionScene } from './scenes/TransitionScene';
 import { UiScene } from './scenes/UiScene';
@@ -41,7 +42,10 @@ window.addEventListener('unhandledrejection', (e) => {
 
 const game = new Phaser.Game({
   ...GAME_CONFIG,
-  scene: [BootScene, WorldScene, UiScene, CampScene, CargoScene, TransitionScene, JournalScene],
+  // `?marcha`: el prototipo de la marcha del Nivel 2 (vista lateral), aparte del juego
+  scene: new URLSearchParams(location.search).has('marcha')
+    ? [MarchScene]
+    : [BootScene, WorldScene, UiScene, CampScene, CargoScene, TransitionScene, JournalScene],
 });
 
 applyIntegerScale(game);
