@@ -5,7 +5,13 @@ import { profileHeight, type MarchTrack } from '@/systems/MarchSystem';
 
 /**
  * La marcha en vista lateral (prototipo del Nivel 2): una maqueta de la estepa
- * vista de costado, con la columna caminando hacia la derecha. Mismo lugar que
+ * vista de costado, con la columna caminando hacia la derecha.
+ *
+ * Orientación: la columna baja hacia el sur y la cámara mira hacia el ESTE, así
+ * que la derecha de la pantalla es el sur y el fondo es el mar (el golfo y el
+ * Atlántico, a la izquierda de quien camina). El viento del oeste viene de atrás
+ * de la cámara y se va hacia el mar. El río Chubut, al final, cruza el camino de
+ * oeste a este y desemboca en ese mismo mar. Mismo lugar que
  * World3D (debajo del canvas de Phaser, en la franja del mundo) y mismo criterio
  * de luz por turno, pero su propia cámara y su propio terreno: un perfil largo a
  * lo largo del camino, con sierras de fondo y mucho cielo.
@@ -34,7 +40,12 @@ interface ActorMesh {
 }
 
 /** el terreno va de bien adelante de la cámara (que está en z≈22) hasta el fondo */
-const D = { near: 30, far: -46 };
+const D = { near: 30, far: -56 };
+/** nivel del mar y de la superficie del río (tiles) */
+const SEA_Y = -1.5;
+const RIVER_Y = -0.9;
+/** el cauce del río, contado desde el final del tramo (tiles) */
+const RIVER = { from: 3, to: 9 };
 
 export class MarchView3D {
   private readonly renderer: THREE.WebGLRenderer;
@@ -82,7 +93,7 @@ export class MarchView3D {
     this.sun.shadow.bias = -0.0008;
 
     this.buildSky();
-    this.buildMountains();
+    this.buildSea();
     this.buildTerrain();
     this.buildRiver();
     this.scatterProps();
@@ -125,32 +136,62 @@ export class MarchView3D {
     col.needsUpdate = true;
   }
 
-  private buildMountains(): void {
-    // tres filas de sierras bajas, cada una más lejos y más azulada por la bruma:
-    // la meseta patagónica no tiene cumbres, tiene bordes
-    const rows: Array<[number, number, number]> = [
-      [-60, 5, PAL.soil2],
-      [-90, 8, PAL.grey],
-      [-125, 12, PAL.slate],
-    ];
-    rows.forEach(([z, amp, color], r) => {
-      const n = 120;
-      const x0 = -80;
-      const x1 = this.track.lengthTiles + 120;
-      const shape = new THREE.Shape();
-      shape.moveTo(x0, -10);
-      for (let i = 0; i <= n; i++) {
-        const x = x0 + ((x1 - x0) * i) / n;
-        const h =
-          amp * (0.55 + 0.3 * Math.sin(x * 0.031 + r * 1.7) + 0.15 * Math.sin(x * 0.11 + r)) +
-          (Math.abs(Math.sin(x * 0.017 + r * 2.3)) > 0.93 ? amp * 0.4 : 0); // alguna mesa más alta
-        shape.lineTo(x, h);
-      }
-      shape.lineTo(x1, -10);
-      const mesh = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshLambertMaterial({ color, flatShading: true }));
-      mesh.position.z = z;
-      this.scene3.add(mesh);
-    });
+  /** Dónde termina la tierra y empieza el mar (z, tiles): cerca en la salida
+   * (Punta Cuevas, sobre el golfo), más lejos en el medio del camino, y otra vez
+   * cerca al llegar al río, que desemboca ahí nomás. */
+  private coastZ(x: number): number {
+    const L = this.track.lengthTiles;
+    const t = Math.max(0, Math.min(1, x / L));
+    return -(17 + 17 * Math.sin(Math.PI * t)) + 3 * Math.sin(x * 0.09) + 1.5 * Math.sin(x * 0.31);
+  }
+
+  /** Alto del suelo en (x, z): el camino sigue el perfil del tramo; hacia el fondo
+   * la estepa ondula y cae en barranca al mar; al final, el valle y el cauce del río. */
+  private groundHeight(x: number, z: number): number {
+    const L = this.track.lengthTiles;
+    const n = noise(x, z);
+    let h = profileHeight(this.track, Math.max(0, Math.min(L, x)));
+    if (x > L) {
+      // el valle: el fondo plano, el cauce hundido y la otra orilla apenas más alta
+      const v = profileHeight(this.track, L);
+      const u = x - L;
+      if (u > RIVER.from && u < RIVER.to) h = RIVER_Y - 0.6;
+      else h = v + (u >= RIVER.to ? 0.25 : 0) - Math.min(0.4, u * 0.08);
+    }
+    if (z < -3) h += 0.35 * n + 0.25 * Math.sin(x * 0.11 + z * 0.17);
+    else h += n * 0.15 * Math.min(1, Math.abs(z) / 2);
+    // la costa: barranca que cae al mar
+    const coast = this.coastZ(x);
+    if (z < coast + 3) {
+      const t = Math.min(1, (coast + 3 - z) / 3);
+      const e = t * t * (3 - 2 * t);
+      h = h + (SEA_Y - 1.2 - h) * e;
+    }
+    return h;
+  }
+
+  private buildSea(): void {
+    const L = this.track.lengthTiles;
+    // el mar hasta el horizonte: la bruma lo funde con el cielo
+    const sea = new THREE.Mesh(
+      new THREE.PlaneGeometry(1400, 1000),
+      new THREE.MeshStandardMaterial({ color: PAL.sea, emissive: 0x10262c, roughness: 0.35, metalness: 0.1 }),
+    );
+    sea.rotation.x = -Math.PI / 2;
+    sea.position.set(L / 2, SEA_Y, -520);
+    this.scene3.add(sea);
+    // la Península Valdés del otro lado del golfo: una línea baja y lejana, solo
+    // a la salida (desde Punta Cuevas se la ve cerrando el golfo)
+    const shape = new THREE.Shape();
+    shape.moveTo(-160, SEA_Y);
+    for (let i = 0; i <= 40; i++) {
+      const x = -160 + i * 6;
+      shape.lineTo(x, SEA_Y + 2.2 + 0.8 * Math.sin(i * 0.7) + (i > 30 ? -(i - 30) * 0.25 : 0));
+    }
+    shape.lineTo(80, SEA_Y);
+    const pen = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshLambertMaterial({ color: PAL.grey, flatShading: true }));
+    pen.position.z = -240;
+    this.scene3.add(pen);
   }
 
   private buildTerrain(): void {
@@ -174,11 +215,7 @@ export class MarchView3D {
       const x = pos.getX(i);
       const z = pos.getZ(i);
       const n = noise(x, z);
-      // el camino sigue el perfil; hacia atrás el terreno sube en lomadas
-      let h = profileHeight(this.track, Math.max(0, Math.min(L, x)));
-      if (z < -3) h += (-z - 3) * 0.09 * (0.6 + 0.4 * Math.sin(x * 0.07 + z * 0.13)) + n * 0.6;
-      else h += n * 0.15 * Math.min(1, Math.abs(z) / 2);
-      if (x > L) h = profileHeight(this.track, L) - Math.min(1.2, (x - L) * 0.2);
+      const h = this.groundHeight(x, z);
       pos.setY(i, h);
       // color: estepa ocre, la huella del camino más clara, el cañadón en arcilla,
       // y al final el verde apagado del valle (GDD §9: el verde saturado es del Nivel 10)
@@ -186,6 +223,10 @@ export class MarchView3D {
       let c = cSand.clone().lerp(cSoil, 0.35 + 0.35 * n).lerp(cDry, Math.max(0, Math.sin(x * 0.21 + z * 0.4)) * 0.25);
       if (Math.abs(z) < 0.9 && x >= 0 && x <= L) c.lerp(cPath, 0.45);
       if (slope > 0.35) c = c.lerp(cClay, Math.min(1, slope));
+      // la barranca de la costa en arcilla, y la playa de abajo en arena húmeda
+      const coast = this.coastZ(x);
+      if (z < coast + 3.5 && h > SEA_Y - 0.4) c = c.lerp(cClay, 0.65);
+      if (h <= SEA_Y - 0.4) c = new THREE.Color(PAL.sandLight).lerp(cSoil, 0.3);
       if (x > L - 14) c.lerp(cGreen, Math.min(1, (x - (L - 14)) / 14) * 0.7);
       colors.push(c.r, c.g, c.b);
     }
@@ -198,18 +239,20 @@ export class MarchView3D {
 
   private buildRiver(): void {
     const L = this.track.lengthTiles;
-    const y = profileHeight(this.track, L) - 0.5;
+    // el río cruza el camino de oeste a este (de la cámara al fondo) y desemboca en el mar
+    const zFar = this.coastZ(L + 6) - 4;
+    const w = RIVER.to - RIVER.from;
     const water = new THREE.Mesh(
-      new THREE.PlaneGeometry(60, D.near - D.far),
-      new THREE.MeshLambertMaterial({ color: PAL.seaLight, emissive: 0x16323a, transparent: true, opacity: 0.9 }),
+      new THREE.PlaneGeometry(w + 0.6, D.near - zFar),
+      new THREE.MeshStandardMaterial({ color: PAL.seaLight, emissive: 0x16323a, roughness: 0.3, metalness: 0.1 }),
     );
     water.rotation.x = -Math.PI / 2;
-    water.position.set(L + 26, y, (D.near + D.far) / 2);
+    water.position.set(L + (RIVER.from + RIVER.to) / 2, RIVER_Y, (D.near + zFar) / 2);
     this.scene3.add(water);
-    // sauces en la orilla: lo primero que no es estepa en dos días
+    // sauces en las dos orillas: lo primero que no es estepa en todo el camino
     const leaf = new THREE.MeshLambertMaterial({ color: PAL.moss, flatShading: true });
     const trunk = new THREE.MeshLambertMaterial({ color: PAL.soil });
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 12; i++) {
       const g = new THREE.Group();
       const t = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 1.4, 5), trunk);
       t.position.y = 0.7;
@@ -217,9 +260,10 @@ export class MarchView3D {
       c.position.y = 2.3;
       c.castShadow = true;
       g.add(t, c);
-      const x = L + 4 + i * 2.7 + hash(i, 3) * 1.5;
-      const z = -4 - hash(i, 7) * 18;
-      g.position.set(x, profileHeight(this.track, L) - 0.2, z);
+      const side = i % 2 === 0 ? RIVER.from - 0.8 : RIVER.to + 0.8;
+      const x = L + side + (hash(i, 3) - 0.5) * 0.8;
+      const z = -3 - hash(i, 7) * 16;
+      g.position.set(x, this.groundHeight(x, z) - 0.1, z);
       g.scale.setScalar(0.8 + hash(i, 9) * 0.6);
       this.scene3.add(g);
     }
@@ -237,6 +281,7 @@ export class MarchView3D {
       const x = -20 + hash(i, 1) * (L + 40);
       const z = D.far * 0.55 + hash(i, 2) * (8 - D.far * 0.55);
       if (Math.abs(z) < 1.2) continue; // el camino queda libre
+      if (z < this.coastZ(x) + 4) continue; // ni en la barranca ni en el agua
       const kind = hash(i, 4);
       let m: THREE.Object3D;
       if (kind < 0.55) {
@@ -257,9 +302,7 @@ export class MarchView3D {
       }
       const holder = new THREE.Group();
       holder.add(m);
-      const h = profileHeight(this.track, Math.max(0, Math.min(L, x)));
-      const back = z < -3 ? (-z - 3) * 0.09 * (0.6 + 0.4 * Math.sin(x * 0.07 + z * 0.13)) + noise(x, z) * 0.6 : noise(x, z) * 0.15;
-      holder.position.set(x, h + back, z);
+      holder.position.set(x, this.groundHeight(x, z), z);
       holder.scale.setScalar(0.8 + hash(i, 5) * 0.8);
       this.scene3.add(holder);
     }
@@ -271,7 +314,8 @@ export class MarchView3D {
     const geo = new THREE.PlaneGeometry(0.5, 0.03);
     for (let i = 0; i < 26; i++) {
       const m = new THREE.Mesh(geo, mat.clone());
-      m.position.set(hash(i, 40) * 30, 0.6 + hash(i, 41) * 3, -2 - hash(i, 42) * 10);
+      m.position.set(hash(i, 40) * 30, 0.6 + hash(i, 41) * 3, 8 - hash(i, 42) * 24);
+      m.rotation.y = Math.PI / 2; // la brizna apunta hacia donde la lleva el viento
       m.userData.v = 6 + hash(i, 43) * 6;
       this.wisps.push(m);
       this.scene3.add(m);
@@ -320,8 +364,16 @@ export class MarchView3D {
     const c = TURN_LIGHT[turn] ?? TURN_LIGHT.manana!;
     this.sun.color.set(c.sun);
     this.sun.intensity = c.sunI * 0.9;
-    // el sol de costado: de la izquierda a la mañana, de la derecha a la tarde, siempre algo de frente
-    this.sunDir.set(c.sunDir[0] * 0.8, c.sunDir[1], 10 + Math.abs(c.sunDir[2]));
+    // el sol de verdad para quien mira al este con el sur a la derecha, en el invierno
+    // del sur: sale del mar (fondo) corrido al norte (izquierda), pasa alto por el
+    // norte y se pone detrás de la cámara (oeste). +x = sur, -z = este.
+    const SUN: Record<string, [number, number, number]> = {
+      amanecer: [-8, 6, -16],
+      manana: [-12, 18, -7],
+      tarde: [-9, 9, 15],
+      noche: [-6, 14, 4],
+    };
+    this.sunDir.set(...(SUN[turn] ?? SUN.manana!));
     this.hemi.color.set(c.sky);
     this.hemi.groundColor.set(c.ground);
     this.hemi.intensity = c.hemiI;
@@ -382,8 +434,13 @@ export class MarchView3D {
     this.sun.target.position.set(focusX, 0, 0);
 
     for (const w of this.wisps) {
-      w.position.x += (w.userData.v as number) * dt;
-      if (w.position.x > focusX + 18) w.position.x = focusX - 18 - Math.random() * 6;
+      // el viento del oeste: de atrás de la cámara hacia el mar
+      w.position.z -= (w.userData.v as number) * dt;
+      w.position.x += (w.userData.v as number) * 0.15 * dt;
+      if (w.position.z < -16) {
+        w.position.z = 8 + Math.random() * 4;
+        w.position.x = focusX - 10 + Math.random() * 20;
+      }
       const m = w.material as THREE.MeshBasicMaterial;
       m.opacity = 0.35 + 0.25 * Math.sin(this.time * 3 + w.position.z);
     }

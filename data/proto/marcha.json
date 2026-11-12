@@ -1,5 +1,5 @@
 {
-  "note": "Prototipo de la marcha del golfo al río en vista lateral. Un tramo corto de prueba: no es el nivel 2 definitivo.",
+  "note": "Prototipo de la marcha del golfo al río en vista lateral. Un tramo corto de prueba: no es el nivel 2 definitivo. Orientación: se baja hacia el sur; el mar queda a la izquierda (al este), que en la vista lateral es el fondo.",
   "lengthTiles": 230,
   "from": "Punta Cuevas",
   "to": "El río",
@@ -106,7 +106,7 @@
     {
       "at": 3,
       "speaker": "npc_lewis",
-      "text": "Al sur, siempre al sur. El viento de la cara izquierda, y no nos perdemos."
+      "text": "Al sur, siempre al sur. Con el mar a la izquierda no hay cómo perderse."
     },
     {
       "at": 60,
