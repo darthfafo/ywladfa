@@ -62,8 +62,8 @@ Regla: **ninguna consecuencia nueva que no esté ya prometida en los datos del N
 ### Resuelto (noviembre 2026)
 
 1. **Distancia y días: 65 km, «tres días si el viento afloja, cuatro si no»**, como anuncia Lewis en el Nivel 1. Se elige por coherencia entre niveles; la fuente (~55 km, ~2 días) queda declarada en la guía y en el Códice como lo documentado. En el prototipo: jugando bien se llega el tercer día, a lo seguro el cuarto.
-2. **Nombre del fuerte:** el juego dice «el fuerte viejo», sin nombre propio (no importa para el nivel y las fuentes no coinciden).
-3. **Tehuelches: sin encuentro en la marcha.** El trato empieza cuando la colonia ya está instalada. En la marcha la columna ve de lejos un campamento (humo y toldos) y cruza una rastrillada: tomarla rodea el arenal. Es dramatizado y se declara así en el Códice.
+2. **El fuerte:** las ruinas del Fuerte Paz (1854), de barro y zanjas; los colonos le dicen «el fuerte viejo» y «Caer Antur» («fuerte aventura»).
+3. **Tehuelches: sin encuentro en la marcha.** El trato empieza cuando la colonia ya está instalada (Francisco, sobrino de Casimiro Bigua, fue el primero). La relación se cuenta como conveniencia recíproca, con miedo de los colonos, no como amistad natural (guía §1.2). En la marcha la columna ve de lejos un campamento (humo y toldos) y cruza una rastrillada: tomarla rodea el arenal. Es dramatizado y se declara así en el Códice.
 4. **Los accidentes del camino** (cañadón, bifurcación, cerro chato, arenal, viento) son inventados para el juego: suman decisiones, no afirman geografía.
 
 Fuentes a revisar todavía: Abraham Matthews, *Crónica de la colonia galesa de la Patagonia*; Lewis Jones, *Una nueva Gales en Sudamérica*.

@@ -44,7 +44,7 @@
       "title": "La marcha al río",
       "unlockedBy": "nivel-02",
       "level": "nivel-02",
-      "documented": "Entre agosto y septiembre de 1865 los colonos dejaron la bahía a pie, en grupos de quince a veinte personas con un par de caballos de carga, y cruzaron la estepa sin agua hasta el río Chubut. Llegaron casi sin agua ni comida a un fuerte viejo abandonado, levantado en 1854, dentro de lo que hoy es Rawson. Para fines de septiembre estaban todos instalados ahí. Hubo muertes en esas semanas.",
+      "documented": "Entre agosto y septiembre de 1865 los colonos dejaron la bahía a pie, en grupos de quince a veinte personas con un par de caballos de carga, y cruzaron la estepa sin agua hasta el río Chubut. Llegaron casi sin agua ni comida a las ruinas del Fuerte Paz, de 1854: barro y zanjas a orillas del río, dentro de lo que hoy es Rawson. Lo llamaron Caer Antur («fuerte aventura») o Fuerte Viejo, y desde ahí se fundó Rawson. Para fines de septiembre estaban todos instalados ahí. Hubo muertes en esas semanas.",
       "dramatized": "La distancia y los días: la fuente consultada da unos 55 km en unos dos días; el juego usa los 65 km y «tres días si el viento afloja, cuatro si no» que anuncia Lewis. El cañadón, la bifurcación, el cerro chato, el arenal y el viento del oeste son inventados. También el campamento tehuelche visto de lejos y la rastrillada: no hay registro de eso en esta marcha.",
       "seeAlso": ["cod_tehuelches", "cod_agua_patagonia"]
     },
@@ -53,7 +53,7 @@
       "title": "Los tehuelches",
       "unlockedBy": "nivel-02",
       "level": "nivel-02",
-      "documented": "Los grupos aonikenk y gününa küne habitaban el valle y la meseta del Chubut. La relación con los colonos galeses fue de intercambio pacífico sostenido: enseñaron a cazar guanaco y ñandú a caballo y a leer el terreno, y comerciaban carne, cuero y plumas por pan, harina, yerba y tejidos. Es un caso poco frecuente de convivencia sin conflicto armado en la colonización del continente.",
+      "documented": "Los grupos aonikenk y gününa küne habitaban el valle y la meseta del Chubut. Antes de que llegaran los galeses, el Estado había pactado con caciques como Casimiro Bigua: raciones a cambio de no agredir a la colonia. Francisco, sobrino de Casimiro, fue el primero en visitarla. Los colonos, que sabían que ocupaban tierra ajena, tenían miedo y dependían de esa amistad. El intercambio (carne, cueros, plumas y caballos por pan, harina, yerba y tela) salvó a la colonia en los años malos, aunque fue desigual. Hubo también robos de ganado y ataques, sobre todo cuando se cortaron las raciones. Más que una convivencia pacífica, fue una conveniencia recíproca.",
       "dramatized": "Los personajes tehuelches individuales del juego son ficticios. Los referentes históricos citados, como el cacique Francisco (Galtsh), sí existieron. El campamento que se ve de lejos en la marcha es una escena del juego, sin registro para esa marcha: el trato con los tehuelches empezó con la colonia ya instalada.",
       "caveat": "Esa relación pacífica convivió con un hecho que el juego no oculta: los galeses se instalaron en territorio indígena y se beneficiaron de la campaña militar que lo despejó.",
       "seeAlso": ["cod_conquista"]

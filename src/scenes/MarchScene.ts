@@ -244,7 +244,7 @@ export class MarchScene extends Phaser.Scene {
     this.time.delayedCall(1200, () =>
       this.showCard(
         'El río',
-        `Agua que corre, sauces y las paredes caídas del fuerte viejo. Jornada ${s.day}, ${TURN_LABEL[s.turn]!.toLowerCase()}.` +
+        `Agua que corre, sauces y las paredes de barro del fuerte viejo: Caer Antur. Jornada ${s.day}, ${TURN_LABEL[s.turn]!.toLowerCase()}.` +
           `<br><br>Agua: ${Math.round(s.agua)} L · Comida: ${Math.round(s.comida)}` +
           `<br>Tu madre: ${mari}` +
           (detours ? `<br>${detours === 1 ? 'Un desvío' : `${detours} desvíos`} en el camino` : '<br>Sin desvíos') +

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import * as THREE from 'three';
 import { CAM_MARCH, PAL, TURN_LIGHT, VIEW } from '@/config';
 import { profileHeight, type MarchTrack } from '@/systems/MarchSystem';
+import { bushGeometry, hash, horse, mudFort, rockGeometry, toldo, tuftGeometry, willow } from './marchModels';
 
 /**
  * La marcha en vista lateral (prototipo del Nivel 2): una maqueta de la estepa
@@ -33,6 +34,8 @@ interface ActorMesh {
   /** solo personajes: el plano con la textura */
   sprite?: THREE.Mesh;
   legs?: THREE.Object3D[];
+  /** caballos: el pivote del cuello, para cabecear */
+  neck?: THREE.Object3D;
   lastX: number;
   phase: number;
   amp: number;
@@ -254,64 +257,60 @@ export class MarchView3D {
     water.position.set(L + (RIVER.from + RIVER.to) / 2, RIVER_Y, (D.near + zFar) / 2);
     this.scene3.add(water);
     // sauces en las dos orillas: lo primero que no es estepa en todo el camino
-    const leaf = new THREE.MeshLambertMaterial({ color: PAL.moss, flatShading: true });
-    const trunk = new THREE.MeshLambertMaterial({ color: PAL.soil });
     for (let i = 0; i < 12; i++) {
-      const g = new THREE.Group();
-      const t = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 1.4, 5), trunk);
-      t.position.y = 0.7;
-      const c = new THREE.Mesh(new THREE.ConeGeometry(0.9, 2.6, 6), leaf);
-      c.position.y = 2.3;
-      c.castShadow = true;
-      g.add(t, c);
+      const g = willow(i);
       const side = i % 2 === 0 ? RIVER.from - 0.8 : RIVER.to + 0.8;
       const x = L + side + (hash(i, 3) - 0.5) * 0.8;
       const z = -3 - hash(i, 7) * 16;
       g.position.set(x, this.groundHeight(x, z) - 0.1, z);
-      g.scale.setScalar(0.8 + hash(i, 9) * 0.6);
+      g.rotation.y = hash(i, 8) * Math.PI * 2;
+      g.scale.setScalar(0.85 + hash(i, 9) * 0.5);
       this.scene3.add(g);
     }
   }
 
+  /** La estepa: coirón, jarillas y piedras, todo en instancias (miles de matas, pocas llamadas). */
   private scatterProps(): void {
     const L = this.track.lengthTiles;
-    const coiron = new THREE.MeshLambertMaterial({ color: PAL.coiron, flatShading: true });
-    const bush = new THREE.MeshLambertMaterial({ color: PAL.scrubDark, flatShading: true });
-    const stone = new THREE.MeshLambertMaterial({ color: PAL.grey, flatShading: true });
-    const cone = new THREE.ConeGeometry(0.14, 0.55, 4);
-    const ico = new THREE.IcosahedronGeometry(0.4, 0);
-    const rock = new THREE.DodecahedronGeometry(0.22, 0);
     // la misma densidad de matas por tile, sea largo o corto el tramo
     const count = Math.round((L + 40) * 1.55);
+    const kinds = [
+      { geos: [0, 1, 2].map(tuftGeometry), mat: new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true }), colors: [PAL.coiron, PAL.wheat], share: 0.55 },
+      { geos: [0, 1].map(bushGeometry), mat: new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true }), colors: [PAL.scrubDark, PAL.scrub], share: 0.3 },
+      { geos: [0, 1, 2].map(rockGeometry), mat: new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true }), colors: [PAL.grey, PAL.soil2], share: 0.15 },
+    ];
+    type Spot = { x: number; z: number; s: number; r: number; c: number };
+    const spots: Spot[][][] = kinds.map((k) => k.geos.map(() => []));
     for (let i = 0; i < count; i++) {
       const x = -20 + hash(i, 1) * (L + 40);
       const z = D.far * 0.55 + hash(i, 2) * (8 - D.far * 0.55);
       if (Math.abs(z) < 1.2) continue; // el camino queda libre
       if (z < this.coastZ(x) + 4) continue; // ni en la barranca ni en el agua
-      const kind = hash(i, 4);
-      let m: THREE.Object3D;
-      if (kind < 0.55) {
-        m = new THREE.Group();
-        for (let k = 0; k < 4; k++) {
-          const c = new THREE.Mesh(cone, coiron);
-          c.position.set((hash(i, 10 + k) - 0.5) * 0.3, 0.25, (hash(i, 20 + k) - 0.5) * 0.3);
-          c.rotation.z = (hash(i, 30 + k) - 0.5) * 0.6;
-          (m as THREE.Group).add(c);
-        }
-      } else if (kind < 0.85) {
-        m = new THREE.Mesh(ico, bush);
-        m.scale.set(1, 0.7, 1);
-        m.position.y = 0.2;
-        (m as THREE.Mesh).castShadow = true;
-      } else {
-        m = new THREE.Mesh(rock, stone);
-      }
-      const holder = new THREE.Group();
-      holder.add(m);
-      holder.position.set(x, this.groundHeight(x, z), z);
-      holder.scale.setScalar(0.8 + hash(i, 5) * 0.8);
-      this.scene3.add(holder);
+      const u = hash(i, 4);
+      const ki = u < kinds[0]!.share ? 0 : u < kinds[0]!.share + kinds[1]!.share ? 1 : 2;
+      const gi = Math.floor(hash(i, 6) * kinds[ki]!.geos.length);
+      spots[ki]![gi]!.push({ x, z, s: 0.8 + hash(i, 5) * 0.8, r: hash(i, 7) * Math.PI * 2, c: hash(i, 8) });
     }
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const up = new THREE.Vector3(0, 1, 0);
+    const col = new THREE.Color();
+    kinds.forEach((k, ki) =>
+      k.geos.forEach((geo, gi) => {
+        const list = spots[ki]![gi]!;
+        if (!list.length) return;
+        const inst = new THREE.InstancedMesh(geo, k.mat, list.length);
+        list.forEach((p, j) => {
+          q.setFromAxisAngle(up, p.r);
+          m.compose(new THREE.Vector3(p.x, this.groundHeight(p.x, p.z), p.z), q, new THREE.Vector3(p.s, p.s * (ki === 2 ? 0.8 : 1), p.s));
+          inst.setMatrixAt(j, m);
+          inst.setColorAt(j, col.set(k.colors[0]!).lerp(new THREE.Color(k.colors[1]!), p.c));
+        });
+        inst.castShadow = ki !== 0; // el coirón es fino: su sombra es ruido
+        inst.receiveShadow = true;
+        this.scene3.add(inst);
+      }),
+    );
   }
 
   /** Briznas que cruza el viento: el oeste es una presencia, no un dato. */
@@ -334,9 +333,12 @@ export class MarchView3D {
 
   private addActor(a: MarchActor): void {
     if (a.texture === 'horse') {
-      const h = horse();
+      // uno lleva los barriles de agua; el otro, los víveres
+      const n = Number(a.id.replace(/\D/g, '')) || 1;
+      const h = horse(n % 2 ? 'barriles' : 'bultos', n);
+      h.obj.scale.setScalar(0.95);
       this.scene3.add(h.obj);
-      this.actors.set(a.id, { obj: h.obj, legs: h.legs, lastX: 0, phase: hash(a.id.length, 3) * 3, amp: 0, baseY: 0 });
+      this.actors.set(a.id, { obj: h.obj, legs: h.legs, neck: h.neck, lastX: 0, phase: hash(n, 3) * 3, amp: 0, baseY: 0 });
       h.obj.position.z = a.z;
       return;
     }
@@ -422,38 +424,27 @@ export class MarchView3D {
   private buildCamp(): void {
     const c = this.track.obstacles.find((o) => o.type === 'camp');
     if (!c || c.at === undefined) return;
-    const hide = new THREE.MeshLambertMaterial({ color: PAL.clayLight, flatShading: true });
-    const hideDark = new THREE.MeshLambertMaterial({ color: PAL.clay, flatShading: true });
-    const pole = new THREE.MeshLambertMaterial({ color: PAL.soil });
-    // un toldo: cueros cosidos sobre palos, alto adelante y casi a ras del suelo
-    // atrás. Visto de costado se lee la caída del techo.
-    const prof = new THREE.Shape();
-    prof.moveTo(0, 0);
-    prof.lineTo(2.8, 0);
-    prof.lineTo(2.8, 0.28);
-    prof.quadraticCurveTo(1.2, 0.55, 0, 1.25);
-    prof.lineTo(0, 0);
-    const body = new THREE.ExtrudeGeometry(prof, { depth: 1.8, bevelEnabled: false });
-    body.translate(-1.4, 0, -0.9);
-    const stick = new THREE.CylinderGeometry(0.035, 0.035, 1.6, 4);
     const z0 = -17;
     for (let i = 0; i < 4; i++) {
       const x = c.at + i * 3.4 + (hash(i, 61) - 0.5) * 1.2;
       const z = z0 - hash(i, 62) * 4;
       if (z < this.coastZ(x) + 5) continue;
-      const t = new THREE.Group();
-      t.add(new THREE.Mesh(body, i % 2 ? hide : hideDark));
-      // los palos del frente asoman por encima del cuero
-      for (const sz of [-0.8, 0.8]) {
-        const p = new THREE.Mesh(stick, pole);
-        p.position.set(-1.4, 0.8, sz);
-        t.add(p);
-      }
-      t.traverse((o) => ((o as THREE.Mesh).castShadow = true));
+      const t = toldo(i);
       t.position.set(x, this.groundHeight(x, z), z);
       t.rotation.y = (i % 2 ? Math.PI : 0) + (hash(i, 63) - 0.5) * 0.3; // no todos miran para el mismo lado
       this.scene3.add(t);
       if (i % 2 === 0) this.smokeAt(x + 1.6, z - 1.2);
+    }
+    // la caballada, suelta, pastando del lado de la huella
+    for (let i = 0; i < 4; i++) {
+      const h = horse('suelto', i + 2);
+      const x = c.at + 2 + i * 2.6 + hash(i, 71) * 1.5;
+      const z = z0 + 5 + hash(i, 72) * 3;
+      h.obj.position.set(x, this.groundHeight(x, z), z);
+      h.obj.rotation.y = (hash(i, 73) - 0.5) * 1.6 + (i % 2 ? Math.PI : 0);
+      h.neck.rotation.z = -1.0 - hash(i, 74) * 0.3; // la cabeza abajo, pastando
+      h.obj.scale.setScalar(0.85);
+      this.scene3.add(h.obj);
     }
   }
 
@@ -469,33 +460,11 @@ export class MarchView3D {
     }
   }
 
-  /** Las paredes caídas del fuerte viejo, en la orilla, del lado del mar. */
+  /** Las ruinas del fuerte viejo (Fuerte Paz, 1854; Caer Antur para los galeses):
+   * barro y zanja, en la orilla, del lado del mar. */
   private buildFort(): void {
     const L = this.track.lengthTiles;
-    const adobe = new THREE.MeshLambertMaterial({ color: PAL.clayPale, flatShading: true });
-    const x0 = L - 4;
-    const z0 = -9;
-    const W = 7;
-    const Dp = 5;
-    // [centro x, centro z, largo, alto, girado]: cuatro lados con huecos y alturas desparejas
-    const walls: Array<[number, number, number, number, boolean]> = [
-      [-2.2, 0, 2.6, 1.1, false],
-      [2.3, 0, 2.4, 0.7, false],
-      [0, -Dp, W, 1.3, false],
-      [-W / 2, -Dp / 2, Dp, 1.0, true],
-      [W / 2, -1.2, 2.4, 0.5, true],
-      [W / 2, -Dp + 0.8, 1.6, 1.2, true],
-    ];
-    for (const [dx, dz, len, h, rot] of walls) {
-      const x = x0 + dx;
-      const z = z0 + dz;
-      const m = new THREE.Mesh(new THREE.BoxGeometry(len, h, 0.45), adobe);
-      if (rot) m.rotation.y = Math.PI / 2;
-      m.position.set(x, this.groundHeight(x, z) + h / 2 - 0.1, z);
-      m.castShadow = true;
-      m.receiveShadow = true;
-      this.scene3.add(m);
-    }
+    this.scene3.add(mudFort((x, z) => this.groundHeight(x, z), L - 4, -9));
   }
 
   /** Luz del turno (TURN_LIGHT, config.ts): la misma que el mundo de arriba. */
@@ -565,7 +534,14 @@ export class MarchView3D {
         const slope = profileHeight(this.track, x + 0.6) - profileHeight(this.track, x - 0.6);
         a.obj.position.set(x, y, a.obj.position.z);
         a.obj.rotation.z = Math.atan2(slope, 1.2);
-        a.legs?.forEach((leg, i) => (leg.rotation.z = Math.sin(a.phase * 0.5 + (i % 2) * Math.PI) * 0.45 * a.amp));
+        // paso: las patas en diagonal van juntas; la rodilla se dobla al levantar
+        a.legs?.forEach((leg, i) => {
+          const ph = a.phase * 0.5 + (i === 0 || i === 3 ? 0 : Math.PI);
+          leg.rotation.z = Math.sin(ph) * 0.38 * a.amp;
+          const knee = leg.userData.knee as THREE.Object3D | undefined;
+          if (knee) knee.rotation.z = -Math.max(0, Math.cos(ph)) * (leg.userData.front ? 0.75 : 0.5) * a.amp;
+        });
+        if (a.neck) a.neck.rotation.z = Math.sin(a.phase) * 0.06 * a.amp;
       }
     }
 
@@ -649,57 +625,6 @@ export class MarchView3D {
     this.renderer.domElement.remove();
     this.renderer.dispose();
   }
-}
-
-/** Caballo de carga low-poly, mirando a la derecha, con los bultos a los costados. */
-function horse(): { obj: THREE.Group; legs: THREE.Object3D[] } {
-  const g = new THREE.Group();
-  const coat = new THREE.MeshLambertMaterial({ color: PAL.clayDark, flatShading: true });
-  const pack = new THREE.MeshLambertMaterial({ color: PAL.sand, flatShading: true });
-  const rope = new THREE.MeshLambertMaterial({ color: PAL.soil, flatShading: true });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.7, 0.55), coat);
-  body.position.y = 1.25;
-  const neck = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.32), coat);
-  neck.position.set(0.85, 1.65, 0);
-  neck.rotation.z = -0.6;
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.28, 0.28), coat);
-  head.position.set(1.18, 1.95, 0);
-  head.rotation.z = -0.35;
-  const tail = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.1), rope);
-  tail.position.set(-0.9, 1.1, 0);
-  tail.rotation.z = 0.35;
-  const bagL = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.5, 0.3), pack);
-  bagL.position.set(-0.05, 1.3, 0.42);
-  const bagR = bagL.clone();
-  bagR.position.z = -0.42;
-  const top = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.25, 0.6), pack);
-  top.position.set(-0.05, 1.72, 0);
-  g.add(body, neck, head, tail, bagL, bagR, top);
-  const legs: THREE.Object3D[] = [];
-  for (const [lx, lz] of [
-    [0.65, 0.18],
-    [0.65, -0.18],
-    [-0.65, 0.18],
-    [-0.65, -0.18],
-  ] as const) {
-    const pivot = new THREE.Group();
-    pivot.position.set(lx, 0.95, lz);
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.95, 0.13), coat);
-    leg.position.y = -0.47;
-    pivot.add(leg);
-    g.add(pivot);
-    legs.push(pivot);
-  }
-  g.traverse((o) => {
-    if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).castShadow = true;
-  });
-  g.scale.setScalar(0.95);
-  return { obj: g, legs };
-}
-
-function hash(a: number, b: number): number {
-  const h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
-  return h - Math.floor(h);
 }
 
 /** Ruido suave determinista en el plano (0..1). */

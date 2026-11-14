@@ -48,7 +48,7 @@ Elegir una versión y sostenerla en todo el juego. Las adoptadas por este proyec
 | Caminaron todos: el contingente entero hizo la marcha por tierra | **Adoptado** (decisión del proyecto, noviembre 2026) | — |
 | Salieron en grupos de 15 a 20 personas, con un par de caballos de carga cada uno | Documentado | MercoPress, 30-VII-2005 |
 | Unos 55 km de estepa sin agua, en unos dos días | Documentado (una fuente) | MercoPress, 30-VII-2005 |
-| Llegaron a un fuerte viejo abandonado, levantado en 1854, dentro de lo que hoy es Rawson | Documentado. El nombre varía: *Caer Antur* (MercoPress), *Yr Hen Amddiffynfa*, «la vieja fortaleza» (Wikipedia en inglés, que advierte que Caer Antur sería otro lugar), «Fortín Viejo» (CONICET) | MercoPress; Wikipedia *Y Wladfa*; CONICET |
+| Llegaron a las ruinas del **Fuerte Paz**, de 1854: una fortificación de barro y zanjas a orillas del río, dentro de lo que hoy es Rawson. Los galeses la llamaron **Caer Antur** («fuerte aventura») o Fuerte Viejo, y fue el refugio desde el que se fundó Rawson | Documentado. Otros nombres: *Yr Hen Amddiffynfa*, «la vieja fortaleza» (Wikipedia en inglés, que advierte que Caer Antur sería otro lugar), «Fortín Viejo» (CONICET). **El juego usa Fuerte Paz / Caer Antur / el fuerte viejo** (decisión del proyecto, noviembre 2026) | MercoPress; Wikipedia *Y Wladfa*; CONICET; aporte del proyecto |
 | Para fines de septiembre de 1865 estaban todos instalados ahí | Documentado | MercoPress; CONICET |
 | «Casi sin agua y comida, estuvieron por bajar los brazos cuando alcanzaron el río» | Documentado (prensa) | Infobae, 28-VII-2020 |
 | Hubo muertes en esas semanas | Documentado sin detalle | Wikipedia *Y Wladfa* |
@@ -58,12 +58,39 @@ Elegir una versión y sostenerla en todo el juego. Las adoptadas por este proyec
 
 - **65 km en tres o cuatro días**, lo que ya dicen `d_n1_anuncio_marcha` y `d_n1_final`. Es dramatizado frente a
   la fuente (~55 km, ~2 días) y la ficha del Códice de la marcha lo tiene que declarar en *dramatized*.
-- **«El fuerte viejo»**, sin nombre propio: las fuentes no coinciden y para el juego no hace falta.
-- **Sin encuentro con los tehuelches durante la marcha.** El trato empieza con la colonia ya instalada. En la marcha
+- **El fuerte:** las ruinas del Fuerte Paz (1854), de barro y zanjas. Los colonos le dicen «el fuerte viejo» y «Caer Antur».
+- **Sin encuentro con los tehuelches durante la marcha.** El trato empieza con la colonia ya instalada: el primero
+  en llegar fue Francisco, sobrino de Casimiro Bigua, cuya gente ocupaba las márgenes del Chubut (§1.2). En la marcha
   solo se ve de lejos un campamento (humo y toldos) y se cruza una rastrillada, que se puede seguir para rodear un
   arenal. Nada de eso está documentado para esta marcha: es dramatizado y se declara. Lo que sí es general y
   conocido es que las rastrilladas eran sendas marcadas por el paso repetido de gente y caballos.
 - **Los accidentes del camino** (cañadón, bifurcación, cerro, arenal, viento) son inventados para el juego.
+
+### 1.2 Galeses y tehuelches: conveniencia recíproca, no solo convivencia pacífica
+
+Base: *De galeses y tehuelche. El pacto fundacional de la historia oficial chubutense* (ver §5), que discute el
+modelo de «convivencia pacífica» (Gavirati) y propone hablar de **conveniencia recíproca**. Lo que el juego toma:
+
+| Hecho | Estado | Fuente citada en el artículo |
+|---|---|---|
+| El Estado buscó acuerdos con los caciques del sur para que reconocieran su autoridad y no agredieran a la colonia. Casimiro Bigua, reconocido por Mitre en 1864; tratado firmado en 1866; raciones (ganado, yerba, azúcar, harina, tabaco, ropa) desde 1865, retiradas en Carmen de Patagones | Documentado | Dumrauf, *El último malón*; Coronato |
+| Francisco, sobrino de Casimiro, fue el primer cacique en tener contacto con la colonia; su gente ocupaba las márgenes del Chubut | Documentado | Ídem |
+| Los colonos sabían que ocupaban tierras ajenas, tenían miedo y dependían de esa amistad; estaban armados desde la llegada y Edwin Roberts les daba instrucción militar | Documentado (Matthews: «por el miedo que les teníamos, a causa de encontrarnos del todo indefensos») | Matthews, *Crónica*; Dumrauf |
+| El intercambio (carne, cueros, plumas, caballos por pan, harina, yerba, tela) salvó a la colonia en los años malos, pero fue desigual: en 1866 «era posible comprar un caballo por unos pocos panes» | Documentado | Matthews; Gavirati |
+| En 1865 Reuque, Sayhueque y Namuncurá se quedaron con unos 500 vacunos enviados desde Patagones a los colonos. Hubo robos de ganado y ataques a la colonia en 1871-1873, cuando Sarmiento cortó las raciones | Documentado | Carta de Williams Jones (1865); Dumrauf |
+| Chiquichano le dijo a Musters que los colonos eran «intrusos en su territorio» | Documentado | Musters, *Vida entre los patagones* |
+
+**Consecuencias para el juego:**
+- La relación se muestra como **mutua conveniencia con miedo de por medio**, no como amistad natural. Sin
+  hostilidad gratuita de nadie (R2): cuando hay tensión, se muestra su causa (raciones cortadas, tierra ajena, ganado).
+- En la marcha, los colonos ven de lejos y tienen miedo (Edwyn: «Que nadie se aparte de la columna»); Lewis dice
+  que la tierra es de ellos. Nada más: el contacto es del nivel siguiente.
+- El artículo critica la tesis de la «araucanización» (tehuelches «autóctonos» frente a mapuches «extranjeros»).
+  La regla R1 distingue pueblos; **no** presenta a los mapuches como invasores ni foráneos.
+
+`TODO(historia)`: el artículo, sobre la muerte de los cuatro colonos en 1884, menciona que se les había advertido
+de la actitud «belicosa de los tehuelche» y que la última batalla fue contra la gente de Foyel e Inacayal. R1
+atribuye la emboscada a gente de Foyel (mapuche). Revisar con más fuentes antes del Nivel 5.
 
 ---
 
@@ -148,6 +175,7 @@ sobre su posición.
 - Asociación Galesa de Puerto Madryn — sección Historia
 - SciELO Argentina — «Amigos, pero intrusos: los caciquillos del Chupat y sus negociaciones con el gobierno y la colonia galesa antes de la conquista (1865-1883)»
 
+- *De galeses y tehuelche. El pacto fundacional de la historia oficial chubutense* (artículo; fuentes: Dumrauf, *El último malón*; Matthews, *Crónica de la colonia galesa*; Musters; Coronato, *Patagonia 1865*) — conveniencia recíproca, tratados y raciones, primer contacto (§1.2)
 - MercoPress, «Welsh community mark 140 years in Patagonia» (30-VII-2005) — la marcha: grupos, distancia, días, el fuerte viejo
 - Wikipedia en inglés, *Y Wladfa* — la marcha, «la vieja fortaleza», el nombre Caer Antur
 - CONICET, «La colonización galesa del Chubut y la necesidad de un puerto» — el contingente reunido en el «Fortín Viejo» a fines de septiembre de 1865

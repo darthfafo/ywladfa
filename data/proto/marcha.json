@@ -183,20 +183,20 @@
     {
       "id": "toldos",
       "type": "camp",
-      "at": 254,
-      "note": "Un campamento tehuelche visto de lejos, en el bajo: humo y toldos. No hay encuentro (docs/04 §1.1, decisión de noviembre de 2026)."
+      "at": 250,
+      "note": "Un campamento tehuelche visto de lejos, en el bajo: humo, toldos y la caballada. No hay encuentro: el primer contacto fue con la colonia ya instalada (docs/04 §1.1)."
     },
     {
       "id": "rastrillada",
       "type": "trail",
-      "at": 272,
+      "at": 276,
       "title": "Una rastrillada",
       "prompt": "La huella cruza una senda ancha, pisada por años de caballos y de gente. No va derecho al sur: rodea el arenal por el bajo.",
       "options": [
         {
           "id": "tomar",
           "text": "Tomar la rastrillada.",
-          "detail": "Da más vuelta, pero por suelo firme. Tu madre no se hunde en la arena.",
+          "detail": "Da más vuelta y pasa más cerca de los toldos, pero por suelo firme. Tu madre no se hunde en la arena.",
           "extraTiles": 26,
           "avoid": "medano"
         },
@@ -276,17 +276,22 @@
       "requiresRoute": "adentro"
     },
     {
-      "at": 250,
+      "at": 245,
       "speaker": "pc",
       "text": "Humo, allá en el bajo. Y toldos."
     },
     {
-      "at": 256,
+      "at": 253,
       "speaker": "npc_lewis",
-      "text": "Tehuelches. Esta tierra la caminan desde mucho antes que nosotros. Sus sendas saben dónde hay agua y dónde no."
+      "text": "Tehuelches. Esta es su tierra, no la nuestra. Sus sendas saben dónde hay agua y dónde no."
     },
     {
-      "at": 264,
+      "at": 261,
+      "speaker": "npc_edwyn",
+      "text": "Que nadie se aparte de la columna."
+    },
+    {
+      "at": 268,
       "speaker": "npc_mari",
       "text": "Que nos vean pasar despacio. Que vean que venimos en paz."
     },
@@ -297,14 +302,19 @@
       "skipIfAvoided": "medano"
     },
     {
-      "at": 394,
+      "at": 390,
       "speaker": "npc_lewis",
       "text": "¿Ven la línea oscura abajo? Es el valle. Es el río."
     },
     {
-      "at": 410,
+      "at": 401,
       "speaker": "npc_lewis",
-      "text": "Y esas paredes caídas, junto al agua, son el fuerte viejo. Ahí paramos."
+      "text": "Y esas paredes de barro con la zanja, junto al agua, son el fuerte viejo. Ahí paramos."
+    },
+    {
+      "at": 411,
+      "speaker": "pc",
+      "text": "Caer Antur, ya le dicen algunos. El fuerte de la aventura."
     }
   ],
   "night": {
