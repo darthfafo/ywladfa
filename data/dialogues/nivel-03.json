@@ -61,6 +61,36 @@
       }
     },
     {
+      "id": "d_n3_viveres",
+      "npc": "npc_edwyn",
+      "lang": "cym",
+      "start": "v0",
+      "nodes": {
+        "v0": {
+          "speaker": "narrator",
+          "text": "Un bote baja por la costa y entra al río. Trae víveres del gobierno: harina, galleta, algo de carne salada.",
+          "next": "v1"
+        },
+        "v1": {
+          "speaker": "npc_edwyn",
+          "text": "Esto es lo que mandaron. No sabemos cuándo llega el próximo.",
+          "next": "v2"
+        },
+        "v2": {
+          "speaker": "npc_edwyn",
+          "text": "Yo llevo el depósito. ¿Se reparte todo ahora o guardamos para el invierno?",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_viveres_llegaron": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
       "id": "d_n3_rancho_hecho",
       "npc": "npc_lewis",
       "lang": "cym",
@@ -147,6 +177,62 @@
     }
   ],
   "choices": [
+    {
+      "id": "ch_n3_viveres",
+      "prompt": "Edwyn espera. ¿Qué se hace con los víveres?",
+      "turnCost": 0,
+      "hint": "Lo que se guarde en el depósito vuelve en el invierno.",
+      "options": [
+        {
+          "id": "repartir",
+          "text": "Repartir todo ahora.",
+          "detail": "Hoy se come bien. Para el invierno, lo que haya.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_viveres": "repartir"
+              }
+            },
+            {
+              "resource": {
+                "id": "comida",
+                "delta": 20,
+                "reason": "víveres del gobierno"
+              }
+            },
+            {
+              "morale": 4
+            }
+          ]
+        },
+        {
+          "id": "guardar",
+          "text": "Guardar la mitad en el depósito.",
+          "detail": "Hoy se come menos. La mitad espera al invierno.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_viveres": "guardar",
+                "n3_reserva_comida": 10
+              }
+            },
+            {
+              "resource": {
+                "id": "comida",
+                "delta": 10,
+                "reason": "víveres del gobierno"
+              }
+            },
+            {
+              "bond": {
+                "npc": "npc_edwyn",
+                "delta": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "ch_n3_rehacer",
       "prompt": "Hay que rehacer. ¿Qué va primero?",

@@ -36,6 +36,28 @@
       "steps": []
     },
     {
+      "id": "q_n3_viveres_repartir",
+      "title": "Los víveres",
+      "day": 0,
+      "dayFlag": "n3_dia_viveres",
+      "optional": true,
+      "journalWhen": "flags.n3_viveres == 'repartir'",
+      "journalLine": "Llegó un bote con víveres del gobierno. Se repartió todo.",
+      "journalThought": "Hoy comimos bien. Nadie sabe cuándo llega el próximo.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_viveres_guardar",
+      "title": "Los víveres",
+      "day": 0,
+      "dayFlag": "n3_dia_viveres",
+      "optional": true,
+      "journalWhen": "flags.n3_viveres == 'guardar'",
+      "journalLine": "Llegó un bote con víveres del gobierno. La mitad quedó en el depósito de Edwyn.",
+      "journalThought": "Hoy comimos poco. En el invierno vamos a agradecerlo.",
+      "steps": []
+    },
+    {
       "id": "q_n3_crecida_perdido",
       "title": "La crecida",
       "day": 0,
@@ -88,6 +110,17 @@
       "journalWhen": "flags.n3_rehacer == 'ayudar'",
       "journalLine": "Ayudé a los que perdieron todo. Edwyn cargó barro conmigo hasta la noche.",
       "journalThought": "Lo nuestro puede esperar un día. Lo de ellos, no.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_corral",
+      "title": "El corral",
+      "day": 0,
+      "dayFlag": "n3_dia_corral",
+      "optional": true,
+      "journalWhen": "flags.n3_tiene_corral == true",
+      "journalLine": "Levantamos el corral de todos, con barro, junco y palos.",
+      "journalThought": "Sin los animales no hay invierno. Lewis tenía razón.",
       "steps": []
     }
   ]

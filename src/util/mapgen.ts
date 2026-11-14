@@ -462,5 +462,10 @@ export function valleyGrid(level: LevelDef): ValleyGrid {
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) cells.push({ h: valleHeight(x, y), kind: kindOf[valleKind(x, y)] });
   for (const c of chacraRects(level))
     for (let y = c.y; y < c.y + c.h; y++) for (let x = c.x; x < c.x + c.w; x++) cells[y * W + x]!.chacra = c.id;
+  // las ruinas del fuerte viejo (decor «fuerte», render3d/marchModels.mudFort: 7×5 más la zanja): ahí no se construye
+  const fort = level.spawns.decor?.find((d) => d.id === 'fuerte');
+  if (fort)
+    for (let y = fort.y - 6; y <= fort.y + 2; y++)
+      for (let x = fort.x - 5; x <= fort.x + 5; x++) if (x >= 0 && y >= 0 && x < W && y < H) cells[y * W + x]!.kind = 'fuerte';
   return { w: W, h: H, cells, riverLevel: 2.0 };
 }

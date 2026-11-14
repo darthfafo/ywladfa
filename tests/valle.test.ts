@@ -121,6 +121,7 @@ describe('el valle (Nivel 3, en armado)', () => {
 
   it('la grilla de construcción y el sistema se arman con el valle', () => {
     const c = new ConstructionSystem(cfg, valleyGrid(level));
-    expect(c.canPlace('rancho', 48, 20).ok).toBe(true); // el llano, al norte del fuerte
+    expect(c.canPlace('rancho', 38, 20).ok).toBe(true); // el llano, al oeste del fuerte
+    expect(c.canPlace('rancho', 52, 24).ok).toBe(false); // adentro de las ruinas del fuerte, no
   });
 });

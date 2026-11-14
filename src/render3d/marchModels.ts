@@ -461,3 +461,81 @@ export function adobeHut(ghost?: 'ok' | 'mal'): THREE.Group {
   g.scale.setScalar(1.85);
   return g;
 }
+
+/**
+ * Corral de palos y travesaños sobre 4×3 casillas (centro en el origen), con una
+ * tranquera abierta adelante. `ghost`: la vista previa, como la del rancho.
+ */
+export function corral(ghost?: 'ok' | 'mal'): THREE.Group {
+  const g = new THREE.Group();
+  const wood = ghost
+    ? new THREE.MeshBasicMaterial({ color: ghost === 'ok' ? PAL.moss : PAL.barranca, transparent: true, opacity: 0.5, depthWrite: false })
+    : lambert(PAL.soil);
+  const W = 3.6;
+  const D = 2.6;
+  const posts: Array<[number, number]> = [];
+  for (let i = 0; i <= 4; i++) posts.push([-W / 2 + (W * i) / 4, -D / 2], [-W / 2 + (W * i) / 4, D / 2]);
+  for (let j = 1; j < 3; j++) posts.push([-W / 2, -D / 2 + (D * j) / 3], [W / 2, -D / 2 + (D * j) / 3]);
+  for (const [x, z] of posts) {
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 1.1, 5), wood);
+    p.position.set(x, 0.55, z);
+    p.rotation.z = (hash(x * 7, z * 3) - 0.5) * 0.12;
+    g.add(p);
+  }
+  // dos travesaños por lado; adelante, la tranquera abierta en el medio
+  const rail = (x0: number, z0: number, x1: number, z1: number, y: number): void => {
+    const len = Math.hypot(x1 - x0, z1 - z0);
+    const r = new THREE.Mesh(new THREE.BoxGeometry(len, 0.07, 0.07), wood);
+    r.position.set((x0 + x1) / 2, y, (z0 + z1) / 2);
+    r.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
+    g.add(r);
+  };
+  for (const y of [0.45, 0.85]) {
+    rail(-W / 2, -D / 2, W / 2, -D / 2, y);
+    rail(-W / 2, -D / 2, -W / 2, D / 2, y);
+    rail(W / 2, -D / 2, W / 2, D / 2, y);
+    rail(-W / 2, D / 2, -W * 0.15, D / 2, y);
+    rail(W * 0.15, D / 2, W / 2, D / 2, y);
+  }
+  if (!ghost) shadows(g);
+  // 3,6 × 2,6 → entra en la planta de 4×3 casillas, a la altura de los personajes
+  g.scale.set(1.1, 1.5, 1.1);
+  return g;
+}
+
+/**
+ * La bandera celeste y blanca en un palo alto (15-IX-1865). Colores apagados, de la
+ * paleta. Devuelve también el cuadro a cuadro: la tela flamea con el viento del oeste.
+ */
+export function flagPole(): { obj: THREE.Group; update: (t: number) => void } {
+  const g = new THREE.Group();
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 4.2, 6), lambert(PAL.soil));
+  pole.position.y = 2.1;
+  g.add(pole);
+  const geo = new THREE.PlaneGeometry(1.5, 0.95, 12, 3);
+  const stripes = document.createElement('canvas');
+  stripes.width = 48;
+  stripes.height = 30;
+  const c = stripes.getContext('2d')!;
+  const hex = (n: number): string => `#${n.toString(16).padStart(6, '0')}`;
+  c.fillStyle = hex(PAL.seaPale);
+  c.fillRect(0, 0, 48, 30);
+  c.fillStyle = hex(PAL.bone);
+  c.fillRect(0, 10, 48, 10);
+  const tex = new THREE.CanvasTexture(stripes);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const cloth = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide }));
+  cloth.position.set(0.78, 3.65, 0);
+  g.add(cloth);
+  shadows(g);
+  const base = (geo.attributes.position as THREE.BufferAttribute).array.slice();
+  const update = (t: number): void => {
+    const pos = geo.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < pos.count; i++) {
+      const x = base[i * 3]! + 0.75; // 0 en el palo, 1,5 en la punta
+      pos.setZ(i, Math.sin(t * 4 + x * 3.2) * 0.09 * x); // t en segundos (World3D.sync)
+    }
+    pos.needsUpdate = true;
+  };
+  return { obj: g, update };
+}

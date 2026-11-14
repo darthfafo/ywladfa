@@ -291,6 +291,10 @@ export function makeProps(scene: Phaser.Scene): void {
   makeRect(scene, 'prop_rancho_ok', 30, 26, PAL.moss, PAL.moss);
   makeRect(scene, 'prop_rancho_mal', 30, 26, PAL.barranca, PAL.barranca);
   makeRect(scene, 'prop_fuerte', 40, 30, PAL.clayPale, PAL.clay);
+  makeRect(scene, 'prop_corral', 40, 30, PAL.soil2, PAL.soil);
+  makeRect(scene, 'prop_corral_ok', 40, 30, PAL.moss, PAL.moss);
+  makeRect(scene, 'prop_corral_mal', 40, 30, PAL.barranca, PAL.barranca);
+  makeRect(scene, 'prop_bandera', 12, 16, PAL.seaPale, PAL.bone);
   makeShip(scene);
 }
 

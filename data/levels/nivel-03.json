@@ -277,7 +277,15 @@
       "text": "Ver qué dejó la crecida."
     },
     {
-      "text": "Rehacer lo que se perdió."
+      "requires": "flags.n3_rehacer == 'corral' && flags.n3_tiene_corral != true",
+      "text": "Levantar el corral de todos: barro, junco y palos."
+    },
+    {
+      "requires": "flags.n3_tiene_rancho != true",
+      "text": "Rehacer el rancho, más arriba."
+    },
+    {
+      "text": "El rancho está en pie."
     }
   ],
   "triggers": [
@@ -312,6 +320,27 @@
       }
     },
     {
+      "id": "trig_n3_viveres",
+      "type": "cutscene",
+      "requires": "progress.day >= 2 && flags.n3_bandera == true",
+      "once": true,
+      "turnCost": 0,
+      "note": "Los víveres del gobierno llegaban de forma irregular (docs/04 §1.3). Este envío puntual es dramatizado.",
+      "action": {
+        "dialogue": "d_n3_viveres"
+      }
+    },
+    {
+      "id": "trig_n3_viveres_reparto",
+      "type": "choice",
+      "requires": "flags.n3_viveres_llegaron == true",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "choice": "ch_n3_viveres"
+      }
+    },
+    {
       "id": "trig_n3_crecida",
       "type": "cutscene",
       "requires": "progress.day >= 3 && flags.n3_bandera == true",
@@ -335,7 +364,7 @@
     {
       "id": "trig_n3_acto1_fin",
       "type": "cutscene",
-      "requires": "flags.n3_rehacer != null && (flags.n3_tiene_rancho == true || progress.day >= 5)",
+      "requires": "flags.n3_rehacer != null && (flags.n3_tiene_rancho == true || progress.day >= 5) && (flags.n3_rehacer != 'corral' || flags.n3_tiene_corral == true || progress.day >= 5)",
       "once": true,
       "turnCost": 0,
       "action": {

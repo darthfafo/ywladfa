@@ -175,10 +175,11 @@ Hecho, en `src/levels/nivel03.ts` y `data/*/nivel-03.json`:
 - **Rehacer**: el techo o el corral (si se perdió el rancho), el corral o ayudar (si quedó en pie).
 - Diario con lo que pensó el personaje en cada paso.
 
-Pendiente del acto I:
-- **La comida**: con el consumo nocturno del Nivel 1 y lo que trae el Nivel 2, el grupo se queda sin comida en dos noches. Hay que decidir de dónde sale en el acto I (los víveres del gobierno llegaban irregulares, documentado en general).
-- La bandera, visible en el mástil del fuerte después de la escena.
-- El corral, construible (hoy la elección «el corral» solo deja el flag).
+- **Los víveres** (jornada 2): llega un bote con víveres del gobierno (dramatizado: llegaban, pero irregulares) y Edwyn, que lleva el depósito, pregunta si se reparte todo o se guarda la mitad para el invierno (`n3_reserva_comida`, vuelve en el acto II).
+- **La bandera** queda en el mástil del fuerte, flameando, desde la escena de Murga.
+- **El corral** se construye si se eligió rehacerlo; en las ruinas del fuerte no se construye.
+
+Pendiente: el acto II (el invierno de 1866) y el nombre del personaje ficticio de D5.
 
 ## Fuentes de esta propuesta
 - MercoPress, «Welsh community mark 140 years in Patagonia» (30-VII-2005): Caer Antur; abril de 1866; los 80-90 tehuelches en la otra orilla; Aaron Jenkins en noviembre de 1867 y la cosecha de marzo.
