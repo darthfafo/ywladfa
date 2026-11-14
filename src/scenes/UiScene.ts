@@ -94,7 +94,7 @@ export class UiScene extends Phaser.Scene {
     const world = this.scene.get('World');
     emitterOn(this, world.events, 'request-dialogue', (p: { id: string; next?: string }) => this.openDialogue(p.id, p.next));
     emitterOn(this, world.events, 'request-choice', (id: string) => this.openChoice(id));
-    emitterOn(this, world.events, 'request-apuntalar', () => this.openApuntalar((misses) => (this.scene.get('World') as WorldScene).finishApuntalar(misses)));
+    emitterOn(this, world.events, 'request-apuntalar', () => this.openApuntalar((misses) => (this.scene.get('World') as WorldScene).finishMinigame('apuntalar', misses)));
     emitterOn(this, world.events, 'request-refusal', (npcId: string, text?: string) => this.openRefusal(npcId, text));
 
     busOn(this, 'resource:changed', () => this.refreshResources());
@@ -486,7 +486,8 @@ export class UiScene extends Phaser.Scene {
         this.scene.launch('Transition', { next });
         return;
       }
-      if (id === 'd_n1_manantial') (this.scene.get('World') as WorldScene).sendDafyddHome();
+      // el guion del nivel reacciona al cierre (ej. Nivel 1: Dafydd vuelve del manantial)
+      (this.scene.get('World') as WorldScene).onDialogueClosed(id);
       this.touch.setContext(null);
       this.touch.setVisible(true);
       if (cutsceneId) {

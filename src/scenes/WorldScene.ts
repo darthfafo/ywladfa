@@ -10,20 +10,12 @@ import type { PasajeDef, TriggerDef } from '@/core/types';
 import type { UiScene } from '@/scenes/UiScene';
 import { TriggerSystem } from '@/systems/TriggerSystem';
 import { TURNS } from '@/systems/TimeSystem';
+import { scriptFor, type Interactable, type LevelScript, type WorldHost } from '@/levels';
 import { addPropImage, hasPropArt, propTextureKey } from '@/util/assets';
 import { tileCenter, toTile } from '@/util/grid';
 import { input } from '@/util/input';
 import { baseTerrain, buildTerrain, cellVariant, COLLIDES, TERRAIN, TERRAIN_SPEED, tileIndex, zoneAt } from '@/util/mapgen';
 import { FACING_FRAME, makeProps, makeTileset, NPC_COLORS, PC_COLORS, resolveCharacterTexture } from '@/util/textures';
-
-interface Interactable {
-  sprite: Phaser.GameObjects.Image;
-  kind: 'cajon' | 'npc' | 'jarilla' | 'comida' | 'pila' | 'cueva' | 'fogon' | 'mirar';
-  /** kind 'mirar': lo que dice el personaje al mirarlo (data: spawns.decor[].look) */
-  look?: string;
-  id: string;
-  label: string;
-}
 
 // El arte real de personaje ya se compone a su tamaño final (50×67, ver
 // scripts/compose-sprites.py) — escala 1, el motor no reinterpola nada, así
@@ -34,10 +26,9 @@ const REAL_ART_SCALE = 1;
 
 /**
  * Cuerpos sólidos (px de mundo), apoyados en el borde de abajo de cada sprite.
- * Chicos a propósito para props que se levantan o se usan (cajón, jarilla): con
- * propInteractRadiusPx (balance.json) tienen que seguir alcanzándose de los cuatro
- * lados. La cueva copia el afloramiento de World3D (3.4×2 tiles, frente 3 px al
- * sur del centro del dibujo).
+ * Chicos a propósito para props que se usan (jarilla): con propInteractRadiusPx
+ * (balance.json) tienen que seguir alcanzándose de los cuatro lados. Los de cada
+ * nivel (los cajones y las cuevas del Nivel 1) están en su guion (src/levels).
  */
 /** Suelo de cada terreno, para el sonido de los pasos. */
 const STEP_SURFACE: Record<number, Surface> = {
@@ -71,10 +62,8 @@ const SOLID = {
   // Con 48 + los 15 del jugador, los centros no bajan de ~32 px. Los pasos entre
   // zonas miden 4+ tiles (64 px): entre un NPC y la pared sigue pasando el jugador.
   npc: { w: 48, h: 10 },
-  cajon: { w: 12, h: 6 },
   jarilla: { w: 10, h: 6 },
   fogon: { w: 24, h: 14 },
-  cueva: { w: 54, h: 32, frontPx: 3 },
   animal: { wFrac: 0.55, h: 8 },
   hull: { wFrac: 0.8, hFrac: 0.4 },
 } as const;
@@ -90,8 +79,9 @@ export class WorldScene extends Phaser.Scene {
   private facing: keyof typeof FACING_FRAME = 'north';
   private nearest: Interactable | null = null;
   private nearestLabel: string | null = null;
-  private carriedCajones = 0;
   private carriedLena = 0;
+  /** lo propio del nivel (src/levels): los cajones y las cuevas del 1, la construcción del 3 */
+  private script: LevelScript | null = null;
   private gateOpen = new Map<string, boolean>();
   /** el barco anclado (data: spawns.ship), hasta que zarpa */
   private ship: Phaser.GameObjects.Image | null = null;
@@ -106,12 +96,6 @@ export class WorldScene extends Phaser.Scene {
     return p.day > sh.goneFrom.day || (p.day === sh.goneFrom.day && TURNS.indexOf(p.turn) >= TURNS.indexOf(sh.goneFrom.turn));
   }
   private gaviotas: { sprite: Phaser.GameObjects.Sprite; speedPxPerSec: number }[] = [];
-  /** Dafydd, de vuelta del manantial: no es un tween a un punto fijo (cruzaba
-   * paredes y props en línea recta, "volando" por encima de todo) — sigue el
-   * rastro real de pasos del jugador, así camina por donde vos caminaste. Ver
-   * sendDafyddHome() y el bloque de seguimiento en update(). */
-  private dafyddFollow: Phaser.GameObjects.Image | null = null;
-  private playerTrail: { x: number; y: number }[] = [];
   /** id de NPC → texture key + escala resueltas (arte real o placeholder) — ver create(). */
   private npcTextures = new Map<string, { key: string; scale: number }>();
   private lightOverlay!: Phaser.GameObjects.Rectangle;
@@ -146,13 +130,11 @@ export class WorldScene extends Phaser.Scene {
     this.facing = 'north';
     this.nearest = null;
     this.nearestLabel = null;
-    this.carriedCajones = 0;
     this.carriedLena = 0;
+    this.script = null;
     this.gateOpen = new Map();
     this.ship = null;
     this.gaviotas = [];
-    this.dafyddFollow = null;
-    this.playerTrail = [];
     this.terrainVersion = 0;
     this.holdTriggersUntil = 0;
     this.npcsPlaced = false;
@@ -236,9 +218,11 @@ export class WorldScene extends Phaser.Scene {
     // (se guarda) pero estos contadores no: sin esto, la leña que se llevaba al caer
     // la noche pesaba para siempre y no se podía dejar en el fogón
     this.carriedLena = game.inv.count('haz_lena');
-    this.carriedCajones = game.inv.count('cajon_provisiones');
 
     this.spawnProps(level);
+    this.script = scriptFor(level.id, this.host());
+    this.script?.spawn?.();
+    this.updateNpcVisibility();
     this.spawnDecor();
 
     // ---- cámara: viewport recortado a la franja del mundo (9:16)
@@ -386,24 +370,36 @@ export class WorldScene extends Phaser.Scene {
     this.tweens.add({ targets: this.lightOverlay, fillAlpha: tint.alpha, duration: ms, ease: 'Sine.easeInOut' });
   }
 
-  /** Al cerrar d_n1_manantial (UiScene.openDialogue), Dafydd se despide y arranca a
-   * seguirte de vuelta al campamento en vez de quedarse plantado sentado ahí el
-   * resto de la jornada. No es un tween a un punto fijo (cruzaba paredes y props
-   * en línea recta, "volando" por encima de todo el cañadón) — camina por el
-   * rastro real de pasos que vos vas dejando, ver el bloque de seguimiento en
-   * update(). El flag `_dafydd_se_fue` (que lo esconde del mapa vía
-   * `hiddenAfterFlag`) recién se pone cuando de verdad llega a la barranca, en
-   * trackTile() — no acá: `trig_manantial` ya pone `n1_encontro_manantial` en su
-   * propia acción ANTES de que el diálogo llegue a abrirse, así que usar ESE flag
-   * como disparador escondía el sprite de un frame al otro sin que se viera nunca
-   * la despedida (ya lo pisó un bug antes). */
-  sendDafyddHome(): void {
-    const it = this.interactables.find((x) => x.kind === 'npc' && x.id === 'npc_dafydd');
-    if (!it || !it.sprite.visible) return;
-    this.dafyddFollow = it.sprite;
-    // camina detrás tuyo: si fuera sólido, darte vuelta te dejaba trabado contra él
-    this.syncSolid(it.sprite, false);
-    this.playerTrail = [{ x: this.player.x, y: this.player.y }];
+  /** Lo que la escena le presta al guion del nivel (src/levels). */
+  private host(): WorldHost {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this;
+    return {
+      scene: this,
+      get player() {
+        return self.player;
+      },
+      interactables: this.interactables,
+      solid: (s, w, h, dy) => this.solid(s, w, h, dy),
+      syncSolid: (s, on) => this.syncSolid(s, on),
+      runTriggerById: (id) => this.runTriggerById(id),
+      triggerPending: (id) => {
+        const t = game.level.triggers.find((x) => x.id === id);
+        return !!t && !this.triggers.hasFired(t.id) && game.flags.eval(t.requires);
+      },
+      checkTriggers: () => this.checkTriggers(),
+      teleport: (x, y) => {
+        this.player.setPosition(tileCenter(x), tileCenter(y));
+        this.lastTile = { x: -1, y: -1 };
+        const z = zoneAt(game.level, x, y);
+        if (z) game.state.progress.zone = z.id;
+      },
+    };
+  }
+
+  /** Al cerrarse un diálogo (UiScene): el guion del nivel puede reaccionar (ej. Dafydd vuelve). */
+  onDialogueClosed(dialogueId: string): void {
+    this.script?.onDialogueEnd?.(dialogueId);
   }
 
   /**
@@ -481,17 +477,9 @@ export class WorldScene extends Phaser.Scene {
     sp.setFrame(FACING_FRAME[horiz ? (dx > 0 ? 'west' : 'east') : dy > 0 ? 'north' : 'south']);
   }
 
-  /** Cierre del minijuego de apuntalar: casi sin errores, la entrada queda firme
-   * (Mari duerme mejor y la narración cambia); después, el trigger de siempre,
-   * que trae la noche. */
-  finishApuntalar(misses: number): void {
-    const cfg = registry.levelBalance(game.state.progress.level).apuntalar as Record<string, number>;
-    const firme = misses <= cfg.firmeMaxMisses!;
-    game.applyEffects([
-      { setFlag: { n1_apuntalado_firme: firme } },
-      ...(firme ? [{ partyStat: { npc: 'npc_mari', health: cfg.firmeMariHealth! } }] : []),
-    ]);
-    this.runTriggerById('trig_apuntalar');
+  /** Al terminar un minijuego del nivel (UiScene): lo resuelve el guion. */
+  finishMinigame(id: string, result: number): void {
+    this.script?.onMinigame?.(id, result);
   }
 
   /** Comida: se ve si no se juntó todavía y, si tiene ventana, solo en ese turno. */
@@ -538,33 +526,6 @@ export class WorldScene extends Phaser.Scene {
         this.add.image(tileCenter(ship.x), tileCenter(ship.y), `prop_${ship.prop}`);
       this.ship.setDepth(7);
     }
-    // cajones a bajar — si ya se entregaron los 8 (ej. se retomó una partida guardada
-    // en J2/J3, donde WorldScene.create() corre de cero otra vez) no hay que volver a
-    // tirarlos desparramados en la playa: ya cumplieron su función.
-    const cajonesFaltan = Number(game.flags.get('n1_cajones_bajados') ?? 0) < level.spawns.cajones.length;
-    if (cajonesFaltan) {
-      for (const [i, c] of level.spawns.cajones.entries()) {
-        // arte real si ya existe (src/assets/props/cajon.png), si no el placeholder
-        // de siempre — mismo criterio que mimosa más arriba.
-        const s =
-          addPropImage(this, 'cajon', tileCenter(c.x), tileCenter(c.y)) ??
-          this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cajon');
-        s.setDepth(10);
-        this.solid(s, SOLID.cajon.w, SOLID.cajon.h);
-        this.interactables.push({ sprite: s, kind: 'cajon', id: `cajon_${i}`, label: 'Levantar' });
-      }
-    }
-    // la pila donde se dejan: tierra adentro, lejos de la marea — por eso hay que
-    // bajarlos ahí y no dejarlos donde el bote los tiró, cerca del agua
-    const dep = level.spawns.deposit;
-    if (dep) {
-      const pila = this.add
-        .rectangle(tileCenter(dep.x), tileCenter(dep.y), 26, 14, PAL.soil2, 0.55)
-        .setStrokeStyle(1, PAL.sandLight, 0.8)
-        .setDepth(9);
-      this.interactables.push({ sprite: pila as unknown as Phaser.GameObjects.Image, kind: 'pila', id: 'pila', label: 'Dejar' });
-    }
-
     // lo que se junta (data: spawns.gatherNodes): leña que hay que llevar al fogón,
     // o comida que suma al toque. `prop` es el dibujo, `gain` la entrada de
     // balance.json con la cantidad. Arte real si ya existe (src/assets/props/).
@@ -578,7 +539,7 @@ export class WorldScene extends Phaser.Scene {
     }
     this.updateFoodVisibility();
 
-    // fogón y cuevas — arte real si ya existe (src/assets/props/fogon.png, cueva.png)
+    // el fogón — arte real si ya existe (src/assets/props/fogon.png)
     const f = level.spawns.fogon;
     if (f) {
     const fs =
@@ -588,16 +549,6 @@ export class WorldScene extends Phaser.Scene {
     // centrado en el fogón (el 3D dibuja el aro de piedras alrededor del centro)
     this.solid(fs, SOLID.fogon.w, SOLID.fogon.h, SOLID.fogon.h / 2 - fs.displayHeight / 2);
     this.interactables.push({ sprite: fs, kind: 'fogon', id: 'fogon', label: 'Fogón' });
-    }
-    for (const c of level.spawns.cuevas) {
-      const s =
-        addPropImage(this, 'cueva', tileCenter(c.x), tileCenter(c.y)) ??
-        this.add.image(tileCenter(c.x), tileCenter(c.y), 'prop_cueva');
-      s.setDepth(8);
-      // el afloramiento 3D de la cueva es más grande que el dibujo 2D: el cuerpo
-      // copia ese bloque (ancho, y hacia el norte) para no caminar adentro de la roca
-      this.solid(s, SOLID.cueva.w, SOLID.cueva.h, SOLID.cueva.frontPx - s.displayHeight / 2);
-      this.interactables.push({ sprite: s, kind: 'cueva', id: c.id, label: 'Entrar' });
     }
     // NPCs
     for (const n of level.spawns.npcs) {
@@ -609,7 +560,6 @@ export class WorldScene extends Phaser.Scene {
       this.solid(s, SOLID.npc.w, SOLID.npc.h);
       this.interactables.push({ sprite: s, kind: 'npc', id: n.id, label: 'Hablar' });
     }
-    this.updateNpcVisibility();
   }
 
   /**
@@ -683,11 +633,9 @@ export class WorldScene extends Phaser.Scene {
     for (const n of game.level.spawns.npcs) {
       const it = this.interactables.find((x) => x.kind === 'npc' && x.id === n.id);
       if (!it) continue;
-      // Dafydd siguiendo al jugador (ver sendDafyddHome): su posición la maneja el
-      // seguimiento cuadro a cuadro, no esto — si algo dispara un turno mientras
-      // camina detrás tuyo, sin este corte lo hacía "saltar" de vuelta al manantial
-      // (su posición de movesTo) en medio del camino.
-      if (this.dafyddFollow && n.id === 'npc_dafydd') continue;
+      // un NPC que mueve el guion del nivel (ej. Dafydd siguiéndote, src/levels/nivel01.ts):
+      // si un turno lo reubicara, «saltaba» a su posición de movesTo en medio del camino
+      if (this.script?.holdsNpc?.(n.id)) continue;
       // quien viene caminando a hablarte termina su caminata (ver approach)
       if (this.approaching.has(it.sprite)) continue;
 
@@ -848,7 +796,7 @@ export class WorldScene extends Phaser.Scene {
     this.updateNearest();
     this.stepSounds();
     if (input.takeAction()) this.interact();
-    this.updateDafyddFollow(delta);
+    this.script?.update?.(delta);
     this.trackTile();
   }
 
@@ -868,52 +816,6 @@ export class WorldScene extends Phaser.Scene {
     input.locked = false;
     ui.touch.setVisible(true);
     this.checkTriggers();
-  }
-
-  /** Dafydd caminando detrás tuyo (ver sendDafyddHome): en vez de perseguir tu
-   * posición ACTUAL (eso lo pegaba pegado al jugador, o lo hacía cortar camino
-   * en diagonal atravesando paredes si vos doblabas una esquina), persigue un
-   * punto de tu propio rastro de pasos con un retraso — así su camino es,
-   * literal, el mismo que el tuyo. El retraso es de DISTANCIA real recorrida,
-   * no de cantidad de frames: contar frames (versión anterior) se comía el
-   * "colchón" cada vez que el jugador se quedaba parado un instante (leyendo
-   * un hint, hablando) — el rastro seguía grabando el mismo punto quieto,
-   * Dafydd lo alcanzaba del todo, y apenas el jugador volvía a caminar
-   * quedaban pegados, superpuestos. Contando distancia en vez de frames, un
-   * jugador parado no acorta el colchón — solo lo hace caminar. */
-  private updateDafyddFollow(delta: number): void {
-    if (!this.dafyddFollow) return;
-    const MIN_GAP = 40; // separación mínima real, a lo largo del camino — casi un ancho de sprite
-    const SAMPLE_DIST = 6; // solo agrega un punto al rastro si te moviste esto; si no, no hay nada nuevo que perseguir
-    const MAX_TRAIL = 400;
-
-    const last = this.playerTrail[this.playerTrail.length - 1];
-    if (!last || Math.hypot(this.player.x - last.x, this.player.y - last.y) >= SAMPLE_DIST) {
-      this.playerTrail.push({ x: this.player.x, y: this.player.y });
-      if (this.playerTrail.length > MAX_TRAIL) this.playerTrail.shift();
-    }
-
-    let acc = 0;
-    let idx = this.playerTrail.length - 1;
-    for (; idx > 0; idx--) {
-      const a = this.playerTrail[idx]!;
-      const b = this.playerTrail[idx - 1]!;
-      acc += Math.hypot(a.x - b.x, a.y - b.y);
-      if (acc >= MIN_GAP) break;
-    }
-    const target = this.playerTrail[idx]!;
-    const sprite = this.dafyddFollow;
-    const dx = target.x - sprite.x;
-    const dy = target.y - sprite.y;
-    const dist = Math.hypot(dx, dy);
-    if (dist < 1) return;
-
-    const speed = registry.balance.global.playerBaseSpeedPxPerSec as number;
-    const step = Math.min(dist, (speed * delta) / 1000);
-    sprite.x += (dx / dist) * step;
-    sprite.y += (dy / dist) * step;
-    const dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'east' : 'west') : dy > 0 ? 'south' : 'north';
-    sprite.setFrame(FACING_FRAME[dir]);
   }
 
   private currentSpeed(): number {
@@ -959,40 +861,14 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private labelFor(it: Interactable): string {
-    if (it.kind !== 'cueva') return it.label;
-    const chosen = game.flags.get('n1_cueva_elegida') as string | undefined;
-    if (!chosen) return 'Elegir';
-    if (it.id !== chosen) return 'Mirar';
-    if (!game.flags.is('n1_apuntalado')) return 'Apuntalar';
-    // tarea de la mañana del J2 (ch_n1_tareas): tapar las grietas de la propia cueva
-    const task = game.level.triggers.find((x) => x.id === 'trig_tarea_cuevas');
-    return task && !this.triggers.hasFired(task.id) && game.flags.eval(task.requires) ? 'Arreglar' : 'Mirar';
+    return this.script?.label?.(it) ?? it.label;
   }
 
   private interact(): void {
     const it = this.nearest;
     if (!it) return;
+    if (this.script?.interact?.(it)) return;
     switch (it.kind) {
-      case 'cajon':
-        sfx.pickup();
-        it.sprite.destroy();
-        this.carriedCajones += 1;
-        game.inv.add('cajon_provisiones', 1);
-        break;
-      case 'pila': {
-        if (this.carriedCajones === 0) {
-          bus.emit('ui:pc-says', { text: 'No estoy cargando nada.' });
-          return;
-        }
-        const n = this.carriedCajones;
-        game.inv.remove('cajon_provisiones', n);
-        sfx.drop();
-        this.carriedCajones = 0;
-        const total = game.flags.inc('n1_cajones_bajados', n);
-        bus.emit('ui:toast', { text: `Cajones bajados: ${total} de 8` });
-        this.checkTriggers();
-        break;
-      }
       case 'jarilla': {
         sfx.chop();
         // se esconde, no se destruye: la mata vuelve a estar al día siguiente
@@ -1028,7 +904,7 @@ export class WorldScene extends Phaser.Scene {
           this.carriedLena = 0;
           game.res.change('lena', n, 'jarilla');
           // cuánta leña se trajo cada jornada: la tarea de leña de J2 (trig_tarea_lena) la cuenta
-          game.flags.inc(`n1_lena_traida_j${game.state.progress.day}`, n);
+          game.flags.inc(`n${Number(game.state.progress.level.slice(-2))}_lena_traida_j${game.state.progress.day}`, n);
           sfx.fireUp();
           bus.emit('ui:toast', { text: `Leña cargada al fogón: +${n}` });
           this.checkTriggers();
@@ -1036,26 +912,6 @@ export class WorldScene extends Phaser.Scene {
           bus.emit('ui:pc-says', { text: 'El fogón. Acá vamos a pasar la noche.' });
         }
         break;
-      case 'cueva': {
-        // primero se elige la cueva; después, tocando la PROPIA, se la apuntala
-        // (trig_apuntalar, manual): eso cierra la tarde del J1 y trae la noche
-        const chosen = game.flags.get('n1_cueva_elegida') as string | undefined;
-        const task = game.level.triggers.find((x) => x.id === 'trig_tarea_cuevas');
-        const taskPending = !!task && !this.triggers.hasFired(task.id) && game.flags.eval(task.requires);
-        if (!chosen) this.runTriggerById('trig_eleccion_cueva');
-        else if (it.id !== chosen) bus.emit('ui:pc-says', { text: 'Esa no es la nuestra.' });
-        else if (taskPending) {
-          // tarea de la mañana de J2 (ch_n1_tareas): arreglar la propia cueva
-          sfx.knock();
-          this.runTriggerById('trig_tarea_cuevas');
-        }
-        else if (game.flags.is('n1_apuntalado')) bus.emit('ui:pc-says', { text: 'Ya está apuntalada. Aguanta.' });
-        else {
-          // minijuego de los maderos (UiScene.openApuntalar); al terminar, finishApuntalar
-          this.events.emit('request-apuntalar');
-        }
-        break;
-      }
       case 'mirar':
         if (it.look) bus.emit('ui:pc-says', { text: it.look });
         break;
@@ -1088,15 +944,9 @@ export class WorldScene extends Phaser.Scene {
     }
     // línea corta en la bandeja de diálogo, no un toast: es lo que dice el NPC,
     // tiene que leerse en el mismo lugar que cualquier otra línea suya, no flotando
-    // en cualquier lado de la pantalla.
-    // Dafydd caminando de vuelta (ver sendDafyddHome) no tiene ningún trigger que
-    // hablarle porque ya dijo lo suyo en trig_manantial — pero "— Ahora no." no
-    // tiene sentido con él literalmente al lado tuyo, siguiéndote los pasos.
-    if (npcId === 'npc_dafydd' && this.dafyddFollow) {
-      this.events.emit('request-refusal', npcId, '— Volvamos al fogón.');
-      return;
-    }
-    this.events.emit('request-refusal', npcId);
+    // en cualquier lado de la pantalla. El guion del nivel puede poner otra línea
+    // (ej. Dafydd siguiéndote: «— Volvamos al fogón.»).
+    this.events.emit('request-refusal', npcId, this.script?.refusal?.(npcId));
   }
 
   private trackTile(): void {
@@ -1112,35 +962,8 @@ export class WorldScene extends Phaser.Scene {
       this.refreshAmbience();
     }
 
-    // Dafydd te siguió hasta acá (ver sendDafyddHome): recién al llegar de
-    // verdad a la barranca se despide del todo — el flag lo esconde del mapa
-    // (updateNpcVisibility → hiddenAfterFlag) sin que updateNpcVisibility haya
-    // podido tironear su posición mientras todavía estaba caminando detrás tuyo.
-    if (this.dafyddFollow && zone?.id === 'z2_barranca') {
-      this.dafyddFollow.setVisible(false).setActive(false);
-      this.dafyddFollow = null;
-      this.playerTrail = [];
-      game.flags.set('_dafydd_se_fue', true);
-    }
-
-    // red de contención: los dos pasajes al cañadón ya exigen n1_dafydd_perdido,
-    // así que esto no debería poder pasar nunca — pero si por lo que sea el
-    // jugador termina adentro antes de tiempo, lo saca en vez de dejarlo ver el
-    // manantial fuera de hora. Mejor esto que confiar solo en la colisión.
-    // Vuelve al fogón, no a un punto fijo en la meseta: la meseta tiene sus
-    // propios pasajes cerrados hasta el día 2 (p_barranca_meseta), así que un
-    // punto "seguro" ahí podía dejar al jugador atrapado sin salida en la
-    // jornada 1 — el fogón, en cambio, siempre es territorio ya alcanzado.
-    if (zone?.id === 'z5_canadon' && !game.flags.is('n1_dafydd_perdido')) {
-      const back = game.level.spawns.campamento ?? game.level.spawns.fogon;
-      this.player.setPosition(tileCenter(back.x), tileCenter(back.y));
-      this.lastTile = { x: -1, y: -1 };
-      const backZone = zoneAt(game.level, back.x, back.y);
-      if (backZone) game.state.progress.zone = backZone.id;
-      bus.emit('ui:pc-says', { text: 'Todavía no. Tengo que volver más tarde.' });
-      this.checkTriggers();
-      return;
-    }
+    // lo propio del nivel al pisar una casilla (ej. Nivel 1: Dafydd llega, la red del cañadón)
+    if (this.script?.onTile?.(zone?.id)) return;
 
     this.checkTriggers();
   }
@@ -1193,7 +1016,9 @@ export class WorldScene extends Phaser.Scene {
     if (this.duskPending) {
       this.duskPending = false;
       this.applyTurnLight(DUSK_MS);
-      const atCamp = game.state.progress.zone === 'z2_barranca';
+      const sp = game.level.spawns.campamento ?? game.level.spawns.fogon;
+      const campZone = this.script?.campZone ?? (sp ? zoneAt(game.level, sp.x, sp.y)?.id : undefined);
+      const atCamp = game.state.progress.zone === campZone;
       bus.emit('ui:toast', { text: atCamp ? 'Se va el sol.' : 'Se va el sol. Hay que volver al fogón.' });
       this.holdTriggersUntil = this.time.now + DUSK_MS;
     }
@@ -1220,15 +1045,11 @@ export class WorldScene extends Phaser.Scene {
     this.checkLevelOver();
   }
 
-  /** Red de contención (R7: el Nivel 1 no se puede perder ni quedar trabado): si ya
-   * se pasaron los días del nivel y el cierre (`trig_punta_final`) todavía no
-   * disparó, lo fuerza acá en vez de dejar que el reloj siga corriendo hacia una
-   * "Jornada 4" que no existe en el diseño (`data/levels/nivel-01.json` solo define
-   * 3 días de guion). */
+  /** Red de contención (R7: un nivel no se puede perder ni quedar trabado): el guion
+   * dice qué cierre forzar si el nivel se pasó de días. */
   private checkLevelOver(): void {
-    if (game.state.progress.day <= game.level.schedule.days) return;
-    if (!game.flags.get('n1_carga')) return;
-    const t = game.level.triggers.find((x) => x.id === 'trig_punta_final') as TriggerDef | undefined;
+    const id = this.script?.levelOverTrigger?.();
+    const t = id ? (game.level.triggers.find((x) => x.id === id) as TriggerDef | undefined) : undefined;
     if (!t || this.triggers.hasFired(t.id)) return;
     this.runTrigger(t);
   }
