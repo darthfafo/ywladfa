@@ -37,7 +37,8 @@
           "q_n1_desembarco": "done"
         }
       },
-      "journalWhen": "flags.n1_cajones_bajados >= 8"
+      "journalWhen": "flags.n1_cajones_bajados >= 8",
+      "journalThought": "Lo que bajamos hoy es todo lo que tenemos."
     },
     {
       "id": "q_n1_refugio",
@@ -67,7 +68,8 @@
           "q_n1_refugio": "done"
         }
       },
-      "journalWhen": "flags.n1_apuntalado == true"
+      "journalWhen": "flags.n1_apuntalado == true",
+      "journalThought": "Si la entrada aguanta el viento, esta noche dormimos."
     },
     {
       "id": "q_n1_agua",
@@ -124,7 +126,9 @@
         }
       },
       "journalWhen": "flags.n1_encontro_manantial == true || flags.n1_agua_tardia == true",
-      "journalSuccessWhen": "flags.n1_encontro_manantial == true"
+      "journalSuccessWhen": "flags.n1_encontro_manantial == true",
+      "journalThoughtIfSuccess": "Con agua cerca podemos pensar en otra cosa. Y cuando nos vayamos, los barriles van a salir llenos.",
+      "journalThoughtIfFail": "Con doce litros no se llega lejos. Cuando nos vayamos, la sed va a venir con nosotros."
     },
     {
       "id": "q_n1_dafydd",
@@ -153,7 +157,8 @@
       "journalWhen": "flags.n1_encontro_manantial == true || flags.n1_agua_tardia == true",
       "journalSuccessWhen": "flags.n1_encontro_manantial == true",
       "journalLineIfSuccess": "Se perdió Dafydd. Lo encontramos en el cañadón, sentado en el agua, sin entender por qué estábamos todos gritando.",
-      "journalLineIfFail": "Se perdió Dafydd. No di con él: lo trajo Berwyn, ya de noche."
+      "journalLineIfFail": "Se perdió Dafydd. No di con él: lo trajo Berwyn, ya de noche.",
+      "journalThoughtIfSuccess": "Dafydd encontró el agua antes que nadie. Su madre no lo va a soltar más."
     },
     {
       "id": "q_n1_lena",
@@ -181,7 +186,8 @@
           "q_n1_lena": "done"
         }
       },
-      "journalWhen": "flags.n1_lena_traida_j2 >= 1"
+      "journalWhen": "flags.n1_lena_traida_j2 >= 1",
+      "journalThought": "Si la jarilla alcanza, el fuego de esta noche va a ser grande. Si no, vamos a dormir con frío."
     },
     {
       "id": "q_n1_carga",
@@ -213,7 +219,88 @@
         },
         "goto": "nivel-02"
       },
-      "journalWhen": "flags.n1_carga != null"
+      "journalWhen": "flags.n1_carga != null",
+      "journalThought": "Lo que quedó en la playa nos va a faltar en algún momento. No sé cuándo."
+    },
+    {
+      "id": "q_n1_pienso_harina",
+      "title": "Lo que quedó",
+      "day": 3,
+      "optional": true,
+      "steps": [],
+      "journalWhen": "flags.n1_carga != null && !(flags.n1_carga includes 'harina')",
+      "journalThought": "Sin la harina, no sé qué vamos a comer cuando se termine lo que llevamos.",
+      "comment": "solo un pensamiento: se suma a la línea de la carga (JournalSystem.entry)"
+    },
+    {
+      "id": "q_n1_pienso_labranza",
+      "title": "Lo que quedó",
+      "day": 3,
+      "optional": true,
+      "steps": [],
+      "journalWhen": "flags.n1_carga != null && !(flags.n1_carga includes 'labranza')",
+      "journalThought": "Sin las herramientas de labranza, abrir la tierra del valle va a llevar mucho más.",
+      "comment": "solo un pensamiento: se suma a la línea de la carga (JournalSystem.entry)"
+    },
+    {
+      "id": "q_n1_pienso_imprenta",
+      "title": "Lo que quedó",
+      "day": 3,
+      "optional": true,
+      "steps": [],
+      "journalWhen": "flags.n1_carga != null && !(flags.n1_carga includes 'imprenta')",
+      "journalThought": "Berwyn no me habló en toda la tarde. Sin la imprenta no va a haber periódico.",
+      "comment": "solo un pensamiento: se suma a la línea de la carga (JournalSystem.entry)"
+    },
+    {
+      "id": "q_n1_pienso_semilla",
+      "title": "Lo que quedó",
+      "day": 3,
+      "optional": true,
+      "steps": [],
+      "journalWhen": "flags.n1_carga != null && !(flags.n1_carga includes 'semilla')",
+      "journalThought": "Sin semilla, ¿qué vamos a sembrar? Habrá que comprarla, y cara.",
+      "comment": "solo un pensamiento: se suma a la línea de la carga (JournalSystem.entry)"
+    },
+    {
+      "id": "q_n1_pienso_organo",
+      "title": "Lo que quedó",
+      "day": 3,
+      "optional": true,
+      "steps": [],
+      "journalWhen": "flags.n1_carga != null && !(flags.n1_carga includes 'organo')",
+      "journalThought": "Matthews miró el órgano hasta que lo perdimos de vista.",
+      "comment": "solo un pensamiento: se suma a la línea de la carga (JournalSystem.entry)"
+    },
+    {
+      "id": "q_n1_pienso_abrigo",
+      "title": "Lo que quedó",
+      "day": 3,
+      "optional": true,
+      "steps": [],
+      "journalWhen": "flags.n1_carga != null && !(flags.n1_carga includes 'abrigo')",
+      "journalThought": "Sin la ropa de abrigo, las noches de la travesía van a ser duras para mamá.",
+      "comment": "solo un pensamiento: se suma a la línea de la carga (JournalSystem.entry)"
+    },
+    {
+      "id": "q_n1_pienso_hierro",
+      "title": "Lo que quedó",
+      "day": 3,
+      "optional": true,
+      "steps": [],
+      "journalWhen": "flags.n1_carga != null && !(flags.n1_carga includes 'hierro')",
+      "journalThought": "Sin clavos ni sierra, cada techo va a tardar el doble.",
+      "comment": "solo un pensamiento: se suma a la línea de la carga (JournalSystem.entry)"
+    },
+    {
+      "id": "q_n1_pienso_libros",
+      "title": "Lo que quedó",
+      "day": 3,
+      "optional": true,
+      "steps": [],
+      "journalWhen": "flags.n1_carga != null && !(flags.n1_carga includes 'libros')",
+      "journalThought": "Sin los libros, las noches van a ser más largas.",
+      "comment": "solo un pensamiento: se suma a la línea de la carga (JournalSystem.entry)"
     }
   ]
 }

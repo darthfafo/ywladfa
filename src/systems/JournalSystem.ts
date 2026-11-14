@@ -3,6 +3,16 @@ import type { Game } from '@/core/Game';
 import { registry } from '@/core/Registry';
 import type { JournalEntry } from '@/core/types';
 
+/** Un bloque de texto de la libreta: qué es (define cómo se dibuja) y su texto. */
+export interface BookBlock {
+  kind: 'title' | 'subtitle' | 'chapter' | 'day' | 'line' | 'thought' | 'note' | 'codex-title' | 'codex-label' | 'codex-text';
+  text: string;
+  /** empieza en hoja nueva */
+  pageBreak?: boolean;
+  /** marca para saltar a esta parte (la cinta del Códice) */
+  anchor?: string;
+}
+
 /**
  * Diario y Códice (GDD §5.11).
  *
@@ -22,19 +32,72 @@ export class JournalSystem {
   /** Entrada de una jornada, o null si todavía no pasó nada que contar. */
   entry(day: number): JournalEntry | null {
     const lines: string[] = [];
+    const thoughts: string[] = [];
     for (const q of registry.questsFor(this.game.state.progress.level)) {
       // `dayFlag`: la jornada sale de un flag (en la marcha, el día en que se tomó la decisión)
       const qDay = q.dayFlag ? Number(this.game.flags.get(q.dayFlag) ?? 0) : q.day;
-      if (qDay !== day || !q.journalLine) continue;
+      if (qDay !== day || !(q.journalLine || q.journalThought)) continue;
       if (q.journalWhen && !this.game.flags.eval(q.journalWhen)) continue;
-      let line: string = q.journalLine;
+      let line: string | undefined = q.journalLine;
+      // `journalThought`: lo que el personaje cree que va a pasar por esto (la bitácora)
+      let thought: string | undefined = q.journalThought;
       if (q.journalSuccessWhen) {
         const ok = this.game.flags.eval(q.journalSuccessWhen);
         line = (ok ? q.journalLineIfSuccess : q.journalLineIfFail) ?? line;
+        thought = (ok ? q.journalThoughtIfSuccess : q.journalThoughtIfFail) ?? thought;
       }
-      lines.push(this.fill(line));
+      if (line) {
+        lines.push(this.fill(line));
+        thoughts.push(thought ? this.fill(thought) : '');
+      } else if (thought && lines.length) {
+        // un pensamiento suelto se suma a la última línea (ej. uno por cada bulto que quedó)
+        const i = lines.length - 1;
+        thoughts[i] = [thoughts[i], this.fill(thought)].filter(Boolean).join(' ');
+      }
     }
-    return lines.length ? { level: this.game.state.progress.level, day, title: `Jornada ${day}`, lines } : null;
+    return lines.length ? { level: this.game.state.progress.level, day, title: `Jornada ${day}`, lines, thoughts } : null;
+  }
+
+  /**
+   * Todo el libro, en orden, como bloques de texto (la libreta 3D los pagina y los
+   * dibuja; acá no hay nada de dibujo): la portada, un capítulo por nivel con sus
+   * jornadas —cada línea con lo que el personaje cree que va a pasar— y el Códice.
+   */
+  bookBlocks(): BookBlock[] {
+    const s = this.game.state;
+    const out: BookBlock[] = [
+      { kind: 'title', text: `Libreta de ${s.player.name}` },
+      { kind: 'subtitle', text: 'Me la dio Berwyn en Punta Cuevas: «Dentro de cuarenta años alguien va a preguntar cómo fue, y no va a quedar nadie que se acuerde».' },
+    ];
+    const entries = this.entries();
+    if (!entries.length) out.push({ kind: 'note', text: 'Todavía no hay nada escrito.' });
+    let level = '';
+    for (const e of entries) {
+      const lv = e.level ?? s.progress.level;
+      if (lv !== level) {
+        level = lv;
+        const def = registry.hasLevel(lv) ? registry.level(lv) : null;
+        out.push({ kind: 'chapter', text: def?.title ?? lv, pageBreak: true });
+        if (def?.date) out.push({ kind: 'subtitle', text: def.date });
+      }
+      out.push({ kind: 'day', text: e.title });
+      e.lines.forEach((l, i) => {
+        out.push({ kind: 'line', text: l });
+        const t = e.thoughts?.[i];
+        if (t) out.push({ kind: 'thought', text: t });
+      });
+    }
+    const codex = this.codex();
+    out.push({ kind: 'chapter', text: 'Códice', pageBreak: true, anchor: 'codice' });
+    out.push({ kind: 'note', text: `${codex.length} de ${registry.codex.length} fichas. Cada una separa lo documentado de lo que el juego inventa.` });
+    for (const c of codex) {
+      out.push({ kind: 'codex-title', text: c.title });
+      out.push({ kind: 'codex-label', text: 'Lo documentado' });
+      out.push({ kind: 'codex-text', text: c.documented });
+      out.push({ kind: 'codex-label', text: 'Lo dramatizado' });
+      out.push({ kind: 'codex-text', text: c.dramatized });
+    }
+    return out;
   }
 
   /** Todas las jornadas hasta la actual, en orden. */

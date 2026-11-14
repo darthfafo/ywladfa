@@ -29,6 +29,8 @@ export interface JournalEntry {
   day: number;
   title: string;
   lines: string[];
+  /** lo que el personaje cree que va a pasar por cada línea ('' si nada); partidas viejas no lo tienen */
+  thoughts?: string[];
 }
 
 export interface GameState {

@@ -65,7 +65,7 @@ ni bloquea el avance. Ver `docs/01-nivel-01.md` §8.
 ✔ docs/           GDD, spec del Nivel 1, arquitectura, assets, guía histórica, plan del Nivel 2
 ✔ data/           config, items, npcs, nivel-01 y nivel-02, diálogos, quests, códice, schemas
 ✔ src/            core + 11 sistemas + 8 escenas + UI táctil + mundo HD-2D (render3d)
-✔ tests/          68 tests en verde: sistemas, recorrido del Nivel 1, caminos, encadenar niveles, marcha, decisiones y Nivel 2
+✔ tests/          72 tests en verde: sistemas, recorrido del Nivel 1, caminos, encadenar niveles, marcha, decisiones, Nivel 2 y la libreta
 ✔ scripts/        validate-data.mjs (integridad referencial)
 ◐ arte            ilustraciones, retratos y sprites reales donde existen; el resto, por código
 ✘ maps/           no hay .tmj de Tiled: el mapa se genera en src/util/mapgen.ts
@@ -92,6 +92,12 @@ caminar con la luna). La llegada cambia según el día y cómo viene tu madre. G
 retoma, y al llegar al Fuerte Paz / Caer Antur vuelca todo a la partida (`Game.finishMarch`): diario
 por jornada, Códice, balance de salida. `?marcha` en la URL la abre suelta, sin tocar la partida.
 
+**La libreta** (desde que Berwyn la da, Nivel 1 día 3) es un cuaderno 3D (`render3d/BookView3D.ts`,
+`JournalScene`): llega volando desde la esquina, se abre en la primera hoja y se hojea con hojas que se
+curvan. Es la bitácora del viaje: un capítulo por nivel, cada jornada con lo que pasó y, debajo de cada
+decisión, en otra tinta, lo que el personaje cree que va a traer (`journalThought` en las quests). Al
+final, el Códice. El contenido sale de `JournalSystem.bookBlocks()`; el paginado, de `paginate()`.
+
 **Lo que falta:** el Nivel 3 (hoy el cierre del 2 es «Continuará…»), arte del río y de la marcha
 (ilustraciones), ciclo de caminata dibujado y texto en bitmap font.
 
@@ -100,7 +106,7 @@ por jornada, Códice, balance de salida. `?marcha` en la URL la abre suelta, sin
 ```bash
 npm install
 npm run dev            # http://localhost:5173  (abrilo angosto o con el emulador de móvil)
-npm test               # 68 tests (sistemas, recorridos, caminos, niveles, marcha), sin navegador
+npm test               # 72 tests (sistemas, recorridos, caminos, niveles, marcha, libreta), sin navegador
 npm run validate:data  # integridad referencial de todo /data
 npm run build:single   # dist/index.html autocontenido, se abre con doble clic
 ```

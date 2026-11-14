@@ -11,7 +11,8 @@
       "optional": true,
       "journalWhen": "flags.n2_caballo == 'repartir'",
       "journalLine": "Uno de los caballos se echó en la huella. Repartimos su carga entre todos y seguimos, más lentos.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Vamos a ir más lentos hasta el río. Espero que el agua alcance."
     },
     {
       "id": "q_n2_dejar_raciones",
@@ -21,7 +22,8 @@
       "optional": true,
       "journalWhen": "flags.n2_caballo_dejado == 'raciones'",
       "journalLine": "Uno de los caballos se echó en la huella. Dejamos un bulto de raciones en la estepa. Nadie lo dijo, pero todos las contamos.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Ojalá no las extrañemos antes de llegar."
     },
     {
       "id": "q_n2_dejar_harina",
@@ -31,7 +33,8 @@
       "optional": true,
       "journalWhen": "flags.n2_caballo_dejado == 'harina'",
       "journalLine": "Uno de los caballos se echó en la huella. Para aliviarlo dejamos harina y galleta en la estepa. No sé si alguien va a volver a buscarlo.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Sin la harina, no sé qué vamos a comer cuando se termine lo que llevamos."
     },
     {
       "id": "q_n2_dejar_labranza",
@@ -41,7 +44,8 @@
       "optional": true,
       "journalWhen": "flags.n2_caballo_dejado == 'labranza'",
       "journalLine": "Uno de los caballos se echó en la huella. Para aliviarlo dejamos herramientas de labranza en la estepa. No sé si alguien va a volver a buscarlo.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Sin las herramientas de labranza, abrir la tierra del valle va a llevar mucho más."
     },
     {
       "id": "q_n2_dejar_imprenta",
@@ -51,7 +55,8 @@
       "optional": true,
       "journalWhen": "flags.n2_caballo_dejado == 'imprenta'",
       "journalLine": "Uno de los caballos se echó en la huella. Para aliviarlo dejamos la imprenta en la estepa. No sé si alguien va a volver a buscarlo.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Berwyn no me habló en toda la tarde. Sin la imprenta no va a haber periódico."
     },
     {
       "id": "q_n2_dejar_semilla",
@@ -61,7 +66,8 @@
       "optional": true,
       "journalWhen": "flags.n2_caballo_dejado == 'semilla'",
       "journalLine": "Uno de los caballos se echó en la huella. Para aliviarlo dejamos semilla de trigo en la estepa. No sé si alguien va a volver a buscarlo.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Sin semilla, ¿qué vamos a sembrar? Habrá que comprarla, y cara."
     },
     {
       "id": "q_n2_dejar_organo",
@@ -71,7 +77,8 @@
       "optional": true,
       "journalWhen": "flags.n2_caballo_dejado == 'organo'",
       "journalLine": "Uno de los caballos se echó en la huella. Para aliviarlo dejamos el órgano de la capilla en la estepa. No sé si alguien va a volver a buscarlo.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Matthews miró el órgano hasta que lo perdimos de vista."
     },
     {
       "id": "q_n2_dejar_abrigo",
@@ -81,7 +88,8 @@
       "optional": true,
       "journalWhen": "flags.n2_caballo_dejado == 'abrigo'",
       "journalLine": "Uno de los caballos se echó en la huella. Para aliviarlo dejamos ropa de abrigo en la estepa. No sé si alguien va a volver a buscarlo.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Sin la ropa de abrigo, las noches de la travesía van a ser duras para mamá."
     },
     {
       "id": "q_n2_dejar_hierro",
@@ -91,7 +99,8 @@
       "optional": true,
       "journalWhen": "flags.n2_caballo_dejado == 'hierro'",
       "journalLine": "Uno de los caballos se echó en la huella. Para aliviarlo dejamos clavos, hierro y sierra en la estepa. No sé si alguien va a volver a buscarlo.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Sin clavos ni sierra, cada techo va a tardar el doble."
     },
     {
       "id": "q_n2_dejar_libros",
@@ -101,7 +110,8 @@
       "optional": true,
       "journalWhen": "flags.n2_caballo_dejado == 'libros'",
       "journalLine": "Uno de los caballos se echó en la huella. Para aliviarlo dejamos libros y biblias en la estepa. No sé si alguien va a volver a buscarlo.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Sin los libros, las noches van a ser más largas."
     },
     {
       "id": "q_n2_canadon_bajar",
@@ -111,7 +121,8 @@
       "optional": true,
       "journalWhen": "flags.n2_canadon == 'bajar'",
       "journalLine": "Un cañadón nos cortó el paso. Bajamos los caballos de a uno; un barril se golpeó contra las piedras.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Perdimos agua, pero ganamos horas."
     },
     {
       "id": "q_n2_canadon_rodear",
@@ -121,7 +132,8 @@
       "optional": true,
       "journalWhen": "flags.n2_canadon == 'rodear'",
       "journalLine": "Un cañadón nos cortó el paso. Lo rodeamos: media legua más.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Media legua más. Mamá lo sintió en las piernas."
     },
     {
       "id": "q_n2_costa",
@@ -131,7 +143,8 @@
       "optional": true,
       "journalWhen": "flags.n2_bifurcacion == 'costa'",
       "journalLine": "Edwyn quería la costa y le hicimos caso. Más larga, pero con el mar siempre a la izquierda.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Edwyn quedó contento. Lewis no dijo nada en toda la tarde."
     },
     {
       "id": "q_n2_aguada_verde",
@@ -141,7 +154,8 @@
       "optional": true,
       "journalWhen": "flags.n2_aguada == 'desviar' && flags.n2_aguada_variante == 'verde'",
       "journalLine": "Bajo unas matas verdes había un hilo de agua. Llenamos los barriles.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Con los barriles llenos, la sed queda para después."
     },
     {
       "id": "q_n2_aguada_seca",
@@ -151,7 +165,8 @@
       "optional": true,
       "journalWhen": "flags.n2_aguada == 'desviar' && flags.n2_aguada_variante == 'seca'",
       "journalLine": "Fuimos a ver unas matas grises sobre la barranca. Barro seco: un trago para cada uno y la hora perdida.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Una hora perdida por unas matas. La próxima vez voy a mirar mejor el color."
     },
     {
       "id": "q_n2_cerro_bien",
@@ -161,7 +176,8 @@
       "optional": true,
       "journalWhen": "flags.n2_cerro == 'derecha'",
       "journalLine": "Lewis quería cortar por adentro y lo seguimos. El cerro chato nos quedó a la derecha, como dijo.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Lewis tenía razón: ganamos horas. Ya no le discuto el camino."
     },
     {
       "id": "q_n2_cerro_mal",
@@ -171,7 +187,8 @@
       "optional": true,
       "journalWhen": "flags.n2_cerro == 'izquierda'",
       "journalLine": "Lewis quería cortar por adentro y lo seguimos. Nos perdimos: cuando volvimos a ver el mar, el sol ya estaba bajo.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Si hubiera mirado el cerro como dijo Lewis... Las horas no vuelven."
     },
     {
       "id": "q_n2_toldos",
@@ -181,7 +198,8 @@
       "optional": true,
       "journalWhen": "flags.n2_rastrillada != null",
       "journalLine": "Vimos humo y toldos en un bajo: tehuelches. Lewis dijo que esta tierra es de ellos. Nadie se acercó, y Edwyn no dejó que nadie se apartara de la columna.",
-      "steps": []
+      "steps": [],
+      "journalThought": "No sé qué piensan ellos de nosotros. Esta es su tierra; nosotros somos los que pasamos."
     },
     {
       "id": "q_n2_rastrillada_tomar",
@@ -191,7 +209,8 @@
       "optional": true,
       "journalWhen": "flags.n2_rastrillada == 'tomar'",
       "journalLine": "Seguimos una rastrillada que rodeaba el arenal. Bajaba a un jagüel: agua turbia, pero agua. Pasamos cerca de los toldos sin hablar.",
-      "steps": []
+      "steps": [],
+      "journalThought": "El agua nos salvó el día. El miedo no se fue."
     },
     {
       "id": "q_n2_rastrillada_derecho",
@@ -201,7 +220,8 @@
       "optional": true,
       "journalWhen": "flags.n2_rastrillada == 'derecho'",
       "journalLine": "Cruzamos el arenal derecho. Los caballos se hundían hasta la rodilla, y mamá también.",
-      "steps": []
+      "steps": [],
+      "journalThought": "La arena nos comió las fuerzas. Mamá lo va a pagar mañana."
     },
     {
       "id": "q_n2_moral_baja",
@@ -211,7 +231,8 @@
       "optional": true,
       "journalWhen": "flags.n2_moral_baja == 'si'",
       "journalLine": "Hubo un día en que nadie habló. Caminábamos más despacio, sin saber por qué.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Si seguimos así, no sé quién va a querer seguir."
     },
     {
       "id": "q_n2_tormenta_seguir",
@@ -221,7 +242,8 @@
       "optional": true,
       "journalWhen": "flags.n2_tormenta == 'seguir'",
       "journalLine": "El viento del oeste levantó una pared de tierra. Seguimos con el viento de costado; mamá tosió tierra toda la tarde, y se nos soltó un barril.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Ganamos horas, pero mamá respira mal."
     },
     {
       "id": "q_n2_tormenta_refugio",
@@ -231,7 +253,8 @@
       "optional": true,
       "journalWhen": "flags.n2_tormenta == 'refugio'",
       "journalLine": "El viento del oeste levantó una pared de tierra. Esperamos tirados en un bajo, con la cara tapada, hasta que aflojó.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Perdimos el día, pero mamá descansó."
     },
     {
       "id": "q_n2_cruce_costado",
@@ -241,7 +264,8 @@
       "optional": true,
       "journalWhen": "flags.n2_cruce == 'costado'",
       "journalLine": "La tierra tapó la huella. Caminamos con el viento pegándonos de la derecha, como dijo Lewis, y la volvimos a encontrar.",
-      "steps": []
+      "steps": [],
+      "journalThought": "El viento es la brújula. No me lo voy a olvidar."
     },
     {
       "id": "q_n2_cruce_espalda",
@@ -251,7 +275,8 @@
       "optional": true,
       "journalWhen": "flags.n2_cruce == 'espalda'",
       "journalLine": "La tierra tapó la huella. Caminamos con el viento en la espalda y aparecimos en la costa. Horas perdidas.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Lewis lo había dicho: el viento tenía que pegar de la derecha."
     },
     {
       "id": "q_n2_noche_1_repartir",
@@ -261,7 +286,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_1 == 'repartir'",
       "journalLine": "A la noche repartimos lo de siempre. El fuego duró poco, pero alcanzó.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Si seguimos repartiendo así, la comida no va a llegar al río."
     },
     {
       "id": "q_n2_noche_1_racionar",
@@ -271,7 +297,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_1 == 'racionar'",
       "journalLine": "A la noche racionamos: media ración y la mitad del agua. Mamá tiritó hasta el amanecer.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Estiramos lo que queda, pero mamá está más flaca."
     },
     {
       "id": "q_n2_noche_1_luna",
@@ -281,7 +308,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_1 == 'luna'",
       "journalLine": "No dormimos: caminamos con la luna. Nadie habló en toda la noche.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Ganamos camino. Nadie durmió: mañana lo vamos a sentir."
     },
     {
       "id": "q_n2_noche_2_repartir",
@@ -291,7 +319,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_2 == 'repartir'",
       "journalLine": "A la noche repartimos lo de siempre. El fuego duró poco, pero alcanzó.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Si seguimos repartiendo así, la comida no va a llegar al río."
     },
     {
       "id": "q_n2_noche_2_racionar",
@@ -301,7 +330,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_2 == 'racionar'",
       "journalLine": "A la noche racionamos: media ración y la mitad del agua. Mamá tiritó hasta el amanecer.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Estiramos lo que queda, pero mamá está más flaca."
     },
     {
       "id": "q_n2_noche_2_luna",
@@ -311,7 +341,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_2 == 'luna'",
       "journalLine": "No dormimos: caminamos con la luna. Nadie habló en toda la noche.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Ganamos camino. Nadie durmió: mañana lo vamos a sentir."
     },
     {
       "id": "q_n2_noche_3_repartir",
@@ -321,7 +352,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_3 == 'repartir'",
       "journalLine": "A la noche repartimos lo de siempre. El fuego duró poco, pero alcanzó.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Si seguimos repartiendo así, la comida no va a llegar al río."
     },
     {
       "id": "q_n2_noche_3_racionar",
@@ -331,7 +363,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_3 == 'racionar'",
       "journalLine": "A la noche racionamos: media ración y la mitad del agua. Mamá tiritó hasta el amanecer.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Estiramos lo que queda, pero mamá está más flaca."
     },
     {
       "id": "q_n2_noche_3_luna",
@@ -341,7 +374,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_3 == 'luna'",
       "journalLine": "No dormimos: caminamos con la luna. Nadie habló en toda la noche.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Ganamos camino. Nadie durmió: mañana lo vamos a sentir."
     },
     {
       "id": "q_n2_noche_4_repartir",
@@ -351,7 +385,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_4 == 'repartir'",
       "journalLine": "A la noche repartimos lo de siempre. El fuego duró poco, pero alcanzó.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Si seguimos repartiendo así, la comida no va a llegar al río."
     },
     {
       "id": "q_n2_noche_4_racionar",
@@ -361,7 +396,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_4 == 'racionar'",
       "journalLine": "A la noche racionamos: media ración y la mitad del agua. Mamá tiritó hasta el amanecer.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Estiramos lo que queda, pero mamá está más flaca."
     },
     {
       "id": "q_n2_noche_4_luna",
@@ -371,7 +407,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_4 == 'luna'",
       "journalLine": "No dormimos: caminamos con la luna. Nadie habló en toda la noche.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Ganamos camino. Nadie durmió: mañana lo vamos a sentir."
     },
     {
       "id": "q_n2_noche_5_repartir",
@@ -381,7 +418,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_5 == 'repartir'",
       "journalLine": "A la noche repartimos lo de siempre. El fuego duró poco, pero alcanzó.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Si seguimos repartiendo así, la comida no va a llegar al río."
     },
     {
       "id": "q_n2_noche_5_racionar",
@@ -391,7 +429,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_5 == 'racionar'",
       "journalLine": "A la noche racionamos: media ración y la mitad del agua. Mamá tiritó hasta el amanecer.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Estiramos lo que queda, pero mamá está más flaca."
     },
     {
       "id": "q_n2_noche_5_luna",
@@ -401,7 +440,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noche_5 == 'luna'",
       "journalLine": "No dormimos: caminamos con la luna. Nadie habló en toda la noche.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Ganamos camino. Nadie durmió: mañana lo vamos a sentir."
     },
     {
       "id": "q_n2_llegada",
@@ -411,7 +451,8 @@
       "optional": true,
       "journalWhen": "flags.n2_llegada == true",
       "journalLine": "Llegamos al río. Agua que corre, y sauces. Al lado, las paredes de barro de un fuerte viejo. Algunos ya le dicen Caer Antur.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Ahora hay que hacer de este barro un lugar para vivir."
     },
     {
       "id": "q_n2_llegada_primeros",
@@ -451,7 +492,8 @@
       "optional": true,
       "journalWhen": "flags.n2_mari_enferma == true",
       "journalLine": "Mamá llegó con fiebre. La acostamos sobre los cueros, adentro de las paredes.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Si la fiebre no baja, no sé qué voy a hacer."
     },
     {
       "id": "q_n2_hambre",
@@ -461,7 +503,8 @@
       "optional": true,
       "journalWhen": "flags.n2_noches_hambre > 0",
       "journalLine": "La comida no alcanzó. Mamá lo pagó más que nadie.",
-      "steps": []
+      "steps": [],
+      "journalThought": "Lo que dejamos en el camino lo pagamos en la mesa."
     }
   ]
 }

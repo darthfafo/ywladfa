@@ -199,6 +199,12 @@ class SfxEngine {
     src.start(t, 0, 0.6);
   }
 
+  /** una hoja de la libreta que se pasa: un roce corto de papel */
+  page(): void {
+    this.noiseBurst({ dur: 0.22, freq: 3200, q: 0.8, type: 'bandpass', gain: 0.16 * AUDIO.ui, attack: 0.03 });
+    this.noiseBurst({ dur: 0.12, freq: 1400, q: 1, type: 'bandpass', gain: 0.08 * AUDIO.ui, attack: 0.01, at: 0.16 });
+  }
+
   /** trueno lejano (relámpago de la portada) */
   thunder(): void {
     this.noiseBurst({ dur: 2.2, freq: 120, type: 'lowpass', gain: 0.6 * AUDIO.ambience, attack: 0.25, at: 0.3 });

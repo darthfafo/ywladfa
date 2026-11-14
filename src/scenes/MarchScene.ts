@@ -116,7 +116,7 @@ export class MarchScene extends Phaser.Scene {
     this.captionEl = this.dom(0, VIEW.world.y + VIEW.world.h - 70, VIEW.width, 60, 62);
     this.cardEl = this.dom(0, VIEW.world.y, VIEW.width, VIEW.world.h, 63);
     // la libreta (Diario y Códice), arriba a la derecha como en el Nivel 1; solo en el juego
-    if (this.integrated) {
+    if (this.integrated && game.flags.is('unlocked_sistema_diario')) {
       const jb = this.dom(VIEW.width - 24, 5, 20, 16, 62);
       this.journalBtn = jb;
       jb.innerHTML =
@@ -222,7 +222,8 @@ export class MarchScene extends Phaser.Scene {
 
   /** La libreta (Diario y Códice), con la marcha en pausa. Solo en el juego. */
   private openJournal(): void {
-    if (!this.integrated || this.scene.isActive('Journal')) return;
+    // la libreta, desde que Berwyn la da (Nivel 1, unlocked_sistema_diario)
+    if (!this.integrated || !game.flags.is('unlocked_sistema_diario') || this.scene.isActive('Journal')) return;
     this.scene.launch('Journal', { tab: 'diario', pause: ['March'] });
   }
 
