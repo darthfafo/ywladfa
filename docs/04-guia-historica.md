@@ -92,6 +92,24 @@ modelo de «convivencia pacífica» (Gavirati) y propone hablar de **convenienci
 de la actitud «belicosa de los tehuelche» y que la última batalla fue contra la gente de Foyel e Inacayal. R1
 atribuye la emboscada a gente de Foyel (mapuche). Revisar con más fuentes antes del Nivel 5.
 
+### 1.3 Los primeros años en el valle, 1865-1868 (base del Nivel 3)
+
+| Hecho | Estado | Fuente |
+|---|---|---|
+| 15-IX-1865: Murga iza la bandera y funda Trerawson, por el ministro Guillermo Rawson | Documentado | Guía §1; Welcome Argentina |
+| 1865: una crecida se lleva las primeras casas de barro y lo sembrado (papa, maíz); se rehacen mejor | Documentado | Wikipedia *Y Wladfa* |
+| Llueve mucho menos de lo prometido y las cosechas fallan; los víveres, semillas y dinero del gobierno llegan irregulares | Documentado | Wikipedia *Y Wladfa*; MercoPress |
+| 8-XII-1865: carta de un cacique al superintendente Jones | Documentado (estudio de Liliana Pérez) | Dialnet |
+| Abril de 1866: cuatro personas se acercan y arman un toldo junto al fuerte; se entienden por señas, un diccionario y lenguas mezcladas. Más tarde, 80-90 tehuelches se instalan en la otra orilla | Documentado (una fuente de prensa) | MercoPress |
+| 1867: falta comida y los colonos deciden retirarse a Madryn; los tehuelches se enojan porque pierden el comercio | Documentado (una fuente secundaria) | «De galeses y tehuelche» (Dumrauf) |
+| Algunos colonos pidieron al gobierno británico mudarse a Malvinas | Documentado sin fecha | Wikipedia *Y Wladfa* |
+| Noviembre de 1867: Aaron Jenkins riega trigo abriendo la orilla del río; la idea del riego sistemático se atribuye a Rachel Jenkins. Marzo de 1868: cosecha espléndida | Documentado | MercoPress; Wikipedia *Y Wladfa* |
+| Enero de 1868: *Y Brut*, primer periódico de la colonia (seis números) | Documentado | Wikipedia *Y Wladfa* |
+
+**Choque con el GDD:** el GDD ubica el Nivel 3 en «Rawson, Gaiman, Dolavon, 1865-67» con el eisteddfod,
+pero Gaiman y el primer eisteddfod son de 1874-75 (§1) y Dolavon es posterior (fecha a confirmar, `TODO(historia)`). Ver la decisión D1 de
+`docs/10-plan-nivel-03.md`.
+
 ---
 
 ## 2. Toponimia y etimología
