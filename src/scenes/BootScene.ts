@@ -3,6 +3,7 @@ import { INPUT_GUARD, PAL, VIEW } from '@/config';
 import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { createInitialState } from '@/core/GameState';
+import { registry } from '@/core/Registry';
 import { saveSystem } from '@/systems/SaveSystem';
 import { addSceneBackground, preloadArt, sceneTextureKey } from '@/util/assets';
 import { DialogueBox } from '@/ui/DialogueBox';
@@ -126,6 +127,16 @@ export class BootScene extends Phaser.Scene {
     // ver util/scale.ts: el momento real en que el juego se hace visible (no un
     // tiempo adivinado) es el que tiene que disparar el reencuadre en frío.
     window.dispatchEvent(new Event('wladfa:ready-to-show'));
+
+    // solo en `npm run dev`: `?nivel=nivel-03` arranca directo en ese nivel (también
+    // los que están en armado), con un estado nuevo — para probar sin jugar lo anterior
+    const jump = import.meta.env.DEV ? new URLSearchParams(location.search).get('nivel') : null;
+    if (jump) {
+      makeProps(this);
+      game.replaceState(createInitialState(jump));
+      this.scene.start(registry.level(jump).kind === 'march' ? 'March' : 'World');
+      return;
+    }
 
     const cx = VIEW.width / 2;
     makeProps(this); // trae 'prop_mimosa': WorldScene todavía no corrió, no existe todavía

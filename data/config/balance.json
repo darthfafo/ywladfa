@@ -272,6 +272,25 @@
     "groupSize": 9
   },
   "nivel03": {
+    "startState": {
+      "resources": {
+        "agua": 18,
+        "comida": 14,
+        "forraje": 0,
+        "lena": 2,
+        "municion": 6,
+        "materiales": 0
+      },
+      "playerCapacityKg": 14,
+      "playerCarriedKg": 6,
+      "languages": {
+        "cym": 3,
+        "spa": 0,
+        "aon": 0
+      },
+      "morale": 55
+    },
+    "groupSize": 9,
     "construccion": {
       "comment": "Nivel 3 (docs/10-plan-nivel-03.md §4.2): costos de cada pieza (materiales y turnos de trabajo), la zanja y el agua, y lo que pesa de la carga dejada.",
       "pieces": {

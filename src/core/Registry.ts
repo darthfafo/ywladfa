@@ -50,9 +50,12 @@ class GameRegistry {
   }
 
   /** ¿Existe un nivel con este id (data/levels/<id>.json)? */
+  /** ¿Existe y se puede jugar? (un nivel en armado, `draft`, todavía no cuenta) */
   hasLevel(id: string): boolean {
-    return this.levels.has(id);
+    const l = this.levels.get(id);
+    return !!l && !l.draft;
   }
+
 
   /** Quests de un nivel (data/quests/<id>.json); vacío si no tiene. */
   questsFor(levelId: string): Array<any> {

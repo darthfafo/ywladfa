@@ -1,0 +1,222 @@
+{
+  "$schema": "../schemas/level.schema.json",
+  "id": "nivel-03",
+  "draft": true,
+  "title": "El valle",
+  "subtitle": "Trerawson, a orillas del Chubut",
+  "date": "Septiembre de 1865 – marzo de 1868",
+  "next": "nivel-04",
+  "comment": "En armado (docs/10-plan-nivel-03.md): el mapa del valle (mapgen valle_chubut) y el lugar de cada cosa. Sin guion todavía. draft: no se entra desde el Nivel 2 hasta que esté jugable.",
+  "map": {
+    "file": "generado",
+    "widthTiles": 64,
+    "heightTiles": 70,
+    "tileSize": 16,
+    "generator": "valle_chubut",
+    "orientationNote": "Norte arriba. El río corre de oeste a este hasta el mar (borde este), entre dos bardas. El fuerte viejo, en la orilla norte cerca del mar.",
+    "chacras": [
+      {
+        "id": "chacra_familia",
+        "owner": "familia",
+        "x": 20,
+        "w": 5,
+        "dy": 7,
+        "h": 4
+      },
+      {
+        "id": "chacra_vecinos",
+        "owner": "vecinos",
+        "x": 27,
+        "w": 5,
+        "dy": 2,
+        "h": 3
+      },
+      {
+        "id": "chacra_jenkins",
+        "owner": "jenkins",
+        "x": 6,
+        "w": 5,
+        "dy": 5,
+        "h": 4
+      }
+    ]
+  },
+  "schedule": {
+    "days": 3,
+    "turnsPerDay": 4
+  },
+  "zones": [
+    {
+      "id": "z1_fuerte",
+      "label": "El fuerte viejo",
+      "rect": [
+        42,
+        26,
+        16,
+        10
+      ],
+      "ambience": {
+        "wind": 0.5,
+        "sea": 0.3
+      }
+    },
+    {
+      "id": "z5_barda",
+      "label": "La barda",
+      "rect": [
+        0,
+        0,
+        64,
+        13
+      ],
+      "ambience": {
+        "wind": 1
+      }
+    },
+    {
+      "id": "z3_rio",
+      "label": "El río",
+      "rect": [
+        0,
+        37,
+        60,
+        14
+      ],
+      "ambience": {
+        "wind": 0.5
+      }
+    },
+    {
+      "id": "z2_llano",
+      "label": "El llano",
+      "rect": [
+        0,
+        13,
+        60,
+        24
+      ],
+      "ambience": {
+        "wind": 0.7
+      }
+    },
+    {
+      "id": "z4_llano_sur",
+      "label": "La otra orilla",
+      "rect": [
+        0,
+        51,
+        60,
+        19
+      ],
+      "ambience": {
+        "wind": 0.7
+      }
+    }
+  ],
+  "camera": {
+    "viewport": {
+      "x": 0,
+      "y": 32,
+      "w": 270,
+      "h": 352
+    },
+    "follow": {
+      "lerpX": 0.15,
+      "lerpY": 0.12,
+      "deadzoneW": 48,
+      "deadzoneH": 96
+    },
+    "bounds": "map"
+  },
+  "spawns": {
+    "player": {
+      "x": 48,
+      "y": 32,
+      "facing": "south"
+    },
+    "npcs": [
+      {
+        "id": "npc_lewis",
+        "x": 45,
+        "y": 30,
+        "day": "*"
+      },
+      {
+        "id": "npc_mari",
+        "x": 50,
+        "y": 30,
+        "day": "*"
+      },
+      {
+        "id": "npc_edwyn",
+        "x": 44,
+        "y": 33,
+        "day": "*"
+      },
+      {
+        "id": "npc_matthews",
+        "x": 52,
+        "y": 32,
+        "day": "*"
+      },
+      {
+        "id": "npc_berwyn",
+        "x": 47,
+        "y": 28,
+        "day": "*"
+      }
+    ],
+    "gatherNodes": [],
+    "cajones": [],
+    "cuevas": [],
+    "fogon": {
+      "x": 48,
+      "y": 29
+    },
+    "campamento": {
+      "x": 48,
+      "y": 31
+    },
+    "pasajes": []
+  },
+  "objectives": [],
+  "goals": [
+    {
+      "text": "Recorrer el valle: el río, el fuerte viejo, la barda."
+    }
+  ],
+  "triggers": [],
+  "hints": [],
+  "exit": {
+    "carryOver": [
+      "resources",
+      "inventory",
+      "party",
+      "flags",
+      "languages",
+      "journal",
+      "codex"
+    ],
+    "closing": {
+      "kicker": "Fin de la tercera parte",
+      "gradeTitle": "Así queda el valle"
+    },
+    "computeGrade": {
+      "comida": {
+        "field": "resources.comida",
+        "good": 12,
+        "ok": 6
+      },
+      "mariHealth": {
+        "field": "party.npc_mari.health",
+        "good": 60,
+        "ok": 35
+      },
+      "morale": {
+        "field": "party.morale",
+        "good": 50,
+        "ok": 30
+      }
+    }
+  }
+}

@@ -164,6 +164,8 @@ export interface LevelDef {
   /** 'world': mapa recorrible (WorldScene). 'march': la marcha en vista lateral
    * (MarchScene), sin mapa ni zonas. Sin el campo: 'world'. */
   kind?: 'world' | 'march';
+  /** en armado: existe en los datos pero todavía no se entra desde el nivel anterior */
+  draft?: boolean;
   /** solo 'march': quiénes van en la columna */
   party?: string[];
   /** solo 'march': el tramo que recorre MarchSystem */
@@ -176,7 +178,15 @@ export interface LevelDef {
   subtitle: string;
   date: string;
   next: string | null;
-  map: { widthTiles: number; heightTiles: number; tileSize: number; /** generador de src/util/mapgen.ts */ generator?: string };
+  map: {
+    widthTiles: number;
+    heightTiles: number;
+    tileSize: number;
+    /** generador de src/util/mapgen.ts */
+    generator?: string;
+    /** valle (Nivel 3): las chacras, ubicadas respecto del río (mapgen.chacraRects) */
+    chacras?: Array<{ id: string; owner: string; x: number; w: number; dy: number; h: number }>;
+  };
   schedule: { days: number; turnsPerDay: number };
   zones: ZoneDef[];
   camera: { follow: { lerpX: number; lerpY: number } };

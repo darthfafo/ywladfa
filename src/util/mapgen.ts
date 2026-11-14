@@ -1,4 +1,5 @@
 import type { LevelDef } from '@/core/types';
+import type { Cell, CellKind, ValleyGrid } from '@/systems/ConstructionSystem';
 
 /**
  * Terreno del prototipo. Reemplazar por el .tmj de Tiled cuando exista el tileset real
@@ -78,6 +79,7 @@ const ZONE_TERRAIN: Record<string, number> = {
  */
 const GENERATORS: Record<string, (level: LevelDef, isOpen: (pasajeId: string) => boolean) => number[][]> = {
   punta_cuevas: buildPuntaCuevas,
+  valle_chubut: buildValleChubut,
 };
 
 export function buildTerrain(level: LevelDef, isOpen: (pasajeId: string) => boolean = () => true): number[][] {
@@ -299,4 +301,166 @@ export function zoneAt(level: LevelDef, tx: number, ty: number): { id: string; l
     if (tx >= x && tx < x + w && ty >= y && ty < y + h) return { id: z.id, label: z.label };
   }
   return null;
+}
+
+// ---------------------------------------------------------------- el valle (Nivel 3)
+
+/**
+ * El valle inferior del Chubut (Nivel 3): el río serpentea de oeste a este hasta el
+ * mar (borde este), entre dos bardas (norte y sur). El río corre sobre su propio
+ * albardón: la orilla es lo más alto del llano, que baja de a poco hacia la barda.
+ * Por eso una zanja que sale del río puede llevar el agua lejos: mientras el
+ * terreno baje (ConstructionSystem). Hay lomadas que cortan el paso del agua.
+ *
+ * Todo sale de funciones fijas (sin azar): el mismo valle en cada partida.
+ */
+export const VALLE = {
+  /** centro del río (fila) y sus ondas */
+  riverBase: 44,
+  riverWaves: [
+    [4, 0.08, 0],
+    [1.6, 0.19, 1.2],
+  ] as Array<[number, number, number]>,
+  /** medio ancho del cauce (filas) */
+  riverHalf: 1.5,
+  /** la barda norte: fila base y onda; la sur */
+  bardaNorth: 12,
+  bardaSouth: 64,
+  /** donde empieza el mar (columna) */
+  seaFrom: 60,
+  /** la bajada a la barda norte (columnas del sendero) */
+  bajada: [18, 21] as [number, number],
+  /** lomadas: centro (x, y relativo al río: negativo = al norte) y alto */
+  lomadas: [
+    [16, -9, 1.7],
+    [30, -14, 1.8],
+    [38, 8, 1.6],
+  ] as Array<[number, number, number]>,
+  /** alturas para la construcción (unidades de ConstructionSystem) */
+  h: { river: 1.0, sea: 0, barda: 5, leveeTop: 2.1, leveeDrop: 0.15, plainTop: 1.8, plainSlope: 0.03, plainMin: 1.0 },
+} as const;
+
+/** Fila del centro del río en la columna `x`. */
+export function riverCenter(x: number): number {
+  let y: number = VALLE.riverBase;
+  for (const [amp, f, ph] of VALLE.riverWaves) y += amp * Math.sin(x * f + ph);
+  return y;
+}
+
+function bardaNorthAt(x: number): number {
+  return VALLE.bardaNorth + Math.round(2 * Math.sin(x * 0.13 + 0.5));
+}
+
+function bardaSouthAt(x: number): number {
+  return VALLE.bardaSouth + Math.round(1.5 * Math.sin(x * 0.17));
+}
+
+function seaAt(y: number): number {
+  return VALLE.seaFrom + Math.round(1.5 * Math.sin(y * 0.3));
+}
+
+/** Distancia (casillas) de (x, y) a la línea del centro del río: no por columna, así
+ * el cauce no se corta donde el río dobla en diagonal. */
+export function riverDistance(x: number, y: number): number {
+  let d = Infinity;
+  for (let s = -4; s <= 4; s += 0.5) d = Math.min(d, Math.hypot(s, y - riverCenter(x + s)));
+  return d;
+}
+
+/** Qué es cada casilla del valle (sin pasar a tiles todavía). */
+export function valleKind(x: number, y: number): 'rio' | 'mar' | 'barda' | 'pared' | 'orilla' | 'llano' | 'lomada' {
+  if (x >= seaAt(y)) return 'mar';
+  const rd = riverDistance(x, y);
+  if (rd <= VALLE.riverHalf) return 'rio';
+  const bn = bardaNorthAt(x);
+  const bs = bardaSouthAt(x);
+  const inBajada = x >= VALLE.bajada[0] && x < VALLE.bajada[1];
+  if (y < bn - 2) return 'barda';
+  if (y < bn) return inBajada ? 'llano' : 'pared';
+  if (y > bs + 2) return 'barda';
+  if (y > bs) return 'pared';
+  if (rd - VALLE.riverHalf <= 1.2) return 'orilla';
+  return lomadaBump(x, y) > 0.6 ? 'lomada' : 'llano';
+}
+
+function lomadaBump(x: number, y: number): number {
+  let b = 0;
+  for (const [lx, ly, a] of VALLE.lomadas) {
+    const cy = riverCenter(lx) + ly;
+    b += a * Math.exp(-((x - lx) ** 2 + (y - cy) ** 2) / 6);
+  }
+  return b;
+}
+
+/**
+ * Alto del terreno en (x, y) para la construcción: el albardón junto al río es lo
+ * más alto del llano; el llano baja hacia la barda; las lomadas suben.
+ */
+export function valleHeight(x: number, y: number): number {
+  const k = valleKind(x, y);
+  const H = VALLE.h;
+  if (k === 'rio') return H.river;
+  if (k === 'mar') return H.sea;
+  if (k === 'barda' || k === 'pared') return H.barda;
+  const d = Math.max(0, riverDistance(x, y) - VALLE.riverHalf);
+  const base = d < 2 ? H.leveeTop - H.leveeDrop * d : Math.max(H.plainMin, H.plainTop - H.plainSlope * (d - 2));
+  // un poco de ondulación fija, para que el trazado no sea una regla
+  const n = 0.06 * Math.sin(x * 0.7 + y * 0.3) + 0.04 * Math.sin(x * 0.21 - y * 0.57);
+  return base + lomadaBump(x, y) + n;
+}
+
+/** Las chacras del nivel (data: map.chacras) en casillas: a `dy` filas al norte (o al sur, negativo) de la orilla. */
+export function chacraRects(level: LevelDef): Array<{ id: string; owner: string; x: number; y: number; w: number; h: number }> {
+  return (level.map.chacras ?? []).map((c) => {
+    const edge = c.dy >= 0 ? Math.floor(riverCenter(c.x + c.w / 2) - VALLE.riverHalf) - 1 : Math.ceil(riverCenter(c.x + c.w / 2) + VALLE.riverHalf) + 1;
+    const y = c.dy >= 0 ? edge - c.dy - c.h + 1 : edge - c.dy;
+    return { id: c.id, owner: c.owner, x: c.x, y, w: c.w, h: c.h };
+  });
+}
+
+function buildValleChubut(level: LevelDef): number[][] {
+  const { widthTiles: W, heightTiles: H } = level.map;
+  const T: Record<ReturnType<typeof valleKind>, number> = {
+    rio: TERRAIN.SEA,
+    mar: TERRAIN.SEA,
+    barda: TERRAIN.MESA,
+    pared: TERRAIN.CLIFF,
+    orilla: TERRAIN.SAND_WET,
+    llano: TERRAIN.CLAY,
+    lomada: TERRAIN.PEBBLE,
+  };
+  const g: number[][] = Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => T[valleKind(x, y)]));
+  // la bajada a la barda norte: sendero
+  for (let y = 0; y < H; y++)
+    for (let x = VALLE.bajada[0]; x < VALLE.bajada[1]; x++) {
+      const bn = bardaNorthAt(x);
+      if (y >= bn - 4 && y < bn + 1) g[y]![x] = TERRAIN.PATH;
+    }
+  // las chacras se ven: tierra trabajada (sendero, por ahora)
+  for (const c of chacraRects(level))
+    for (let y = c.y; y < c.y + c.h; y++) for (let x = c.x; x < c.x + c.w; x++) if (g[y]?.[x] === TERRAIN.CLAY) g[y]![x] = TERRAIN.PATH;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) g[j]![i] = tileIndex(g[j]![i]!, cellVariant(i, j));
+  return g;
+}
+
+/**
+ * La grilla de construcción del valle (ConstructionSystem): alto y tipo de cada
+ * casilla, con las chacras del nivel marcadas. Mismo valle que buildValleChubut.
+ */
+export function valleyGrid(level: LevelDef): ValleyGrid {
+  const { widthTiles: W, heightTiles: H } = level.map;
+  const kindOf: Record<ReturnType<typeof valleKind>, CellKind> = {
+    rio: 'rio',
+    mar: 'rio',
+    barda: 'barda',
+    pared: 'barda',
+    orilla: 'orilla',
+    llano: 'llano',
+    lomada: 'llano',
+  };
+  const cells: Cell[] = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) cells.push({ h: valleHeight(x, y), kind: kindOf[valleKind(x, y)] });
+  for (const c of chacraRects(level))
+    for (let y = c.y; y < c.y + c.h; y++) for (let x = c.x; x < c.x + c.w; x++) cells[y * W + x]!.chacra = c.id;
+  return { w: W, h: H, cells, riverLevel: 2.0 };
 }

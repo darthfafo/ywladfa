@@ -156,7 +156,7 @@ barro, corral, zanja, compuerta, trigo.
 |---|---|---|
 | 0 | ~~Resolver D1-D8~~ (hecho). Quedan los `TODO(historia)` 1-5 | Este documento pasa a spec |
 | 1 | ~~`WorldScene` genérica + guion del N1 aparte~~ (hecho: `src/levels/` con `LevelScript`, `WorldHost` y `Nivel01Script`) | El N1 se juega igual; tests en verde |
-| 2 | Generador `valle_chubut` con alturas | Se camina el valle |
+| 2 | ~~Generador `valle_chubut` con alturas~~ (hecho: `mapgen.ts` → `valleKind`, `valleHeight`, `valleyGrid`; `data/levels/nivel-03.json` en `draft`; `?nivel=nivel-03` en `npm run dev`) | Se camina el valle |
 | 3 | ~~`ConstructionSystem` + tests~~ (hecho: `src/systems/ConstructionSystem.ts`, `tests/construction.test.ts`, balance `nivel03.construccion`) | Pendiente, flujo e inundación probados sin navegador |
 | 4 | Acto I: llegada, bandera, rancho, crecida | Se construye y la crecida castiga lo que corresponde |
 | 5 | Acto II: invierno, el toldo, la manta, la enfermedad | Las promesas del N1 (harina, abrigo) se cumplen |
