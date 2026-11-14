@@ -65,7 +65,7 @@ ni bloquea el avance. Ver `docs/01-nivel-01.md` §8.
 ✔ docs/           GDD, spec del Nivel 1, arquitectura, assets, guía histórica, plan del Nivel 2
 ✔ data/           config, items, npcs, nivel-01 y nivel-02, diálogos, quests, códice, schemas
 ✔ src/            core + 11 sistemas + 8 escenas + UI táctil + mundo HD-2D (render3d)
-✔ tests/          58 tests en verde: sistemas, recorrido del Nivel 1, caminos, encadenar niveles, marcha y Nivel 2
+✔ tests/          68 tests en verde: sistemas, recorrido del Nivel 1, caminos, encadenar niveles, marcha, decisiones y Nivel 2
 ✔ scripts/        validate-data.mjs (integridad referencial)
 ◐ arte            ilustraciones, retratos y sprites reales donde existen; el resto, por código
 ✘ maps/           no hay .tmj de Tiled: el mapa se genera en src/util/mapgen.ts
@@ -82,9 +82,13 @@ con el recordatorio de qué hacer (`level.goals`) y el cierre con el balance de 
 con `kind: "march"` en `data/levels/nivel-02.json`): 65 km del golfo al río, tres días si el viento
 afloja, cuatro si no. Se entra con «Seguir viaje» al cerrar el Nivel 1 y hereda agua, comida, la
 salud de Mari, la moral, la carga (sin abrigo, noches frías; sin libros, menos moral; sin harina,
-hambre) y los vínculos (alguien sale a buscarte si te perdés). Decisiones: el caballo, el cañadón, la
-costa o el atajo (con el cerro que avisa Lewis), la aguada, el campamento tehuelche visto de lejos y la
-rastrillada, el viento del oeste y cada noche. Guarda cada noche (`Game.saveMarch`), «Continuar» la
+hambre) y los vínculos (alguien sale a buscarte si te perdés). Decisiones, cada una con su costo
+(`tests/march-decisions.test.ts` verifica que ninguna sea de adorno): el paso, todo el tiempo (apurar
+sin aire enferma a tu madre); el caballo (repartir, o elegir qué se deja: raciones o un bulto del
+Nivel 1); el cañadón; la costa o el atajo (Edwyn o Lewis: vínculo, y el atajo pide moral); la aguada
+(verde o seca según la partida: se lee); el campamento tehuelche visto de lejos y la rastrillada; el
+viento del oeste; la huella borrada (la brújula es el viento); y cada noche (repartir, racionar o
+caminar con la luna). La llegada cambia según el día y cómo viene tu madre. Guarda cada noche (`Game.saveMarch`), «Continuar» la
 retoma, y al llegar al Fuerte Paz / Caer Antur vuelca todo a la partida (`Game.finishMarch`): diario
 por jornada, Códice, balance de salida. `?marcha` en la URL la abre suelta, sin tocar la partida.
 
@@ -96,7 +100,7 @@ por jornada, Códice, balance de salida. `?marcha` en la URL la abre suelta, sin
 ```bash
 npm install
 npm run dev            # http://localhost:5173  (abrilo angosto o con el emulador de móvil)
-npm test               # 58 tests (sistemas, recorridos, caminos, niveles, marcha), sin navegador
+npm test               # 68 tests (sistemas, recorridos, caminos, niveles, marcha), sin navegador
 npm run validate:data  # integridad referencial de todo /data
 npm run build:single   # dist/index.html autocontenido, se abre con doble clic
 ```

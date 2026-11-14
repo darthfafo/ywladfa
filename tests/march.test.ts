@@ -15,21 +15,28 @@ const SAFE: Record<string, string> = {
   cerro: 'derecha',
   rastrillada: 'tomar',
   tormenta: 'refugio',
+  cruce: 'costado',
   noche: 'repartir',
 };
 
 /** Corre la marcha a paso fijo; resuelve cada decisión con `pick`. */
-function play(m: MarchSystem, pick: Record<string, string> = {}, maxSec = 2000): { ev: MarchEvent[]; asked: string[] } {
+function play(m: MarchSystem, pick: Record<string, string> = {}, maxSec = 2000, attentive = false): { ev: MarchEvent[]; asked: string[] } {
   const choices = { ...SAFE, ...pick };
   const ev: MarchEvent[] = [];
   const asked: string[] = [];
   for (let t = 0; t < maxSec * 10 && !m.state.arrived; t++) {
+    // un jugador atento al aire de su madre: apura si puede, afloja si no
+    if (attentive) m.setPace(m.state.mariStamina > 55 ? 'apurar' : m.state.mariStamina > 30 ? 'normal' : 'aflojar');
     ev.push(...m.update(0.1));
     while (m.state.blocked) {
       const id = m.state.blocked.id;
       if (!choices[id]) throw new Error(`sin elección para ${id}`);
       asked.push(id);
-      ev.push(...m.choose(choices[id]!));
+      // «dejar:raciones» = dejar algo, y qué
+      const [opt, drop] = choices[id]!.split(':');
+      const before = m.state.blocked;
+      ev.push(...m.choose(opt!, drop));
+      if (m.state.blocked === before) throw new Error(`la elección ${choices[id]} no avanzó en ${id}`);
     }
   }
   return { ev, asked };
@@ -42,9 +49,9 @@ const elapsed = (m: MarchSystem): number => {
 };
 
 describe('marcha (prototipo del Nivel 2)', () => {
-  it('tres días si el viento afloja, cuatro si no: arriesgando bien se llega al tercero; siendo cauto en todo, al cuarto', () => {
+  it('tres días si el viento afloja, cuatro si no: arriesgando bien (y caminando con la luna) se llega al tercero; siendo cauto en todo, al cuarto', () => {
     const audaz = new MarchSystem(cfg, T);
-    const a = play(audaz, { caballo: 'dejar', bifurcacion: 'adentro', cerro: 'derecha', tormenta: 'seguir', rastrillada: 'derecho' });
+    const a = play(audaz, { caballo: 'dejar:raciones', bifurcacion: 'adentro', cerro: 'derecha', tormenta: 'seguir', rastrillada: 'tomar', noche: 'luna' }, 2000, true);
     expect(audaz.state.arrived).toBe(true);
     expect(a.asked).toContain('noche');
     expect(a.ev.filter((e) => e.type === 'night')).toHaveLength(2);
@@ -142,7 +149,8 @@ describe('marcha (prototipo del Nivel 2)', () => {
     expect(rep.state.loadFactor).toBeLessThan(1);
     expect(rep.state.comida).toBe(comida);
     const dej = hastaElCaballo();
-    dej.choose('dejar');
+    expect(dej.choose('dejar')).toEqual([]); // dejar, pero qué: sin decirlo no se puede
+    dej.choose('dejar', 'raciones');
     expect(dej.state.loadFactor).toBe(1);
     expect(dej.state.comida).toBeLessThan(comida);
     // y repartir la carga cuesta horas hasta el final

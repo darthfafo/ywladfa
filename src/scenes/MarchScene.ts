@@ -255,6 +255,11 @@ export class MarchScene extends Phaser.Scene {
       case 'night':
         this.night(e.day, e.option);
         break;
+      case 'lowMorale':
+        // sin ánimo: el grupo camina más lento y se nota
+        this.caption('Richard Jones Berwyn', '¿Cuánto falta? Nadie dijo que iba a ser así.', 4200);
+        if (this.integrated) game.marchDecision('moral_baja', 'si', this.march.state.day);
+        break;
       case 'scene':
         this.illustrate(e.id, e.text, () => this.resume());
         break;
@@ -282,8 +287,11 @@ export class MarchScene extends Phaser.Scene {
     if (kind === 'lost') return 'La huella se borra entre las matas. Caminan, dan vueltas, vuelven sobre sus pasos. El sol ya está más bajo.';
     if (kind === 'shelter') return 'Se tiran al suelo en un bajo, con la cara tapada. Horas después el viento afloja.';
     if (o.type === 'canadon') return 'Media legua de rodeo por el borde del cañadón.';
-    if (o.type === 'aguada') return 'Bajo las matas hay un hilo de agua. Se llenan los barriles.';
-    if (o.type === 'trail') return 'La rastrillada baja y da la vuelta al arenal. Suelo duro, pisado por años. Del campamento, solo el humo.';
+    if (o.type === 'aguada')
+      return this.march.state.variant[o.id] === 'seca'
+        ? 'Barro seco y raíces. Apenas un trago para cada uno, y la hora perdida.'
+        : 'Bajo las matas hay un hilo de agua. Se llenan los barriles.';
+    if (o.type === 'trail') return 'La rastrillada baja hasta un jagüel: agua turbia, pero agua. Pasan cerca de los toldos callados, sin mirar.';
     if (o.type === 'fork') return 'La huella de la costa da vueltas por la barranca, pero el mar está siempre ahí.';
     return 'Pasa el tiempo.';
   }
@@ -298,31 +306,61 @@ export class MarchScene extends Phaser.Scene {
     this.showCard(
       o.title ?? '',
       prompt,
-      (o.options ?? []).map((opt) => ({
-        label: opt.text,
-        detail: opt.detail,
-        onPick: () => {
-          this.hideCard();
-          const day = this.march.state.day;
-          const hungry = this.march.state.hungryNights;
-          const ev = this.march.choose(opt.id);
-          // en el juego, cada decisión queda en la partida (flags del nivel → el diario)
-          if (this.integrated) game.marchDecision(o.type === 'night' ? `noche_${day}` : o.id, opt.id, day);
-          if (o.type === 'night') this.hungerTonight = this.march.state.hungryNights > hungry;
-          const skip = ev.find((x) => x.type === 'skip') as Extract<MarchEvent, { type: 'skip' }> | undefined;
-          const rest = ev.filter((x) => x.type !== 'skip');
-          const after = (): void => {
-            rest.forEach((x) => this.onEvent(x));
-            if (skip?.kind !== 'lost') return;
-            // con vínculo, alguien salió a buscarte (Nivel 1: los fogones)
-            if (skip.helper) this.caption(registry.speakerName(skip.helper, this.playerName), 'Te vi dar vueltas y salí a buscarte. Por acá: allá está el mar.', 4500);
-            else this.caption('Lewis Jones', 'Ahí está el mar. Íbamos para cualquier lado. El cerro era a la derecha.', 4500);
-          };
-          if (skip) this.fadeThrough(this.skipText(o, skip.kind), after, skip.kind === 'lost' ? 'marcha_perdidos' : undefined);
-          else after();
-        },
-      })),
+      (o.options ?? []).map((opt) => {
+        // lo arriesgado pide ánimo: con la moral baja, nadie quiere
+        const ok = this.march.available(opt);
+        return {
+          label: opt.text,
+          detail: ok ? opt.detail : 'Con el ánimo como está, nadie quiere arriesgarse.',
+          disabled: !ok,
+          onPick: () => (opt.drop ? this.pickDrop(o, opt.id) : this.decide(o, opt.id)),
+        };
+      }),
     );
+  }
+
+  /** Dejar algo en la estepa: raciones, o uno de los bultos que se trajeron de Punta Cuevas. */
+  private pickDrop(o: MarchObstacle, optId: string): void {
+    const items = o.dropItems ?? {};
+    const taken = this.integrated ? ((game.flags.get('n1_carga') as string[] | undefined) ?? []) : [];
+    const ids = ['raciones', ...taken].filter((id) => items[id] && !this.march.state.dropped.includes(id));
+    const label = (id: string): string => items[id]!.label ?? registry.bultos.find((b) => b.id === id)?.label ?? id;
+    this.showCard(
+      '¿Qué se deja?',
+      'El caballo no puede con todo. Lo que quede acá no vuelve.',
+      [
+        ...ids.map((id) => ({ label: label(id), detail: items[id]!.detail, onPick: () => this.decide(o, optId, id) })),
+        { label: 'Mejor repartir la carga.', detail: 'Volver atrás: nadie deja nada.', onPick: () => this.obstacle(o) },
+      ],
+    );
+  }
+
+  /** Aplica la decisión, la anota en la partida y muestra lo que pasa. */
+  private decide(o: MarchObstacle, optId: string, dropId?: string): void {
+    this.hideCard();
+    const day = this.march.state.day;
+    const hungry = this.march.state.hungryNights;
+    const ev = this.march.choose(optId, dropId);
+    // en el juego, cada decisión queda en la partida (flags del nivel → el diario)
+    if (this.integrated) {
+      const extra: Record<string, string> = {};
+      if (dropId) extra[`${o.id}_dejado`] = dropId;
+      const v = this.march.state.variant[o.id];
+      if (v) extra[`${o.id}_variante`] = v;
+      game.marchDecision(o.type === 'night' ? `noche_${day}` : o.id, optId, day, extra);
+    }
+    if (o.type === 'night') this.hungerTonight = this.march.state.hungryNights > hungry;
+    const skip = ev.find((x) => x.type === 'skip') as Extract<MarchEvent, { type: 'skip' }> | undefined;
+    const rest = ev.filter((x) => x.type !== 'skip');
+    const after = (): void => {
+      rest.forEach((x) => this.onEvent(x));
+      if (skip?.kind !== 'lost') return;
+      // con vínculo, alguien salió a buscarte (Nivel 1: los fogones)
+      if (skip.helper) this.caption(registry.speakerName(skip.helper, this.playerName), 'Te vi dar vueltas y salí a buscarte. Por acá: allá está el sur.', 4500);
+      else this.caption('Lewis Jones', o.lostLine ?? 'Íbamos para cualquier lado.', 4500);
+    };
+    if (skip) this.fadeThrough(this.skipText(o, skip.kind), after, skip.kind === 'lost' ? 'marcha_perdidos' : undefined);
+    else after();
   }
 
   private hungerTonight = false;
@@ -345,9 +383,11 @@ export class MarchScene extends Phaser.Scene {
       duration: 900,
       onComplete: () => {
         const text =
-          (option.id === 'racionar'
-            ? `Noche ${day} a la intemperie. Media ración y la mitad del agua. Tu madre tirita hasta el amanecer.`
-            : `Noche ${day} a la intemperie. El fuego dura poco, pero alcanza. Tu madre duerme.`) +
+          (option.id === 'luna'
+            ? `Noche ${day}: caminan con la luna, sin dormir. Nadie habla. Al amanecer la huella sigue, y ellos también.`
+            : option.id === 'racionar'
+              ? `Noche ${day} a la intemperie. Media ración y la mitad del agua. Tu madre tirita hasta el amanecer.`
+              : `Noche ${day} a la intemperie. El fuego dura poco, pero alcanza. Tu madre duerme.`) +
             (extra.length ? ` ${extra.join(' ')}` : '') +
             (this.integrated ? '<br><span style="color:#7FB0B8">Partida guardada.</span>' : '');
         const back = (): void => {
@@ -355,8 +395,8 @@ export class MarchScene extends Phaser.Scene {
           this.view?.setTurn(this.march.state.turn);
           this.tweens.add({ targets: this.fade, fillAlpha: 0, duration: 1100, onComplete: () => (this.paused = false) });
         };
-        // el fogón a cielo abierto, si ya está la ilustración; si no, en negro con el texto
-        if (this.illustrate('marcha_noche', text, back, 6000)) return;
+        // el fogón a cielo abierto, si ya está la ilustración (no si caminaron); si no, en negro con el texto
+        if (option.id !== 'luna' && this.illustrate('marcha_noche', text, back, 6000)) return;
         this.caption('', text, 4200);
         this.time.delayedCall(3600, back);
       },
@@ -381,6 +421,17 @@ export class MarchScene extends Phaser.Scene {
     });
   }
 
+  /** Cómo se llega: antes o después que los otros grupos, y cómo viene tu madre (level.arrival). */
+  private arrivalText(): string {
+    const s = this.march.state;
+    const arr = registry.level(this.levelId).arrival;
+    if (!arr) return '';
+    const byDay = arr.byDay.find((x) => x.maxDay === undefined || s.day <= x.maxDay)?.text ?? '';
+    const sickBelow = registry.levelBalance(this.levelId).marcha?.mariSickBelow as number | undefined;
+    const sick = sickBelow !== undefined && s.mariHealth < sickBelow ? ` ${arr.sick}` : '';
+    return `<span style="color:#BFD3D8">${byDay}${sick}</span>`;
+  }
+
   private arrived(): void {
     const s = this.march.state;
     this.paused = true;
@@ -393,6 +444,7 @@ export class MarchScene extends Phaser.Scene {
       this.showCard(
         'El río',
         `Agua que corre, sauces y las paredes de barro del fuerte viejo: Caer Antur. Jornada ${s.day}, ${TURN_LABEL[s.turn]!.toLowerCase()}.` +
+          `<br><br>${this.arrivalText()}` +
           `<br><br>Agua: ${Math.round(s.agua)} L · Comida: ${Math.round(s.comida)}` +
           `<br>Tu madre: ${mari}` +
           (detours ? `<br>${detours === 1 ? 'Un desvío' : `${detours} desvíos`} en el camino` : '<br>Sin desvíos') +
@@ -439,8 +491,9 @@ export class MarchScene extends Phaser.Scene {
           <span style="color:#7FB0B8; letter-spacing:1px;">TU MADRE</span>
           <span style="flex:1; height:5px; background:#0E1416; border:1px solid rgba(217,168,69,0.35); position:relative;">
             <span data-mari style="position:absolute; left:0; top:0; bottom:0; width:50%; background:#586A46;"></span>
+            <span data-mari-health style="position:absolute; left:0; bottom:-4px; height:2px; width:50%; background:#B07A52;"></span>
           </span>
-          <span data-mari-word style="width:74px; text-align:right;"></span>
+          <span data-mari-word style="width:84px; text-align:right; white-space:nowrap;"></span>
         </div>
         <div data-road style="margin-top:10px; font-size:6px; color:#7FB0B8; display:flex; align-items:center; gap:5px;"></div>
       </div>`;
@@ -464,7 +517,9 @@ export class MarchScene extends Phaser.Scene {
       `<span><span style="color:#7FB0B8;">${levelLabel(this.levelId)} · </span>JORNADA ${s.day} · ${TURN_LABEL[s.turn]}</span><span style="display:inline-flex; gap:3px;">${dots}</span></div>` +
       `<div style="display:flex; gap:12px; font-size:8px; padding:5px 0 0 6px;">` +
       `<span><span style="color:#7FB0B8">AGUA</span> <span style="color:${aguaColor}">${Math.round(s.agua)}</span></span>` +
-      `<span><span style="color:#7FB0B8">COMIDA</span> ${Math.round(s.comida)}</span></div></div>`;
+      `<span><span style="color:#7FB0B8">COMIDA</span> ${Math.round(s.comida)}</span>` +
+      // la moral: por debajo de la marca el grupo camina más lento
+      `<span><span style="color:#7FB0B8">MORAL</span> <span style="color:${s.morale < (registry.levelBalance(this.levelId).marcha?.morale?.slowBelow ?? 35) ? '#DE7050' : '#EAE8E0'}">${Math.round(s.morale)}</span></span></div></div>`;
 
     this.trayEl.querySelectorAll<HTMLButtonElement>('[data-pace]').forEach((b) => {
       const on = !s.waiting && b.dataset.pace === s.pace;
@@ -475,11 +530,17 @@ export class MarchScene extends Phaser.Scene {
     const bar = this.trayEl.querySelector<HTMLElement>('[data-mari]')!;
     bar.style.width = `${Math.round(s.mariStamina)}%`;
     bar.style.background = s.mariStamina < 30 ? '#9C3A24' : s.mariStamina < 55 ? '#A9791F' : '#586A46';
+    // la palabra: lo más grave primero (la salud), después el aire
+    const sickBelow = registry.levelBalance(this.levelId).marcha?.mariSickBelow ?? 35;
     const word =
-      s.mariLag >= 8 ? 'se quedó atrás' : s.mariStamina < 30 ? 'no da más' : s.mariStamina < 55 ? 'cansada' : 'bien';
+      s.mariHealth < sickBelow ? 'enferma' : s.mariLag >= 8 ? 'quedó atrás' : s.mariStamina < 30 ? 'no da más' : s.mariStamina < 55 ? 'cansada' : 'bien';
     const w = this.trayEl.querySelector<HTMLElement>('[data-mari-word]')!;
     w.textContent = word;
-    w.style.color = s.mariStamina < 30 ? '#DE7050' : '#EAE8E0';
+    w.style.color = s.mariStamina < 30 || s.mariHealth < sickBelow ? '#DE7050' : '#EAE8E0';
+    // la salud, una línea fina debajo del aire: baja de a poco y no vuelve sola
+    const hb = this.trayEl.querySelector<HTMLElement>('[data-mari-health]')!;
+    hb.style.width = `${Math.round(s.mariHealth)}%`;
+    hb.style.background = s.mariHealth < sickBelow ? '#DE7050' : '#B07A52';
 
     // lo recorrido: una línea fina de Punta Cuevas al río (no un mapa: solo cuánto falta)
     const pct = Math.round(this.march.progress * 100);
@@ -508,32 +569,43 @@ export class MarchScene extends Phaser.Scene {
   }
 
   /** Tarjeta en el medio del mundo (inicio, obstáculos, llegada). Mientras está, la marcha se detiene. */
-  private showCard(title: string, body: string, options: Array<{ label: string; detail?: string; onPick: () => void }>): void {
+  private showCard(title: string, body: string, options: Array<{ label: string; detail?: string; disabled?: boolean; onPick: () => void }>): void {
     this.paused = true;
     this.captionTimer?.remove();
     this.captionEl.innerHTML = '';
     const f = this.font;
+    // con muchas opciones (qué dejar en la estepa) todo más apretado: tiene que entrar
+    // en la franja del mundo, y en el celular no hay scroll (main.ts bloquea el touchmove)
+    const compact = options.length > 4;
     this.cardEl.innerHTML = `
       <div style="box-sizing:border-box; width:${VIEW.width}px; height:${VIEW.world.h}px; display:flex; align-items:center; justify-content:center; background:rgba(14,20,22,0.35);">
-        <div style="box-sizing:border-box; width:${VIEW.width - 28}px; padding:12px; font-family:${f}; color:#EAE8E0;
+        <div style="box-sizing:border-box; width:${VIEW.width - 28}px; padding:${compact ? 9 : 12}px; font-family:${f}; color:#EAE8E0;
           background:linear-gradient(rgba(36,54,59,0.96), rgba(14,20,22,0.96)); border:1px solid rgba(217,168,69,0.55); box-shadow:0 4px 16px rgba(0,0,0,0.5);">
           <div style="display:flex; align-items:center; gap:6px; font-size:10px; color:#D9A845;">
             <span style="width:4px; height:4px; background:#9C3A24; transform:rotate(45deg); display:inline-block;"></span>${title}</div>
           <div style="height:1px; background:rgba(127,176,184,0.35); margin:8px 0 9px;"></div>
           <div style="font-size:7px; line-height:1.8;">${body}</div>
-          <div data-opts style="display:flex; flex-direction:column; gap:5px; margin-top:11px;"></div>
+          <div data-opts style="display:flex; flex-direction:column; gap:${compact ? 3 : 5}px; margin-top:${compact ? 8 : 11}px;"></div>
         </div>
       </div>`;
     const opts = this.cardEl.querySelector('[data-opts]') as HTMLElement;
     const shownAt = performance.now();
+    const first = options.findIndex((o) => !o.disabled);
     options.forEach((o, i) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.style.cssText = btn(true) + ' text-align:left; padding:7px 9px; height:auto; line-height:1.6;';
-      b.innerHTML = o.label + (o.detail ? `<div style="font-size:6px; color:#7FB0B8; margin-top:3px; line-height:1.6;">${o.detail}</div>` : '');
-      paint(b, i === 0);
+      b.style.cssText = btn(true) + ` text-align:left; padding:${compact ? '4px 8px' : '7px 9px'}; height:auto; line-height:${compact ? 1.4 : 1.6};`;
+      b.innerHTML = o.label + (o.detail ? `<div style="font-size:6px; color:#7FB0B8; margin-top:${compact ? 1 : 3}px; line-height:1.5;">${o.detail}</div>` : '');
+      if (o.disabled) {
+        // se ve, pero no se puede: el motivo va en el detalle
+        b.style.opacity = '0.45';
+        b.style.cursor = 'default';
+        opts.appendChild(b);
+        return;
+      }
+      paint(b, i === first);
       b.addEventListener('pointerenter', () => paint(b, true));
-      b.addEventListener('pointerleave', () => paint(b, i === 0));
+      b.addEventListener('pointerleave', () => paint(b, i === first));
       b.addEventListener('click', () => {
         if (performance.now() - shownAt < INPUT_GUARD.choiceMs) return;
         sfx.select();

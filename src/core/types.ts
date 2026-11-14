@@ -168,6 +168,8 @@ export interface LevelDef {
   march?: MarchTrack;
   /** solo 'march': fichas del Códice que se abren al llegar */
   codexOnArrive?: string[];
+  /** solo 'march': el texto de la llegada según la jornada (el primero cuyo maxDay alcanza) y si tu madre llega enferma */
+  arrival?: { byDay: Array<{ maxDay?: number; text: string }>; sick: string };
   title: string;
   subtitle: string;
   date: string;

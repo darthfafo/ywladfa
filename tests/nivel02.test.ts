@@ -31,6 +31,7 @@ const SAFE: Record<string, string> = {
   cerro: 'derecha',
   rastrillada: 'tomar',
   tormenta: 'refugio',
+  cruce: 'costado',
   noche: 'repartir',
 };
 
@@ -69,8 +70,14 @@ function walk(g: Game, m: MarchSystem, pick: Record<string, string> = {}, untilD
     while (m.state.blocked) {
       const o = m.state.blocked;
       const day = m.state.day;
-      ev.push(...m.choose(choices[o.id]!));
-      g.marchDecision(o.type === 'night' ? `noche_${day}` : o.id, choices[o.id]!, day);
+      if (!choices[o.id]) throw new Error(`sin elección para ${o.id}`);
+      const [opt, drop] = choices[o.id]!.split(':');
+      ev.push(...m.choose(opt!, drop));
+      if (m.state.blocked === o) throw new Error(`la elección ${choices[o.id]} no avanzó en ${o.id}`);
+      const extra: Record<string, string> = {};
+      if (drop) extra[`${o.id}_dejado`] = drop;
+      if (m.state.variant[o.id]) extra[`${o.id}_variante`] = m.state.variant[o.id]!;
+      g.marchDecision(o.type === 'night' ? `noche_${day}` : o.id, opt!, day, extra);
       if (o.type === 'night') g.saveMarch(m.snapshot());
     }
   }
@@ -165,5 +172,31 @@ describe('Nivel 2 en el juego', () => {
     const acompañado = perdido('npc_edwyn');
     expect(acompañado.helper).toBe('npc_edwyn');
     expect(acompañado.tiles).toBeLessThan(solo.tiles);
+  });
+
+  it('lo que se decide vuelve a la partida: el consejo seguido, lo que quedó en la estepa, cómo llega tu madre', () => {
+    const g = startLevel2(endOfLevel1(['harina', 'semilla', 'abrigo', 'libros']));
+    const edwyn = g.party.member('npc_edwyn')!.bond;
+    const m = new MarchSystem(cfg, track, { ...inherited(g), mariHealth: 30 });
+    walk(g, m, { caballo: 'dejar:semilla', bifurcacion: 'costa' });
+    // seguir a Edwyn por la costa suma vínculo con él (pasa al Nivel 3)
+    expect(g.party.member('npc_edwyn')!.bond).toBe(edwyn + 1);
+    // la semilla quedó en la estepa: flag para el Nivel 3 y línea en el diario
+    expect(g.flags.get('n2_bultos_dejados')).toEqual(['semilla']);
+    const lines = g.journal.entries().filter((e) => e.level === 'nivel-02').flatMap((e) => e.lines);
+    expect(lines.some((l) => l.includes('semilla de trigo'))).toBe(true);
+    // con la salud baja, llega enferma: queda dicho
+    expect(g.flags.get('n2_mari_enferma')).toBe(true);
+    expect(lines.some((l) => l.includes('fiebre'))).toBe(true);
+  });
+
+  it('la moral baja queda en el diario el día que pasó', () => {
+    const g = startLevel2(endOfLevel1());
+    const m = new MarchSystem(cfg, track, { ...inherited(g), morale: 20 });
+    // la escena anota el día en que el grupo se quedó sin ánimo (MarchScene → lowMorale)
+    for (let i = 0; i < 50 && !m.state.lowMoraleSaid; i++) for (const e of m.update(0.1)) if (e.type === 'lowMorale') g.marchDecision('moral_baja', 'si', m.state.day);
+    walk(g, m);
+    const lines = g.journal.entries().filter((e) => e.level === 'nivel-02').flatMap((e) => e.lines);
+    expect(lines.some((l) => l.includes('nadie habló'))).toBe(true);
   });
 });

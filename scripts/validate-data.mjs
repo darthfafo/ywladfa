@@ -126,7 +126,7 @@ for (const [path, l] of loaded) {
   for (const qq of q?.quests ?? []) {
     if (!qq.dayFlag) continue;
     const id = qq.dayFlag.replace(prefix, '');
-    if (!qq.dayFlag.startsWith(prefix) || !(obs.has(id) || id === 'llegada' || /^noche_\d+$/.test(id)))
+    if (!qq.dayFlag.startsWith(prefix) || !(obs.has(id) || id === 'llegada' || id === 'moral_baja' || /^noche_\d+$/.test(id)))
       errs.push(`${qq.id} → dayFlag sin decisión: ${qq.dayFlag}`);
   }
 }

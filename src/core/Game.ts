@@ -125,9 +125,11 @@ export class Game {
   }
 
   /** Una decisión del camino: queda como flag del nivel, con la jornada en que se tomó (el diario la ubica ahí). */
-  marchDecision(id: string, option: string, day: number): void {
+  marchDecision(id: string, option: string, day: number, extra: Record<string, string> = {}): void {
     this.flags.set(`${this.flagPrefix}_${id}`, option);
     this.flags.set(`${this.flagPrefix}_dia_${id}`, day);
+    // lo que acompaña a la decisión: qué se dejó, qué variante tocó (el diario lo cuenta)
+    for (const [k, v] of Object.entries(extra)) this.flags.set(`${this.flagPrefix}_${k}`, v);
   }
 
   /** La noche de la marcha: se escribe el diario de la jornada que terminó y se guarda la columna tal como está. */
@@ -160,6 +162,14 @@ export class Game {
       [`${p}_noches_hambre`]: m.hungryNights,
       [`${p}_dia_llegada`]: m.day,
     });
+    // lo que se dejó en la estepa (bultos del Nivel 1 incluidos: pesa en el Nivel 3)
+    this.flags.set(`${p}_bultos_dejados`, [...m.dropped]);
+    this.flags.set(`${p}_noches_luna`, m.nightWalks);
+    // cómo llega tu madre
+    const sickBelow = registry.levelBalance(this.state.progress.level).marcha?.mariSickBelow as number | undefined;
+    this.flags.set(`${p}_mari_enferma`, sickBelow !== undefined && m.mariHealth < sickBelow);
+    // los consejos que se siguieron (Lewis o Edwyn en la bifurcación)
+    for (const [npc, d] of Object.entries(m.bondDelta)) this.party.bond(npc, d);
     for (const id of this.level.codexOnArrive ?? []) this.applyEffect({ codex: id });
     this.state.march = undefined;
     this.journal.write(m.day);

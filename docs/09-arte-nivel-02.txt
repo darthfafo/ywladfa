@@ -34,6 +34,9 @@ Cuándo: al empezar el nivel, antes de la tarjeta «La marcha».
 Texto en el juego: «Agosto de 1865. Se sale de Punta Cuevas en grupos de quince o
 veinte, con un par de caballos de carga. A pie, todos.»
 ```
+3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
+centered with generous margin on all sides for safe cropping on different phone
+screens, no text, no UI elements.
 A small column of fifteen to twenty Welsh colonists on foot setting out at dawn
 from a coastal clay cliff with cave dwellings behind them, two pack horses loaded
 with water barrels and bundles, women in shawls and men in dark coats and wide
@@ -45,6 +48,9 @@ morning light, long low shadows, a sense of leaving the only shelter they know.
 ### cutscene_marcha_noche — Fogón a cielo abierto
 Cuándo: cada noche de la marcha (reemplaza el fundido a negro).
 ```
+3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
+centered with generous margin on all sides for safe cropping on different phone
+screens, no text, no UI elements.
 Night on the open Patagonian steppe, no cave and no shelter, a small dim fire in a
 shallow hollow among dry tussock grass, colonists wrapped in blankets huddled close
 around it, two pack horses hobbled nearby with their loads on the ground, a vast
@@ -57,6 +63,9 @@ Cuándo: en el camino, al ver el campamento tehuelche (antes de la línea «Humo
 en el bajo. Y toldos.»).
 Texto en el juego: «En un bajo, lejos, sube humo.»
 ```
+3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
+centered with generous margin on all sides for safe cropping on different phone
+screens, no text, no UI elements.
 Seen from behind and slightly above, a few Welsh colonists stopped on a low rise
 of the steppe, looking down at a distant Tehuelche camp in a sheltered hollow:
 three or four low tents of sewn guanaco hides on wooden poles, thin smoke rising
@@ -71,6 +80,9 @@ Cuándo: al llegar al borde de la meseta (antes de «¿Ven la línea oscura abaj
 valle. Es el río.»). Es el clímax del nivel.
 Texto en el juego: «Desde el borde de la meseta, abajo: una línea oscura de sauces.»
 ```
+3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
+centered with generous margin on all sides for safe cropping on different phone
+screens, no text, no UI elements.
 From the edge of a high dry plateau, exhausted colonists and their pack horses look
 down into a wide valley where a winding river (the Chubut) curves through the flat
 floor, lined by a dark ribbon of willow trees, the first muted green in the whole
@@ -84,6 +96,9 @@ Cuándo: al llegar, junto al río; y de fondo en el cierre «Fin de la segunda p
 Texto en el juego: «Junto al agua, paredes de barro y una zanja: lo que queda del
 Fuerte Paz.»
 ```
+3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
+centered with generous margin on all sides for safe cropping on different phone
+screens, no text, no UI elements.
 The ruins of a small abandoned mud-walled fort on the bank of a winding river, low
 crumbling adobe walls with gaps, a shallow ditch around it, an old bare flagpole
 still standing, willows by the water, Welsh colonists arriving on foot with two
@@ -99,6 +114,9 @@ a refuge that is barely a refuge, the beginning of a settlement.
 Cuándo: antes de la decisión «Un caballo» (repartir la carga o dejar un bulto).
 Texto en el juego: «A media mañana, uno de los caballos de carga se echa en la huella.»
 ```
+3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
+centered with generous margin on all sides for safe cropping on different phone
+screens, no text, no UI elements.
 A pack horse lying down exhausted on a dusty steppe track, its load of bundles and
 a water barrel half slipped off, colonists gathered around it, one kneeling at the
 horse's head, others looking at the bundles, the rest of the column waiting ahead,
@@ -109,6 +127,9 @@ flat empty steppe, harsh midday winter light, the weight of what has to be left.
 Cuándo: antes de la decisión «Viento del oeste» (seguir o refugiarse).
 Texto en el juego: «Por el oeste, el cielo se pone pardo.»
 ```
+3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
+centered with generous margin on all sides for safe cropping on different phone
+screens, no text, no UI elements.
 A towering brown wall of wind-blown dust approaching across the steppe from the
 right side of the frame (the west), the sky turning ochre, a small column of
 colonists on foot turning their backs and covering their faces with shawls and
@@ -119,6 +140,9 @@ sea barely visible on the far left, menace of weather, not of people.
 ### cutscene_marcha_perdidos — Perdidos
 Cuándo: si se toma mal el atajo del cerro (se pierden y terminan saliendo a la costa).
 ```
+3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
+centered with generous margin on all sides for safe cropping on different phone
+screens, no text, no UI elements.
 A small group of colonists and pack horses standing confused among identical low
 thorny bushes on a featureless plain, no path visible, a flat-topped mesa hill on
 the wrong side of them, the sun low, one man pointing one way and another the
@@ -130,6 +154,9 @@ Cuándo: la primera vez que tu madre se queda atrás por cansancio.
 Texto en el juego: «Tu madre se sienta en un bulto. No da un paso más. La columna
 para a esperarla.»
 ```
+3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
+centered with generous margin on all sides for safe cropping on different phone
+screens, no text, no UI elements.
 A middle-aged Welsh woman in a dark shawl and headscarf sitting exhausted on a
 bundle at the side of a steppe track, her grown child crouching beside her holding
 a water flask, the rest of the column stopped further ahead looking back, wind,
@@ -140,10 +167,9 @@ dry grass, overcast sky, tenderness and worry, no melodrama.
 
 ## Además (no son ilustraciones)
 
-- **Sprites de colonos genéricos (2 o 3, 4 direcciones, como los de `06-prompts-sprites.txt`)**:
-  la columna histórica era de 15 a 20 personas y hoy se ven 6. Con dos o tres
-  figuras genéricas (un hombre con sombrero y bulto, una mujer con chal, un muchacho)
-  la columna se lee como un grupo de verdad.
+- **La columna son los personajes del juego** (vos, tu madre, Lewis, Edwyn, Matthews,
+  Berwyn y los dos caballos): no hacen falta colonos genéricos. Es representativa del
+  grupo de 15 a 20 (decisión del proyecto, noviembre 2026).
 - **Sonido**: el agua del río al llegar, y el viento con más cuerpo en la tormenta.
 - Los caballos, los toldos, el fuerte, los sauces y la vegetación de la estepa ya
   están hechos en 3D por código (`src/render3d/marchModels.ts`): no hace falta arte.

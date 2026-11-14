@@ -58,6 +58,10 @@ export interface MarchConfig {
   };
   /** con alguien de vínculo, perderse cuesta menos: sale a buscarte */
   bondLostFactor: number;
+  /** caminar con Mari sin aire la enferma: por debajo de `belowStamina`, salud por tile */
+  exhaust: { belowStamina: number; healthPerTile: number };
+  /** la moral: por debajo de `slowBelow` el grupo camina más lento (y se queja). Las opciones arriesgadas piden moral (`requiresMorale`) */
+  morale: { slowBelow: number; speedFactor: number };
 }
 
 /**
@@ -74,6 +78,8 @@ export interface MarchStart {
   left?: string[];
   /** quién del grupo tiene vínculo con vos (sale a buscarte si te perdés) */
   bondHelper?: string | null;
+  /** fija las variantes de la partida (la aguada con agua o seca): mismas en toda la partida, nunca una tirada al elegir */
+  seed?: number;
 }
 
 /** Una opción frente a un obstáculo. Todos los campos son opcionales y se suman. */
@@ -100,11 +106,21 @@ export interface MarchOption {
   route?: string;
   /** zona (por id) que este camino esquiva: su efecto no rige (ej. la rastrillada rodea el médano) */
   avoid?: string;
+  /** moral del grupo (+/−) */
+  morale?: number;
+  /** vínculo con quien aconsejó esto (npc → +/−) */
+  bond?: Record<string, number>;
+  /** solo se puede elegir con la moral por encima de esto (si no, nadie quiere arriesgarse) */
+  requiresMorale?: number;
+  /** caballo: dejar algo en la estepa; cuál, lo elige el jugador (raciones o un bulto del Nivel 1) */
+  drop?: boolean;
+  /** noche: caminar con la luna en vez de dormir; cuánto se avanza (sin pasar el próximo obstáculo) */
+  nightWalkTiles?: number;
 }
 
 export interface MarchObstacle {
   id: string;
-  type: 'canadon' | 'aguada' | 'medano' | 'fork' | 'landmark' | 'storm' | 'horse' | 'night' | 'trail' | 'camp';
+  type: 'canadon' | 'aguada' | 'medano' | 'fork' | 'landmark' | 'storm' | 'horse' | 'night' | 'trail' | 'camp' | 'cross';
   title?: string;
   at?: number;
   width?: number;
@@ -122,6 +138,14 @@ export interface MarchObstacle {
   rejoinAt?: number;
   /** tormenta: con qué opción se la enfrenta (si se elige otra, se espera a que pase) */
   braveOption?: string;
+  /** zonas: salud de Mari por tile mientras rige (el polvo, la arena) */
+  healthPerTile?: number;
+  /** caballo: qué se puede dejar en la estepa (raciones, o un bulto que se trajo del Nivel 1) y lo que cuesta */
+  dropItems?: Record<string, { label?: string; detail: string; comida?: number }>;
+  /** si esta decisión te pierde: lo que dice Lewis cuando vuelven a encontrar el camino */
+  lostLine?: string;
+  /** variantes fijas por partida (por `seed`): cambian el texto y las opciones, y el jugador las lee */
+  variants?: Array<{ id: string; prompt: string; options: MarchOption[] }>;
 }
 
 export interface MarchTrack {
@@ -183,6 +207,16 @@ export interface MarchState {
   bondHelper: string | null;
   /** ilustraciones ya mostradas */
   seen: string[];
+  /** lo que se dejó en la estepa (raciones o bultos del Nivel 1) */
+  dropped: string[];
+  /** vínculo ganado o perdido en la marcha (npc → delta), se vuelca al llegar */
+  bondDelta: Record<string, number>;
+  /** noches caminadas con la luna */
+  nightWalks: number;
+  /** variante de cada obstáculo que la tiene (fija por partida) */
+  variant: Record<string, string>;
+  /** ya se avisó que el grupo está sin ánimo */
+  lowMoraleSaid: boolean;
 }
 
 export type MarchEvent =
@@ -192,6 +226,7 @@ export type MarchEvent =
   | { type: 'turn'; day: number; turn: Turn }
   | { type: 'night'; day: number; option: MarchOption }
   | { type: 'mariBehind' }
+  | { type: 'lowMorale' }
   | { type: 'thirst' }
   | { type: 'skip'; tiles: number; label: string; kind: 'detour' | 'lost' | 'shelter'; helper?: string | null }
   | { type: 'arrived' };
@@ -268,14 +303,43 @@ export class MarchSystem {
       left: start.left ?? [],
       bondHelper: start.bondHelper ?? null,
       seen: [],
+      dropped: [],
+      bondDelta: {},
+      nightWalks: 0,
+      variant: {},
+      lowMoraleSaid: false,
     };
-    this.state.seen ??= []; // marchas guardadas antes de que existiera
+    // marchas guardadas antes de que existieran estos campos
+    const st = this.state;
+    st.seen ??= [];
+    st.dropped ??= [];
+    st.bondDelta ??= {};
+    st.nightWalks ??= 0;
+    st.variant ??= {};
+    st.lowMoraleSaid ??= false;
+    // las variantes se fijan una vez por partida, con la semilla: no son una tirada al elegir
+    const seed = start.seed ?? 0;
+    track.obstacles.forEach((o, i) => {
+      if (!o.variants?.length || st.variant[o.id]) return;
+      st.variant[o.id] = o.variants[Math.floor(seedHash(seed, i) * o.variants.length)]!.id;
+    });
     this.nightObstacle = { id: 'noche', type: 'night', title: track.night.title, prompt: track.night.prompt, options: track.night.options };
   }
 
   /** Copia del estado para guardar la partida (se retoma con `resume`). */
   snapshot(): MarchState {
     return structuredClone({ ...this.state, waiting: false });
+  }
+
+  /** El obstáculo con su variante de la partida aplicada (texto y opciones). */
+  resolve(o: MarchObstacle): MarchObstacle {
+    const v = o.variants?.find((x) => x.id === this.state.variant[o.id]);
+    return v ? { ...o, prompt: v.prompt, options: v.options } : o;
+  }
+
+  /** ¿Se puede elegir esta opción ahora? (la moral alcanza) */
+  available(opt: MarchOption): boolean {
+    return opt.requiresMorale === undefined || this.state.morale >= opt.requiresMorale;
   }
 
   setPace(p: Pace): void {
@@ -342,6 +406,8 @@ export class MarchSystem {
     const storm = this.stormHere();
     if (storm) v *= storm.slowFactor ?? 1;
     if (s.agua <= 0) v *= this.cfg.thirstSpeedFactor;
+    // sin ánimo el grupo camina más lento
+    if (s.morale < this.cfg.morale.slowBelow) v *= this.cfg.morale.speedFactor;
     return v;
   }
 
@@ -368,8 +434,8 @@ export class MarchSystem {
     const next = this.nextObstacle();
     if (next && next.at !== undefined && s.pos + step >= next.at - 1) {
       step = Math.max(0, next.at - 1 - s.pos);
-      s.blocked = next;
-      ev.push({ type: 'obstacle', obstacle: next });
+      s.blocked = this.resolve(next);
+      ev.push({ type: 'obstacle', obstacle: s.blocked });
     }
     s.pos += step;
 
@@ -383,6 +449,17 @@ export class MarchSystem {
       if (storm) fatigue *= storm.staminaFactor ?? 1;
     }
     s.mariStamina = Math.max(0, Math.min(100, s.mariStamina - fatigue));
+    // lo que enferma al caminar: el polvo de la tormenta, la arena, y caminar sin aire
+    let hurt = 0;
+    for (const o of this.track.obstacles) if (o.type === 'medano' && this.zoneOn(o)) hurt += o.healthPerTile ?? 0;
+    const storm = this.stormHere();
+    if (storm) hurt += storm.healthPerTile ?? 0;
+    if (s.mariStamina < cfg.exhaust.belowStamina && pace.mariStaminaPerTile > 0) hurt += cfg.exhaust.healthPerTile;
+    if (hurt > 0) s.mariHealth = Math.max(0, s.mariHealth - hurt * step);
+    if (!s.lowMoraleSaid && s.morale < cfg.morale.slowBelow) {
+      s.lowMoraleSaid = true;
+      ev.push({ type: 'lowMorale' });
+    }
     if (s.agua <= 0) {
       s.mariHealth = Math.max(0, s.mariHealth - cfg.thirstHealthPerTile * step);
       if (step > 0 && !s.said.includes(-1)) {
@@ -426,12 +503,14 @@ export class MarchSystem {
   }
 
   /** Elige qué hacer frente a lo que frena la columna (obstáculo o noche). */
-  choose(optionId: string): MarchEvent[] {
+  choose(optionId: string, dropId?: string): MarchEvent[] {
     const s = this.state;
     const o = s.blocked;
     if (!o) return [];
     const opt = o.options?.find((x) => x.id === optionId);
-    if (!opt) return [];
+    if (!opt || !this.available(opt)) return [];
+    // dejar algo: hay que decir qué
+    if (opt.drop && !dropId) return [];
     s.blocked = null;
     const ev: MarchEvent[] = [];
 
@@ -443,6 +522,11 @@ export class MarchSystem {
     s.resolved[o.id] = opt.id;
     s.dayOf[o.id] = s.day;
     this.apply(opt);
+    if (opt.drop && dropId) {
+      s.dropped.push(dropId);
+      const cost = o.dropItems?.[dropId]?.comida;
+      if (cost) s.comida = Math.max(0, s.comida + cost);
+    }
     if (opt.route) s.route = opt.route;
     if (o.type === 'canadon' && opt.extraTiles && o.at !== undefined) s.pos = o.at + (o.width ?? 10) + 1;
 
@@ -482,6 +566,8 @@ export class MarchSystem {
     if (opt.mariHealth) s.mariHealth = Math.max(0, Math.min(100, s.mariHealth + opt.mariHealth));
     if (opt.loadFactor) s.loadFactor *= opt.loadFactor;
     if (opt.avoid && !s.avoided.includes(opt.avoid)) s.avoided.push(opt.avoid);
+    if (opt.morale) s.morale = clamp(s.morale + opt.morale);
+    for (const [npc, d] of Object.entries(opt.bond ?? {})) s.bondDelta[npc] = (s.bondDelta[npc] ?? 0) + d;
   }
 
   /** La noche: se reparte (o se raciona) y amanece otro día. */
@@ -503,11 +589,23 @@ export class MarchSystem {
     }
     // sin ropa de abrigo la noche abriga menos y enferma (Nivel 1: el bulto que quedó)
     if (s.left.includes('abrigo')) {
-      s.mariStamina = stamina0 + (s.mariStamina - stamina0) * cfg.carga.abrigo.nightStaminaFactor;
+      if (s.mariStamina > stamina0) s.mariStamina = stamina0 + (s.mariStamina - stamina0) * cfg.carga.abrigo.nightStaminaFactor;
       s.mariHealth = Math.max(0, s.mariHealth + cfg.carga.abrigo.nightHealth);
     }
     // sin libros nadie lee en voz alta la primera noche
     if (s.day === 1 && s.left.includes('libros')) s.morale = clamp(s.morale + cfg.carga.libros.firstNightMorale);
+    // caminar con la luna: se avanza de noche, hasta el próximo obstáculo como mucho
+    // (que espera al amanecer). Lo que se pasa de noche no se ve ni se oye.
+    if (opt.nightWalkTiles) {
+      s.nightWalks += 1;
+      const next = this.nextObstacle();
+      const limit = Math.min(next?.at !== undefined ? next.at - 1.5 : Infinity, this.track.lengthTiles - 1);
+      s.pos = Math.max(s.pos, Math.min(s.pos + opt.nightWalkTiles, limit));
+      this.track.lines.forEach((l, i) => {
+        if (l.at <= s.pos && !s.said.includes(i)) s.said.push(i);
+      });
+      for (const sc of this.track.scenes ?? []) if (sc.at <= s.pos && !s.seen.includes(sc.id)) s.seen.push(sc.id);
+    }
     s.resolved[`noche_${s.day}`] = opt.id;
     s.dayOf[`noche_${s.day}`] = s.day;
     s.mariLag = 0;
@@ -523,7 +621,7 @@ export class MarchSystem {
     const s = this.state;
     let best: MarchObstacle | null = null;
     for (const o of this.track.obstacles) {
-      if (!o.options || o.at === undefined || s.resolved[o.id] || !this.onRoute(o)) continue;
+      if (!(o.options || o.variants) || o.at === undefined || s.resolved[o.id] || !this.onRoute(o)) continue;
       if (o.at - 1 < s.pos - 0.001) continue;
       if (!best || o.at < best.at!) best = o;
     }
@@ -552,4 +650,10 @@ export class MarchSystem {
 
 function clamp(v: number): number {
   return Math.max(0, Math.min(100, v));
+}
+
+/** 0..1 estable a partir de la semilla de la partida y un índice. */
+function seedHash(seed: number, i: number): number {
+  const h = Math.sin(seed * 12.9898 + (i + 1) * 78.233) * 43758.5453;
+  return h - Math.floor(h);
 }

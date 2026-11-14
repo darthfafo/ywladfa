@@ -240,7 +240,16 @@
           "firstNightMorale": -8
         }
       },
-      "bondLostFactor": 0.6
+      "bondLostFactor": 0.6,
+      "exhaust": {
+        "belowStamina": 25,
+        "healthPerTile": 0.25
+      },
+      "morale": {
+        "slowBelow": 35,
+        "speedFactor": 0.88
+      },
+      "mariSickBelow": 35
     },
     "startState": {
       "resources": {

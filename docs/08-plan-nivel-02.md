@@ -189,6 +189,16 @@ Los pasos 1 a 4 son base y no dependen de la investigación histórica: se puede
 - **D1 quedó superada:** la marcha se juega en vista lateral (`MarchScene`), no en un corredor de mapa visto desde arriba. Por eso el paso 4 (terreno por franjas) ya no hace falta para el Nivel 2.
 - Pasos 5 a 9: `MarchSystem` con tests; el nivel como dato (`data/levels/nivel-02.json`, `kind: "march"`); herencia del Nivel 1 (agua, comida, salud de Mari, moral, la carga y los vínculos); la elección de ruta con extravío y aguada; el diario por jornada (`data/quests/nivel-02.json`, con `dayFlag`); guardado cada noche y «Continuar»; el cierre con balance de salida y las fichas `cod_marcha` y `cod_tehuelches`.
 - Pendiente: paso 10 (ilustraciones de la marcha y del río, sonido del agua, pasada en celular).
+- **Jugabilidad (noviembre 2026), medida simulando todas las combinaciones:** antes apurar ganaba siempre y la mitad de las decisiones no cambiaba nada. Ahora:
+  - el paso es una decisión continua: caminar con tu madre sin aire la enferma (`exhaust`), y un paso atento le gana a apurar;
+  - cada decisión tiene un costo propio (tiempo, agua, comida, salud de tu madre, moral, un bulto del Nivel 1 o vínculo) y un test verifica que todas cambian el resultado;
+  - el caballo deja elegir qué queda en la estepa (raciones o un bulto: pesa en el Nivel 3, `n2_bultos_dejados`);
+  - la noche tiene tres opciones (repartir, racionar, caminar con la luna);
+  - leer el terreno: la aguada verde o seca (fija por partida), el cerro y la huella borrada (la brújula es el viento, que Lewis avisa antes);
+  - la moral hace cosas: por debajo de 35 el grupo camina más lento; el atajo pide 30;
+  - la bifurcación es un consejo: Edwyn (costa) o Lewis (atajo), y eso suma vínculo;
+  - la llegada cambia con el día (de los primeros, con otros grupos, de los últimos) y si tu madre llega enferma (`n2_mari_enferma`).
+  Resultado con un Nivel 1 típico: un jugador atento llega el día 4 con su madre en 66; uno que lee el terreno y arriesga, el día 3 con ella en 53; uno que apura todo, el día 3 con ella en 23; uno distraído, el día 4 con ella en 29.
 Los pasos 6 a 9 dependen del paso 0.
 
 ---
