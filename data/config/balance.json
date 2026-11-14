@@ -191,22 +191,22 @@
     "comment": "Prototipo de la marcha en vista lateral (?marcha). Números de prueba, a ajustar jugando.",
     "marcha": {
       "startTurn": "manana",
-      "tilesPerTurn": 75,
+      "tilesPerTurn": 65,
       "paces": {
         "aflojar": {
           "speedTilesPerSec": 1.5,
-          "waterPerTile": 0.025,
-          "mariStaminaPerTile": -0.35
+          "waterPerTile": 0.015,
+          "mariStaminaPerTile": -0.3
         },
         "normal": {
           "speedTilesPerSec": 2.2,
-          "waterPerTile": 0.04,
-          "mariStaminaPerTile": 0.18
+          "waterPerTile": 0.022,
+          "mariStaminaPerTile": 0.2
         },
         "apurar": {
           "speedTilesPerSec": 3.2,
-          "waterPerTile": 0.06,
-          "mariStaminaPerTile": 0.55
+          "waterPerTile": 0.033,
+          "mariStaminaPerTile": 0.45
         }
       },
       "waitStaminaPerSec": 14,

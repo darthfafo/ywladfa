@@ -99,6 +99,8 @@ export class MarchView3D {
     this.scatterProps();
     this.buildRidge();
     this.buildLandmarks();
+    this.buildCamp();
+    this.buildFort();
     this.buildWisps();
     for (const a of actors) this.addActor(a);
     this.setTurn('manana');
@@ -279,7 +281,9 @@ export class MarchView3D {
     const cone = new THREE.ConeGeometry(0.14, 0.55, 4);
     const ico = new THREE.IcosahedronGeometry(0.4, 0);
     const rock = new THREE.DodecahedronGeometry(0.22, 0);
-    for (let i = 0; i < 420; i++) {
+    // la misma densidad de matas por tile, sea largo o corto el tramo
+    const count = Math.round((L + 40) * 1.55);
+    for (let i = 0; i < count; i++) {
       const x = -20 + hash(i, 1) * (L + 40);
       const z = D.far * 0.55 + hash(i, 2) * (8 - D.far * 0.55);
       if (Math.abs(z) < 1.2) continue; // el camino queda libre
@@ -412,6 +416,88 @@ export class MarchView3D {
     this.scene3.add(mesa);
   }
 
+  /** Un campamento tehuelche visto de lejos, en el bajo entre la huella y el mar:
+   * toldos de cuero y el humo de los fogones, que el viento del oeste tumba hacia
+   * el mar. Se ve, no se visita (docs/04 §1.1). */
+  private buildCamp(): void {
+    const c = this.track.obstacles.find((o) => o.type === 'camp');
+    if (!c || c.at === undefined) return;
+    const hide = new THREE.MeshLambertMaterial({ color: PAL.clayLight, flatShading: true });
+    const hideDark = new THREE.MeshLambertMaterial({ color: PAL.clay, flatShading: true });
+    const pole = new THREE.MeshLambertMaterial({ color: PAL.soil });
+    // un toldo: cueros cosidos sobre palos, alto adelante y casi a ras del suelo
+    // atrás. Visto de costado se lee la caída del techo.
+    const prof = new THREE.Shape();
+    prof.moveTo(0, 0);
+    prof.lineTo(2.8, 0);
+    prof.lineTo(2.8, 0.28);
+    prof.quadraticCurveTo(1.2, 0.55, 0, 1.25);
+    prof.lineTo(0, 0);
+    const body = new THREE.ExtrudeGeometry(prof, { depth: 1.8, bevelEnabled: false });
+    body.translate(-1.4, 0, -0.9);
+    const stick = new THREE.CylinderGeometry(0.035, 0.035, 1.6, 4);
+    const z0 = -17;
+    for (let i = 0; i < 4; i++) {
+      const x = c.at + i * 3.4 + (hash(i, 61) - 0.5) * 1.2;
+      const z = z0 - hash(i, 62) * 4;
+      if (z < this.coastZ(x) + 5) continue;
+      const t = new THREE.Group();
+      t.add(new THREE.Mesh(body, i % 2 ? hide : hideDark));
+      // los palos del frente asoman por encima del cuero
+      for (const sz of [-0.8, 0.8]) {
+        const p = new THREE.Mesh(stick, pole);
+        p.position.set(-1.4, 0.8, sz);
+        t.add(p);
+      }
+      t.traverse((o) => ((o as THREE.Mesh).castShadow = true));
+      t.position.set(x, this.groundHeight(x, z), z);
+      t.rotation.y = (i % 2 ? Math.PI : 0) + (hash(i, 63) - 0.5) * 0.3; // no todos miran para el mismo lado
+      this.scene3.add(t);
+      if (i % 2 === 0) this.smokeAt(x + 1.6, z - 1.2);
+    }
+  }
+
+  private readonly smoke: THREE.Mesh[] = [];
+  /** Una columna de humo: bolitas que suben, se abren y se van con el viento. */
+  private smokeAt(x: number, z: number): void {
+    const geo = new THREE.IcosahedronGeometry(0.35, 0);
+    for (let k = 0; k < 9; k++) {
+      const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: PAL.bone, transparent: true, opacity: 0.4, depthWrite: false }));
+      m.userData = { x, z, y: this.groundHeight(x, z) + 0.2, t: k / 9 };
+      this.smoke.push(m);
+      this.scene3.add(m);
+    }
+  }
+
+  /** Las paredes caídas del fuerte viejo, en la orilla, del lado del mar. */
+  private buildFort(): void {
+    const L = this.track.lengthTiles;
+    const adobe = new THREE.MeshLambertMaterial({ color: PAL.clayPale, flatShading: true });
+    const x0 = L - 4;
+    const z0 = -9;
+    const W = 7;
+    const Dp = 5;
+    // [centro x, centro z, largo, alto, girado]: cuatro lados con huecos y alturas desparejas
+    const walls: Array<[number, number, number, number, boolean]> = [
+      [-2.2, 0, 2.6, 1.1, false],
+      [2.3, 0, 2.4, 0.7, false],
+      [0, -Dp, W, 1.3, false],
+      [-W / 2, -Dp / 2, Dp, 1.0, true],
+      [W / 2, -1.2, 2.4, 0.5, true],
+      [W / 2, -Dp + 0.8, 1.6, 1.2, true],
+    ];
+    for (const [dx, dz, len, h, rot] of walls) {
+      const x = x0 + dx;
+      const z = z0 + dz;
+      const m = new THREE.Mesh(new THREE.BoxGeometry(len, h, 0.45), adobe);
+      if (rot) m.rotation.y = Math.PI / 2;
+      m.position.set(x, this.groundHeight(x, z) + h / 2 - 0.1, z);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      this.scene3.add(m);
+    }
+  }
+
   /** Luz del turno (TURN_LIGHT, config.ts): la misma que el mundo de arriba. */
   setTurn(turn: string): void {
     const c = TURN_LIGHT[turn] ?? TURN_LIGHT.manana!;
@@ -506,6 +592,15 @@ export class MarchView3D {
       const on = w.userData.calm ? 1 : this.stormK;
       w.visible = on > 0.02;
       m.opacity = (0.35 + 0.25 * Math.sin(this.time * 3 + w.position.z)) * on;
+    }
+
+    for (const p of this.smoke) {
+      const u = p.userData as { x: number; z: number; y: number; t: number };
+      u.t = (u.t + dt * 0.12) % 1;
+      // sube y se tumba hacia el mar (−z), más rápido con la tormenta
+      p.position.set(u.x + u.t * 0.6, u.y + u.t * 4.5, u.z - u.t * u.t * (5 + this.stormK * 8));
+      p.scale.setScalar(0.6 + u.t * 2.2);
+      (p.material as THREE.MeshBasicMaterial).opacity = 0.42 * (1 - u.t) * Math.min(1, u.t * 6);
     }
 
     // la lomada que tapa el mar y la tormenta: transiciones suaves, no saltos

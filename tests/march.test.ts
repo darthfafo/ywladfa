@@ -13,6 +13,7 @@ const SAFE: Record<string, string> = {
   bifurcacion: 'costa',
   aguada: 'seguir',
   cerro: 'derecha',
+  rastrillada: 'tomar',
   tormenta: 'refugio',
   noche: 'repartir',
 };
@@ -26,6 +27,7 @@ function play(m: MarchSystem, pick: Record<string, string> = {}, maxSec = 2000):
     ev.push(...m.update(0.1));
     while (m.state.blocked) {
       const id = m.state.blocked.id;
+      if (!choices[id]) throw new Error(`sin elección para ${id}`);
       asked.push(id);
       ev.push(...m.choose(choices[id]!));
     }
@@ -40,17 +42,40 @@ const elapsed = (m: MarchSystem): number => {
 };
 
 describe('marcha (prototipo del Nivel 2)', () => {
-  it('avanzar o sostener: arriesgando se llega con una noche; siendo cauto en todo, con dos', () => {
+  it('tres días si el viento afloja, cuatro si no: arriesgando bien se llega al tercero; siendo cauto en todo, al cuarto', () => {
     const audaz = new MarchSystem(cfg, T);
-    const a = play(audaz, { caballo: 'dejar', bifurcacion: 'adentro', cerro: 'derecha' });
+    const a = play(audaz, { caballo: 'dejar', bifurcacion: 'adentro', cerro: 'derecha', tormenta: 'seguir', rastrillada: 'derecho' });
     expect(audaz.state.arrived).toBe(true);
     expect(a.asked).toContain('noche');
-    expect(a.ev.filter((e) => e.type === 'night')).toHaveLength(1);
-    expect(audaz.state.day).toBe(2);
+    expect(a.ev.filter((e) => e.type === 'night')).toHaveLength(2);
+    expect(audaz.state.day).toBe(3);
     const cauto = new MarchSystem(cfg, T);
     const c = play(cauto);
     expect(cauto.state.arrived).toBe(true);
-    expect(c.ev.filter((e) => e.type === 'night')).toHaveLength(2);
+    expect(c.ev.filter((e) => e.type === 'night')).toHaveLength(3);
+    expect(cauto.state.day).toBe(4);
+  });
+
+  it('la rastrillada rodea el arenal: más vuelta, pero tu madre no se hunde en la arena', () => {
+    const medano = T.obstacles.find((o) => o.id === 'medano')!;
+    const enArena = (pick: string): { v: number; m: MarchSystem } => {
+      const m = new MarchSystem(cfg, T);
+      for (let i = 0; i < 30000 && m.state.pos < medano.from! + 3 && !m.state.arrived; i++) {
+        m.update(0.1);
+        if (m.state.blocked) m.choose({ ...SAFE, rastrillada: pick }[m.state.blocked.id]!);
+      }
+      return { v: m.speed(), m };
+    };
+    const tomar = enArena('tomar');
+    const derecho = enArena('derecho');
+    expect(tomar.m.state.avoided).toContain('medano');
+    expect(tomar.v).toBeGreaterThan(derecho.v);
+    // la línea de la arena solo la dice quien cruza el arenal
+    const arena = T.lines.findIndex((l) => l.text.startsWith('Arena'));
+    expect(derecho.m.state.said).toContain(arena);
+    expect(tomar.m.state.said).not.toContain(arena);
+    // el campamento se ve de lejos: no frena la columna ni pide decidir nada
+    expect(play(new MarchSystem(cfg, T)).asked).not.toContain('toldos');
   });
 
   it('el paso importa: apurar llega en menos tiempo, con menos agua y Mari más cansada', () => {
@@ -127,14 +152,21 @@ describe('marcha (prototipo del Nivel 2)', () => {
   });
 
   it('la tormenta: enfrentarla frena y cansa; refugiarse cuesta tiempo pero Mari descansa', () => {
-    const seg = new MarchSystem(cfg, T);
-    play(seg, { tormenta: 'seguir' });
-    const ref = new MarchSystem(cfg, T);
-    play(ref, { tormenta: 'refugio' });
-    expect(seg.state.mariStamina).toBeLessThan(ref.state.mariStamina);
+    const storm = T.obstacles.find((o) => o.id === 'tormenta')!;
+    // cruzar el mismo trecho con el viento en contra cansa más que con el viento calmo
+    const cansancio = (pick: string): number => {
+      const m = new MarchSystem(cfg, T);
+      m.state.pos = storm.at! + 1;
+      m.state.resolved.tormenta = pick;
+      m.state.mariStamina = 60;
+      for (let i = 0; i < 2000 && m.state.pos < storm.at! + 6; i++) m.update(0.1);
+      return 60 - m.state.mariStamina;
+    };
+    expect(cansancio('seguir')).toBeGreaterThan(cansancio('refugio'));
+    // y refugiarse le devuelve aire a tu madre
+    expect(storm.options!.find((o) => o.id === 'refugio')!.mariStamina).toBeGreaterThan(0);
     // en la zona de la tormenta, enfrentarla va más lento que fuera de ella
     const m = new MarchSystem(cfg, T);
-    const storm = T.obstacles.find((o) => o.id === 'tormenta')!;
     m.state.pos = storm.at! + 2;
     m.state.resolved.tormenta = 'seguir';
     const enTormenta = m.speed();

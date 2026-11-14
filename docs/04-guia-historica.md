@@ -38,8 +38,8 @@ Elegir una versión y sostenerla en todo el juego. Las adoptadas por este proyec
 | Rifleros | 28 / 29 / 30 | **28 jinetes, 30 hombres con apoyo** |
 | Circuito de la expedición | 750 km (ida) / 1.200 km (circuito) | **~750 km a Trevelin, ~1.200 km el circuito completo** |
 | Profundidad del salto del Malacara | 3 a 5 m; algunas fuentes lo discuten como leyenda | **~4 m, declarado como discutido en el Códice** |
-| Distancia de la marcha al río | ~55 km (MercoPress) / 65 km (texto actual del Nivel 1) | **pendiente de decisión** — ver §1.1 |
-| Duración de la marcha | ~2 días (MercoPress) / «tres días si el viento afloja, cuatro si no» (Lewis, Nivel 1) | **pendiente de decisión** — ver §1.1 |
+| Distancia de la marcha al río | ~55 km (MercoPress) / 65 km (Nivel 1) | **65 km** en el juego, por coherencia entre niveles; el Códice declara los ~55 km de la fuente — ver §1.1 |
+| Duración de la marcha | ~2 días (MercoPress) / «tres días si el viento afloja, cuatro si no» (Lewis, Nivel 1) | **tres o cuatro días** en el juego, según cómo se juegue; el Códice declara los ~2 días de la fuente — ver §1.1 |
 
 ### 1.1 La marcha del golfo al río (base del Nivel 2)
 
@@ -54,9 +54,16 @@ Elegir una versión y sostenerla en todo el juego. Las adoptadas por este proyec
 | Hubo muertes en esas semanas | Documentado sin detalle | Wikipedia *Y Wladfa* |
 | La mayoría de las mujeres y los chicos fue semanas después por mar | Una sola fuente, sin nombrar el barco. **Descartado para el juego** por la decisión de arriba | La Nación |
 
-**Pendiente:** el texto actual del Nivel 1 dice 65 km y tres o cuatro días (`d_n1_anuncio_marcha`) y
-el cierre dice «ciento cincuenta personas caminaron sesenta y cinco kilómetros» (`d_n1_final`). La fuente
-encontrada da ~55 km y ~2 días. Hay que elegir una versión y sostenerla en los dos niveles.
+**Decisiones del proyecto (noviembre 2026):**
+
+- **65 km en tres o cuatro días**, lo que ya dicen `d_n1_anuncio_marcha` y `d_n1_final`. Es dramatizado frente a
+  la fuente (~55 km, ~2 días) y la ficha del Códice de la marcha lo tiene que declarar en *dramatized*.
+- **«El fuerte viejo»**, sin nombre propio: las fuentes no coinciden y para el juego no hace falta.
+- **Sin encuentro con los tehuelches durante la marcha.** El trato empieza con la colonia ya instalada. En la marcha
+  solo se ve de lejos un campamento (humo y toldos) y se cruza una rastrillada, que se puede seguir para rodear un
+  arenal. Nada de eso está documentado para esta marcha: es dramatizado y se declara. Lo que sí es general y
+  conocido es que las rastrilladas eran sendas marcadas por el paso repetido de gente y caballos.
+- **Los accidentes del camino** (cañadón, bifurcación, cerro, arenal, viento) son inventados para el juego.
 
 ---
 

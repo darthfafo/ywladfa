@@ -104,8 +104,8 @@ export class MarchScene extends Phaser.Scene {
 
     this.showCard(
       'La marcha',
-      // sin cifras de distancia ni de días: están pendientes de decisión (docs/04 §1.1)
-      'Del golfo al río, a pie, por la estepa. Vos marcás el paso de la columna.' +
+      // 65 km y «tres días si el viento afloja, cuatro si no»: lo que anuncia Lewis en el Nivel 1 (docs/04 §1.1)
+      'Del golfo al río, a pie: sesenta y cinco kilómetros de estepa. Tres días si el viento afloja, cuatro si no. Vos marcás el paso de la columna.' +
         '<br><br>Apurar llega antes, pero gasta más agua y cansa a tu madre. Esperar no acerca, pero el sol sigue andando.' +
         '<br><br>Prestá atención a lo que se dice en el camino: nadie lo va a repetir.',
       [{ label: 'Salir de Punta Cuevas', onPick: () => this.hideCard() }],
@@ -163,6 +163,7 @@ export class MarchScene extends Phaser.Scene {
     if (kind === 'shelter') return 'Se tiran al suelo en un bajo, con la cara tapada. Horas después el viento afloja.';
     if (o.type === 'canadon') return 'Media legua de rodeo por el borde del cañadón.';
     if (o.type === 'aguada') return 'Bajo las matas hay un hilo de agua. Se llenan los barriles.';
+    if (o.type === 'trail') return 'La rastrillada baja y da la vuelta al arenal. Suelo duro, pisado por años. Del campamento, solo el humo.';
     if (o.type === 'fork') return 'La huella de la costa da vueltas por la barranca, pero el mar está siempre ahí.';
     return 'Pasa el tiempo.';
   }
@@ -206,7 +207,7 @@ export class MarchScene extends Phaser.Scene {
         this.caption(
           '',
           option.id === 'racionar'
-            ? `Noche ${day} a la intemperie. Medio litro y media ración. Tu madre tirita hasta el amanecer.`
+            ? `Noche ${day} a la intemperie. Media ración y la mitad del agua. Tu madre tirita hasta el amanecer.`
             : `Noche ${day} a la intemperie. El fuego dura poco, pero alcanza. Tu madre duerme.`,
           4200,
         );
@@ -243,7 +244,7 @@ export class MarchScene extends Phaser.Scene {
     this.time.delayedCall(1200, () =>
       this.showCard(
         'El río',
-        `Agua que corre, y sauces. Jornada ${s.day}, ${TURN_LABEL[s.turn]!.toLowerCase()}.` +
+        `Agua que corre, sauces y las paredes caídas del fuerte viejo. Jornada ${s.day}, ${TURN_LABEL[s.turn]!.toLowerCase()}.` +
           `<br><br>Agua: ${Math.round(s.agua)} L · Comida: ${Math.round(s.comida)}` +
           `<br>Tu madre: ${mari}` +
           (detours ? `<br>${detours === 1 ? 'Un desvío' : `${detours} desvíos`} en el camino` : '<br>Sin desvíos') +

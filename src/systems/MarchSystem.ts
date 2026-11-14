@@ -1,6 +1,6 @@
 /**
- * La marcha (sistema nuevo del Nivel 2, GDD §6): el reloj avanza con la
- * distancia. Lógica pura, sin Phaser (R1): la escena le pasa el tiempo y lee el
+ * La marcha (sistema nuevo del Nivel 2, GDD §6): el reloj avanza con el
+ * tiempo. Lógica pura, sin Phaser (R1): la escena le pasa el tiempo y lee el
  * estado; los números salen de balance.json (nivel02.marcha) y el tramo de
  * data/proto/marcha.json.
  *
@@ -19,6 +19,7 @@
  *   Mari. Ninguna es gratis, ninguna es azar.
  * - Una bifurcación elige el camino (`route`); algunos obstáculos solo aparecen
  *   en uno de los dos.
+ * - Un camino puede esquivar una zona (`avoid`): la rastrillada rodea el médano.
  * - Al caer la noche se decide cómo repartir el agua y la comida.
  * - Sin agua, la columna va más lenta y Mari pierde salud. Nunca se pierde (R7):
  *   se llega igual, peor.
@@ -68,11 +69,13 @@ export interface MarchOption {
   loadFactor?: number;
   /** bifurcación: qué camino se toma */
   route?: string;
+  /** zona (por id) que este camino esquiva: su efecto no rige (ej. la rastrillada rodea el médano) */
+  avoid?: string;
 }
 
 export interface MarchObstacle {
   id: string;
-  type: 'canadon' | 'aguada' | 'medano' | 'fork' | 'landmark' | 'storm' | 'horse' | 'night';
+  type: 'canadon' | 'aguada' | 'medano' | 'fork' | 'landmark' | 'storm' | 'horse' | 'night' | 'trail' | 'camp';
   title?: string;
   at?: number;
   width?: number;
@@ -101,7 +104,7 @@ export interface MarchTrack {
   obstacles: MarchObstacle[];
   /** la decisión de cada noche */
   night: { title: string; prompt: string; options: MarchOption[] };
-  lines: Array<{ at: number; speaker: string; text: string; requiresRoute?: string }>;
+  lines: Array<{ at: number; speaker: string; text: string; requiresRoute?: string; skipIfAvoided?: string }>;
 }
 
 export interface MarchState {
@@ -136,6 +139,8 @@ export interface MarchState {
   lostCount: number;
   /** noches en las que se racionó */
   rationedNights: number;
+  /** zonas esquivadas por el camino elegido */
+  avoided: string[];
 }
 
 export type MarchEvent =
@@ -205,6 +210,7 @@ export class MarchSystem {
       loadFactor: 1,
       lostCount: 0,
       rationedNights: 0,
+      avoided: [],
     };
     this.nightObstacle = { id: 'noche', type: 'night', title: track.night.title, prompt: track.night.prompt, options: track.night.options };
   }
@@ -234,6 +240,11 @@ export class MarchSystem {
     return from !== undefined && to !== undefined && this.state.pos >= from && this.state.pos <= to;
   }
 
+  /** ¿Rige ahora el efecto de esta zona? (se está adentro y el camino no la esquiva) */
+  private zoneOn(o: MarchObstacle): boolean {
+    return this.inZone(o) && !this.state.avoided.includes(o.id);
+  }
+
   /** ¿La tormenta está pegando ahora? (se eligió enfrentarla y se está adentro) */
   stormHere(): MarchObstacle | null {
     for (const o of this.track.obstacles) {
@@ -260,7 +271,7 @@ export class MarchSystem {
     if (s.mariLag >= this.cfg.mariMaxLagTiles) return 0;
     let v = this.cfg.paces[s.pace].speedTilesPerSec * s.loadFactor;
     for (const o of this.track.obstacles) {
-      if (o.type === 'medano' && this.inZone(o)) v *= o.slowFactor ?? 1;
+      if (o.type === 'medano' && this.zoneOn(o)) v *= o.slowFactor ?? 1;
       if (o.type === 'canadon' && s.resolved[o.id] === 'bajar' && o.at !== undefined && s.pos >= o.at && s.pos <= o.at + (o.width ?? 10)) {
         v *= o.options?.find((x) => x.id === 'bajar')?.slowFactor ?? 1;
       }
@@ -304,7 +315,7 @@ export class MarchSystem {
     s.agua = Math.max(0, s.agua - pace.waterPerTile * step);
     let fatigue = pace.mariStaminaPerTile * step;
     if (fatigue > 0) {
-      for (const o of this.track.obstacles) if (o.type === 'medano' && this.inZone(o)) fatigue *= o.staminaFactor ?? 1;
+      for (const o of this.track.obstacles) if (o.type === 'medano' && this.zoneOn(o)) fatigue *= o.staminaFactor ?? 1;
       const storm = this.stormHere();
       if (storm) fatigue *= storm.staminaFactor ?? 1;
     }
@@ -325,7 +336,7 @@ export class MarchSystem {
 
     // líneas del camino
     this.track.lines.forEach((l, i) => {
-      if (!s.said.includes(i) && s.pos >= l.at && this.onRoute(l)) {
+      if (!s.said.includes(i) && s.pos >= l.at && this.onRoute(l) && !(l.skipIfAvoided && s.avoided.includes(l.skipIfAvoided))) {
         s.said.push(i);
         ev.push({ type: 'line', speaker: l.speaker, text: l.text });
       }
@@ -394,6 +405,7 @@ export class MarchSystem {
     if (opt.mariStamina) s.mariStamina = Math.max(0, Math.min(100, s.mariStamina + opt.mariStamina));
     if (opt.mariHealth) s.mariHealth = Math.max(0, Math.min(100, s.mariHealth + opt.mariHealth));
     if (opt.loadFactor) s.loadFactor *= opt.loadFactor;
+    if (opt.avoid && !s.avoided.includes(opt.avoid)) s.avoided.push(opt.avoid);
   }
 
   /** La noche: se reparte (o se raciona) y amanece otro día. */

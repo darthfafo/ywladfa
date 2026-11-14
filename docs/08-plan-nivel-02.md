@@ -59,11 +59,12 @@ Regla: **ninguna consecuencia nueva que no esté ya prometida en los datos del N
 - Llegaron a **un fuerte viejo abandonado** junto al río, de 1854. El nombre varía según la fuente (Caer Antur, «la vieja fortaleza», Fortín Viejo): el juego tiene que elegir uno.
 - Casi sin agua ni comida al llegar; hubo muertes en esas semanas (sin detalle: no se dramatizan casos puntuales).
 
-### `TODO(historia)` — todavía abierto
+### Resuelto (noviembre 2026)
 
-1. **Distancia y días.** El Nivel 1 dice 65 km y «tres días si el viento afloja, cuatro si no»; la fuente dice ~55 km y ~2 días. Hay que elegir. Si se adoptan dos días, la estructura de §4.1 pasa a **dos jornadas, tres si te perdés**.
-2. **Nombre del fuerte** que se muestra al jugador.
-3. **Primer contacto con los tehuelches**: si fue durante la marcha o después. Hasta saberlo, en este nivel solo hay *señales* (una rastrillada, humo lejos), nunca un encuentro.
+1. **Distancia y días: 65 km, «tres días si el viento afloja, cuatro si no»**, como anuncia Lewis en el Nivel 1. Se elige por coherencia entre niveles; la fuente (~55 km, ~2 días) queda declarada en la guía y en el Códice como lo documentado. En el prototipo: jugando bien se llega el tercer día, a lo seguro el cuarto.
+2. **Nombre del fuerte:** el juego dice «el fuerte viejo», sin nombre propio (no importa para el nivel y las fuentes no coinciden).
+3. **Tehuelches: sin encuentro en la marcha.** El trato empieza cuando la colonia ya está instalada. En la marcha la columna ve de lejos un campamento (humo y toldos) y cruza una rastrillada: tomarla rodea el arenal. Es dramatizado y se declara así en el Códice.
+4. **Los accidentes del camino** (cañadón, bifurcación, cerro chato, arenal, viento) son inventados para el juego: suman decisiones, no afirman geografía.
 
 Fuentes a revisar todavía: Abraham Matthews, *Crónica de la colonia galesa de la Patagonia*; Lewis Jones, *Una nueva Gales en Sudamérica*.
 
@@ -86,7 +87,7 @@ y la cuarta se paga con agua y comida.
 | **J2 Mañana-Tarde** | **Tramo 2: la meseta o la costa** | Sin sendero ni marcador. Si te salís del rumbo, **te perdés**: se pierde un turno y la columna espera. Las señales son el sol, el viento del oeste y los hitos | Extravío |
 | **J2 Tarde** | — | Alguien no puede seguir (Mari si viene débil; si no, otro). Elegís: aflojar el paso (cuesta la cuarta jornada) o repartir su carga (te sobrecargás) | Decisión del nivel |
 | **J2 Noche** | Fogón sin leña suficiente | Se quema algo de lo que se trajo, o se pasa frío. Depende de la carga del N1 | P2: todo se decide |
-| **J3 Mañana** | **Tramo 3: la bajada al valle** | Señales de que hay gente: una rastrillada, humo. Ficha `cod_tehuelches`. Sin encuentro (ver `TODO(historia)` 5) | Códice, atmósfera |
+| **J3 Mañana** | **Tramo 3: la bajada al valle** | Señales de que hay gente: un campamento visto de lejos, una rastrillada. Ficha `cod_tehuelches`. Sin encuentro (§3, resuelto 3) | Códice, atmósfera |
 | **J3 Tarde** | El río | **Primera vista del río Chubut.** El primer verde apagado del juego. Clímax | Pago emocional |
 | **J3/J4 Noche** | Llegada | Cierre: primera línea con `▓` (ver decisión D3). Balance de salida y diario | Idiomas (anuncio, no sistema) |
 
@@ -167,7 +168,7 @@ Cada paso deja algo verificable y el juego publicado sigue funcionando.
 
 | # | Paso | Se verifica con |
 |---|---|---|
-| 0 | Resolver los `TODO(historia)` abiertos (distancia/días, nombre del fuerte, contacto) y las decisiones D1, D3-D5 | Guía histórica actualizada; este plan pasa a ser spec (`docs/09-nivel-02.md`) |
+| 0 | ~~Resolver los `TODO(historia)` abiertos~~ (hecho, §3) y las decisiones D1, D3-D5 | Guía histórica actualizada; este plan pasa a ser spec (`docs/09-nivel-02.md`) |
 | 1 | Separar `WorldScene` genérica + guion del Nivel 1 | Tests en verde; el Nivel 1 se juega igual de punta a punta |
 | 2 | `Registry`, diario y generador de mapa por nivel; versión de partida y migración | Una partida vieja del Nivel 1 continúa sin errores |
 | 3 | Transición real entre niveles con `carryOver` | Al cerrar el Nivel 1 se entra a un Nivel 2 vacío con el estado correcto |
