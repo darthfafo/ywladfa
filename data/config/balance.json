@@ -270,5 +270,69 @@
       "morale": 55
     },
     "groupSize": 9
+  },
+  "nivel03": {
+    "construccion": {
+      "comment": "Nivel 3 (docs/10-plan-nivel-03.md §4.2): costos de cada pieza (materiales y turnos de trabajo), la zanja y el agua, y lo que pesa de la carga dejada.",
+      "pieces": {
+        "rancho": {
+          "size": [
+            2,
+            2
+          ],
+          "materiales": 6,
+          "turnos": 4,
+          "on": [
+            "llano",
+            "barda",
+            "orilla"
+          ]
+        },
+        "corral": {
+          "size": [
+            3,
+            2
+          ],
+          "materiales": 4,
+          "turnos": 3,
+          "on": [
+            "llano",
+            "barda",
+            "orilla"
+          ]
+        },
+        "zanja": {
+          "size": [
+            1,
+            1
+          ],
+          "materiales": 0,
+          "turnos": 1,
+          "on": [
+            "llano",
+            "orilla"
+          ]
+        },
+        "compuerta": {
+          "size": [
+            1,
+            1
+          ],
+          "materiales": 2,
+          "turnos": 1,
+          "on": [
+            "llano",
+            "orilla"
+          ]
+        }
+      },
+      "zanjaDepth": 1.0,
+      "headLossPerCell": 0.03,
+      "floodMargin": 0.4,
+      "mods": {
+        "sinHierroFactor": 2,
+        "sinLabranzaZanjaJornadas": 4
+      }
+    }
   }
 }
