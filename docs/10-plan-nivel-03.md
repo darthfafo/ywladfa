@@ -140,13 +140,20 @@ barro, corral, zanja, compuerta, trigo.
 | **D7** | **Duración** | 90 min (GDD) · 60-75 | **60-75**: tres actos con saltos de tiempo |
 | **D8** | **1867: la retirada a Madryn** | (a) se muestra como decisión de la colonia (el jugador no la cambia) · (b) se deja como mención en el diario | **(a)**, con la decisión personal de empacar o ayudar a los Jenkins |
 
+### Decidido (noviembre 2026)
+- **D1 → (b)**: el nivel va del 15-IX-1865 a la cosecha de marzo de 1868; el cierre salta «diez años después» a Gaiman, con el primer eisteddfod y el coro (ahí se pagan la imprenta y el órgano).
+- **D3 → (b)**: rancho, corral, zanja y compuerta. La siembra y la cosecha son el resultado de la zanja, no un sistema.
+- **D4 → (a)**: el trato en el toldo es una escena guionada sobre la manta, con señas y el `▓` en aonikenk; dos o tres decisiones que mueven confianza y vínculos.
+- **D5 → (b)**: si quedó la harina, el que corre riesgo es **un personaje ficticio del grupo, con nombre** (a definir), con dos jornadas de aviso y evitable con comida del trato. Tu madre no muere en el Nivel 3.
+- **D2, D6, D7, D8**: se toma la recomendación (mapa recorrible; `▓` en castellano y en aonikenk; 60-75 min; la retirada a Madryn como decisión de la colonia). A confirmar si algo cambia.
+
 ---
 
 ## 7. Orden de trabajo
 
 | # | Paso | Se verifica con |
 |---|---|---|
-| 0 | Resolver D1-D8 y los `TODO(historia)` 1-5 | Este documento pasa a spec |
+| 0 | ~~Resolver D1-D8~~ (hecho). Quedan los `TODO(historia)` 1-5 | Este documento pasa a spec |
 | 1 | `WorldScene` genérica + guion del N1 aparte (deuda) | El N1 se juega igual; tests en verde |
 | 2 | Generador `valle_chubut` con alturas | Se camina el valle |
 | 3 | `ConstructionSystem` + tests | Pendiente, flujo e inundación probados sin navegador |
