@@ -186,7 +186,9 @@ Los pasos 1 a 4 son base y no dependen de la investigación histórica: se puede
 - Paso 1, en parte: el paisaje, el barco anclado, los pájaros, el sonido por zona y lo que se junta salieron del código y son datos del nivel (`spawns.decor`, `ship`, `birds`, `gatherNodes[].prop/gain`, `zones[].ambience`); la pila y el fogón son opcionales. Quedan en `WorldScene` las mecánicas propias del Nivel 1 (cajones, cuevas, Dafydd), que no molestan a otro nivel porque solo actúan si sus datos existen.
 - Paso 2: `Registry` carga todos los niveles de `data/levels`, `data/dialogues` y `data/quests` por nombre de archivo; el mapa sale del generador que pide `map.generator`; la partida guardada tiene versión (`0.2.0`) y migración.
 - Paso 3: `stateForNextLevel` arma el estado del nivel siguiente según `exit.carryOver`, el diario guarda de qué nivel es cada entrada, y el cierre ofrece «Seguir viaje» en cuanto exista `data/levels/nivel-02.json`. Las escenas sueltan sus suscripciones al cerrarse y vuelven a cero al reiniciarse, así se pueden encadenar niveles sin recargar la página (probado encadenando el Nivel 1 consigo mismo).
-- Pendiente: paso 4 (terreno por franjas), que conviene hacer con el mapa del Nivel 2 ya definido.
+- **D1 quedó superada:** la marcha se juega en vista lateral (`MarchScene`), no en un corredor de mapa visto desde arriba. Por eso el paso 4 (terreno por franjas) ya no hace falta para el Nivel 2.
+- Pasos 5 a 9: `MarchSystem` con tests; el nivel como dato (`data/levels/nivel-02.json`, `kind: "march"`); herencia del Nivel 1 (agua, comida, salud de Mari, moral, la carga y los vínculos); la elección de ruta con extravío y aguada; el diario por jornada (`data/quests/nivel-02.json`, con `dayFlag`); guardado cada noche y «Continuar»; el cierre con balance de salida y las fichas `cod_marcha` y `cod_tehuelches`.
+- Pendiente: paso 10 (ilustraciones de la marcha y del río, sonido del agua, pasada en celular).
 Los pasos 6 a 9 dependen del paso 0.
 
 ---

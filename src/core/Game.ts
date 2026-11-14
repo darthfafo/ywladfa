@@ -3,6 +3,7 @@ import { conditionContext, createInitialState } from './GameState';
 import { registry } from './Registry';
 import { resolvePath } from './conditions';
 import type { DialogueEffect, ExitGradeRow, GameState } from './types';
+import type { MarchState } from '@/systems/MarchSystem';
 
 import { FlagSystem } from '@/systems/FlagSystem';
 import { InventorySystem } from '@/systems/InventorySystem';
@@ -104,6 +105,66 @@ export class Game {
   applyEffects(list?: DialogueEffect[]): void {
     if (!list) return;
     for (const e of list) this.applyEffect(e);
+  }
+
+  // ---------------------------------------------------------------- marcha
+
+  /** ¿El nivel actual es una marcha (MarchScene) en vez de un mapa (WorldScene)? */
+  get isMarch(): boolean {
+    return this.level.kind === 'march';
+  }
+
+  /** ¿Ya se llegó al final de la marcha? (la partida se guardó en el cierre del nivel) */
+  get marchDone(): boolean {
+    return this.isMarch && this.flags.is(`${this.flagPrefix}_llegada`);
+  }
+
+  /** Prefijo de los flags del nivel: nivel-02 → n2 (convención n{N}_…). */
+  private get flagPrefix(): string {
+    return `n${Number(this.state.progress.level.slice(-2))}`;
+  }
+
+  /** Una decisión del camino: queda como flag del nivel, con la jornada en que se tomó (el diario la ubica ahí). */
+  marchDecision(id: string, option: string, day: number): void {
+    this.flags.set(`${this.flagPrefix}_${id}`, option);
+    this.flags.set(`${this.flagPrefix}_dia_${id}`, day);
+  }
+
+  /** La noche de la marcha: se escribe el diario de la jornada que terminó y se guarda la columna tal como está. */
+  saveMarch(snap: MarchState): void {
+    this.state.march = snap;
+    this.time.setTo(snap.day, snap.turn);
+    this.journal.write(snap.day - 1);
+    saveSystem.save(this.state);
+    bus.emit('save:written', { slot: 0 });
+  }
+
+  /**
+   * Llegada: lo que pasó en la marcha vuelve al estado del juego por los sistemas
+   * (agua, comida, la salud de Mari, la moral, el reloj, flags, Códice), se escribe
+   * el diario y se guarda. Desde acá sigue el cierre del nivel.
+   */
+  finishMarch(m: MarchState): void {
+    const p = this.flagPrefix;
+    this.res.change('agua', Math.round(m.agua) - this.res.get('agua'), 'la marcha');
+    this.res.change('comida', Math.round(m.comida) - this.res.get('comida'), 'la marcha');
+    const mari = this.party.member('npc_mari');
+    if (mari) this.party.health('npc_mari', Math.round(m.mariHealth) - mari.health);
+    this.party.groupMorale(Math.round(m.morale) - this.state.morale);
+    this.time.setTo(m.day, m.turn);
+    this.flags.setMany({
+      [`${p}_llegada`]: true,
+      [`${p}_ruta`]: m.route ?? 'costa',
+      [`${p}_perdidos`]: m.lostCount,
+      [`${p}_noches_racionadas`]: m.rationedNights,
+      [`${p}_noches_hambre`]: m.hungryNights,
+      [`${p}_dia_llegada`]: m.day,
+    });
+    for (const id of this.level.codexOnArrive ?? []) this.applyEffect({ codex: id });
+    this.state.march = undefined;
+    this.journal.write(m.day);
+    saveSystem.save(this.state);
+    bus.emit('save:written', { slot: 0 });
   }
 
   /** Gasta turnos y, si se cerró una jornada, corre la noche. */

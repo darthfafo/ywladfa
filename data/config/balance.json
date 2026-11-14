@@ -220,11 +220,46 @@
         "agua": 14,
         "comida": 14,
         "mariStamina": 80,
-        "mariHealth": 70
+        "mariHealth": 70,
+        "morale": 55
       },
       "waitWaterPerTile": 0.015,
       "clockTilesPerSec": 2.2,
-      "comment": "El reloj corre con el tiempo (clockTilesPerSec, igual a cualquier paso): apurar cubre más camino por turno, aflojar menos. tilesPerTurn está medido a paso normal."
-    }
+      "comment": "El reloj corre con el tiempo (clockTilesPerSec, igual a cualquier paso): apurar cubre más camino por turno, aflojar menos. tilesPerTurn está medido a paso normal.",
+      "hunger": {
+        "healthPerRation": 1.5,
+        "morale": -6
+      },
+      "rationMorale": -3,
+      "carga": {
+        "abrigo": {
+          "nightStaminaFactor": 0.6,
+          "nightHealth": -4
+        },
+        "libros": {
+          "firstNightMorale": -8
+        }
+      },
+      "bondLostFactor": 0.6
+    },
+    "startState": {
+      "resources": {
+        "agua": 18,
+        "comida": 14,
+        "forraje": 0,
+        "lena": 2,
+        "municion": 6,
+        "materiales": 0
+      },
+      "playerCapacityKg": 14,
+      "playerCarriedKg": 6,
+      "languages": {
+        "cym": 3,
+        "spa": 0,
+        "aon": 0
+      },
+      "morale": 55
+    },
+    "groupSize": 9
   }
 }

@@ -1399,6 +1399,11 @@
     "flagsRequired": [
       "n1_carga"
     ],
+    "closing": {
+      "kicker": "Fin de la primera parte",
+      "gradeTitle": "Así dejan Punta Cuevas",
+      "image": "punta_final"
+    },
     "computeGrade": {
       "agua": {
         "field": "resources.agua",

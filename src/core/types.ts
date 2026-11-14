@@ -1,3 +1,4 @@
+import type { MarchState, MarchTrack } from '@/systems/MarchSystem';
 export type TurnId = 'amanecer' | 'manana' | 'tarde' | 'noche';
 export type ResourceId = 'agua' | 'comida' | 'forraje' | 'lena' | 'municion' | 'materiales';
 export type LangId = 'cym' | 'spa' | 'aon';
@@ -46,6 +47,8 @@ export interface GameState {
   codex: string[];
   /** Ids de trigger `once` ya disparados — sin esto, cargar una partida repite cutscenes. */
   triggersFired: string[];
+  /** Nivel de marcha a medio camino: la columna guardada a la noche (MarchSystem.snapshot) */
+  march?: MarchState;
 }
 
 /* ---------- datos de diseño (data/*.json) ---------- */
@@ -156,6 +159,15 @@ export interface PasajeDef {
 
 export interface LevelDef {
   id: string;
+  /** 'world': mapa recorrible (WorldScene). 'march': la marcha en vista lateral
+   * (MarchScene), sin mapa ni zonas. Sin el campo: 'world'. */
+  kind?: 'world' | 'march';
+  /** solo 'march': quiénes van en la columna */
+  party?: string[];
+  /** solo 'march': el tramo que recorre MarchSystem */
+  march?: MarchTrack;
+  /** solo 'march': fichas del Códice que se abren al llegar */
+  codexOnArrive?: string[];
   title: string;
   subtitle: string;
   date: string;
@@ -215,7 +227,12 @@ export interface LevelDef {
   goals?: Array<{ requires?: string; text: string }>;
   triggers: TriggerDef[];
   /** Estado de salida del nivel: cada renglón se califica contra dos umbrales. */
-  exit?: { carryOver?: string[]; computeGrade?: Record<string, { field: string; good: number; ok: number }> };
+  exit?: {
+    carryOver?: string[];
+    computeGrade?: Record<string, { field: string; good: number; ok: number }>;
+    /** la pantalla de cierre: el rótulo, el título del balance y la ilustración de fondo */
+    closing?: { kicker: string; gradeTitle: string; image?: string };
+  };
 }
 
 /** Un renglón del balance de salida (Game.exitGrade). */

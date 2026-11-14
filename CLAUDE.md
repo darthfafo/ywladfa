@@ -4,7 +4,7 @@ Este repo es **Chubut 1865 — La Huella de los Rifleros** (antes "Y Wladfa": es
 sobre la colonización galesa del Chubut (1865–1902), en Phaser 3 + TypeScript.
 
 Pantalla **vertical 9:16 (270×480), mobile-first**. El repo ya tiene los documentos de diseño,
-los datos y el **Nivel 1 jugable de punta a punta**. El objetivo ahora es el Nivel 2.
+los datos, el **Nivel 1 jugable de punta a punta** y el **Nivel 2 (la marcha) jugable** encadenado al 1.
 
 ---
 
@@ -63,9 +63,9 @@ ni bloquea el avance. Ver `docs/01-nivel-01.md` §8.
 
 ```
 ✔ docs/           GDD, spec del Nivel 1, arquitectura, assets, guía histórica, plan del Nivel 2
-✔ data/           config, items, npcs, nivel-01, diálogos, quests, códice, schemas
-✔ src/            core + 10 sistemas + 7 escenas + UI táctil + mundo HD-2D (render3d)
-✔ tests/          38 tests en verde: sistemas, recorrido del nivel, caminos del mapa y encadenar niveles
+✔ data/           config, items, npcs, nivel-01 y nivel-02, diálogos, quests, códice, schemas
+✔ src/            core + 11 sistemas + 8 escenas + UI táctil + mundo HD-2D (render3d)
+✔ tests/          58 tests en verde: sistemas, recorrido del Nivel 1, caminos, encadenar niveles, marcha y Nivel 2
 ✔ scripts/        validate-data.mjs (integridad referencial)
 ◐ arte            ilustraciones, retratos y sprites reales donde existen; el resto, por código
 ✘ maps/           no hay .tmj de Tiled: el mapa se genera en src/util/mapgen.ts
@@ -78,15 +78,25 @@ mañana del J2, Dafydd y el manantial (con salida si no se lo encuentra), la dec
 con el recordatorio de qué hacer (`level.goals`) y el cierre con el balance de salida
 (`level.exit.computeGrade`). Guarda sola al cerrar cada jornada (`SaveSystem`).
 
-**Lo que falta:** el Nivel 2. Hoy el cierre es una pantalla de «Continuará…».
-Pendientes menores del Nivel 1: ciclo de caminata dibujado (hoy es procedural) y texto en bitmap font.
+**El Nivel 2 — «La travesía»** es una marcha en vista lateral (`MarchScene` + `MarchSystem`, nivel
+con `kind: "march"` en `data/levels/nivel-02.json`): 65 km del golfo al río, tres días si el viento
+afloja, cuatro si no. Se entra con «Seguir viaje» al cerrar el Nivel 1 y hereda agua, comida, la
+salud de Mari, la moral, la carga (sin abrigo, noches frías; sin libros, menos moral; sin harina,
+hambre) y los vínculos (alguien sale a buscarte si te perdés). Decisiones: el caballo, el cañadón, la
+costa o el atajo (con el cerro que avisa Lewis), la aguada, el campamento tehuelche visto de lejos y la
+rastrillada, el viento del oeste y cada noche. Guarda cada noche (`Game.saveMarch`), «Continuar» la
+retoma, y al llegar al Fuerte Paz / Caer Antur vuelca todo a la partida (`Game.finishMarch`): diario
+por jornada, Códice, balance de salida. `?marcha` en la URL la abre suelta, sin tocar la partida.
+
+**Lo que falta:** el Nivel 3 (hoy el cierre del 2 es «Continuará…»), arte del río y de la marcha
+(ilustraciones), ciclo de caminata dibujado y texto en bitmap font.
 
 ## Cómo correrlo
 
 ```bash
 npm install
 npm run dev            # http://localhost:5173  (abrilo angosto o con el emulador de móvil)
-npm test               # 38 tests (sistemas, recorrido, caminos, encadenar niveles), sin navegador
+npm test               # 58 tests (sistemas, recorridos, caminos, niveles, marcha), sin navegador
 npm run validate:data  # integridad referencial de todo /data
 npm run build:single   # dist/index.html autocontenido, se abre con doble clic
 ```
@@ -96,13 +106,9 @@ La pantalla es **270×480 (9:16) fija**; en desktop se centra con banda a los co
 
 ## Próximo objetivo
 
-El **Nivel 2 — «La travesía: del golfo al río»**. El plan está en `docs/08-plan-nivel-02.md`:
-qué hereda del Nivel 1, el sistema nuevo (marcha, ruta, extravío), la deuda técnica a pagar
-antes (el código del mundo está atado al Nivel 1) y el orden de trabajo.
-
-Antes de escribir contenido del Nivel 2 hay que resolver los `TODO(historia)` y las decisiones
-D1-D5 de ese documento. Los pasos 1 a 4 (separar el guion del Nivel 1, carga por nivel,
-transición real, terreno por franjas) no dependen de eso y se pueden empezar.
+Pulir el Nivel 2 (arte, sonido, pasada en celular; plan en `docs/08-plan-nivel-02.md`) y empezar
+el **Nivel 3 — «El valle»**: el 15-IX-1865 (Murga y la bandera) y el primer contacto con los
+tehuelches, que según la guía (§1.2) fue con la colonia ya instalada.
 
 ---
 

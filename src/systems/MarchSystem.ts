@@ -44,7 +44,36 @@ export interface MarchConfig {
   mariMaxLagTiles: number;
   thirstSpeedFactor: number;
   thirstHealthPerTile: number;
-  start: { agua: number; comida: number; mariStamina: number; mariHealth: number };
+  start: { agua: number; comida: number; mariStamina: number; mariHealth: number; morale: number };
+  /** la noche sin las raciones completas: cuánta salud pierde Mari por ración que falta, y la moral */
+  hunger: { healthPerRation: number; morale: number };
+  /** racionar baja la moral del grupo */
+  rationMorale: number;
+  /** lo que se dejó en Punta Cuevas (Nivel 1, items.json → ifLeft) */
+  carga: {
+    /** sin ropa de abrigo: la noche abriga menos y enferma */
+    abrigo: { nightStaminaFactor: number; nightHealth: number };
+    /** sin libros ni biblias: −moral la primera noche */
+    libros: { firstNightMorale: number };
+  };
+  /** con alguien de vínculo, perderse cuesta menos: sale a buscarte */
+  bondLostFactor: number;
+}
+
+/**
+ * Con qué arranca la marcha: lo que hereda del Nivel 1. Todo opcional: sin esto
+ * (el prototipo suelto) arranca con `cfg.start`.
+ */
+export interface MarchStart {
+  agua?: number;
+  comida?: number;
+  mariHealth?: number;
+  mariStamina?: number;
+  morale?: number;
+  /** bultos que quedaron en Punta Cuevas (ids de items.json → bultos_nivel01) */
+  left?: string[];
+  /** quién del grupo tiene vínculo con vos (sale a buscarte si te perdés) */
+  bondHelper?: string | null;
 }
 
 /** Una opción frente a un obstáculo. Todos los campos son opcionales y se suman. */
@@ -141,6 +170,15 @@ export interface MarchState {
   rationedNights: number;
   /** zonas esquivadas por el camino elegido */
   avoided: string[];
+  /** moral del grupo (0..100) */
+  morale: number;
+  /** noches en las que no alcanzó la comida */
+  hungryNights: number;
+  /** en qué jornada se resolvió cada decisión (para el diario) */
+  dayOf: Record<string, number>;
+  /** lo que pesa del Nivel 1 */
+  left: string[];
+  bondHelper: string | null;
 }
 
 export type MarchEvent =
@@ -150,7 +188,7 @@ export type MarchEvent =
   | { type: 'night'; day: number; option: MarchOption }
   | { type: 'mariBehind' }
   | { type: 'thirst' }
-  | { type: 'skip'; tiles: number; label: string; kind: 'detour' | 'lost' | 'shelter' }
+  | { type: 'skip'; tiles: number; label: string; kind: 'detour' | 'lost' | 'shelter'; helper?: string | null }
   | { type: 'arrived' };
 
 /** Alto del terreno en x (tiles): interpolación suave del perfil, con el cañadón hundido. */
@@ -185,21 +223,29 @@ export class MarchSystem {
   readonly state: MarchState;
   private nightObstacle: MarchObstacle;
 
+  /**
+   * `start`: lo que hereda del Nivel 1. `resume`: una marcha guardada a la noche
+   * (snapshot()), que sigue tal cual.
+   */
   constructor(
     private readonly cfg: MarchConfig,
     readonly track: MarchTrack,
+    start: MarchStart = {},
+    resume?: MarchState,
   ) {
-    this.state = {
+    const mariHealth = start.mariHealth ?? cfg.start.mariHealth;
+    this.state = resume ? structuredClone(resume) : {
       day: 1,
       turn: cfg.startTurn,
       pos: 0,
       clock: 0,
       pace: 'normal',
       waiting: false,
-      agua: cfg.start.agua,
-      comida: cfg.start.comida,
-      mariStamina: cfg.start.mariStamina,
-      mariHealth: cfg.start.mariHealth,
+      agua: start.agua ?? cfg.start.agua,
+      comida: start.comida ?? cfg.start.comida,
+      // con la salud baja no hay aire para sostener el paso
+      mariStamina: start.mariStamina ?? Math.min(cfg.start.mariStamina, mariHealth + 10),
+      mariHealth,
       mariLag: 0,
       blocked: null,
       resolved: {},
@@ -211,8 +257,18 @@ export class MarchSystem {
       lostCount: 0,
       rationedNights: 0,
       avoided: [],
+      morale: start.morale ?? cfg.start.morale,
+      hungryNights: 0,
+      dayOf: {},
+      left: start.left ?? [],
+      bondHelper: start.bondHelper ?? null,
     };
     this.nightObstacle = { id: 'noche', type: 'night', title: track.night.title, prompt: track.night.prompt, options: track.night.options };
+  }
+
+  /** Copia del estado para guardar la partida (se retoma con `resume`). */
+  snapshot(): MarchState {
+    return structuredClone({ ...this.state, waiting: false });
   }
 
   setPace(p: Pace): void {
@@ -370,6 +426,7 @@ export class MarchSystem {
     }
 
     s.resolved[o.id] = opt.id;
+    s.dayOf[o.id] = s.day;
     this.apply(opt);
     if (opt.route) s.route = opt.route;
     if (o.type === 'canadon' && opt.extraTiles && o.at !== undefined) s.pos = o.at + (o.width ?? 10) + 1;
@@ -386,7 +443,11 @@ export class MarchSystem {
     if (opt.extraTiles) walk(opt.extraTiles, 'detour');
     if (opt.lostTiles) {
       s.lostCount += 1;
-      walk(opt.lostTiles, 'lost');
+      // con vínculo, alguien sale a buscarte y la vuelta es más corta
+      const helper = s.bondHelper;
+      walk(Math.round(opt.lostTiles * (helper ? this.cfg.bondLostFactor : 1)), 'lost');
+      const sk = ev.find((x) => x.type === 'skip');
+      if (sk && sk.type === 'skip') sk.helper = helper;
     }
     if (opt.shelterTiles) {
       // a resguardo: el reloj corre, se gasta poca agua, Mari descansa
@@ -411,8 +472,29 @@ export class MarchSystem {
   /** La noche: se reparte (o se raciona) y amanece otro día. */
   private camp(opt: MarchOption, ev: MarchEvent[]): void {
     const s = this.state;
+    const cfg = this.cfg;
+    // lo que no alcanza: cada ración que falta la paga Mari
+    const missing = Math.max(0, -(opt.comida ?? 0) - s.comida);
+    const stamina0 = s.mariStamina;
     this.apply(opt);
-    if (opt.id === 'racionar') s.rationedNights += 1;
+    if (missing > 0) {
+      s.hungryNights += 1;
+      s.mariHealth = Math.max(0, s.mariHealth - missing * cfg.hunger.healthPerRation);
+      s.morale = clamp(s.morale + cfg.hunger.morale);
+    }
+    if (opt.id === 'racionar') {
+      s.rationedNights += 1;
+      s.morale = clamp(s.morale + cfg.rationMorale);
+    }
+    // sin ropa de abrigo la noche abriga menos y enferma (Nivel 1: el bulto que quedó)
+    if (s.left.includes('abrigo')) {
+      s.mariStamina = stamina0 + (s.mariStamina - stamina0) * cfg.carga.abrigo.nightStaminaFactor;
+      s.mariHealth = Math.max(0, s.mariHealth + cfg.carga.abrigo.nightHealth);
+    }
+    // sin libros nadie lee en voz alta la primera noche
+    if (s.day === 1 && s.left.includes('libros')) s.morale = clamp(s.morale + cfg.carga.libros.firstNightMorale);
+    s.resolved[`noche_${s.day}`] = opt.id;
+    s.dayOf[`noche_${s.day}`] = s.day;
     s.mariLag = 0;
     ev.push({ type: 'night', day: s.day, option: opt });
     s.day += 1;
@@ -451,4 +533,8 @@ export class MarchSystem {
       ev.push({ type: 'turn', day: s.day, turn: s.turn });
     }
   }
+}
+
+function clamp(v: number): number {
+  return Math.max(0, Math.min(100, v));
 }

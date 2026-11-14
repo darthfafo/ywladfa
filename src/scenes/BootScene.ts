@@ -759,7 +759,10 @@ export class BootScene extends Phaser.Scene {
   private continueGame(): void {
     const saved = saveSystem.load();
     if (saved) game.replaceState(saved);
-    this.scene.start('World');
+    // la partida puede estar en un nivel de marcha (MarchScene) o de mapa (WorldScene)
+    // una marcha ya terminada sigue en su cierre, no vuelve a empezar
+    if (game.marchDone) this.scene.start('Transition', { next: game.level.next });
+    else this.scene.start(game.isMarch ? 'March' : 'World');
   }
 
   /* ---------------- helpers de UI ---------------- */

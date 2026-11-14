@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import balance from '@data/config/balance.json';
-import track from '@data/proto/marcha.json';
+import level from '@data/levels/nivel-02.json';
 import { MarchSystem, profileHeight, type MarchConfig, type MarchEvent, type MarchTrack } from '@/systems/MarchSystem';
 
 const cfg = (balance as any).nivel02.marcha as MarchConfig;
-const T = track as unknown as MarchTrack;
+const T = (level as unknown as { march: MarchTrack }).march;
 
 /** Lo que elige un jugador prolijo, salvo lo que cada test cambie. */
 const SAFE: Record<string, string> = {

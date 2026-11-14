@@ -1,24 +1,29 @@
 import Phaser from 'phaser';
-import balance from '@data/config/balance.json';
-import trackJson from '@data/proto/marcha.json';
 import { INPUT_GUARD, PAL, VIEW } from '@/config';
+import { game } from '@/core/Game';
 import { registry } from '@/core/Registry';
 import { sfx } from '@/audio/Sfx';
 import { MarchView3D, type MarchActor } from '@/render3d/MarchView3D';
-import { MarchSystem, type MarchConfig, type MarchEvent, type MarchObstacle, type MarchTrack, type Pace } from '@/systems/MarchSystem';
+import { MarchSystem, type MarchConfig, type MarchEvent, type MarchObstacle, type MarchStart, type Pace } from '@/systems/MarchSystem';
 import { addPanel } from '@/ui/panel';
 import { preloadArt } from '@/util/assets';
+import { busOn } from '@/util/scoped';
 import { RETRO_FONT } from '@/util/text';
 import { NPC_COLORS, PC_COLORS, resolveCharacterTexture } from '@/util/textures';
 
 /**
- * Prototipo de la marcha del Nivel 2 en vista lateral (`?marcha` en la URL).
- * Aparte del juego: no toca la partida guardada ni el estado del Nivel 1.
+ * Un nivel de marcha (data/levels/*.json con `kind: "march"`; hoy, el Nivel 2):
+ * la columna en vista lateral, del golfo al río. La lógica es MarchSystem (con
+ * tests); esto es la pantalla.
  *
- * Lo que se prueba: que avanzar se sienta como avanzar (vista de costado, la
- * columna caminando, el horizonte) y que la decisión de siempre —avanzar o
- * sostener— funcione con tres controles: el paso, esperar, y qué hacer ante un
- * obstáculo. La lógica es MarchSystem (con tests); esto es la pantalla.
+ * Dos modos:
+ * - **en el juego**: el nivel actual de la partida es una marcha (se llega con
+ *   «Seguir viaje» al cerrar el Nivel 1, o con «Continuar»). Arranca con lo que
+ *   hereda del Nivel 1 —agua, comida, la salud de tu madre, la moral, lo que
+ *   quedó en Punta Cuevas, quién tiene vínculo con vos—, guarda cada noche y al
+ *   llegar vuelca todo a la partida (Game.finishMarch) y pasa al cierre.
+ * - **suelto** (`?marcha` en la URL): con los valores de prueba de balance.json,
+ *   sin tocar la partida guardada.
  */
 
 const PACES: Array<{ id: Pace; label: string }> = [
@@ -52,6 +57,11 @@ export class MarchScene extends Phaser.Scene {
   private cardEl!: HTMLDivElement;
   private captionTimer: Phaser.Time.TimerEvent | null = null;
   private font = RETRO_FONT.replace(/"/g, "'");
+  /** ¿Es el nivel de la partida (true) o el prototipo suelto (?marcha)? */
+  private integrated = false;
+  private levelId = 'nivel-02';
+  private playerName = 'Elin';
+  private journalBtn: HTMLDivElement | null = null;
 
   constructor() {
     super('March');
@@ -65,13 +75,20 @@ export class MarchScene extends Phaser.Scene {
     document.getElementById('boot-loading')?.remove();
     window.dispatchEvent(new Event('wladfa:ready-to-show'));
 
-    this.march = new MarchSystem((balance as any).nivel02.marcha as MarchConfig, trackJson as unknown as MarchTrack);
+    this.integrated = game.isMarch;
+    this.levelId = this.integrated ? game.state.progress.level : 'nivel-02';
+    const level = registry.level(this.levelId);
+    const cfg = registry.levelBalance(this.levelId).marcha as MarchConfig;
+    const resume = this.integrated ? game.state.march : undefined;
+    this.march = new MarchSystem(cfg, level.march!, this.integrated ? this.inherited() : {}, resume);
+    this.playerName = this.integrated ? game.state.player.name : 'Elin';
+    const pcTex = this.integrated && game.state.player.gender === 'm' ? 'pc_m' : 'pc_f';
 
     // la columna, con los personajes de siempre (arte real si ya existe)
     const actors: MarchActor[] = COLUMN.map((c) => {
       if (c.id.startsWith('horse')) return { id: c.id, texture: 'horse', z: c.z };
-      const colors = c.id === 'pc' ? PC_COLORS.pc_f! : NPC_COLORS[c.id]!;
-      const key = resolveCharacterTexture(this, c.id === 'pc' ? 'pc_f' : c.id, colors[0], colors[1], colors[2]).key;
+      const colors = c.id === 'pc' ? PC_COLORS[pcTex]! : NPC_COLORS[c.id]!;
+      const key = resolveCharacterTexture(this, c.id === 'pc' ? pcTex : c.id, colors[0], colors[1], colors[2]).key;
       return { id: c.id, texture: key, z: c.z };
     });
     this.view = new MarchView3D(this, this.march.track, actors);
@@ -93,6 +110,15 @@ export class MarchScene extends Phaser.Scene {
     this.trayEl = this.dom(0, VIEW.tray.y, VIEW.width, VIEW.tray.h, 61);
     this.captionEl = this.dom(0, VIEW.world.y + VIEW.world.h - 70, VIEW.width, 60, 62);
     this.cardEl = this.dom(0, VIEW.world.y, VIEW.width, VIEW.world.h, 63);
+    // la libreta (Diario y Códice), arriba a la derecha como en el Nivel 1; solo en el juego
+    if (this.integrated) {
+      const jb = this.dom(VIEW.width - 24, 5, 20, 16, 62);
+      this.journalBtn = jb;
+      jb.innerHTML =
+        `<button type="button" aria-label="Libreta" style="width:18px; height:15px; padding:0; margin:0; border-radius:0; cursor:pointer; ` +
+        `background:rgba(14,20,22,0.6); border:1px solid rgba(217,168,69,0.55); color:#D9A845; font-size:9px; line-height:1;">☰</button>`;
+      jb.querySelector('button')!.addEventListener('click', () => this.openJournal());
+    }
     this.buildTray();
     this.refresh();
 
@@ -101,15 +127,66 @@ export class MarchScene extends Phaser.Scene {
     kb?.on('keydown-TWO', () => this.setPace('normal'));
     kb?.on('keydown-THREE', () => this.setPace('apurar'));
     kb?.on('keydown-SPACE', () => this.toggleWait());
+    kb?.on('keydown-J', () => this.openJournal());
+    // la libreta se dibuja encima: el HUD, la bandeja y los textos de la marcha se esconden mientras está abierta
+    busOn(this, 'ui:hud-visible', ({ visible }) => {
+      for (const el of [this.hudEl, this.trayEl, this.captionEl, this.cardEl]) el.style.visibility = visible ? '' : 'hidden';
+      this.journalBtn?.style.setProperty('visibility', visible ? '' : 'hidden');
+    });
 
+    this.view.setTurn(this.march.state.turn);
+    if (resume) {
+      this.showCard(
+        `Jornada ${resume.day}`,
+        'La columna se levanta con la primera luz. Falta camino hasta el río.',
+        [{ label: 'Seguir la marcha', onPick: () => this.hideCard() }],
+      );
+      return;
+    }
     this.showCard(
       'La marcha',
       // 65 km y «tres días si el viento afloja, cuatro si no»: lo que anuncia Lewis en el Nivel 1 (docs/04 §1.1)
       'Del golfo al río, a pie: sesenta y cinco kilómetros de estepa. Tres días si el viento afloja, cuatro si no. Vos marcás el paso de la columna.' +
         '<br><br>Apurar llega antes, pero gasta más agua y cansa a tu madre. Esperar no acerca, pero el sol sigue andando.' +
+        this.carryText() +
         '<br><br>Prestá atención a lo que se dice en el camino: nadie lo va a repetir.',
       [{ label: 'Salir de Punta Cuevas', onPick: () => this.hideCard() }],
     );
+  }
+
+  /** Lo que la marcha hereda del Nivel 1 (en el juego; suelto, nada). */
+  private inherited(): MarchStart {
+    const taken = game.flags.get('n1_carga') as string[] | undefined;
+    const inColumn = new Set(COLUMN.map((c) => c.id));
+    // con vínculo (fogones del Nivel 1): el más cercano sale a buscarte si te perdés
+    const helper = game.state.party
+      .filter((p) => p.id !== 'npc_mari' && inColumn.has(p.id) && p.bond >= 1)
+      .sort((a, b) => b.bond - a.bond)[0];
+    return {
+      agua: game.res.get('agua'),
+      comida: game.res.get('comida'),
+      mariHealth: game.party.member('npc_mari')?.health,
+      morale: game.state.morale,
+      left: taken ? registry.bultos.filter((b) => !taken.includes(b.id)).map((b) => b.id) : [],
+      bondHelper: helper?.id ?? null,
+    };
+  }
+
+  /** En la tarjeta de salida: con qué se sale y lo que pesa de lo que quedó en Punta Cuevas. */
+  private carryText(): string {
+    if (!this.integrated) return '';
+    const s = this.march.state;
+    const out = [`Salen con ${Math.round(s.agua)} L de agua y ${Math.round(s.comida)} raciones.`];
+    if (s.left.includes('abrigo')) out.push('La ropa de abrigo quedó en la playa: las noches van a ser largas.');
+    if (s.left.includes('harina')) out.push('La harina quedó en la playa: la comida no va a alcanzar.');
+    if (s.left.includes('libros')) out.push('Los libros quedaron en la playa.');
+    return `<br><br><span style="color:#7FB0B8">${out.join(' ')}</span>`;
+  }
+
+  /** La libreta (Diario y Códice), con la marcha en pausa. Solo en el juego. */
+  private openJournal(): void {
+    if (!this.integrated || this.scene.isActive('Journal')) return;
+    this.scene.launch('Journal', { tab: 'diario', pause: ['March'] });
   }
 
   /** Dónde va cada uno de la columna (tiles). */
@@ -130,7 +207,7 @@ export class MarchScene extends Phaser.Scene {
   private onEvent(e: MarchEvent): void {
     switch (e.type) {
       case 'line':
-        this.caption(e.speaker === 'pc' ? 'Elin' : registry.speakerName(e.speaker, 'Elin'), e.text);
+        this.caption(registry.speakerName(e.speaker, this.playerName), e.text);
         break;
       case 'turn':
         this.view?.setTurn(e.turn);
@@ -183,12 +260,20 @@ export class MarchScene extends Phaser.Scene {
         detail: opt.detail,
         onPick: () => {
           this.hideCard();
+          const day = this.march.state.day;
+          const hungry = this.march.state.hungryNights;
           const ev = this.march.choose(opt.id);
+          // en el juego, cada decisión queda en la partida (flags del nivel → el diario)
+          if (this.integrated) game.marchDecision(o.type === 'night' ? `noche_${day}` : o.id, opt.id, day);
+          if (o.type === 'night') this.hungerTonight = this.march.state.hungryNights > hungry;
           const skip = ev.find((x) => x.type === 'skip') as Extract<MarchEvent, { type: 'skip' }> | undefined;
           const rest = ev.filter((x) => x.type !== 'skip');
           const after = (): void => {
             rest.forEach((x) => this.onEvent(x));
-            if (skip?.kind === 'lost') this.caption('Lewis Jones', 'Ahí está el mar. Íbamos para cualquier lado. El cerro era a la derecha.', 4500);
+            if (skip?.kind !== 'lost') return;
+            // con vínculo, alguien salió a buscarte (Nivel 1: los fogones)
+            if (skip.helper) this.caption(registry.speakerName(skip.helper, this.playerName), 'Te vi dar vueltas y salí a buscarte. Por acá: allá está el mar.', 4500);
+            else this.caption('Lewis Jones', 'Ahí está el mar. Íbamos para cualquier lado. El cerro era a la derecha.', 4500);
           };
           if (skip) this.fadeThrough(this.skipText(o, skip.kind), after);
           else after();
@@ -197,8 +282,19 @@ export class MarchScene extends Phaser.Scene {
     );
   }
 
+  private hungerTonight = false;
+
   private night(day: number, option: { id: string }): void {
     this.paused = true;
+    const s = this.march.state;
+    // lo que pesa de lo que quedó en Punta Cuevas, y si la comida no alcanzó
+    const extra = [
+      this.hungerTonight ? 'La comida no alcanzó para todos.' : '',
+      s.left.includes('abrigo') ? 'Sin ropa de abrigo, el frío no deja dormir.' : '',
+      day === 1 && s.left.includes('libros') ? 'Sin libros, esta noche nadie lee en voz alta.' : '',
+    ].filter(Boolean);
+    // en el juego, cada noche se guarda la partida con la columna tal como está
+    if (this.integrated) game.saveMarch(this.march.snapshot());
     this.tweens.add({
       targets: this.fade,
       fillAlpha: 1,
@@ -206,9 +302,11 @@ export class MarchScene extends Phaser.Scene {
       onComplete: () => {
         this.caption(
           '',
-          option.id === 'racionar'
+          (option.id === 'racionar'
             ? `Noche ${day} a la intemperie. Media ración y la mitad del agua. Tu madre tirita hasta el amanecer.`
-            : `Noche ${day} a la intemperie. El fuego dura poco, pero alcanza. Tu madre duerme.`,
+            : `Noche ${day} a la intemperie. El fuego dura poco, pero alcanza. Tu madre duerme.`) +
+            (extra.length ? ` ${extra.join(' ')}` : '') +
+            (this.integrated ? '<br><span style="color:#7FB0B8">Partida guardada.</span>' : ''),
           4200,
         );
         this.time.delayedCall(3600, () => {
@@ -238,6 +336,8 @@ export class MarchScene extends Phaser.Scene {
   private arrived(): void {
     const s = this.march.state;
     this.paused = true;
+    // en el juego: todo lo de la marcha vuelve a la partida (por los sistemas), diario y guardado
+    if (this.integrated) game.finishMarch(this.march.snapshot());
     const mari = s.mariHealth >= 60 ? 'cansada, pero entera' : s.mariHealth >= 40 ? 'débil' : 'muy débil';
     // cuántas veces se eligió el camino largo (rodeo o desvío a una aguada)
     const detours = this.march.track.obstacles.filter((o) => o.options?.find((x) => x.id === s.resolved[o.id])?.extraTiles).length;
@@ -250,10 +350,15 @@ export class MarchScene extends Phaser.Scene {
           (detours ? `<br>${detours === 1 ? 'Un desvío' : `${detours} desvíos`} en el camino` : '<br>Sin desvíos') +
           (s.lostCount ? `<br>Se perdieron ${s.lostCount === 1 ? 'una vez' : `${s.lostCount} veces`}` : '') +
           (s.rationedNights ? '<br>Racionaron el agua' : ''),
-        [
-          { label: 'Volver a empezar', onPick: () => window.location.reload() },
-          { label: 'Ir al juego', onPick: () => (window.location.href = window.location.pathname) },
-        ],
+        this.integrated
+          ? [
+              { label: 'Seguir', onPick: () => this.scene.start('Transition', { next: registry.level(this.levelId).next }) },
+              { label: 'Leer el diario', onPick: () => this.openJournal() },
+            ]
+          : [
+              { label: 'Volver a empezar', onPick: () => window.location.reload() },
+              { label: 'Ir al juego', onPick: () => (window.location.href = window.location.pathname) },
+            ],
       ),
     );
   }

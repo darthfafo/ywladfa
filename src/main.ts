@@ -45,7 +45,7 @@ const game = new Phaser.Game({
   // `?marcha`: el prototipo de la marcha del Nivel 2 (vista lateral), aparte del juego
   scene: new URLSearchParams(location.search).has('marcha')
     ? [MarchScene]
-    : [BootScene, WorldScene, UiScene, CampScene, CargoScene, TransitionScene, JournalScene],
+    : [BootScene, WorldScene, UiScene, CampScene, CargoScene, MarchScene, TransitionScene, JournalScene],
 });
 
 applyIntegerScale(game);

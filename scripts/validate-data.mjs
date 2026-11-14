@@ -88,6 +88,40 @@ for (const s of lvl.spawns.npcs) if (!inZone(s.x, s.y)) errs.push(`npc ${s.id} s
 for (const c of lvl.spawns.cajones) if (!inZone(c.x, c.y)) errs.push(`cajón fuera de zona (${c.x},${c.y})`);
 if (!inZone(lvl.spawns.player.x, lvl.spawns.player.y)) errs.push('el jugador spawnea fuera de toda zona');
 
+// niveles de marcha (kind: "march"): la columna, quién habla, lo que referencian
+for (const [path, l] of loaded) {
+  if (!path.startsWith('data/levels/') || l.kind !== 'march') continue;
+  const where = `${l.id}`;
+  if (!l.march) {
+    errs.push(`${where}: nivel de marcha sin "march"`);
+    continue;
+  }
+  for (const id of l.party ?? []) if (!npcs.has(id)) errs.push(`${where} party → npc inexistente ${id}`);
+  for (const ln of l.march.lines) if (ln.speaker !== 'pc' && !npcs.has(ln.speaker)) errs.push(`${where} línea en ${ln.at} → speaker desconocido ${ln.speaker}`);
+  for (const c of l.codexOnArrive ?? []) if (!codex.has(c)) errs.push(`${where} codexOnArrive → ficha inexistente ${c}`);
+  const obs = new Set();
+  const routes = new Set();
+  for (const o of l.march.obstacles) {
+    if (obs.has(o.id)) errs.push(`${where} obstáculo repetido ${o.id}`);
+    obs.add(o.id);
+    for (const op of o.options ?? []) if (op.route) routes.add(op.route);
+  }
+  for (const o of l.march.obstacles) {
+    if (o.requiresRoute && !routes.has(o.requiresRoute)) errs.push(`${where}/${o.id} → ruta inexistente ${o.requiresRoute}`);
+    for (const op of o.options ?? []) if (op.avoid && !obs.has(op.avoid)) errs.push(`${where}/${o.id}/${op.id} → avoid de zona inexistente ${op.avoid}`);
+    if (o.at !== undefined && (o.at < 0 || o.at > l.march.lengthTiles)) errs.push(`${where}/${o.id} fuera del tramo`);
+  }
+  // el diario: cada dayFlag nombra una decisión que existe (o la llegada, o una noche)
+  const q = loaded.get(`data/quests/${l.id}.json`);
+  const prefix = `n${Number(l.id.slice(-2))}_dia_`;
+  for (const qq of q?.quests ?? []) {
+    if (!qq.dayFlag) continue;
+    const id = qq.dayFlag.replace(prefix, '');
+    if (!qq.dayFlag.startsWith(prefix) || !(obs.has(id) || id === 'llegada' || /^noche_\d+$/.test(id)))
+      errs.push(`${qq.id} → dayFlag sin decisión: ${qq.dayFlag}`);
+  }
+}
+
 function fail() {
   console.error('\n✖ Validación de datos fallida:\n');
   for (const e of errs) console.error('  -', e);

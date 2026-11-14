@@ -41,6 +41,19 @@ export class TimeSystem {
     return daysEnded;
   }
 
+  /**
+   * Pone el reloj en una jornada y un turno dados. Solo para los niveles de
+   * marcha, cuyo reloj corre con el tiempo de la caminata (MarchSystem) y se
+   * vuelca acá al guardar o al llegar.
+   */
+  setTo(day: number, turn: TurnId): void {
+    const prevTurn = this.state.progress.turn;
+    if (day === this.state.progress.day && turn === prevTurn) return;
+    this.state.progress.day = day;
+    this.state.progress.turn = turn;
+    bus.emit('time:turn-advanced', { day, turn, prevTurn });
+  }
+
   /** ¿Se acabó el presupuesto de jornadas del nivel? */
   isLevelOver(totalDays: number): boolean {
     return this.state.progress.day > totalDays;

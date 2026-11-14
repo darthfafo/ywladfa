@@ -1,0 +1,209 @@
+{
+  "$schema": "../schemas/quest.schema.json",
+  "level": "nivel-02",
+  "comment": "El diario de la marcha. Cada línea va a la jornada en que se tomó la decisión (dayFlag: n2_dia_<id>, lo pone Game.marchDecision).",
+  "quests": [
+    {
+      "id": "q_n2_caballo_repartir",
+      "title": "El caballo",
+      "day": 0,
+      "dayFlag": "n2_dia_caballo",
+      "optional": true,
+      "journalWhen": "flags.n2_caballo == 'repartir'",
+      "journalLine": "Uno de los caballos se echó en la huella. Repartimos su carga entre todos y seguimos, más lentos.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_caballo_dejar",
+      "title": "El caballo",
+      "day": 0,
+      "dayFlag": "n2_dia_caballo",
+      "optional": true,
+      "journalWhen": "flags.n2_caballo == 'dejar'",
+      "journalLine": "Uno de los caballos se echó en la huella. Dejamos un bulto de raciones en la estepa. Nadie lo dijo, pero todos las contamos.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_canadon_bajar",
+      "title": "El cañadón",
+      "day": 0,
+      "dayFlag": "n2_dia_canadon",
+      "optional": true,
+      "journalWhen": "flags.n2_canadon == 'bajar'",
+      "journalLine": "Un cañadón nos cortó el paso. Bajamos los caballos de a uno.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_canadon_rodear",
+      "title": "El cañadón",
+      "day": 0,
+      "dayFlag": "n2_dia_canadon",
+      "optional": true,
+      "journalWhen": "flags.n2_canadon == 'rodear'",
+      "journalLine": "Un cañadón nos cortó el paso. Lo rodeamos: media legua más.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_costa",
+      "title": "La huella de la costa",
+      "day": 0,
+      "dayFlag": "n2_dia_bifurcacion",
+      "optional": true,
+      "journalWhen": "flags.n2_bifurcacion == 'costa'",
+      "journalLine": "Tomamos la huella de la costa. Más larga, pero con el mar siempre a la izquierda.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_aguada",
+      "title": "Matas verdes",
+      "day": 0,
+      "dayFlag": "n2_dia_aguada",
+      "optional": true,
+      "journalWhen": "flags.n2_aguada == 'desviar'",
+      "journalLine": "Bajo unas matas verdes había un hilo de agua. Llenamos los barriles.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_cerro_bien",
+      "title": "El cerro chato",
+      "day": 0,
+      "dayFlag": "n2_dia_cerro",
+      "optional": true,
+      "journalWhen": "flags.n2_cerro == 'derecha'",
+      "journalLine": "Cortamos por adentro, sin ver el mar. El cerro chato nos quedó a la derecha, como dijo Lewis.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_cerro_mal",
+      "title": "El cerro chato",
+      "day": 0,
+      "dayFlag": "n2_dia_cerro",
+      "optional": true,
+      "journalWhen": "flags.n2_cerro == 'izquierda'",
+      "journalLine": "Cortamos por adentro y nos perdimos. Cuando volvimos a ver el mar, el sol ya estaba bajo.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_toldos",
+      "title": "Los toldos",
+      "day": 0,
+      "dayFlag": "n2_dia_rastrillada",
+      "optional": true,
+      "journalWhen": "flags.n2_rastrillada != null",
+      "journalLine": "Vimos humo y toldos en un bajo: tehuelches. Lewis dijo que esta tierra es de ellos. Nadie se acercó, y Edwyn no dejó que nadie se apartara de la columna.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_rastrillada_tomar",
+      "title": "La rastrillada",
+      "day": 0,
+      "dayFlag": "n2_dia_rastrillada",
+      "optional": true,
+      "journalWhen": "flags.n2_rastrillada == 'tomar'",
+      "journalLine": "Seguimos una rastrillada que rodeaba el arenal. Suelo duro, pisado por años.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_rastrillada_derecho",
+      "title": "El arenal",
+      "day": 0,
+      "dayFlag": "n2_dia_rastrillada",
+      "optional": true,
+      "journalWhen": "flags.n2_rastrillada == 'derecho'",
+      "journalLine": "Cruzamos el arenal derecho. Los caballos se hundían hasta la rodilla.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_tormenta_seguir",
+      "title": "El viento del oeste",
+      "day": 0,
+      "dayFlag": "n2_dia_tormenta",
+      "optional": true,
+      "journalWhen": "flags.n2_tormenta == 'seguir'",
+      "journalLine": "El viento del oeste levantó una pared de tierra. Seguimos con el viento de costado, a la mitad del paso.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_tormenta_refugio",
+      "title": "El viento del oeste",
+      "day": 0,
+      "dayFlag": "n2_dia_tormenta",
+      "optional": true,
+      "journalWhen": "flags.n2_tormenta == 'refugio'",
+      "journalLine": "El viento del oeste levantó una pared de tierra. Esperamos tirados en un bajo, con la cara tapada.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_noche_1",
+      "title": "La noche 1",
+      "day": 0,
+      "dayFlag": "n2_dia_noche_1",
+      "optional": true,
+      "journalWhen": "flags.n2_noche_1 != null",
+      "journalLine": "Acampamos en la huella.",
+      "steps": [],
+      "journalSuccessWhen": "flags.n2_noche_1 == 'racionar'",
+      "journalLineIfSuccess": "A la noche racionamos: media ración y la mitad del agua. Mamá tiritó hasta el amanecer.",
+      "journalLineIfFail": "A la noche repartimos lo de siempre. El fuego duró poco, pero alcanzó."
+    },
+    {
+      "id": "q_n2_noche_2",
+      "title": "La noche 2",
+      "day": 0,
+      "dayFlag": "n2_dia_noche_2",
+      "optional": true,
+      "journalWhen": "flags.n2_noche_2 != null",
+      "journalLine": "Acampamos en la huella.",
+      "steps": [],
+      "journalSuccessWhen": "flags.n2_noche_2 == 'racionar'",
+      "journalLineIfSuccess": "A la noche racionamos: media ración y la mitad del agua. Mamá tiritó hasta el amanecer.",
+      "journalLineIfFail": "A la noche repartimos lo de siempre. El fuego duró poco, pero alcanzó."
+    },
+    {
+      "id": "q_n2_noche_3",
+      "title": "La noche 3",
+      "day": 0,
+      "dayFlag": "n2_dia_noche_3",
+      "optional": true,
+      "journalWhen": "flags.n2_noche_3 != null",
+      "journalLine": "Acampamos en la huella.",
+      "steps": [],
+      "journalSuccessWhen": "flags.n2_noche_3 == 'racionar'",
+      "journalLineIfSuccess": "A la noche racionamos: media ración y la mitad del agua. Mamá tiritó hasta el amanecer.",
+      "journalLineIfFail": "A la noche repartimos lo de siempre. El fuego duró poco, pero alcanzó."
+    },
+    {
+      "id": "q_n2_noche_4",
+      "title": "La noche 4",
+      "day": 0,
+      "dayFlag": "n2_dia_noche_4",
+      "optional": true,
+      "journalWhen": "flags.n2_noche_4 != null",
+      "journalLine": "Acampamos en la huella.",
+      "steps": [],
+      "journalSuccessWhen": "flags.n2_noche_4 == 'racionar'",
+      "journalLineIfSuccess": "A la noche racionamos: media ración y la mitad del agua. Mamá tiritó hasta el amanecer.",
+      "journalLineIfFail": "A la noche repartimos lo de siempre. El fuego duró poco, pero alcanzó."
+    },
+    {
+      "id": "q_n2_llegada",
+      "title": "El río",
+      "day": 0,
+      "dayFlag": "n2_dia_llegada",
+      "optional": true,
+      "journalWhen": "flags.n2_llegada == true",
+      "journalLine": "Llegamos al río. Agua que corre, y sauces. Al lado, las paredes de barro de un fuerte viejo. Algunos ya le dicen Caer Antur.",
+      "steps": []
+    },
+    {
+      "id": "q_n2_hambre",
+      "title": "La comida",
+      "day": 0,
+      "dayFlag": "n2_dia_llegada",
+      "optional": true,
+      "journalWhen": "flags.n2_noches_hambre > 0",
+      "journalLine": "La comida no alcanzó. Mamá lo pagó más que nadie.",
+      "steps": []
+    }
+  ]
+}

@@ -46,6 +46,7 @@ export function stateForNextLevel(prev: GameState, nextLevel: string): GameState
     codex: keep('codex'),
     progress: { level: nextLevel, day: 1, turn: 'amanecer', zone: '' },
     triggersFired: [],
+    march: undefined,
   };
 }
 
@@ -55,8 +56,10 @@ export function createInitialState(levelId = 'nivel-01', name = 'Elin', gender: 
   const start = b.startState;
   const level = registry.level(levelId);
 
-  const party: PartyMember[] = level.spawns.npcs
-    .map((s) => registry.npc(s.id))
+  // un nivel de marcha no tiene mapa: la columna sale de `party`
+  const ids = level.kind === 'march' ? (level.party ?? []) : level.spawns.npcs.map((s) => s.id);
+  const party: PartyMember[] = ids
+    .map((id) => registry.npc(id))
     .map((n) => ({
       id: n.id,
       name: n.name,

@@ -28,13 +28,18 @@ export class TransitionScene extends Phaser.Scene {
   create(data: TransitionData): void {
     this.scene.stop('World');
     this.scene.stop('Ui');
+    this.scene.stop('March');
+    // el cierre de cada nivel: rótulo, título del balance e ilustración (level.exit.closing)
+    const closing = game.level.exit?.closing ?? { kicker: 'Fin de esta parte', gradeTitle: 'Así siguen' };
+    // si hay nivel siguiente, su título; si no, «Continuará…»
+    const nextTitle = data.next && registry.hasLevel(data.next) ? registry.level(data.next).title : 'Continuará…';
     const cx = VIEW.width / 2;
     const cy = VIEW.height / 2;
 
     this.add.rectangle(0, 0, VIEW.width, VIEW.height, PAL.void, 1).setOrigin(0, 0);
     // la última ilustración del nivel (la punta) detrás, apagada: cierra con imagen, no en negro
-    const key = sceneTextureKey('punta_final');
-    if (this.textures.exists(key)) {
+    const key = closing.image ? sceneTextureKey(closing.image) : '';
+    if (key && this.textures.exists(key)) {
       const img = this.add.image(cx, cy, key);
       img.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
       img.setScale(Math.max(VIEW.width / img.width, VIEW.height / img.height)).setAlpha(0);
@@ -56,9 +61,9 @@ export class TransitionScene extends Phaser.Scene {
     el.setHTML(
       `<div style="font-family:${font}; text-align:center; opacity:0; animation: tr-in 1.4s .4s ease-out forwards;">` +
         `<style>@keyframes tr-in { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:none;} }</style>` +
-        `<div style="font-size:7px; color:#BFD3D8; letter-spacing:1px; ${outline}">Fin de la primera parte</div>` +
+        `<div style="font-size:7px; color:#BFD3D8; letter-spacing:1px; ${outline}">${closing.kicker}</div>` +
         `<div style="margin:12px 0 10px; white-space:nowrap;">${rule('left')}${diamond}${rule('right')}</div>` +
-        `<div style="font-size:15px; color:#D9A845; ${outline}">Continuará…</div>` +
+        `<div style="font-size:15px; color:#D9A845; ${outline}">${nextTitle}</div>` +
       `</div>`,
     );
 
@@ -72,7 +77,7 @@ export class TransitionScene extends Phaser.Scene {
       const sum = this.add.dom(0, 170, 'div', `width:${VIEW.width}px; pointer-events:none;`).setOrigin(0, 0);
       sum.setHTML(
         `<div style="font-family:${font}; width:176px; margin:0 auto; opacity:0; animation: tr-in 1.2s 1.2s ease-out forwards;">` +
-          `<div style="font-size:6px; letter-spacing:1px; color:#7FB0B8; text-align:center; margin-bottom:9px;">Así dejan Punta Cuevas</div>` +
+          `<div style="font-size:6px; letter-spacing:1px; color:#7FB0B8; text-align:center; margin-bottom:9px;">${closing.gradeTitle}</div>` +
           rows
             .map(
               (r) =>
@@ -157,7 +162,8 @@ export class TransitionScene extends Phaser.Scene {
     const s = stateForNextLevel(game.state, next);
     game.replaceState(s);
     saveSystem.save(s);
-    this.scene.start('World');
+    // cada nivel con su escena: un mapa (WorldScene) o una marcha (MarchScene)
+    this.scene.start(registry.level(next).kind === 'march' ? 'March' : 'World');
   }
 
   /** Borra la partida guardada — sin esto, "jugar otra vez" volvía a la portada

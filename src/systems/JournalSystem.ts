@@ -23,7 +23,9 @@ export class JournalSystem {
   entry(day: number): JournalEntry | null {
     const lines: string[] = [];
     for (const q of registry.questsFor(this.game.state.progress.level)) {
-      if (q.day !== day || !q.journalLine) continue;
+      // `dayFlag`: la jornada sale de un flag (en la marcha, el día en que se tomó la decisión)
+      const qDay = q.dayFlag ? Number(this.game.flags.get(q.dayFlag) ?? 0) : q.day;
+      if (qDay !== day || !q.journalLine) continue;
       if (q.journalWhen && !this.game.flags.eval(q.journalWhen)) continue;
       let line: string = q.journalLine;
       if (q.journalSuccessWhen) {
