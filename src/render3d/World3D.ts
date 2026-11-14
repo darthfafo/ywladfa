@@ -8,6 +8,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { HorizontalTiltShiftShader } from 'three/examples/jsm/shaders/HorizontalTiltShiftShader.js';
 import { VerticalTiltShiftShader } from 'three/examples/jsm/shaders/VerticalTiltShiftShader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { contactShadow, setFrameToFeet } from './spriteFeet';
 import { CAM_3D, CAM_TALK, PAL, RENDER_3D_FX, TERRAIN_HEIGHT_3D,
   SEA_SURFACE_3D, TURN_LIGHT, VIEW } from '@/config';
 import { game } from '@/core/Game';
@@ -91,6 +92,8 @@ interface Mirror {
   zBias?: number;
   /** caminata procedural (ver walk()): última posición, fase del paso, intensidad */
   walk?: { x: number; y: number; phase: number; amp: number };
+  /** personajes: la sombra de contacto en el piso, debajo de los pies */
+  blob?: THREE.Mesh;
   update?: (t: number) => void;
 }
 
@@ -734,26 +737,40 @@ export class World3D {
         m.zBias = (this.mirrorCount++ % 11) * 0.004;
         this.mirrors.set(go, m);
         this.scene3.add(m.obj);
+        if (m.kind === 'billboard' && !m.lift) {
+          m.blob = contactShadow(0.42);
+          this.scene3.add(m.blob);
+        }
       }
       seen.add(go);
       const g = go as Phaser.GameObjects.Image;
       m.obj.visible = g.visible;
+      if (m.blob) m.blob.visible = g.visible && g.alpha > 0.5;
       if (!g.visible) continue;
       const w = g.displayWidth * PX;
       const h = g.displayHeight * PX;
       if (m.kind === 'billboard') {
-        // los pies (borde de abajo del sprite) sobre el piso, en la fila donde pisan
+        // los pies sobre el piso, en la fila donde pisan. El cuadro trae filas
+        // transparentes debajo de los pies: se recortan (spriteFeet), si no la
+        // figura flota y la sombra le sale separada
+        const feet = m.tex && g.frame ? setFrameToFeet(m.tex, g.frame) : 1;
         m.obj.position.set(g.x * PX, m.lift ?? 0, (g.y + g.displayHeight * (1 - g.originY)) * PX + (m.zBias ?? 0));
-        m.obj.scale.set(w, h * this.spriteStretch(), 1);
+        m.obj.scale.set(w, h * feet * this.spriteStretch(), 1);
         m.obj.rotation.y = this.spriteYaw;
         if (!m.lift) this.walk(m, g, dt);
+        if (m.blob) {
+          m.blob.position.set(m.obj.position.x, 0.02, m.obj.position.z - 0.05);
+          // en el aire (el saltito del paso) la mancha se achica
+          const s = 1 - Math.min(0.3, m.obj.position.y * 2);
+          m.blob.scale.set(w * 1.1 * s, 0.55 * w * 1.1 * s, 1);
+        }
       } else if (m.kind === 'flat') {
         m.obj.position.set(g.x * PX, m.lift ?? 0, g.y * PX);
         m.obj.scale.set(w, 1, h);
       } else {
         m.obj.position.set(g.x * PX, m.lift ?? 0, g.y * PX);
       }
-      if (m.tex && g.frame) this.setFrame(m.tex, g.frame);
+      if (m.tex && g.frame && m.kind !== 'billboard') this.setFrame(m.tex, g.frame);
       if (m.mat) {
         m.mat.opacity = g.alpha;
         m.mat.transparent = g.alpha < 1;
@@ -763,6 +780,7 @@ export class World3D {
     for (const [go, m] of this.mirrors) {
       if (seen.has(go)) continue;
       this.scene3.remove(m.obj);
+      if (m.blob) this.scene3.remove(m.blob);
       m.tex?.dispose();
       this.mirrors.delete(go);
     }

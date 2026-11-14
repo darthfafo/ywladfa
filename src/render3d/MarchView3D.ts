@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import * as THREE from 'three';
 import { CAM_MARCH, PAL, TURN_LIGHT, VIEW } from '@/config';
 import { profileHeight, type MarchTrack } from '@/systems/MarchSystem';
+import { contactShadow, setFrameToFeet } from './spriteFeet';
 import { bushGeometry, hash, horse, mudFort, rockGeometry, toldo, tuftGeometry, willow } from './marchModels';
 
 /**
@@ -36,6 +37,8 @@ interface ActorMesh {
   legs?: THREE.Object3D[];
   /** caballos: el pivote del cuello, para cabecear */
   neck?: THREE.Object3D;
+  /** personajes: la sombra de contacto debajo de los pies */
+  blob?: THREE.Mesh;
   lastX: number;
   phase: number;
   amp: number;
@@ -350,10 +353,8 @@ export class MarchView3D {
     t.magFilter = t.minFilter = THREE.NearestFilter;
     t.generateMipmaps = false;
     t.needsUpdate = true;
-    const w = frame.source.width;
-    const hh = frame.source.height;
-    t.repeat.set(frame.cutWidth / w, frame.cutHeight / hh);
-    t.offset.set(frame.cutX / w, 1 - (frame.cutY + frame.cutHeight) / hh);
+    // sin las filas transparentes de debajo de los pies: si no, flota (spriteFeet)
+    const feet = setFrameToFeet(t, frame);
     const mat = new THREE.MeshLambertMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.45, alphaTest: 0.5, side: THREE.DoubleSide });
     const geo = new THREE.PlaneGeometry(1, 1);
     geo.translate(0, 0.5, 0);
@@ -361,12 +362,15 @@ export class MarchView3D {
     sprite.castShadow = true;
     sprite.customDepthMaterial = new THREE.MeshDepthMaterial({ map: t, alphaTest: 0.5, depthPacking: THREE.RGBADepthPacking });
     const H = CAM_MARCH.spriteHeight;
-    sprite.scale.set((H * frame.cutWidth) / frame.cutHeight, H, 1);
+    // el mismo tamaño de figura que antes: el alto H es el del cuadro entero
+    sprite.scale.set((H * frame.cutWidth) / frame.cutHeight, H * feet, 1);
     const holder = new THREE.Group();
     holder.add(sprite);
     holder.position.z = a.z;
     this.scene3.add(holder);
-    this.actors.set(a.id, { obj: holder, sprite, lastX: 0, phase: hash(a.id.length, 5) * 3, amp: 0, baseY: 0 });
+    const blob = contactShadow(0.55);
+    this.scene3.add(blob);
+    this.actors.set(a.id, { obj: holder, sprite, blob, lastX: 0, phase: hash(a.id.length, 5) * 3, amp: 0, baseY: 0 });
   }
 
   /**
@@ -527,7 +531,10 @@ export class MarchView3D {
       const y = profileHeight(this.track, Math.max(0, Math.min(L, x)));
       const step = Math.sin(a.phase);
       if (a.sprite) {
-        a.obj.position.set(x, y + Math.abs(step) * 0.12 * a.amp, a.obj.position.z);
+        const hop = Math.abs(step) * 0.12 * a.amp;
+        a.obj.position.set(x, y + hop, a.obj.position.z);
+        a.blob?.position.set(x, Math.max(y, this.groundHeight(x, a.obj.position.z)) + 0.05, a.obj.position.z);
+        a.blob?.scale.set(1 - hop * 1.5, 0.55 * (1 - hop * 1.5), 1);
         a.sprite.rotation.z = step * 0.06 * a.amp;
       } else {
         // caballo: se inclina con la pendiente y mueve las patas
