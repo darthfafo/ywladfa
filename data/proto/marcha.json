@@ -51,11 +51,33 @@
   ],
   "obstacles": [
     {
+      "id": "caballo",
+      "type": "horse",
+      "at": 44,
+      "title": "Un caballo",
+      "prompt": "Uno de los caballos se echa en la huella. No da más con la carga.",
+      "options": [
+        {
+          "id": "repartir",
+          "text": "Repartir la carga entre todos.",
+          "detail": "No se pierde nada, pero la columna va más lenta hasta el río.",
+          "loadFactor": 0.85
+        },
+        {
+          "id": "dejar",
+          "text": "Dejar un bulto en la estepa.",
+          "detail": "El caballo sigue liviano. Son raciones que no vuelven.",
+          "comida": -5
+        }
+      ]
+    },
+    {
       "id": "canadon",
       "type": "canadon",
-      "at": 92,
+      "at": 80,
       "width": 14,
       "depth": 2.6,
+      "title": "Un cañadón",
       "prompt": "Un cañadón corta el paso. Los caballos cargados no bajan fácil.",
       "options": [
         {
@@ -73,10 +95,35 @@
       ]
     },
     {
+      "id": "bifurcacion",
+      "type": "fork",
+      "at": 104,
+      "rejoinAt": 152,
+      "title": "La huella se abre",
+      "prompt": "Una huella sigue por la costa, con el mar a la vista. Otra corta por adentro: parece más derecha, pero desde ahí no se ve el mar.",
+      "options": [
+        {
+          "id": "costa",
+          "text": "Por la costa.",
+          "detail": "Más largo, pero no hay cómo perderse.",
+          "route": "costa",
+          "extraTiles": 30
+        },
+        {
+          "id": "adentro",
+          "text": "Por adentro.",
+          "detail": "Más corto, si se sabe para dónde ir.",
+          "route": "adentro"
+        }
+      ]
+    },
+    {
       "id": "aguada",
       "type": "aguada",
-      "at": 128,
-      "prompt": "Lewis señala unas matas verdes lejos del camino. Puede haber agua.",
+      "at": 124,
+      "requiresRoute": "costa",
+      "title": "Matas verdes",
+      "prompt": "Sobre la barranca de la costa, unas matas verdes. Puede haber agua.",
       "options": [
         {
           "id": "desviar",
@@ -88,7 +135,28 @@
         {
           "id": "seguir",
           "text": "Seguir de largo.",
-          "detail": "El río está más cerca que ayer."
+          "detail": "Cada hora cuenta."
+        }
+      ]
+    },
+    {
+      "id": "cerro",
+      "type": "landmark",
+      "at": 128,
+      "requiresRoute": "adentro",
+      "title": "Un cerro chato",
+      "prompt": "Adelante, un cerro chato. La huella se abre otra vez: una lo deja de un lado, la otra del otro.",
+      "options": [
+        {
+          "id": "derecha",
+          "text": "Dejar el cerro a la derecha."
+        },
+        {
+          "id": "izquierda",
+          "text": "Dejar el cerro a la izquierda.",
+          "lostTiles": 55,
+          "mariStamina": -15,
+          "route": "costa"
         }
       ]
     },
@@ -96,10 +164,35 @@
       "id": "medano",
       "type": "medano",
       "from": 160,
-      "to": 180,
+      "to": 178,
       "slowFactor": 0.6,
       "staminaFactor": 2,
       "note": "Arena suelta: los caballos se hunden y cuesta el doble."
+    },
+    {
+      "id": "tormenta",
+      "type": "storm",
+      "at": 186,
+      "to": 204,
+      "slowFactor": 0.45,
+      "staminaFactor": 2.2,
+      "braveOption": "seguir",
+      "title": "Viento del oeste",
+      "prompt": "El viento del oeste levanta la tierra. Viene una pared parda desde atrás, de costado a la columna.",
+      "options": [
+        {
+          "id": "seguir",
+          "text": "Seguir con el viento de costado.",
+          "detail": "No se pierde tiempo, pero se avanza a la mitad y cansa el doble."
+        },
+        {
+          "id": "refugio",
+          "text": "Refugiarse en un bajo hasta que pase.",
+          "detail": "Se pierden horas. Tu madre descansa.",
+          "shelterTiles": 40,
+          "mariStamina": 25
+        }
+      ]
     }
   ],
   "lines": [
@@ -109,9 +202,26 @@
       "text": "Al sur, siempre al sur. Con el mar a la izquierda no hay cómo perderse."
     },
     {
-      "at": 60,
+      "at": 30,
       "speaker": "pc",
       "text": "Ni un árbol. Ni una sombra."
+    },
+    {
+      "at": 98,
+      "speaker": "npc_lewis",
+      "text": "Más adelante hay una huella que corta por adentro. Si la tomamos, el cerro chato tiene que quedarnos a la derecha. A la derecha, ¿oyeron?"
+    },
+    {
+      "at": 112,
+      "speaker": "pc",
+      "text": "Ya no se ve el mar.",
+      "requiresRoute": "adentro"
+    },
+    {
+      "at": 148,
+      "speaker": "pc",
+      "text": "Ahí está el mar otra vez.",
+      "requiresRoute": "adentro"
     },
     {
       "at": 158,
@@ -119,9 +229,32 @@
       "text": "Arena. Los caballos se hunden hasta la rodilla."
     },
     {
-      "at": 200,
+      "at": 212,
       "speaker": "npc_lewis",
       "text": "¿Ven la línea oscura abajo? Es el valle. Es el río."
     }
-  ]
+  ],
+  "night": {
+    "title": "Cae la noche",
+    "prompt": "Sin cuevas y con poca leña. Se acampa en la huella. ¿Cómo se reparte lo que queda?",
+    "options": [
+      {
+        "id": "repartir",
+        "text": "Como siempre.",
+        "detail": "Agua y una ración entera para cada uno. Tu madre descansa bien.",
+        "water": -2,
+        "comida": -9,
+        "mariStamina": 60
+      },
+      {
+        "id": "racionar",
+        "text": "Racionar.",
+        "detail": "La mitad del agua y media ración. Se estira lo que queda, pero tu madre lo paga.",
+        "water": -1,
+        "comida": -5,
+        "mariStamina": 35,
+        "mariHealth": -6
+      }
+    ]
+  }
 }

@@ -75,7 +75,8 @@ export class MarchScene extends Phaser.Scene {
       return { id: c.id, texture: key, z: c.z };
     });
     this.view = new MarchView3D(this, this.march.track, actors);
-    const draw = () => this.view?.render(this.game.loop.delta, this.march.state.pos, this.columnXs());
+    const draw = () =>
+      this.view?.render(this.game.loop.delta, this.march.state.pos, this.columnXs(), { inland: this.march.inland(), storm: this.march.stormHere() ? 1 : 0 });
     this.game.events.on(Phaser.Core.Events.POST_RENDER, draw);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off(Phaser.Core.Events.POST_RENDER, draw);
@@ -105,7 +106,8 @@ export class MarchScene extends Phaser.Scene {
       'La marcha',
       // sin cifras de distancia ni de días: están pendientes de decisión (docs/04 §1.1)
       'Del golfo al río, a pie, por la estepa. Vos marcás el paso de la columna.' +
-        '<br><br>Apurar llega antes, pero gasta más agua y cansa a tu madre. Esperar no acerca, pero el sol sigue andando.',
+        '<br><br>Apurar llega antes, pero gasta más agua y cansa a tu madre. Esperar no acerca, pero el sol sigue andando.' +
+        '<br><br>Prestá atención a lo que se dice en el camino: nadie lo va a repetir.',
       [{ label: 'Salir de Punta Cuevas', onPick: () => this.hideCard() }],
     );
   }
@@ -137,7 +139,7 @@ export class MarchScene extends Phaser.Scene {
         this.obstacle(e.obstacle);
         break;
       case 'night':
-        this.night(e.day);
+        this.night(e.day, e.option);
         break;
       case 'mariBehind':
         this.caption('', 'Tu madre se quedó atrás. La columna para a esperarla.');
@@ -155,45 +157,61 @@ export class MarchScene extends Phaser.Scene {
 
   // ---------------------------------------------------------------- momentos
 
+  /** Qué se cuenta mientras pasa el tiempo de un rodeo, un extravío o un refugio. */
+  private skipText(o: MarchObstacle, kind: 'detour' | 'lost' | 'shelter'): string {
+    if (kind === 'lost') return 'La huella se borra entre las matas. Caminan, dan vueltas, vuelven sobre sus pasos. El sol ya está más bajo.';
+    if (kind === 'shelter') return 'Se tiran al suelo en un bajo, con la cara tapada. Horas después el viento afloja.';
+    if (o.type === 'canadon') return 'Media legua de rodeo por el borde del cañadón.';
+    if (o.type === 'aguada') return 'Bajo las matas hay un hilo de agua. Se llenan los barriles.';
+    if (o.type === 'fork') return 'La huella de la costa da vueltas por la barranca, pero el mar está siempre ahí.';
+    return 'Pasa el tiempo.';
+  }
+
   private obstacle(o: MarchObstacle): void {
+    // la noche muestra con qué se cuenta: es lo que hay que repartir
+    const s = this.march.state;
+    const prompt =
+      o.type === 'night'
+        ? `${o.prompt ?? ''}<br><br><span style="color:#7FB0B8">Quedan ${Math.round(s.agua)} L de agua y ${Math.round(s.comida)} raciones.</span>`
+        : (o.prompt ?? '');
     this.showCard(
-      o.id === 'canadon' ? 'Un cañadón' : 'Matas verdes',
-      o.prompt ?? '',
+      o.title ?? '',
+      prompt,
       (o.options ?? []).map((opt) => ({
         label: opt.text,
         detail: opt.detail,
         onPick: () => {
           this.hideCard();
           const ev = this.march.choose(opt.id);
-          const skip = ev.find((x) => x.type === 'skip');
+          const skip = ev.find((x) => x.type === 'skip') as Extract<MarchEvent, { type: 'skip' }> | undefined;
           const rest = ev.filter((x) => x.type !== 'skip');
-          if (skip) {
-            this.fadeThrough(
-              o.id === 'canadon' ? 'Media legua de rodeo por el borde del cañadón.' : 'Bajo las matas hay un hilo de agua. Se llenan los barriles.',
-              () => rest.forEach((x) => this.onEvent(x)),
-            );
-          } else rest.forEach((x) => this.onEvent(x));
+          const after = (): void => {
+            rest.forEach((x) => this.onEvent(x));
+            if (skip?.kind === 'lost') this.caption('Lewis Jones', 'Ahí está el mar. Íbamos para cualquier lado. El cerro era a la derecha.', 4500);
+          };
+          if (skip) this.fadeThrough(this.skipText(o, skip.kind), after);
+          else after();
         },
       })),
     );
   }
 
-  private night(day: number): void {
-    const n = (balance as any).nivel02.marcha.night;
+  private night(day: number, option: { id: string }): void {
     this.paused = true;
     this.tweens.add({
       targets: this.fade,
       fillAlpha: 1,
       duration: 900,
       onComplete: () => {
-        this.view?.setTurn('noche');
         this.caption(
           '',
-          `Noche ${day} a la intemperie. Sin cuevas, sin leña: el fuego dura poco. Se comen ${n.comida} raciones y ${n.agua} L de agua. Tu madre duerme.`,
+          option.id === 'racionar'
+            ? `Noche ${day} a la intemperie. Medio litro y media ración. Tu madre tirita hasta el amanecer.`
+            : `Noche ${day} a la intemperie. El fuego dura poco, pero alcanza. Tu madre duerme.`,
           4200,
         );
         this.time.delayedCall(3600, () => {
-          this.view?.setTurn('amanecer');
+          this.view?.setTurn(this.march.state.turn);
           this.tweens.add({ targets: this.fade, fillAlpha: 0, duration: 1100, onComplete: () => (this.paused = false) });
         });
       },
@@ -228,7 +246,9 @@ export class MarchScene extends Phaser.Scene {
         `Agua que corre, y sauces. Jornada ${s.day}, ${TURN_LABEL[s.turn]!.toLowerCase()}.` +
           `<br><br>Agua: ${Math.round(s.agua)} L · Comida: ${Math.round(s.comida)}` +
           `<br>Tu madre: ${mari}` +
-          (detours ? `<br>${detours === 1 ? 'Un desvío' : `${detours} desvíos`} en el camino` : '<br>Sin desvíos'),
+          (detours ? `<br>${detours === 1 ? 'Un desvío' : `${detours} desvíos`} en el camino` : '<br>Sin desvíos') +
+          (s.lostCount ? `<br>Se perdieron ${s.lostCount === 1 ? 'una vez' : `${s.lostCount} veces`}` : '') +
+          (s.rationedNights ? '<br>Racionaron el agua' : ''),
         [
           { label: 'Volver a empezar', onPick: () => window.location.reload() },
           { label: 'Ir al juego', onPick: () => (window.location.href = window.location.pathname) },

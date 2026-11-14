@@ -97,6 +97,8 @@ export class MarchView3D {
     this.buildTerrain();
     this.buildRiver();
     this.scatterProps();
+    this.buildRidge();
+    this.buildLandmarks();
     this.buildWisps();
     for (const a of actors) this.addActor(a);
     this.setTurn('manana');
@@ -111,7 +113,7 @@ export class MarchView3D {
     for (let i = 0; i < pos.count; i++) colors.push(1, 1, 1);
     geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     // sin tone mapping: si no, el ACES de la escena lo lava a un blanco parejo
-    this.skyMat = new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, depthWrite: false, toneMapped: false });
+    this.skyMat = new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, depthWrite: false, toneMapped: false, transparent: true });
     const sky = new THREE.Mesh(geo, this.skyMat);
     // a la distancia y la altura que la cámara (mirando apenas hacia abajo) ve por
     // encima de las sierras: así el degradé se ve entero, no solo el horizonte
@@ -312,8 +314,10 @@ export class MarchView3D {
   private buildWisps(): void {
     const mat = new THREE.MeshBasicMaterial({ color: PAL.sandLight, transparent: true, opacity: 0.5, depthWrite: false });
     const geo = new THREE.PlaneGeometry(0.5, 0.03);
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0; i < 90; i++) {
       const m = new THREE.Mesh(geo, mat.clone());
+      // de día se ven pocas; con la tormenta, todas (ver render)
+      m.userData.calm = i < 26;
       m.position.set(hash(i, 40) * 30, 0.6 + hash(i, 41) * 3, 8 - hash(i, 42) * 24);
       m.rotation.y = Math.PI / 2; // la brizna apunta hacia donde la lleva el viento
       m.userData.v = 6 + hash(i, 43) * 6;
@@ -359,6 +363,55 @@ export class MarchView3D {
     this.actors.set(a.id, { obj: holder, sprite, lastX: 0, phase: hash(a.id.length, 5) * 3, amp: 0, baseY: 0 });
   }
 
+  /**
+   * La lomada que tapa el mar cuando la columna corta por adentro: un lomo largo
+   * entre el camino y la costa, a lo largo del tramo de la bifurcación. Sube y
+   * baja con `inland` (ver render): así se VE que el mar quedó fuera de la vista.
+   */
+  private buildRidge(): void {
+    const f = this.track.obstacles.find((o) => o.type === 'fork');
+    if (!f || f.at === undefined || f.rejoinAt === undefined) return;
+    const x0 = f.at - 6;
+    const x1 = f.rejoinAt + 6;
+    const n = Math.round((x1 - x0) * 1.5);
+    const geo = new THREE.PlaneGeometry(x1 - x0, 14, n, 6);
+    geo.rotateX(-Math.PI / 2);
+    geo.translate((x0 + x1) / 2, 0, -11);
+    const pos = geo.attributes.position!;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const along = Math.min(1, (x - x0) / 8, (x1 - x) / 8); // rampas en los extremos
+      const across = Math.max(0, 1 - Math.abs(z + 11) / 7);
+      pos.setY(i, Math.max(0, along) * across * (4.5 + 0.8 * Math.sin(x * 0.2)));
+    }
+    geo.computeVertexNormals();
+    const ridge = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: PAL.soil2, flatShading: true }));
+    ridge.receiveShadow = true;
+    ridge.position.y = profileHeight(this.track, (x0 + x1) / 2) - 0.3;
+    ridge.scale.y = 0.001;
+    ridge.visible = false;
+    this.scene3.add(ridge);
+    this.ridge = ridge;
+  }
+  private ridge: THREE.Mesh | null = null;
+
+  /** El cerro chato del atajo: en primer plano, a la derecha de quien camina (al oeste). */
+  private buildLandmarks(): void {
+    const c = this.track.obstacles.find((o) => o.type === 'landmark');
+    if (!c || c.at === undefined) return;
+    const geo = new THREE.CylinderGeometry(4.2, 6.5, 2.6, 9, 1);
+    const pos = geo.attributes.position!;
+    for (let i = 0; i < pos.count; i++) pos.setX(i, pos.getX(i) * 1.3 + Math.sin(i * 1.7) * 0.25);
+    geo.computeVertexNormals();
+    const mesa = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: PAL.clay, flatShading: true }));
+    mesa.castShadow = true;
+    mesa.receiveShadow = true;
+    const x = c.at + 8;
+    mesa.position.set(x, profileHeight(this.track, x) + 0.9, 12);
+    this.scene3.add(mesa);
+  }
+
   /** Luz del turno (TURN_LIGHT, config.ts): la misma que el mundo de arriba. */
   setTurn(turn: string): void {
     const c = TURN_LIGHT[turn] ?? TURN_LIGHT.manana!;
@@ -378,8 +431,9 @@ export class MarchView3D {
     this.hemi.groundColor.set(c.ground);
     this.hemi.intensity = c.hemiI;
     const fog = new THREE.Color(c.fog);
-    this.scene3.background = fog;
-    this.scene3.fog = new THREE.Fog(fog, 60, 190);
+    this.baseFog.copy(fog);
+    this.scene3.background = fog.clone();
+    this.scene3.fog = new THREE.Fog(fog.clone(), 60, 190);
     // arriba, un celeste patagónico lavado (de día) o casi negro (de noche)
     const top = new THREE.Color(c.sky).lerp(new THREE.Color(turn === 'noche' ? PAL.void : 0x6d93ad), turn === 'noche' ? 0.85 : 0.75);
     this.paintSky(top, fog);
@@ -389,12 +443,19 @@ export class MarchView3D {
     }
   }
   private readonly sunDir = new THREE.Vector3();
+  private readonly baseFog = new THREE.Color();
+  private stormK = 0;
+  private inlandK = 0;
 
   /**
    * Un cuadro: `focusX` es el jugador (la cámara lo sigue), `xs` dónde está cada
    * uno de la columna (tiles a lo largo del camino).
    */
-  render(dtMs: number, focusX: number, xs: Record<string, number>): void {
+  /**
+   * `env.inland`: 0..1, cuánto se perdió de vista el mar (atajo por adentro).
+   * `env.storm`: 0..1, cuánto pega la tormenta de tierra.
+   */
+  render(dtMs: number, focusX: number, xs: Record<string, number>, env: { inland: number; storm: number } = { inland: 0, storm: 0 }): void {
     const dt = Math.min(dtMs / 1000, 0.05);
     this.time += dt;
     this.fitToCanvas();
@@ -435,15 +496,35 @@ export class MarchView3D {
 
     for (const w of this.wisps) {
       // el viento del oeste: de atrás de la cámara hacia el mar
-      w.position.z -= (w.userData.v as number) * dt;
+      w.position.z -= (w.userData.v as number) * (1 + this.stormK * 2.5) * dt;
       w.position.x += (w.userData.v as number) * 0.15 * dt;
       if (w.position.z < -16) {
         w.position.z = 8 + Math.random() * 4;
         w.position.x = focusX - 10 + Math.random() * 20;
       }
       const m = w.material as THREE.MeshBasicMaterial;
-      m.opacity = 0.35 + 0.25 * Math.sin(this.time * 3 + w.position.z);
+      const on = w.userData.calm ? 1 : this.stormK;
+      w.visible = on > 0.02;
+      m.opacity = (0.35 + 0.25 * Math.sin(this.time * 3 + w.position.z)) * on;
     }
+
+    // la lomada que tapa el mar y la tormenta: transiciones suaves, no saltos
+    this.inlandK += (env.inland - this.inlandK) * Math.min(1, dt * 1.5);
+    this.stormK += (env.storm - this.stormK) * Math.min(1, dt * 1.2);
+    if (this.ridge) {
+      this.ridge.visible = this.inlandK > 0.01;
+      this.ridge.scale.y = Math.max(0.001, this.inlandK);
+    }
+    const fog = this.scene3.fog as THREE.Fog | null;
+    if (fog) {
+      const dust = this.baseFog.clone().lerp(new THREE.Color(0x8a6a45), this.stormK * 0.85);
+      fog.color.copy(dust);
+      (this.scene3.background as THREE.Color).copy(dust);
+      fog.near = 60 - 52 * this.stormK;
+      fog.far = 190 - 150 * this.stormK;
+    }
+    // en la tormenta el cielo se borra: deja ver el fondo, que ya es del color del polvo
+    if (this.skyMat) this.skyMat.opacity = 1 - 0.9 * this.stormK;
 
     this.renderer.render(this.scene3, this.camera);
   }

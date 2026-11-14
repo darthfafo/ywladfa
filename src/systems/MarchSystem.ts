@@ -9,11 +9,17 @@
  * Reglas:
  * - La columna avanza a tres pasos: aflojar, normal, apurar. Más rápido gasta más
  *   agua por tramo y cansa a Mari.
- * - El reloj es la distancia: cada `tilesPerTurn` recorridos pasa un turno.
+ * - El reloj corre con el tiempo, al mismo ritmo camine como camine la columna
+ *   (`clockTilesPerSec`): apurar cubre más camino por turno, aflojar menos, y
+ *   todo lo que frena (la carga repartida, la tormenta, el médano) cuesta horas.
  *   Esperar también gasta reloj (el sol no espera) pero no acerca.
  * - Si Mari se cansa, se queda atrás; si se queda muy atrás, la columna para.
- * - Los obstáculos frenan la columna hasta que el jugador decide.
- * - Al caer la noche se acampa: se come, se bebe y Mari descansa.
+ * - Los obstáculos frenan la columna hasta que el jugador decide. Cada opción
+ *   cuesta algo distinto: tiempo, agua, comida, el paso del resto del camino o a
+ *   Mari. Ninguna es gratis, ninguna es azar.
+ * - Una bifurcación elige el camino (`route`); algunos obstáculos solo aparecen
+ *   en uno de los dos.
+ * - Al caer la noche se decide cómo repartir el agua y la comida.
  * - Sin agua, la columna va más lenta y Mari pierde salud. Nunca se pierde (R7):
  *   se llega igual, peor.
  */
@@ -26,39 +32,64 @@ export interface MarchConfig {
   startTurn: Turn;
   tilesPerTurn: number;
   paces: Record<Pace, { speedTilesPerSec: number; waterPerTile: number; mariStaminaPerTile: number }>;
-  waitTilesPerSec: number;
+  /** cuánto avanza el reloj por segundo (en tiles de paso normal), se camine o se espere */
+  clockTilesPerSec: number;
   waitStaminaPerSec: number;
+  /** agua que se gasta esperando, por tile de reloj */
+  waitWaterPerTile: number;
   mariLagBelowStamina: number;
   mariLagTilesPerSec: number;
   mariCatchUpTilesPerSec: number;
   mariMaxLagTiles: number;
   thirstSpeedFactor: number;
   thirstHealthPerTile: number;
-  night: { agua: number; comida: number; staminaRecover: number };
   start: { agua: number; comida: number; mariStamina: number; mariHealth: number };
 }
 
+/** Una opción frente a un obstáculo. Todos los campos son opcionales y se suman. */
 export interface MarchOption {
   id: string;
   text: string;
   detail?: string;
+  /** cañadón: velocidad mientras se lo cruza */
   slowFactor?: number;
+  /** más camino: el reloj, el agua y el cansancio corren como si se caminara */
   extraTiles?: number;
+  /** perderse: igual que extraTiles, pero cuenta como extravío */
+  lostTiles?: number;
+  /** esperar a resguardo: el reloj corre, se gasta poca agua, Mari descansa */
+  shelterTiles?: number;
+  /** cambios directos */
   water?: number;
+  comida?: number;
+  mariStamina?: number;
+  mariHealth?: number;
+  /** multiplica la velocidad de acá al final (ej. repartir la carga de un caballo) */
+  loadFactor?: number;
+  /** bifurcación: qué camino se toma */
+  route?: string;
 }
 
 export interface MarchObstacle {
   id: string;
-  type: 'canadon' | 'aguada' | 'medano';
+  type: 'canadon' | 'aguada' | 'medano' | 'fork' | 'landmark' | 'storm' | 'horse' | 'night';
+  title?: string;
   at?: number;
   width?: number;
   depth?: number;
+  /** zonas (médano, tormenta): de dónde a dónde rige el efecto */
   from?: number;
   to?: number;
   slowFactor?: number;
   staminaFactor?: number;
   prompt?: string;
   options?: MarchOption[];
+  /** solo aparece si se tomó este camino en la bifurcación */
+  requiresRoute?: string;
+  /** bifurcación: dónde vuelven a juntarse los dos caminos */
+  rejoinAt?: number;
+  /** tormenta: con qué opción se la enfrenta (si se elige otra, se espera a que pase) */
+  braveOption?: string;
 }
 
 export interface MarchTrack {
@@ -68,7 +99,9 @@ export interface MarchTrack {
   /** [x, alto] en tiles: el perfil del terreno a lo largo del camino */
   profile: Array<[number, number]>;
   obstacles: MarchObstacle[];
-  lines: Array<{ at: number; speaker: string; text: string }>;
+  /** la decisión de cada noche */
+  night: { title: string; prompt: string; options: MarchOption[] };
+  lines: Array<{ at: number; speaker: string; text: string; requiresRoute?: string }>;
 }
 
 export interface MarchState {
@@ -93,18 +126,26 @@ export interface MarchState {
   /** líneas ya dichas */
   said: number[];
   arrived: boolean;
-  /** tiles recorridos de más (rodeos, desvíos) */
+  /** tiles recorridos de más (rodeos, desvíos, extravíos) */
   extraTiles: number;
+  /** camino tomado en la bifurcación */
+  route: string | null;
+  /** velocidad del resto del camino (1 = normal) */
+  loadFactor: number;
+  /** veces que la columna se perdió */
+  lostCount: number;
+  /** noches en las que se racionó */
+  rationedNights: number;
 }
 
 export type MarchEvent =
   | { type: 'obstacle'; obstacle: MarchObstacle }
   | { type: 'line'; speaker: string; text: string }
   | { type: 'turn'; day: number; turn: Turn }
-  | { type: 'night'; day: number }
+  | { type: 'night'; day: number; option: MarchOption }
   | { type: 'mariBehind' }
   | { type: 'thirst' }
-  | { type: 'skip'; tiles: number; label: string }
+  | { type: 'skip'; tiles: number; label: string; kind: 'detour' | 'lost' | 'shelter' }
   | { type: 'arrived' };
 
 /** Alto del terreno en x (tiles): interpolación suave del perfil, con el cañadón hundido. */
@@ -137,6 +178,7 @@ export function profileHeight(track: MarchTrack, x: number): number {
 
 export class MarchSystem {
   readonly state: MarchState;
+  private nightObstacle: MarchObstacle;
 
   constructor(
     private readonly cfg: MarchConfig,
@@ -159,7 +201,12 @@ export class MarchSystem {
       said: [],
       arrived: false,
       extraTiles: 0,
+      route: null,
+      loadFactor: 1,
+      lostCount: 0,
+      rationedNights: 0,
     };
+    this.nightObstacle = { id: 'noche', type: 'night', title: track.night.title, prompt: track.night.prompt, options: track.night.options };
   }
 
   setPace(p: Pace): void {
@@ -175,20 +222,51 @@ export class MarchSystem {
     return Math.min(1, this.state.pos / this.track.lengthTiles);
   }
 
+  /** ¿El obstáculo corresponde al camino tomado? */
+  private onRoute(o: { requiresRoute?: string }): boolean {
+    return !o.requiresRoute || o.requiresRoute === this.state.route;
+  }
+
+  /** ¿Está la columna adentro de la zona de este obstáculo (médano, tormenta)? */
+  private inZone(o: MarchObstacle): boolean {
+    const from = o.from ?? o.at;
+    const to = o.to;
+    return from !== undefined && to !== undefined && this.state.pos >= from && this.state.pos <= to;
+  }
+
+  /** ¿La tormenta está pegando ahora? (se eligió enfrentarla y se está adentro) */
+  stormHere(): MarchObstacle | null {
+    for (const o of this.track.obstacles) {
+      if (o.type === 'storm' && this.state.resolved[o.id] === o.braveOption && this.inZone(o)) return o;
+    }
+    return null;
+  }
+
+  /** ¿Va la columna por adentro, sin el mar a la vista? (0..1, con rampas en los extremos) */
+  inland(): number {
+    const f = this.track.obstacles.find((o) => o.type === 'fork');
+    if (!f || f.at === undefined || f.rejoinAt === undefined || this.state.route !== 'adentro') return 0;
+    const ramp = 8;
+    const x = this.state.pos;
+    if (x < f.at || x > f.rejoinAt) return 0;
+    return Math.min(1, (x - f.at) / ramp, (f.rejoinAt - x) / ramp);
+  }
+
   /** Velocidad real de la cabeza de la columna ahora (tiles/s). */
   speed(): number {
     const s = this.state;
     if (s.arrived || s.blocked || s.waiting) return 0;
     // Mari muy atrás: la columna la espera sola
     if (s.mariLag >= this.cfg.mariMaxLagTiles) return 0;
-    let v = this.cfg.paces[s.pace].speedTilesPerSec;
+    let v = this.cfg.paces[s.pace].speedTilesPerSec * s.loadFactor;
     for (const o of this.track.obstacles) {
-      if (o.type === 'medano' && o.from !== undefined && o.to !== undefined && s.pos >= o.from && s.pos <= o.to) v *= o.slowFactor ?? 1;
+      if (o.type === 'medano' && this.inZone(o)) v *= o.slowFactor ?? 1;
       if (o.type === 'canadon' && s.resolved[o.id] === 'bajar' && o.at !== undefined && s.pos >= o.at && s.pos <= o.at + (o.width ?? 10)) {
-        const opt = o.options?.find((x) => x.id === 'bajar');
-        v *= opt?.slowFactor ?? 1;
+        v *= o.options?.find((x) => x.id === 'bajar')?.slowFactor ?? 1;
       }
     }
+    const storm = this.stormHere();
+    if (storm) v *= storm.slowFactor ?? 1;
     if (s.agua <= 0) v *= this.cfg.thirstSpeedFactor;
     return v;
   }
@@ -200,20 +278,20 @@ export class MarchSystem {
     if (s.arrived || s.blocked) return ev;
 
     const v = this.speed();
-    const moved = v * dt;
     const cfg = this.cfg;
 
     if (s.waiting || (v === 0 && s.mariLag >= cfg.mariMaxLagTiles)) {
       // esperar: el reloj corre, Mari descansa y alcanza a la columna
       s.mariStamina = Math.min(100, s.mariStamina + cfg.waitStaminaPerSec * dt);
       s.mariLag = Math.max(0, s.mariLag - cfg.mariCatchUpTilesPerSec * dt);
-      this.tick(cfg.waitTilesPerSec * dt, ev);
+      s.agua = Math.max(0, s.agua - cfg.waitWaterPerTile * cfg.clockTilesPerSec * dt);
+      this.tick(cfg.clockTilesPerSec * dt, ev);
       return ev;
     }
 
     // la columna se acerca al próximo obstáculo sin pasarse
+    let step = v * dt;
     const next = this.nextObstacle();
-    let step = moved;
     if (next && next.at !== undefined && s.pos + step >= next.at - 1) {
       step = Math.max(0, next.at - 1 - s.pos);
       s.blocked = next;
@@ -225,10 +303,10 @@ export class MarchSystem {
     const pace = cfg.paces[s.pace];
     s.agua = Math.max(0, s.agua - pace.waterPerTile * step);
     let fatigue = pace.mariStaminaPerTile * step;
-    for (const o of this.track.obstacles) {
-      if (o.type === 'medano' && o.from !== undefined && o.to !== undefined && s.pos >= o.from && s.pos <= o.to && fatigue > 0) {
-        fatigue *= o.staminaFactor ?? 1;
-      }
+    if (fatigue > 0) {
+      for (const o of this.track.obstacles) if (o.type === 'medano' && this.inZone(o)) fatigue *= o.staminaFactor ?? 1;
+      const storm = this.stormHere();
+      if (storm) fatigue *= storm.staminaFactor ?? 1;
     }
     s.mariStamina = Math.max(0, Math.min(100, s.mariStamina - fatigue));
     if (s.agua <= 0) {
@@ -247,15 +325,17 @@ export class MarchSystem {
 
     // líneas del camino
     this.track.lines.forEach((l, i) => {
-      if (!s.said.includes(i) && s.pos >= l.at) {
+      if (!s.said.includes(i) && s.pos >= l.at && this.onRoute(l)) {
         s.said.push(i);
         ev.push({ type: 'line', speaker: l.speaker, text: l.text });
       }
     });
 
-    this.tick(step, ev);
+    // el reloj corre con el tiempo, no con la distancia (si se frenó contra un
+    // obstáculo en este cuadro, solo el tramo que se caminó)
+    this.tick(v > 0 ? (step / v) * cfg.clockTilesPerSec : 0, ev);
 
-    if (s.pos >= this.track.lengthTiles) {
+    if (s.pos >= this.track.lengthTiles && !s.blocked) {
       s.pos = this.track.lengthTiles;
       s.arrived = true;
       ev.push({ type: 'arrived' });
@@ -263,60 +343,99 @@ export class MarchSystem {
     return ev;
   }
 
-  /** Elige qué hacer frente al obstáculo que frena la columna. */
+  /** Elige qué hacer frente a lo que frena la columna (obstáculo o noche). */
   choose(optionId: string): MarchEvent[] {
     const s = this.state;
     const o = s.blocked;
     if (!o) return [];
     const opt = o.options?.find((x) => x.id === optionId);
     if (!opt) return [];
-    s.resolved[o.id] = opt.id;
     s.blocked = null;
     const ev: MarchEvent[] = [];
-    if (opt.water) s.agua += opt.water;
-    if (opt.extraTiles) {
-      // rodeo o desvío: el reloj y el agua corren como si se caminara, pero la
-      // columna vuelve al mismo camino (y, si rodea un cañadón, del otro lado)
-      s.extraTiles += opt.extraTiles;
-      s.agua = Math.max(0, s.agua - this.cfg.paces[s.pace].waterPerTile * opt.extraTiles);
-      s.mariStamina = Math.max(0, s.mariStamina - this.cfg.paces[s.pace].mariStaminaPerTile * opt.extraTiles * 0.5);
-      if (o.type === 'canadon' && o.at !== undefined) s.pos = o.at + (o.width ?? 10) + 1;
-      ev.push({ type: 'skip', tiles: opt.extraTiles, label: opt.text });
-      this.tick(opt.extraTiles, ev);
+
+    if (o.type === 'night') {
+      this.camp(opt, ev);
+      return ev;
+    }
+
+    s.resolved[o.id] = opt.id;
+    this.apply(opt);
+    if (opt.route) s.route = opt.route;
+    if (o.type === 'canadon' && opt.extraTiles && o.at !== undefined) s.pos = o.at + (o.width ?? 10) + 1;
+
+    const pace = this.cfg.paces[s.pace];
+    const walk = (tiles: number, kind: 'detour' | 'lost'): void => {
+      // más camino: el reloj, el agua y el cansancio corren como si se caminara
+      s.extraTiles += tiles;
+      s.agua = Math.max(0, s.agua - pace.waterPerTile * tiles);
+      s.mariStamina = Math.max(0, s.mariStamina - Math.max(0, pace.mariStaminaPerTile) * tiles * 0.5);
+      ev.push({ type: 'skip', tiles, label: opt.text, kind });
+      this.tick(tiles, ev);
+    };
+    if (opt.extraTiles) walk(opt.extraTiles, 'detour');
+    if (opt.lostTiles) {
+      s.lostCount += 1;
+      walk(opt.lostTiles, 'lost');
+    }
+    if (opt.shelterTiles) {
+      // a resguardo: el reloj corre, se gasta poca agua, Mari descansa
+      s.agua = Math.max(0, s.agua - this.cfg.waitWaterPerTile * opt.shelterTiles);
+      ev.push({ type: 'skip', tiles: opt.shelterTiles, label: opt.text, kind: 'shelter' });
+      this.tick(opt.shelterTiles, ev);
     }
     return ev;
+  }
+
+  /** Cambios directos de una opción. */
+  private apply(opt: MarchOption): void {
+    const s = this.state;
+    if (opt.water) s.agua = Math.max(0, s.agua + opt.water);
+    if (opt.comida) s.comida = Math.max(0, s.comida + opt.comida);
+    if (opt.mariStamina) s.mariStamina = Math.max(0, Math.min(100, s.mariStamina + opt.mariStamina));
+    if (opt.mariHealth) s.mariHealth = Math.max(0, Math.min(100, s.mariHealth + opt.mariHealth));
+    if (opt.loadFactor) s.loadFactor *= opt.loadFactor;
+  }
+
+  /** La noche: se reparte (o se raciona) y amanece otro día. */
+  private camp(opt: MarchOption, ev: MarchEvent[]): void {
+    const s = this.state;
+    this.apply(opt);
+    if (opt.id === 'racionar') s.rationedNights += 1;
+    s.mariLag = 0;
+    ev.push({ type: 'night', day: s.day, option: opt });
+    s.day += 1;
+    s.turn = 'amanecer';
+    ev.push({ type: 'turn', day: s.day, turn: s.turn });
+    // si quedaba reloj de más (un rodeo que cruzó la noche), sigue corriendo
+    this.tick(0, ev);
   }
 
   private nextObstacle(): MarchObstacle | null {
     const s = this.state;
     let best: MarchObstacle | null = null;
     for (const o of this.track.obstacles) {
-      if (!o.options || o.at === undefined || s.resolved[o.id]) continue;
+      if (!o.options || o.at === undefined || s.resolved[o.id] || !this.onRoute(o)) continue;
       if (o.at - 1 < s.pos - 0.001) continue;
       if (!best || o.at < best.at!) best = o;
     }
     return best;
   }
 
-  /** El reloj avanza `tiles` equivalentes: turnos y, al llegar la noche, campamento. */
+  /** El reloj avanza `tiles` equivalentes: turnos y, al terminar la tarde, la noche. */
   private tick(tiles: number, ev: MarchEvent[]): void {
     const s = this.state;
     s.clock += tiles;
-    while (s.clock >= this.cfg.tilesPerTurn) {
+    while (s.clock >= this.cfg.tilesPerTurn && !s.blocked) {
       s.clock -= this.cfg.tilesPerTurn;
-      const i = TURNS.indexOf(s.turn);
       if (s.turn === 'tarde') {
-        // cae la noche: se acampa, se come, se bebe, se descansa; amanece otro día
-        ev.push({ type: 'night', day: s.day });
-        s.agua = Math.max(0, s.agua - this.cfg.night.agua);
-        s.comida = Math.max(0, s.comida - this.cfg.night.comida);
-        s.mariStamina = Math.min(100, s.mariStamina + this.cfg.night.staminaRecover);
-        s.mariLag = 0;
-        s.day += 1;
-        s.turn = 'amanecer';
-      } else {
-        s.turn = TURNS[i + 1]!;
+        // cae la noche: la columna para y hay que decidir cómo repartir
+        s.turn = 'noche';
+        ev.push({ type: 'turn', day: s.day, turn: s.turn });
+        s.blocked = this.nightObstacle;
+        ev.push({ type: 'obstacle', obstacle: this.nightObstacle });
+        return;
       }
+      s.turn = TURNS[TURNS.indexOf(s.turn) + 1]!;
       ev.push({ type: 'turn', day: s.day, turn: s.turn });
     }
   }
