@@ -1,0 +1,149 @@
+# Arte del Nivel 2 — «La travesía: del golfo al río»
+
+Ilustraciones (escenas cinemáticas) que contextualizan la marcha. Mismo sistema que
+las del Nivel 1: PNG 3:4 vertical en `src/assets/scenes/<id>.png`.
+
+**Ya están conectadas en el juego.** Cada una aparece sola en su momento apenas el
+PNG existe (MarchScene.illustrate); mientras falte, la marcha sigue como hoy, sin
+cartel de "falta imagen". Dónde aparece cada una:
+  - las del camino: `data/levels/nivel-02.json` → `march.scenes` (posición en el tramo y texto);
+  - la partida, la noche, el extravío y tu madre: MarchScene (inicio, `night`, `fadeThrough`, `mariBehind`);
+  - `marcha_caer_antur` es además el fondo del cierre del nivel (`exit.closing.image`).
+
+Para cada prompt: pegar primero el **prefijo de estilo compartido** de
+`docs/05-prompts-arte2.txt` §0 y, al final, el sufijo de cinemáticas de §2:
+`3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
+centered with generous margin on all sides for safe cropping on different phone
+screens, no text, no UI elements.`
+
+Orientación que tiene que respetarse en todas (es la del juego): la columna va hacia
+el **sur**; el **mar queda al este** (a la izquierda de quien camina); el **viento del
+oeste** viene de la derecha. Grupos de **15 a 20 personas a pie** con **dos caballos
+de carga**; nada de carros. Invierno austral (agosto): luz baja, frío, pasto seco.
+
+Regla de representación (docs/04 §1.2 y R2): los tehuelches se ven solo de lejos, sin
+rasgos de caricatura, sin armas en primer plano, sin gesto hostil. Es su tierra; los
+colonos son los que pasan.
+
+---
+
+## Imprescindibles (5) — arman el arco del nivel
+
+### cutscene_marcha_partida — La partida
+Cuándo: al empezar el nivel, antes de la tarjeta «La marcha».
+Texto en el juego: «Agosto de 1865. Se sale de Punta Cuevas en grupos de quince o
+veinte, con un par de caballos de carga. A pie, todos.»
+```
+A small column of fifteen to twenty Welsh colonists on foot setting out at dawn
+from a coastal clay cliff with cave dwellings behind them, two pack horses loaded
+with water barrels and bundles, women in shawls and men in dark coats and wide
+hats, a mother walking beside her grown child, the grey gulf sea on the left side
+of the frame, the empty brown steppe stretching ahead to the south, cold winter
+morning light, long low shadows, a sense of leaving the only shelter they know.
+```
+
+### cutscene_marcha_noche — Fogón a cielo abierto
+Cuándo: cada noche de la marcha (reemplaza el fundido a negro).
+```
+Night on the open Patagonian steppe, no cave and no shelter, a small dim fire in a
+shallow hollow among dry tussock grass, colonists wrapped in blankets huddled close
+around it, two pack horses hobbled nearby with their loads on the ground, a vast
+cold starry sky above, wind bending the grass, very little light and very much
+dark, endurance rather than comfort.
+```
+
+### cutscene_marcha_toldos — Toldos a lo lejos
+Cuándo: en el camino, al ver el campamento tehuelche (antes de la línea «Humo, allá
+en el bajo. Y toldos.»).
+Texto en el juego: «En un bajo, lejos, sube humo.»
+```
+Seen from behind and slightly above, a few Welsh colonists stopped on a low rise
+of the steppe, looking down at a distant Tehuelche camp in a sheltered hollow:
+three or four low tents of sewn guanaco hides on wooden poles, thin smoke rising
+and bent by the wind, a herd of horses grazing nearby, tiny distant figures going
+about their day, the camp belongs to the land and looks settled and calm, the
+colonists in the foreground hesitant and still, respectful distance, no weapons,
+no confrontation, muted earth palette.
+```
+
+### cutscene_marcha_rio — La primera vista del río
+Cuándo: al llegar al borde de la meseta (antes de «¿Ven la línea oscura abajo? Es el
+valle. Es el río.»). Es el clímax del nivel.
+Texto en el juego: «Desde el borde de la meseta, abajo: una línea oscura de sauces.»
+```
+From the edge of a high dry plateau, exhausted colonists and their pack horses look
+down into a wide valley where a winding river (the Chubut) curves through the flat
+floor, lined by a dark ribbon of willow trees, the first muted green in the whole
+journey (desaturated olive, never bright), the sea faint at the far left horizon,
+late afternoon light breaking through clouds onto the valley, relief and awe after
+days of thirst.
+```
+
+### cutscene_marcha_caer_antur — Caer Antur, el Fuerte Paz
+Cuándo: al llegar, junto al río; y de fondo en el cierre «Fin de la segunda parte».
+Texto en el juego: «Junto al agua, paredes de barro y una zanja: lo que queda del
+Fuerte Paz.»
+```
+The ruins of a small abandoned mud-walled fort on the bank of a winding river, low
+crumbling adobe walls with gaps, a shallow ditch around it, an old bare flagpole
+still standing, willows by the water, Welsh colonists arriving on foot with two
+pack horses, some already setting down bundles inside the walls, dusk light,
+a refuge that is barely a refuge, the beginning of a settlement.
+```
+
+---
+
+## Recomendadas (4) — momentos de decisión y de fracaso suave
+
+### cutscene_marcha_caballo — El caballo que se echa
+Cuándo: antes de la decisión «Un caballo» (repartir la carga o dejar un bulto).
+Texto en el juego: «A media mañana, uno de los caballos de carga se echa en la huella.»
+```
+A pack horse lying down exhausted on a dusty steppe track, its load of bundles and
+a water barrel half slipped off, colonists gathered around it, one kneeling at the
+horse's head, others looking at the bundles, the rest of the column waiting ahead,
+flat empty steppe, harsh midday winter light, the weight of what has to be left.
+```
+
+### cutscene_marcha_tormenta — El viento del oeste
+Cuándo: antes de la decisión «Viento del oeste» (seguir o refugiarse).
+Texto en el juego: «Por el oeste, el cielo se pone pardo.»
+```
+A towering brown wall of wind-blown dust approaching across the steppe from the
+right side of the frame (the west), the sky turning ochre, a small column of
+colonists on foot turning their backs and covering their faces with shawls and
+hats, pack horses lowering their heads, dry grass flattened by the wind, the grey
+sea barely visible on the far left, menace of weather, not of people.
+```
+
+### cutscene_marcha_perdidos — Perdidos
+Cuándo: si se toma mal el atajo del cerro (se pierden y terminan saliendo a la costa).
+```
+A small group of colonists and pack horses standing confused among identical low
+thorny bushes on a featureless plain, no path visible, a flat-topped mesa hill on
+the wrong side of them, the sun low, one man pointing one way and another the
+other way, a mother sitting on a bundle, disorientation and wasted hours.
+```
+
+### cutscene_marcha_mari — Tu madre no da más
+Cuándo: la primera vez que tu madre se queda atrás por cansancio.
+Texto en el juego: «Tu madre se sienta en un bulto. No da un paso más. La columna
+para a esperarla.»
+```
+A middle-aged Welsh woman in a dark shawl and headscarf sitting exhausted on a
+bundle at the side of a steppe track, her grown child crouching beside her holding
+a water flask, the rest of the column stopped further ahead looking back, wind,
+dry grass, overcast sky, tenderness and worry, no melodrama.
+```
+
+---
+
+## Además (no son ilustraciones)
+
+- **Sprites de colonos genéricos (2 o 3, 4 direcciones, como los de `06-prompts-sprites.txt`)**:
+  la columna histórica era de 15 a 20 personas y hoy se ven 6. Con dos o tres
+  figuras genéricas (un hombre con sombrero y bulto, una mujer con chal, un muchacho)
+  la columna se lee como un grupo de verdad.
+- **Sonido**: el agua del río al llegar, y el viento con más cuerpo en la tormenta.
+- Los caballos, los toldos, el fuerte, los sauces y la vegetación de la estepa ya
+  están hechos en 3D por código (`src/render3d/marchModels.ts`): no hace falta arte.

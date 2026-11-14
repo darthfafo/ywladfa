@@ -6,9 +6,10 @@ import { sfx } from '@/audio/Sfx';
 import { MarchView3D, type MarchActor } from '@/render3d/MarchView3D';
 import { MarchSystem, type MarchConfig, type MarchEvent, type MarchObstacle, type MarchStart, type Pace } from '@/systems/MarchSystem';
 import { addPanel } from '@/ui/panel';
-import { preloadArt } from '@/util/assets';
+import { hasSceneArt, preloadArt } from '@/util/assets';
+import { playCinematic } from '@/ui/cinematic';
 import { busOn } from '@/util/scoped';
-import { RETRO_FONT } from '@/util/text';
+import { levelLabel, RETRO_FONT } from '@/util/text';
 import { NPC_COLORS, PC_COLORS, resolveCharacterTexture } from '@/util/textures';
 
 /**
@@ -75,6 +76,10 @@ export class MarchScene extends Phaser.Scene {
     document.getElementById('boot-loading')?.remove();
     window.dispatchEvent(new Event('wladfa:ready-to-show'));
 
+    // Phaser reutiliza la instancia de la escena: lo de la corrida anterior vuelve a cero
+    this.mariShown = false;
+    this.hungerTonight = false;
+    this.journalBtn = null;
     this.integrated = game.isMarch;
     this.levelId = this.integrated ? game.state.progress.level : 'nivel-02';
     const level = registry.level(this.levelId);
@@ -143,7 +148,7 @@ export class MarchScene extends Phaser.Scene {
       );
       return;
     }
-    this.showCard(
+    const intro = (): void => this.showCard(
       'La marcha',
       // 65 km y «tres días si el viento afloja, cuatro si no»: lo que anuncia Lewis en el Nivel 1 (docs/04 §1.1)
       'Del golfo al río, a pie: sesenta y cinco kilómetros de estepa. Tres días si el viento afloja, cuatro si no. Vos marcás el paso de la columna.' +
@@ -152,6 +157,38 @@ export class MarchScene extends Phaser.Scene {
         '<br><br>Prestá atención a lo que se dice en el camino: nadie lo va a repetir.',
       [{ label: 'Salir de Punta Cuevas', onPick: () => this.hideCard() }],
     );
+    this.paused = true;
+    if (!this.illustrate('marcha_partida', 'Agosto de 1865. Se sale de Punta Cuevas en grupos de quince o veinte, con un par de caballos de carga. A pie, todos.', intro)) intro();
+  }
+
+  /**
+   * Una ilustración del nivel (src/assets/scenes/<id>.png, prompts en
+   * docs/09-arte-nivel-02.txt) sobre el mundo, con su texto abajo y la marcha en
+   * pausa; se cierra sola o con un toque. Si el PNG todavía no existe devuelve
+   * false y no hace nada: el que llama sigue como si no hubiera ilustración.
+   */
+  private illustrate(id: string, text: string, then: () => void, ms = 5200): boolean {
+    if (!hasSceneArt(id)) return false;
+    this.paused = true;
+    const cine = playCinematic(this, id, { x: 0, y: VIEW.world.y, w: VIEW.width, h: VIEW.world.h }, 55);
+    this.caption('', text, ms);
+    let done = false;
+    const finish = (): void => {
+      if (done) return;
+      done = true;
+      cine.close();
+      this.captionTimer?.remove();
+      this.captionEl.innerHTML = '';
+      then();
+    };
+    this.time.delayedCall(ms, finish);
+    this.time.delayedCall(INPUT_GUARD.choiceMs, () => this.input.once('pointerdown', finish));
+    return true;
+  }
+
+  /** Vuelve a caminar, salvo que haya una decisión abierta. */
+  private resume(): void {
+    if (!this.cardEl.innerHTML) this.paused = false;
   }
 
   /** Lo que la marcha hereda del Nivel 1 (en el juego; suelto, nada). */
@@ -218,8 +255,14 @@ export class MarchScene extends Phaser.Scene {
       case 'night':
         this.night(e.day, e.option);
         break;
+      case 'scene':
+        this.illustrate(e.id, e.text, () => this.resume());
+        break;
       case 'mariBehind':
-        this.caption('', 'Tu madre se quedó atrás. La columna para a esperarla.');
+        // la primera vez, con ilustración si existe
+        if (this.mariShown || !this.illustrate('marcha_mari', 'Tu madre se sienta en un bulto. No da un paso más. La columna para a esperarla.', () => this.resume()))
+          this.caption('', 'Tu madre se quedó atrás. La columna para a esperarla.');
+        this.mariShown = true;
         break;
       case 'thirst':
         this.caption('Lewis Jones', 'Se terminó el agua. Despacio, y nadie se separa.');
@@ -275,7 +318,7 @@ export class MarchScene extends Phaser.Scene {
             if (skip.helper) this.caption(registry.speakerName(skip.helper, this.playerName), 'Te vi dar vueltas y salí a buscarte. Por acá: allá está el mar.', 4500);
             else this.caption('Lewis Jones', 'Ahí está el mar. Íbamos para cualquier lado. El cerro era a la derecha.', 4500);
           };
-          if (skip) this.fadeThrough(this.skipText(o, skip.kind), after);
+          if (skip) this.fadeThrough(this.skipText(o, skip.kind), after, skip.kind === 'lost' ? 'marcha_perdidos' : undefined);
           else after();
         },
       })),
@@ -283,6 +326,7 @@ export class MarchScene extends Phaser.Scene {
   }
 
   private hungerTonight = false;
+  private mariShown = false;
 
   private night(day: number, option: { id: string }): void {
     this.paused = true;
@@ -300,35 +344,39 @@ export class MarchScene extends Phaser.Scene {
       fillAlpha: 1,
       duration: 900,
       onComplete: () => {
-        this.caption(
-          '',
+        const text =
           (option.id === 'racionar'
             ? `Noche ${day} a la intemperie. Media ración y la mitad del agua. Tu madre tirita hasta el amanecer.`
             : `Noche ${day} a la intemperie. El fuego dura poco, pero alcanza. Tu madre duerme.`) +
             (extra.length ? ` ${extra.join(' ')}` : '') +
-            (this.integrated ? '<br><span style="color:#7FB0B8">Partida guardada.</span>' : ''),
-          4200,
-        );
-        this.time.delayedCall(3600, () => {
+            (this.integrated ? '<br><span style="color:#7FB0B8">Partida guardada.</span>' : '');
+        const back = (): void => {
+          this.paused = true;
           this.view?.setTurn(this.march.state.turn);
           this.tweens.add({ targets: this.fade, fillAlpha: 0, duration: 1100, onComplete: () => (this.paused = false) });
-        });
+        };
+        // el fogón a cielo abierto, si ya está la ilustración; si no, en negro con el texto
+        if (this.illustrate('marcha_noche', text, back, 6000)) return;
+        this.caption('', text, 4200);
+        this.time.delayedCall(3600, back);
       },
     });
   }
 
-  private fadeThrough(text: string, after: () => void): void {
+  private fadeThrough(text: string, after: () => void, art?: string): void {
     this.paused = true;
     this.tweens.add({
       targets: this.fade,
       fillAlpha: 1,
       duration: 600,
       onComplete: () => {
-        this.caption('', text, 2600);
-        this.time.delayedCall(1800, () => {
+        const back = (): void => {
           after();
           this.tweens.add({ targets: this.fade, fillAlpha: 0, duration: 700, onComplete: () => (this.paused = false) });
-        });
+        };
+        if (art && this.illustrate(art, text, back)) return;
+        this.caption('', text, 2600);
+        this.time.delayedCall(1800, back);
       },
     });
   }
@@ -411,8 +459,9 @@ export class MarchScene extends Phaser.Scene {
     const aguaColor = s.agua < 4 ? '#DE7050' : '#EAE8E0';
     this.hudEl.innerHTML =
       `<div style="font-family:${this.font}; width:${VIEW.width}px; pointer-events:none;">` +
-      `<div style="display:flex; align-items:center; justify-content:center; gap:6px; font-size:9px; padding-top:5px; color:#D9A845;">` +
-      `<span>JORNADA ${s.day} · ${TURN_LABEL[s.turn]}</span><span style="display:inline-flex; gap:3px;">${dots}</span></div>` +
+      // 7px y centrado en lo que deja libre el ☰: con el nivel no entra a 9px en 270 de ancho
+      `<div style="display:flex; align-items:center; justify-content:center; gap:6px; font-size:7px; padding:6px 22px 0 0; color:#D9A845;">` +
+      `<span><span style="color:#7FB0B8;">${levelLabel(this.levelId)} · </span>JORNADA ${s.day} · ${TURN_LABEL[s.turn]}</span><span style="display:inline-flex; gap:3px;">${dots}</span></div>` +
       `<div style="display:flex; gap:12px; font-size:8px; padding:5px 0 0 6px;">` +
       `<span><span style="color:#7FB0B8">AGUA</span> <span style="color:${aguaColor}">${Math.round(s.agua)}</span></span>` +
       `<span><span style="color:#7FB0B8">COMIDA</span> ${Math.round(s.comida)}</span></div></div>`;

@@ -10,7 +10,7 @@ import { playCinematic, type Cinematic } from '@/ui/cinematic';
 import { DialogueBox } from '@/ui/DialogueBox';
 import { TouchControls } from '@/ui/TouchControls';
 import { input } from '@/util/input';
-import { crisp, FONT, RETRO_FONT } from '@/util/text';
+import { crisp, FONT, levelLabel, RETRO_FONT } from '@/util/text';
 import { TURNS } from '@/systems/TimeSystem';
 import { addPanel } from '@/ui/panel';
 import { sfx } from '@/audio/Sfx';
@@ -327,8 +327,11 @@ export class UiScene extends Phaser.Scene {
     // Mayúsculas en todo el HUD: a este tamaño de letra, minúsculas con
     // ascendentes/descendentes finos se leen peor en un celular real.
     this.dayEl.setHTML(
-      `<div style="display:flex; align-items:center; justify-content:center; gap:6px;">` +
-        `<span style="color:#D9A845;">JORNADA ${s.day} · ${game.time.label().toUpperCase()}</span>` +
+      // 7px y centrado en lo que deja libre el ☰ de la derecha: «NIVEL N · JORNADA N · MAÑANA»
+      // con los rombos no entra a 9px en 270 de ancho (medido)
+      `<div style="display:flex; align-items:center; justify-content:center; gap:6px; font-size:7px; padding-right:22px;">` +
+        // con más de un nivel, el encabezado dice en cuál se está (apagado: lo que importa es la jornada)
+        `<span><span style="color:#7FB0B8;">${levelLabel(s.level)} · </span><span style="color:#D9A845;">JORNADA ${s.day} · ${game.time.label().toUpperCase()}</span></span>` +
         `<span style="display:inline-flex; gap:3px;">${dots}</span>` +
         `</div>`,
     );

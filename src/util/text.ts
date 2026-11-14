@@ -48,3 +48,8 @@ export function crisp<T extends Phaser.GameObjects.Text>(text: T): T {
 
   return text;
 }
+
+/** «NIVEL 2» a partir del id del nivel (nivel-02), para el encabezado del HUD. */
+export function levelLabel(levelId: string): string {
+  return `NIVEL ${Number(levelId.slice(-2))}`;
+}

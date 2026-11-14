@@ -155,7 +155,7 @@ Esto no agrega nada visible, pero sin esto el Nivel 2 se escribiría copiando y 
 
 ### 5.3 Arte que hace falta (prompts en `05`/`06`/`07`)
 
-- **Ilustraciones (5):** la partida, la meseta al mediodía, alguien que no puede seguir, el fogón a cielo abierto, la primera vista del río.
+- **Ilustraciones:** la lista final, con prompts y el momento en que aparece cada una, está en `docs/09-arte-nivel-02.txt` (5 imprescindibles y 4 recomendadas). Ya están conectadas: aparecen solas cuando existe el PNG.
 - **Sprites:** dos o tres colonos genéricos para la columna (4 direcciones, como los actuales); los carros, si se confirman (`TODO(historia)` 3).
 - **Terreno 3D:** laguna seca / salitral, cañadón de bajada, el río con sus sauces. Regla cromática del GDD §9: el verde saturado se reserva para el Nivel 10; acá el verde es apagado.
 - **Sonido:** viento con más peso (ya existe), agua corriendo (nuevo, para el río), pasos sobre salitre.

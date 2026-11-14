@@ -111,6 +111,15 @@ for (const [path, l] of loaded) {
     for (const op of o.options ?? []) if (op.avoid && !obs.has(op.avoid)) errs.push(`${where}/${o.id}/${op.id} → avoid de zona inexistente ${op.avoid}`);
     if (o.at !== undefined && (o.at < 0 || o.at > l.march.lengthTiles)) errs.push(`${where}/${o.id} fuera del tramo`);
   }
+  // ilustraciones del camino: ids únicos, adentro del tramo, con texto
+  const seenScenes = new Set();
+  for (const sc of l.march.scenes ?? []) {
+    if (seenScenes.has(sc.id)) errs.push(`${where} ilustración repetida ${sc.id}`);
+    seenScenes.add(sc.id);
+    if (!/^[a-z0-9_]+$/.test(sc.id)) errs.push(`${where} ilustración con id inválido ${sc.id}`);
+    if (sc.at < 0 || sc.at > l.march.lengthTiles) errs.push(`${where} ilustración ${sc.id} fuera del tramo`);
+    if (!sc.text) errs.push(`${where} ilustración ${sc.id} sin texto`);
+  }
   // el diario: cada dayFlag nombra una decisión que existe (o la llegada, o una noche)
   const q = loaded.get(`data/quests/${l.id}.json`);
   const prefix = `n${Number(l.id.slice(-2))}_dia_`;

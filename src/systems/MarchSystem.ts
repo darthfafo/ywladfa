@@ -134,6 +134,8 @@ export interface MarchTrack {
   /** la decisión de cada noche */
   night: { title: string; prompt: string; options: MarchOption[] };
   lines: Array<{ at: number; speaker: string; text: string; requiresRoute?: string; skipIfAvoided?: string }>;
+  /** ilustraciones (src/assets/scenes/<id>.png) que se muestran al pasar por `at`; sin el PNG, nada */
+  scenes?: Array<{ at: number; id: string; text: string; requiresRoute?: string }>;
 }
 
 export interface MarchState {
@@ -179,11 +181,14 @@ export interface MarchState {
   /** lo que pesa del Nivel 1 */
   left: string[];
   bondHelper: string | null;
+  /** ilustraciones ya mostradas */
+  seen: string[];
 }
 
 export type MarchEvent =
   | { type: 'obstacle'; obstacle: MarchObstacle }
   | { type: 'line'; speaker: string; text: string }
+  | { type: 'scene'; id: string; text: string }
   | { type: 'turn'; day: number; turn: Turn }
   | { type: 'night'; day: number; option: MarchOption }
   | { type: 'mariBehind' }
@@ -262,7 +267,9 @@ export class MarchSystem {
       dayOf: {},
       left: start.left ?? [],
       bondHelper: start.bondHelper ?? null,
+      seen: [],
     };
+    this.state.seen ??= []; // marchas guardadas antes de que existiera
     this.nightObstacle = { id: 'noche', type: 'night', title: track.night.title, prompt: track.night.prompt, options: track.night.options };
   }
 
@@ -397,6 +404,14 @@ export class MarchSystem {
         ev.push({ type: 'line', speaker: l.speaker, text: l.text });
       }
     });
+
+    // ilustraciones del camino
+    for (const sc of this.track.scenes ?? []) {
+      if (!s.seen.includes(sc.id) && s.pos >= sc.at && this.onRoute(sc)) {
+        s.seen.push(sc.id);
+        ev.push({ type: 'scene', id: sc.id, text: sc.text });
+      }
+    }
 
     // el reloj corre con el tiempo, no con la distancia (si se frenó contra un
     // obstáculo en este cuadro, solo el tramo que se caminó)

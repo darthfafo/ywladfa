@@ -354,7 +354,34 @@
           "mariHealth": -6
         }
       ]
-    }
+    },
+    "scenes": [
+      {
+        "at": 47,
+        "id": "marcha_caballo",
+        "text": "A media mañana, uno de los caballos de carga se echa en la huella."
+      },
+      {
+        "at": 243,
+        "id": "marcha_toldos",
+        "text": "En un bajo, lejos, sube humo."
+      },
+      {
+        "at": 327,
+        "id": "marcha_tormenta",
+        "text": "Por el oeste, el cielo se pone pardo."
+      },
+      {
+        "at": 387,
+        "id": "marcha_rio",
+        "text": "Desde el borde de la meseta, abajo: una línea oscura de sauces."
+      },
+      {
+        "at": 405,
+        "id": "marcha_caer_antur",
+        "text": "Junto al agua, paredes de barro y una zanja: lo que queda del Fuerte Paz."
+      }
+    ]
   },
   "codexOnArrive": [
     "cod_marcha",
@@ -377,7 +404,8 @@
     ],
     "closing": {
       "kicker": "Fin de la segunda parte",
-      "gradeTitle": "Así llegan al río"
+      "gradeTitle": "Así llegan al río",
+      "image": "marcha_caer_antur"
     },
     "computeGrade": {
       "agua": {
