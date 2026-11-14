@@ -1,0 +1,235 @@
+{
+  "$schema": "../schemas/dialogue.schema.json",
+  "level": "nivel-03",
+  "note": "Nivel 3, acto I (IX-1865). De Murga solo están documentados la bandera y el nombre Trerawson (docs/04 §1.3): sus palabras y las de Lewis son dramatizadas.",
+  "dialogues": [
+    {
+      "id": "d_n3_bandera",
+      "npc": "npc_murga",
+      "lang": "cym",
+      "start": "n0",
+      "nodes": {
+        "n0": {
+          "speaker": "narrator",
+          "text": "15 de septiembre de 1865. Junto a las paredes del fuerte viejo, a la orilla del río.",
+          "next": "n1"
+        },
+        "n1": {
+          "speaker": "narrator",
+          "text": "Un comandante del gobierno argentino junta a todos frente al fuerte. Se llama Julián Murga.",
+          "next": "n2"
+        },
+        "n2": {
+          "speaker": "npc_murga",
+          "lang": "spa",
+          "text": "En nombre del gobierno de la Nación, este pueblo se llamará Trerawson, por el ministro don Guillermo Rawson.",
+          "next": "n3"
+        },
+        "n3": {
+          "speaker": "narrator",
+          "text": "Sube una bandera celeste y blanca. Casi nadie entendió lo que dijo el comandante.",
+          "next": "n4"
+        },
+        "n4": {
+          "speaker": "npc_lewis",
+          "text": "Dice que el pueblo se llama Trerawson, por el ministro Rawson. Que esta tierra es del gobierno argentino.",
+          "next": "n5"
+        },
+        "n5": {
+          "speaker": "pc",
+          "portrait": "tenso",
+          "text": "¿Y los que vivían acá antes?",
+          "next": "n6"
+        },
+        "n6": {
+          "speaker": "npc_lewis",
+          "text": "De eso no dijo nada.",
+          "next": "n7"
+        },
+        "n7": {
+          "speaker": "npc_lewis",
+          "text": "Antes del frío, cada familia levanta su rancho. Barro de la orilla y junco del río.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_bandera": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_rancho_hecho",
+      "npc": "npc_lewis",
+      "lang": "cym",
+      "start": "b0",
+      "nodes": {
+        "b0": {
+          "speaker": "npc_lewis",
+          "condition": "flags.n3_rancho_lugar == 'barda'",
+          "text": "En la barda. Vas a caminar mucho hasta el agua, pero ahí arriba no llega nadie más que el viento.",
+          "end": true
+        },
+        "b1": {
+          "speaker": "npc_edwyn",
+          "text": "Cerca del río. El barro a mano, y el agua también.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_crecida",
+      "npc": "npc_lewis",
+      "lang": "cym",
+      "start": "c0",
+      "nodes": {
+        "c0": {
+          "speaker": "narrator",
+          "text": "De noche, el río creció. Al amanecer, el llano es un espejo marrón.",
+          "next": "c1"
+        },
+        "c1": {
+          "speaker": "narrator",
+          "condition": "flags.n3_rancho_perdido == true",
+          "text": "Del rancho quedan dos paredes blandas y el junco flotando.",
+          "next": "c4"
+        },
+        "c2": {
+          "speaker": "narrator",
+          "condition": "flags.n3_rancho_lugar != null",
+          "text": "El rancho sigue en pie. Abajo, las casas de otros ya no están.",
+          "next": "c4"
+        },
+        "c3": {
+          "speaker": "narrator",
+          "text": "No llegaron a levantar nada. Esta vez, no hubo nada que perder.",
+          "next": "c4"
+        },
+        "c4": {
+          "speaker": "npc_lewis",
+          "text": "Así es este río. Se vuelve a hacer, más arriba y mejor.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_crecida_vista": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_acto1_fin",
+      "lang": "cym",
+      "start": "f0",
+      "nodes": {
+        "f0": {
+          "speaker": "narrator",
+          "text": "Se rehízo lo que se pudo. Las casas nuevas, más altas y mejores.",
+          "next": "f1"
+        },
+        "f1": {
+          "speaker": "narrator",
+          "text": "Lo que sigue —el invierno de 1866— está en armado.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_acto1": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    }
+  ],
+  "choices": [
+    {
+      "id": "ch_n3_rehacer",
+      "prompt": "Hay que rehacer. ¿Qué va primero?",
+      "turnCost": 0,
+      "hint": "Lo que se haga primero se nota en el invierno.",
+      "options": [
+        {
+          "id": "techo",
+          "text": "El techo de la familia. Mamá no puede dormir al raso.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_rehacer": "techo"
+              }
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": 6
+              }
+            },
+            {
+              "morale": -4
+            }
+          ],
+          "condition": "flags.n3_rancho_perdido == true"
+        },
+        {
+          "id": "corral",
+          "text": "El corral de todos. Sin los animales no hay invierno.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_rehacer": "corral"
+              }
+            },
+            {
+              "bond": {
+                "npc": "npc_lewis",
+                "delta": 1
+              }
+            },
+            {
+              "morale": 6
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": -4
+              }
+            }
+          ]
+        },
+        {
+          "id": "ayudar",
+          "text": "Ayudar a los que perdieron todo.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_rehacer": "ayudar"
+              }
+            },
+            {
+              "bond": {
+                "npc": "npc_edwyn",
+                "delta": 1
+              }
+            },
+            {
+              "morale": 6
+            }
+          ],
+          "condition": "flags.n3_rancho_perdido != true"
+        }
+      ]
+    }
+  ],
+  "tutorials": [
+    {
+      "id": "tut_n3_rancho",
+      "title": "El rancho",
+      "text": "Juntá barro y junco en la orilla. Con material, caminá hasta donde quieras levantar el rancho y tocá «Rancho acá». Cerca del río el barro está a mano; en la barda, lejos del agua, acarrearlo lleva más turnos.",
+      "hint": "Las paredes del fuerte guardan una marca. Miralas."
+    }
+  ]
+}

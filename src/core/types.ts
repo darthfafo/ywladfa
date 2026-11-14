@@ -284,6 +284,8 @@ export interface DialogueNode {
   portrait?: 'neutral' | 'tenso' | 'calido';
   text?: string;
   broken?: boolean;
+  /** el idioma de esta línea, si no es el del diálogo (ej. Murga en castellano en una escena en galés) */
+  lang?: LangId;
   condition?: string;
   next?: string;
   end?: boolean;
@@ -305,7 +307,8 @@ export interface ChoiceScreenDef {
   prompt: string;
   turnCost: number;
   /** `detail`: qué implica la opción (adónde vas, qué te deja), en letra chica debajo */
-  options: Array<{ id: string; text: string; detail?: string; effects?: DialogueEffect[] }>;
+  /** `condition`: la opción solo aparece si se cumple (ej. rehacer el techo, si se perdió) */
+  options: Array<{ id: string; text: string; detail?: string; condition?: string; effects?: DialogueEffect[] }>;
   /** Aclaración técnica sobre la decisión (consecuencias no obvias en el texto de
    * las opciones) — va en el pie del panel, ver UiScene.openOverlay. */
   hint?: string;

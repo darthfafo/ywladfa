@@ -103,7 +103,8 @@ export class DialogueSystem {
   }
 
   private renderNode(nodeId: string, node: DialogueNode): RenderedLine {
-    const lang = this.def!.lang;
+    // cada línea en su idioma: el del nodo si lo dice, si no el del diálogo
+    const lang = node.lang ?? this.def!.lang;
     const raw = node.text ?? '';
     const text = node.broken ? raw : this.game.lang.render(raw, lang);
     const choices = (node.choices ?? []).filter((c) => this.game.flags.eval(c.condition));

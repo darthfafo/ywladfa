@@ -35,6 +35,8 @@ export interface WorldHost {
   checkTriggers(): void;
   /** lleva al jugador a una casilla (el guion decide cuándo hace falta) */
   teleport(tileX: number, tileY: number): void;
+  /** hacia dónde mira el jugador */
+  facing(): 'north' | 'south' | 'east' | 'west';
 }
 
 export interface LevelScript {
@@ -44,6 +46,8 @@ export interface LevelScript {
   label?(it: Interactable): string | undefined;
   /** la acción sobre un interactable; true si el guion la resolvió */
   interact?(it: Interactable): boolean;
+  /** el botón de acción cuando no hay nada cerca (ej. Nivel 3: «Rancho acá»); null = nada */
+  freeAction?(): { label: string; run: () => void } | null;
   /** al pisar una casilla nueva, antes de los triggers; true = no seguir (el guion ya resolvió) */
   onTile?(zoneId: string | undefined): boolean;
   /** cada cuadro con el control libre */

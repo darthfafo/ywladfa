@@ -98,6 +98,32 @@
       "level": ["nivel-01", "nivel-02", "nivel-03"]
     },
     {
+      "id": "npc_murga",
+      "name": "Julián Murga",
+      "historical": true,
+      "years": "—",
+      "role": "Comandante del gobierno argentino",
+      "sprite": "npc_murga",
+      "portrait": "murga",
+      "languages": {
+        "cym": 0,
+        "spa": 3,
+        "aon": 0
+      },
+      "trade": "militar",
+      "bond": 0,
+      "stats": {
+        "health": 80,
+        "morale": 70,
+        "stamina": 70
+      },
+      "note": "El 15-IX-1865 izó la bandera argentina y llamó al pueblo Trerawson, por el ministro Guillermo Rawson (docs/04 §1.3). Solo eso está documentado: sus palabras en el juego son dramatizadas.",
+      "voiceNote": "Habla solo castellano: para el jugador, bloques.",
+      "level": [
+        "nivel-03"
+      ]
+    },
+    {
       "id": "npc_dafydd",
       "name": "Dafydd",
       "historical": false,

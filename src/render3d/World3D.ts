@@ -14,6 +14,7 @@ import { CAM_3D, CAM_TALK, PAL, RENDER_3D_FX, TERRAIN_HEIGHT_3D,
 import { game } from '@/core/Game';
 import { baseTerrain, TERRAIN } from '@/util/mapgen';
 import { buildShip } from './ship';
+import { adobeHut, mudFort } from './marchModels';
 import { TEX_TILES, terrainTexture } from './terrainTextures';
 
 /**
@@ -700,6 +701,11 @@ export class World3D {
       return { kind: 'model', obj: f.group, update: f.update };
     }
     if (key === 'prop_cueva') return { kind: 'model', obj: caveMouth() };
+    // Nivel 3: los ranchos, su vista previa y las ruinas del fuerte (render3d/marchModels.ts)
+    if (key === 'prop_rancho') return { kind: 'model', obj: adobeHut() };
+    if (key === 'prop_rancho_ok') return { kind: 'model', obj: adobeHut('ok') };
+    if (key === 'prop_rancho_mal') return { kind: 'model', obj: adobeHut('mal') };
+    if (key === 'prop_fuerte') return { kind: 'model', obj: mudFort(() => 0, 0, 2.5) };
 
     const tex = this.texFor(go as Phaser.GameObjects.Image);
     const mat = new THREE.MeshLambertMaterial({

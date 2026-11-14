@@ -416,3 +416,48 @@ export function mudFort(ground: (x: number, z: number) => number, cx: number, cz
   shadows(g);
   return g;
 }
+
+// ---------------------------------------------------------------- rancho (Nivel 3)
+
+/**
+ * Rancho de barro con techo de junco a dos aguas, sobre 3×3 casillas (centro en el
+ * origen). `ghost`: la vista previa de dónde va a quedar, transparente, en verde si
+ * se puede construir ahí y en rojizo si no.
+ */
+export function adobeHut(ghost?: 'ok' | 'mal'): THREE.Group {
+  const g = new THREE.Group();
+  const mat = (color: number): THREE.Material =>
+    ghost
+      ? new THREE.MeshBasicMaterial({ color: ghost === 'ok' ? PAL.moss : PAL.barranca, transparent: true, opacity: 0.45, depthWrite: false })
+      : lambert(color);
+  const wall = mat(PAL.clayLight);
+  const wallDark = mat(PAL.clay);
+  const thatch = mat(PAL.coiron);
+  const dark = mat(PAL.ink);
+  const W = 1.6;
+  const D = 1.3;
+  const H = 0.9;
+  const walls = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), wall);
+  walls.position.y = H / 2;
+  g.add(walls);
+  // zócalo más oscuro (barro mojado) y la puerta
+  const base = new THREE.Mesh(new THREE.BoxGeometry(W + 0.04, 0.18, D + 0.04), wallDark);
+  base.position.y = 0.09;
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.6, 0.04), dark);
+  door.position.set(0.2, 0.3, D / 2 + 0.02);
+  g.add(base, door);
+  // techo a dos aguas: dos faldones de junco y la cumbrera
+  for (const s of [-1, 1]) {
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(W + 0.3, 0.08, D / 2 + 0.32), thatch);
+    slab.position.set(0, H + 0.28, s * (D / 4 + 0.06));
+    slab.rotation.x = s * 0.62;
+    g.add(slab);
+  }
+  const ridge = new THREE.Mesh(new THREE.BoxGeometry(W + 0.34, 0.09, 0.12), wallDark);
+  ridge.position.y = H + 0.5;
+  g.add(ridge);
+  if (!ghost) shadows(g);
+  // a la escala de los personajes del mundo (que miden unas tres casillas): la planta ocupa 3×3
+  g.scale.setScalar(1.85);
+  return g;
+}

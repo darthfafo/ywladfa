@@ -1,0 +1,94 @@
+{
+  "$schema": "../schemas/quest.schema.json",
+  "level": "nivel-03",
+  "comment": "El diario del Nivel 3. dayFlag: la jornada en que pasó (n3_dia_<cosa>, lo pone el guion).",
+  "quests": [
+    {
+      "id": "q_n3_bandera",
+      "title": "La bandera",
+      "day": 1,
+      "optional": true,
+      "journalWhen": "flags.n3_bandera == true",
+      "journalLine": "Un comandante del gobierno argentino, Julián Murga, izó una bandera celeste y blanca junto al fuerte. El pueblo se llama Trerawson. No entendí casi nada de lo que dijo.",
+      "journalThought": "Lewis tradujo que esta tierra es del gobierno. De los que vivían acá antes, nadie dijo nada.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_rancho_barda",
+      "title": "El rancho",
+      "day": 0,
+      "dayFlag": "n3_dia_rancho",
+      "optional": true,
+      "journalWhen": "flags.n3_rancho_lugar == 'barda'",
+      "journalLine": "Levantamos el rancho en la barda, lejos del agua. El barro lo subimos a lomo.",
+      "journalThought": "Si el río crece, ahí arriba no llega.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_rancho_abajo",
+      "title": "El rancho",
+      "day": 0,
+      "dayFlag": "n3_dia_rancho",
+      "optional": true,
+      "journalWhen": "flags.n3_rancho_lugar != null && flags.n3_rancho_lugar != 'barda'",
+      "journalLine": "Levantamos el rancho abajo, cerca del río. El barro, a mano.",
+      "journalThought": "Estamos cerca del agua y de las chacras. Ojalá el río se quede donde está.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_crecida_perdido",
+      "title": "La crecida",
+      "day": 0,
+      "dayFlag": "n3_dia_crecida",
+      "optional": true,
+      "journalWhen": "flags.n3_rancho_perdido == true",
+      "journalLine": "El río creció de noche y se llevó el rancho. Quedaron dos paredes blandas.",
+      "journalThought": "La marca en las paredes del fuerte lo decía. Esta vez lo vamos a hacer más arriba.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_crecida_salvado",
+      "title": "La crecida",
+      "day": 0,
+      "dayFlag": "n3_dia_crecida",
+      "optional": true,
+      "journalWhen": "flags.n3_crecida == true && flags.n3_rancho_perdido != true && flags.n3_rancho_lugar != null",
+      "journalLine": "El río creció de noche. Nuestro rancho quedó en pie; otros perdieron todo.",
+      "journalThought": "Lejos del agua cuesta, pero el río no se lo lleva.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_rehacer_techo",
+      "title": "Rehacer",
+      "day": 0,
+      "dayFlag": "n3_dia_crecida",
+      "optional": true,
+      "journalWhen": "flags.n3_rehacer == 'techo'",
+      "journalLine": "Primero el techo de la familia. Mamá durmió bajo junco nuevo.",
+      "journalThought": "Algunos me miraron feo: el corral de todos quedó para después.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_rehacer_corral",
+      "title": "Rehacer",
+      "day": 0,
+      "dayFlag": "n3_dia_crecida",
+      "optional": true,
+      "journalWhen": "flags.n3_rehacer == 'corral'",
+      "journalLine": "Primero el corral de todos. Lewis dijo que sin animales no hay invierno.",
+      "journalThought": "Mamá durmió otra noche al raso. Espero que aguante.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_rehacer_ayudar",
+      "title": "Rehacer",
+      "day": 0,
+      "dayFlag": "n3_dia_crecida",
+      "optional": true,
+      "journalWhen": "flags.n3_rehacer == 'ayudar'",
+      "journalLine": "Ayudé a los que perdieron todo. Edwyn cargó barro conmigo hasta la noche.",
+      "journalThought": "Lo nuestro puede esperar un día. Lo de ellos, no.",
+      "steps": []
+    }
+  ]
+}

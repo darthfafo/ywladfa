@@ -557,7 +557,7 @@ export class UiScene extends Phaser.Scene {
     this.openOverlay(
       'Decisión',
       c.prompt,
-      c.options.map((o) => ({
+      c.options.filter((o) => !o.condition || game.flags.eval(o.condition)).map((o) => ({
         label: o.text,
         detail: o.detail,
         onPick: () => {

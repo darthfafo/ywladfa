@@ -1,9 +1,11 @@
 import type { LevelScript, WorldHost } from './LevelScript';
 import { Nivel01Script } from './nivel01';
+import { Nivel03Script } from './nivel03';
 
 /** El guion de cada nivel de mapa, por id. Un nivel sin guion propio usa solo lo genérico. */
 const SCRIPTS: Record<string, (host: WorldHost) => LevelScript> = {
   'nivel-01': (h) => new Nivel01Script(h),
+  'nivel-03': (h) => new Nivel03Script(h),
 };
 
 export function scriptFor(levelId: string, host: WorldHost): LevelScript | null {

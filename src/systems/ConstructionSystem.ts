@@ -54,6 +54,8 @@ export interface ConstructionConfig {
   headLossPerCell: number;
   /** cuánto más baja que el agua tiene que estar una chacra para que se desborde */
   floodMargin: number;
+  /** el barro sale del río: cuanto más lejos se construye, más turnos de acarreo (cada `tilesPerTurno` casillas, uno más) */
+  acarreo: { tilesPerTurno: number; pieces: PieceKind[] };
   /** lo que pesa de lo que quedó en Punta Cuevas (items.json → ifLeft) */
   mods: {
     /** sin clavos, hierro ni sierra: el trabajo rinde la mitad (multiplica los turnos) */
@@ -91,12 +93,43 @@ export class ConstructionSystem {
   readonly placed: Placed[] = [];
   /** casilla → índice en `placed` (las piezas grandes ocupan varias) */
   private occupied = new Map<number, number>();
+  /** distancia (casillas, caminando en cruz) de cada casilla al río */
+  private readonly riverDist: Int32Array;
 
   constructor(
     private readonly cfg: ConstructionConfig,
     readonly grid: ValleyGrid,
     private readonly mods: { sinHierro?: boolean; sinLabranza?: boolean } = {},
-  ) {}
+  ) {
+    // distancia al río de todas las casillas a la vez (BFS desde el agua)
+    const { w, h, cells } = grid;
+    this.riverDist = new Int32Array(w * h).fill(-1);
+    const q: number[] = [];
+    cells.forEach((c, i) => {
+      if (c.kind === 'rio') {
+        this.riverDist[i] = 0;
+        q.push(i);
+      }
+    });
+    for (let k = 0; k < q.length; k++) {
+      const i = q[k]!;
+      const x = i % w;
+      const y = Math.floor(i / w);
+      for (const [a, b] of this.neighbors(x, y)) {
+        if (a < 0 || b < 0 || a >= w || b >= h) continue;
+        const j = b * w + a;
+        if (this.riverDist[j] !== -1) continue;
+        this.riverDist[j] = this.riverDist[i]! + 1;
+        q.push(j);
+      }
+    }
+  }
+
+  /** Casillas hasta el río desde (x, y) (−1 si no hay río). */
+  distanceToRiver(x: number, y: number): number {
+    const c = this.cell(x, y);
+    return c ? this.riverDist[y * this.grid.w + x]! : -1;
+  }
 
   cell(x: number, y: number): Cell | null {
     if (x < 0 || y < 0 || x >= this.grid.w || y >= this.grid.h) return null;
@@ -112,11 +145,19 @@ export class ConstructionSystem {
     return i === undefined ? null : this.placed[i]!;
   }
 
-  /** Lo que cuesta una pieza, con lo que pesa de lo que quedó atrás. */
-  cost(kind: PieceKind): Cost {
+  /**
+   * Lo que cuesta una pieza, con lo que pesa de lo que quedó atrás. Con lugar
+   * (x, y), suma el acarreo del barro desde el río.
+   */
+  cost(kind: PieceKind, x?: number, y?: number): Cost {
     const d = this.cfg.pieces[kind];
     const f = this.mods.sinHierro ? this.cfg.mods.sinHierroFactor : 1;
-    return { materiales: d.materiales, turnos: Math.ceil(d.turnos * f) };
+    let turnos = Math.ceil(d.turnos * f);
+    if (x !== undefined && y !== undefined && this.cfg.acarreo.pieces.includes(kind)) {
+      const dist = Math.max(0, this.distanceToRiver(x, y));
+      turnos += Math.floor(dist / this.cfg.acarreo.tilesPerTurno);
+    }
+    return { materiales: d.materiales, turnos };
   }
 
   /** Jornadas de más que lleva el riego entero (sin herramientas de labranza). */
@@ -162,7 +203,7 @@ export class ConstructionSystem {
       const [sw, sh] = this.cfg.pieces[kind].size;
       for (let j = 0; j < sh; j++) for (let k = 0; k < sw; k++) this.occupied.set(this.idx(x + k, y + j), i);
     }
-    return { ok: true, cost: this.cost(kind) };
+    return { ok: true, cost: this.cost(kind, x, y) };
   }
 
   private neighbors(x: number, y: number): Array<[number, number]> {

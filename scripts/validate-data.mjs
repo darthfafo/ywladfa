@@ -35,31 +35,46 @@ const npcs = new Set(loaded.get('data/npcs.json').npcs.map((n) => n.id));
 const items = new Set(loaded.get('data/items.json').items.map((i) => i.id));
 const bultos = loaded.get('data/items.json').bultos_nivel01;
 const codex = new Set(loaded.get('data/codex.json').entries.map((c) => c.id));
-const lvl = loaded.get('data/levels/nivel-01.json');
-const dlg = loaded.get('data/dialogues/nivel-01.json');
-const qst = loaded.get('data/quests/nivel-01.json');
+// todos los diálogos y elecciones del juego (un trigger puede abrir uno de otro archivo)
+const allDialogues = [...loaded].filter(([p]) => p.startsWith('data/dialogues/')).flatMap(([, d]) => d.dialogues ?? []);
+const dlgIds = new Set(allDialogues.map((d) => d.id));
+const choiceIds = new Set([...loaded].filter(([p]) => p.startsWith('data/dialogues/')).flatMap(([, d]) => (d.choices ?? []).map((c) => c.id)));
+const tutorialIds = new Set([...loaded].filter(([p]) => p.startsWith('data/dialogues/')).flatMap(([, d]) => (d.tutorials ?? []).map((t) => t.id)));
+let trigCount = 0;
 
-const trigs = new Set(lvl.triggers.map((t) => t.id));
-const zones = new Set(lvl.zones.map((z) => z.id));
-const dlgIds = new Set(dlg.dialogues.map((d) => d.id));
-const choiceIds = new Set(dlg.choices.map((c) => c.id));
+// cada nivel de mapa (no marcha): sus triggers, sus quests y dónde aparece cada cosa
+for (const [path, lvl] of loaded) {
+  if (!path.startsWith('data/levels/') || lvl.kind === 'march') continue;
+  const id = lvl.id;
+  const qst = loaded.get(`data/quests/${id}.json`);
+  const trigs = new Set(lvl.triggers.map((t) => t.id));
+  trigCount += trigs.size;
+  const zones = new Set(lvl.zones.map((z) => z.id));
 
-for (const s of lvl.spawns.npcs) if (!npcs.has(s.id)) errs.push(`spawn npc inexistente: ${s.id}`);
+  for (const s of lvl.spawns.npcs) if (!npcs.has(s.id)) errs.push(`${id}: spawn npc inexistente: ${s.id}`);
 
-for (const t of lvl.triggers) {
-  if (t.zone && !zones.has(t.zone)) errs.push(`${t.id} → zona inexistente ${t.zone}`);
-  const a = t.action ?? {};
-  if (a.dialogue && !dlgIds.has(a.dialogue)) errs.push(`${t.id} → diálogo inexistente ${a.dialogue}`);
-  if (a.choice && !choiceIds.has(a.choice)) errs.push(`${t.id} → choice inexistente ${a.choice}`);
-  if (a.giveItem && !items.has(a.giveItem)) errs.push(`${t.id} → ítem inexistente ${a.giveItem}`);
-  if (typeof t.turnCost !== 'number' || t.turnCost < 0 || t.turnCost > 4) errs.push(`${t.id} → turnCost fuera de rango`);
+  for (const t of lvl.triggers) {
+    if (t.zone && !zones.has(t.zone)) errs.push(`${id}/${t.id} → zona inexistente ${t.zone}`);
+    const a = t.action ?? {};
+    if (a.dialogue && !dlgIds.has(a.dialogue)) errs.push(`${id}/${t.id} → diálogo inexistente ${a.dialogue}`);
+    if (a.choice && !choiceIds.has(a.choice)) errs.push(`${id}/${t.id} → choice inexistente ${a.choice}`);
+    if (a.tutorial && !tutorialIds.has(a.tutorial)) errs.push(`${id}/${t.id} → tutorial inexistente ${a.tutorial}`);
+    if (a.giveItem && !items.has(a.giveItem)) errs.push(`${id}/${t.id} → ítem inexistente ${a.giveItem}`);
+    if (typeof t.turnCost !== 'number' || t.turnCost < 0 || t.turnCost > 4) errs.push(`${id}/${t.id} → turnCost fuera de rango`);
+  }
+
+  for (const q of qst?.quests ?? [])
+    for (const st of q.steps)
+      if (st.trigger && !trigs.has(st.trigger)) errs.push(`${q.id}/${st.id} → trigger inexistente ${st.trigger}`);
+
+  // geometría: todo spawn dentro de alguna zona
+  const inZone = (x, y) => lvl.zones.some((z) => x >= z.rect[0] && x < z.rect[0] + z.rect[2] && y >= z.rect[1] && y < z.rect[1] + z.rect[3]);
+  for (const s of lvl.spawns.npcs) if (!inZone(s.x, s.y)) errs.push(`${id}: npc ${s.id} spawnea fuera de toda zona (${s.x},${s.y})`);
+  for (const c of lvl.spawns.cajones ?? []) if (!inZone(c.x, c.y)) errs.push(`${id}: cajón fuera de zona (${c.x},${c.y})`);
+  if (!inZone(lvl.spawns.player.x, lvl.spawns.player.y)) errs.push(`${id}: el jugador spawnea fuera de toda zona`);
 }
 
-for (const q of qst.quests)
-  for (const st of q.steps)
-    if (st.trigger && !trigs.has(st.trigger)) errs.push(`${q.id}/${st.id} → trigger inexistente ${st.trigger}`);
-
-for (const d of dlg.dialogues) {
+for (const d of allDialogues) {
   if (d.npc && !npcs.has(d.npc)) errs.push(`${d.id} → npc inexistente ${d.npc}`);
   if (!d.nodes[d.start]) errs.push(`${d.id} → nodo start inexistente ${d.start}`);
   for (const [nid, n] of Object.entries(d.nodes)) {
@@ -80,13 +95,6 @@ for (const c of loaded.get('data/codex.json').entries)
   if (!c.documented || !c.dramatized) errs.push(`codex ${c.id} sin documented/dramatized`);
 
 if (bultos.length !== 8) errs.push(`se esperaban 8 bultos, hay ${bultos.length}`);
-
-// geometría: todo spawn dentro de alguna zona
-const inZone = (x, y) =>
-  lvl.zones.some((z) => x >= z.rect[0] && x < z.rect[0] + z.rect[2] && y >= z.rect[1] && y < z.rect[1] + z.rect[3]);
-for (const s of lvl.spawns.npcs) if (!inZone(s.x, s.y)) errs.push(`npc ${s.id} spawnea fuera de toda zona (${s.x},${s.y})`);
-for (const c of lvl.spawns.cajones) if (!inZone(c.x, c.y)) errs.push(`cajón fuera de zona (${c.x},${c.y})`);
-if (!inZone(lvl.spawns.player.x, lvl.spawns.player.y)) errs.push('el jugador spawnea fuera de toda zona');
 
 // niveles de marcha (kind: "march"): la columna, quién habla, lo que referencian
 for (const [path, l] of loaded) {
@@ -141,5 +149,5 @@ if (errs.length) fail();
 
 console.log(
   `✔ Datos válidos — ${loaded.size} archivos · ${npcs.size} npcs · ${items.size} ítems · ` +
-    `${trigs.size} triggers · ${dlgIds.size} diálogos · ${codex.size} fichas de códice`,
+    `${trigCount} triggers · ${dlgIds.size} diálogos · ${codex.size} fichas de códice`,
 );

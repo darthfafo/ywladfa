@@ -6,7 +6,7 @@
   "subtitle": "Trerawson, a orillas del Chubut",
   "date": "Septiembre de 1865 – marzo de 1868",
   "next": "nivel-04",
-  "comment": "En armado (docs/10-plan-nivel-03.md): el mapa del valle (mapgen valle_chubut) y el lugar de cada cosa. Sin guion todavía. draft: no se entra desde el Nivel 2 hasta que esté jugable.",
+  "comment": "En armado (docs/10-plan-nivel-03.md): el acto I — la bandera y el barro (IX-1865). Guion en src/levels/nivel03.ts. draft: no se entra desde el Nivel 2 hasta que esté jugable.",
   "map": {
     "file": "generado",
     "widthTiles": 64,
@@ -42,7 +42,7 @@
     ]
   },
   "schedule": {
-    "days": 3,
+    "days": 5,
     "turnsPerDay": 4
   },
   "zones": [
@@ -50,10 +50,10 @@
       "id": "z1_fuerte",
       "label": "El fuerte viejo",
       "rect": [
-        42,
-        26,
+        44,
+        19,
         16,
-        10
+        15
       ],
       "ambience": {
         "wind": 0.5,
@@ -130,62 +130,219 @@
   },
   "spawns": {
     "player": {
-      "x": 48,
-      "y": 32,
-      "facing": "south"
+      "x": 52,
+      "y": 31,
+      "facing": "north"
     },
     "npcs": [
       {
+        "id": "npc_murga",
+        "x": 53,
+        "y": 23,
+        "day": 1,
+        "hiddenAfterFlag": "n3_bandera"
+      },
+      {
         "id": "npc_lewis",
-        "x": 45,
-        "y": 30,
+        "x": 51,
+        "y": 27,
         "day": "*"
       },
       {
         "id": "npc_mari",
-        "x": 50,
-        "y": 30,
+        "x": 56,
+        "y": 28,
         "day": "*"
       },
       {
         "id": "npc_edwyn",
-        "x": 44,
-        "y": 33,
+        "x": 49,
+        "y": 29,
         "day": "*"
       },
       {
         "id": "npc_matthews",
-        "x": 52,
-        "y": 32,
+        "x": 57,
+        "y": 25,
         "day": "*"
       },
       {
         "id": "npc_berwyn",
-        "x": 47,
-        "y": 28,
+        "x": 54,
+        "y": 22,
         "day": "*"
       }
     ],
-    "gatherNodes": [],
+    "gatherNodes": [
+      {
+        "id": "barro_1",
+        "type": "materiales",
+        "x": 47,
+        "y": 38,
+        "prop": "barro",
+        "gain": "barro",
+        "name": "materiales: barro de la orilla",
+        "regrows": true
+      },
+      {
+        "id": "barro_2",
+        "type": "materiales",
+        "x": 49,
+        "y": 37,
+        "prop": "barro",
+        "gain": "barro",
+        "name": "materiales: barro de la orilla",
+        "regrows": true
+      },
+      {
+        "id": "barro_3",
+        "type": "materiales",
+        "x": 52,
+        "y": 37,
+        "prop": "barro",
+        "gain": "barro",
+        "name": "materiales: barro de la orilla",
+        "regrows": true
+      },
+      {
+        "id": "barro_4",
+        "type": "materiales",
+        "x": 55,
+        "y": 37,
+        "prop": "barro",
+        "gain": "barro",
+        "name": "materiales: barro de la orilla",
+        "regrows": true
+      },
+      {
+        "id": "junco_1",
+        "type": "materiales",
+        "x": 45,
+        "y": 39,
+        "prop": "junco",
+        "gain": "junco",
+        "name": "materiales: junco",
+        "regrows": true
+      },
+      {
+        "id": "junco_2",
+        "type": "materiales",
+        "x": 57,
+        "y": 37,
+        "prop": "junco",
+        "gain": "junco",
+        "name": "materiales: junco",
+        "regrows": true
+      }
+    ],
     "cajones": [],
     "cuevas": [],
     "fogon": {
-      "x": 48,
-      "y": 29
+      "x": 55,
+      "y": 26
     },
     "campamento": {
-      "x": 48,
-      "y": 31
+      "x": 53,
+      "y": 29
     },
-    "pasajes": []
+    "pasajes": [],
+    "decor": [
+      {
+        "id": "fuerte",
+        "prop": "fuerte",
+        "x": 53,
+        "y": 26,
+        "fallback": true,
+        "depth": 5,
+        "look": "Hay una raya de barro seco en las paredes, a la altura de la rodilla. Hasta acá llegó el río alguna vez."
+      }
+    ]
   },
   "objectives": [],
   "goals": [
     {
-      "text": "Recorrer el valle: el río, el fuerte viejo, la barda."
+      "requires": "flags.n3_bandera != true",
+      "text": "Ir al fuerte viejo: el comandante junta a todos."
+    },
+    {
+      "requires": "flags.n3_tiene_rancho != true && flags.n3_crecida != true",
+      "text": "Juntar barro y junco en la orilla y levantar el rancho. ¿Cerca del río o en la barda?"
+    },
+    {
+      "requires": "flags.n3_crecida != true",
+      "text": "Esperar. El río está alto."
+    },
+    {
+      "requires": "flags.n3_rehacer == null",
+      "text": "Ver qué dejó la crecida."
+    },
+    {
+      "text": "Rehacer lo que se perdió."
     }
   ],
-  "triggers": [],
+  "triggers": [
+    {
+      "id": "trig_n3_bandera",
+      "type": "cutscene",
+      "requires": "progress.day == 1",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n3_bandera"
+      }
+    },
+    {
+      "id": "trig_n3_tut_rancho",
+      "type": "tutorial",
+      "requires": "flags.n3_bandera == true",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "tutorial": "tut_n3_rancho"
+      }
+    },
+    {
+      "id": "trig_n3_rancho_hecho",
+      "type": "dialogue",
+      "requires": "flags.n3_tiene_rancho == true && flags.n3_crecida != true",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n3_rancho_hecho"
+      }
+    },
+    {
+      "id": "trig_n3_crecida",
+      "type": "cutscene",
+      "requires": "progress.day >= 3 && flags.n3_bandera == true",
+      "once": true,
+      "turnCost": 0,
+      "note": "la crecida de 1865: el guion (src/levels/nivel03.ts) baja el agua sobre lo construido al disparar este trigger, antes del diálogo",
+      "action": {
+        "dialogue": "d_n3_crecida"
+      }
+    },
+    {
+      "id": "trig_n3_rehacer",
+      "type": "choice",
+      "requires": "flags.n3_crecida_vista == true",
+      "once": true,
+      "turnCost": 1,
+      "action": {
+        "choice": "ch_n3_rehacer"
+      }
+    },
+    {
+      "id": "trig_n3_acto1_fin",
+      "type": "cutscene",
+      "requires": "flags.n3_rehacer != null && (flags.n3_tiene_rancho == true || progress.day >= 5)",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n3_acto1_fin"
+      }
+    }
+  ],
   "hints": [],
   "exit": {
     "carryOver": [

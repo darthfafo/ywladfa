@@ -203,6 +203,7 @@ export const NPC_COLORS: Record<string, [number, number, HatStyle]> = {
   npc_pepperell: [PAL.slate, PAL.bone, 'copa'],
   npc_mari: [PAL.clayDark, PAL.clayPale, 'boina'],
   npc_dafydd: [PAL.soil2, PAL.coiron, 'boina'],
+  npc_murga: [PAL.ink2, PAL.slate, 'boina'],
 };
 
 export const PC_COLORS: Record<string, [number, number, HatStyle]> = {
@@ -283,6 +284,13 @@ export function makeProps(scene: Phaser.Scene): void {
   // comida: molle (mata con frutos rojos) y mejillones (piedra con valvas)
   makeRect(scene, 'prop_molle', 14, 14, PAL.scrubDark, PAL.barranca);
   makeRect(scene, 'prop_mejillones', 12, 7, PAL.ink, PAL.grey);
+  // Nivel 3: barro y junco de la orilla, el rancho (y su vista previa) y las ruinas del fuerte
+  makeRect(scene, 'prop_barro', 12, 8, PAL.clay, PAL.clayLight);
+  makeRect(scene, 'prop_junco', 10, 14, PAL.coiron, PAL.wheat);
+  makeRect(scene, 'prop_rancho', 30, 26, PAL.clayLight, PAL.coiron);
+  makeRect(scene, 'prop_rancho_ok', 30, 26, PAL.moss, PAL.moss);
+  makeRect(scene, 'prop_rancho_mal', 30, 26, PAL.barranca, PAL.barranca);
+  makeRect(scene, 'prop_fuerte', 40, 30, PAL.clayPale, PAL.clay);
   makeShip(scene);
 }
 

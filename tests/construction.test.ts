@@ -129,4 +129,15 @@ describe('construcción (Nivel 3)', () => {
     expect(c.pieceAt(2, 2)).toBeNull(); // se puede volver a construir
     expect(c.pieceAt(1, 4)?.kind).toBe('zanja'); // la zanja queda
   });
+
+  it('el barro sale del río: lejos del agua, el rancho lleva turnos de acarreo', () => {
+    const c = new ConstructionSystem(cfg, valley());
+    expect(c.distanceToRiver(1, 3)).toBe(1);
+    const cerca = c.cost('rancho', 2, 2).turnos;
+    const lejos = c.cost('rancho', 9, 2).turnos; // en la barda, 9 casillas del río
+    expect(lejos).toBeGreaterThan(cerca);
+    expect(lejos - cerca).toBe(Math.floor(9 / cfg.acarreo.tilesPerTurno) - Math.floor(2 / cfg.acarreo.tilesPerTurno));
+    // la zanja no acarrea barro: se cava ahí mismo
+    expect(c.cost('zanja', 8, 2).turnos).toBe(c.cost('zanja').turnos);
+  });
 });

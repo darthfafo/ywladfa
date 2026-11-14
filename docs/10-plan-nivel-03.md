@@ -158,13 +158,27 @@ barro, corral, zanja, compuerta, trigo.
 | 1 | ~~`WorldScene` genérica + guion del N1 aparte~~ (hecho: `src/levels/` con `LevelScript`, `WorldHost` y `Nivel01Script`) | El N1 se juega igual; tests en verde |
 | 2 | ~~Generador `valle_chubut` con alturas~~ (hecho: `mapgen.ts` → `valleKind`, `valleHeight`, `valleyGrid`; `data/levels/nivel-03.json` en `draft`; `?nivel=nivel-03` en `npm run dev`) | Se camina el valle |
 | 3 | ~~`ConstructionSystem` + tests~~ (hecho: `src/systems/ConstructionSystem.ts`, `tests/construction.test.ts`, balance `nivel03.construccion`) | Pendiente, flujo e inundación probados sin navegador |
-| 4 | Acto I: llegada, bandera, rancho, crecida | Se construye y la crecida castiga lo que corresponde |
+| 4 | Acto I: llegada, bandera, rancho, crecida — **en buena parte hecho** (abajo) | Se construye y la crecida castiga lo que corresponde |
 | 5 | Acto II: invierno, el toldo, la manta, la enfermedad | Las promesas del N1 (harina, abrigo) se cumplen |
 | 6 | Acto III: la zanja y la cosecha | La zanja se traza, se cava y llega el agua (o inunda) |
 | 7 | Cierre, diario, Códice, balance; encadenar con el N2 | Partida N1 → N2 → N3 de punta a punta |
 | 8 | Arte, sonido, pasada en celular | En un teléfono |
 
 ---
+
+## Estado del acto I (noviembre 2026)
+
+Hecho, en `src/levels/nivel03.ts` y `data/*/nivel-03.json`:
+- **La bandera**: Murga en castellano (`▓`: cada línea puede tener su idioma), Lewis traduce. Solo la bandera y el nombre Trerawson, lo documentado. Ficha `cod_trerawson`.
+- **El rancho**: barro y junco en la orilla (materiales, vuelven al otro día); «Rancho acá» con vista previa verde o rojiza delante del jugador; cuesta materiales y turnos, más lejos del río más acarreo. Rancho de barro y junco en 3D.
+- **La crecida** (día 3): se lleva lo construido abajo; la barda y las lomadas quedan. La pista: la marca de barro en las paredes del fuerte («Mirar»).
+- **Rehacer**: el techo o el corral (si se perdió el rancho), el corral o ayudar (si quedó en pie).
+- Diario con lo que pensó el personaje en cada paso.
+
+Pendiente del acto I:
+- **La comida**: con el consumo nocturno del Nivel 1 y lo que trae el Nivel 2, el grupo se queda sin comida en dos noches. Hay que decidir de dónde sale en el acto I (los víveres del gobierno llegaban irregulares, documentado en general).
+- La bandera, visible en el mástil del fuerte después de la escena.
+- El corral, construible (hoy la elección «el corral» solo deja el flag).
 
 ## Fuentes de esta propuesta
 - MercoPress, «Welsh community mark 140 years in Patagonia» (30-VII-2005): Caer Antur; abril de 1866; los 80-90 tehuelches en la otra orilla; Aaron Jenkins en noviembre de 1867 y la cosecha de marzo.

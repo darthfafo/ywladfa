@@ -388,6 +388,7 @@ export class WorldScene extends Phaser.Scene {
         return !!t && !this.triggers.hasFired(t.id) && game.flags.eval(t.requires);
       },
       checkTriggers: () => this.checkTriggers(),
+      facing: () => this.facing as 'north' | 'south' | 'east' | 'west',
       teleport: (x, y) => {
         this.player.setPosition(tileCenter(x), tileCenter(y));
         this.lastTile = { x: -1, y: -1 };
@@ -535,7 +536,9 @@ export class WorldScene extends Phaser.Scene {
         addPropImage(this, prop, tileCenter(n.x), tileCenter(n.y)) ?? this.add.image(tileCenter(n.x), tileCenter(n.y), `prop_${prop}`);
       s.setDepth(10);
       this.solid(s, SOLID.jarilla.w, SOLID.jarilla.h);
-      this.interactables.push({ sprite: s, kind: n.type === 'lena' ? 'jarilla' : 'comida', id: n.id, label: n.type === 'lena' ? 'Cortar' : 'Juntar' });
+      // leña (se carga hasta el fogón), comida (una vez), u otro recurso (ej. barro y junco, materiales: vuelve al otro día)
+      const kind = n.type === 'lena' ? 'jarilla' : n.type === 'comida' ? 'comida' : 'juntar';
+      this.interactables.push({ sprite: s, kind, id: n.id, label: n.type === 'lena' ? 'Cortar' : 'Juntar' });
     }
     this.updateFoodVisibility();
 
@@ -851,8 +854,9 @@ export class WorldScene extends Phaser.Scene {
         best = it;
       }
     }
-    // la etiqueta puede cambiar sin cambiar de objetivo (la cueva: Elegir → Apuntalar)
-    const label = best ? this.labelFor(best) : null;
+    // la etiqueta puede cambiar sin cambiar de objetivo (la cueva: Elegir → Apuntalar).
+    // Sin nada cerca, el guion del nivel puede ofrecer su acción (ej. «Rancho acá»)
+    const label = best ? this.labelFor(best) : (this.script?.freeAction?.()?.label ?? null);
     if (best !== this.nearest || label !== this.nearestLabel) {
       this.nearest = best;
       this.nearestLabel = label;
@@ -866,7 +870,10 @@ export class WorldScene extends Phaser.Scene {
 
   private interact(): void {
     const it = this.nearest;
-    if (!it) return;
+    if (!it) {
+      this.script?.freeAction?.()?.run();
+      return;
+    }
     if (this.script?.interact?.(it)) return;
     switch (it.kind) {
       case 'jarilla': {
@@ -892,6 +899,20 @@ export class WorldScene extends Phaser.Scene {
         sfx.pickup();
         this.updateFoodVisibility();
         bus.emit('ui:toast', { text: `+${amount} raciones: ${node?.name ?? 'comida'}` });
+        break;
+      }
+      case 'juntar': {
+        // un recurso que va directo (ej. barro y junco → materiales); si `regrows`, vuelve al otro día
+        const node = game.level.spawns.gatherNodes.find((n) => n.id === it.id);
+        if (!node) break;
+        const amount = registry.levelBalance(game.state.progress.level).gains[node.gain ?? node.type].amount as number;
+        game.res.change(node.type, amount, it.id);
+        sfx.pickup();
+        it.sprite.setVisible(false).setActive(false);
+        this.syncSolid(it.sprite, false);
+        if (node.regrows) this.cutJarilla.set(it.sprite, game.state.progress.day);
+        else game.flags.set(`_juntado_${it.id}`, true);
+        bus.emit('ui:toast', { text: `+${amount} ${node.name ?? node.type}` });
         break;
       }
       case 'npc':

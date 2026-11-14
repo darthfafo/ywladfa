@@ -105,6 +105,15 @@
       "seeAlso": ["cod_evans", "cod_cwm_hyfryd"]
     },
     {
+      "id": "cod_trerawson",
+      "title": "Trerawson",
+      "unlockedBy": "trig_n3_bandera",
+      "level": "nivel-03",
+      "documented": "El 15 de septiembre de 1865 el comandante Julián Murga izó la bandera argentina junto al fuerte viejo y llamó al pueblo Trerawson, por el ministro del Interior Guillermo Rawson: es la actual Rawson. Ese año una crecida del río se llevó las primeras casas de barro, que se volvieron a levantar mejor.",
+      "dramatized": "Las palabras de Murga y de Lewis Jones en la escena, la marca del río en las paredes del fuerte y dónde levanta su rancho la familia del juego.",
+      "seeAlso": ["cod_marcha", "cod_riego"]
+    },
+    {
       "id": "cod_riego",
       "title": "Los canales de riego",
       "unlockedBy": "nivel-03",
