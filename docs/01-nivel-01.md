@@ -273,7 +273,7 @@ El nivel no se puede perder. Puede salir mal, que es distinto.
 
 | Situación | Respuesta del juego |
 |---|---|
-| No encontrás el manantial en J2 | Berwyn lo encuentra en la noche J2. Ganás **12 L** en vez de 30, y se ve que otro hizo tu trabajo |
+| No encontrás a Dafydd (ni el manantial) en J2 | Le preguntás a Lewis y te dice para dónde ir: «Es por arriba, a la izquierda. Por ahí se fue el chico». Nadie lo va a buscar por vos: lo encontrás vos. El diario lo recuerda («Tuve que preguntarle a Lewis para dónde ir») |
 | No juntaste leña | El fuego de la noche J2 es chico. Mari baja a 45. El sprite del fuego es visiblemente más chico |
 | Nunca hablaste en el fogón | Empezás el Nivel 2 sin ningún vínculo. Nadie te espera cuando te quedás atrás |
 | Te quedaste en la playa todo el nivel | A las 3 jornadas el juego avanza igual, con el peor estado de salida. No hay pantalla de derrota |

@@ -73,7 +73,7 @@ ni bloquea el avance. Ver `docs/01-nivel-01.md` §8.
 
 **El Nivel 1 se juega completo**, de la portada al cierre: desembarco y cajones, la barranca y
 la elección de cueva, el minijuego de apuntalar, los dos fogones (`CampScene`), la tarea de la
-mañana del J2, Dafydd y el manantial (con salida si no se lo encuentra), la decisión de la carga
+mañana del J2, Dafydd y el manantial (si no lo encontrás, Lewis te dice para dónde ir), la decisión de la carga
 (`CargoScene`), la libreta con Diario y Códice (`JournalSystem`, `JournalScene`), el menú de pausa
 con el recordatorio de qué hacer (`level.goals`) y el cierre con el balance de salida
 (`level.exit.computeGrade`). Guarda sola al cerrar cada jornada (`SaveSystem`).

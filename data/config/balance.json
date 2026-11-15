@@ -73,12 +73,6 @@
         "amount": 30,
         "renewablePerDay": 8
       },
-      "manantial_tardio": {
-        "resource": "agua",
-        "amount": 12,
-        "renewablePerDay": 4,
-        "comment": "si Berwyn lo encuentra en vez del jugador"
-      },
       "jarilla": {
         "resource": "lena",
         "amount": 1,

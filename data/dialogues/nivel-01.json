@@ -574,7 +574,7 @@
       "npc": "npc_lewis",
       "lang": "cym",
       "start": "pa1",
-      "note": "J2 tarde, Dafydd perdido y sin encontrar: hablarle a Lewis deja pedir ayuda. Es la salida del fracaso suave (docs/01-nivel-01.md §8): si se pide, trig_manantial_tardio cierra la tarde con Berwyn trayendo a Dafydd.",
+      "note": "J2 tarde, Dafydd perdido y sin encontrar: hablarle a Lewis deja preguntarle para dónde ir. Es la salida del fracaso suave (docs/01-nivel-01.md §8): nadie sale a buscarlo por vos; Lewis te dice dónde está y lo encontrás vos.",
       "nodes": {
         "pa1": {
           "speaker": "npc_lewis",
@@ -588,7 +588,7 @@
             },
             {
               "id": "pa_ayuda",
-              "text": "No lo encuentro. Necesito ayuda.",
+              "text": "No lo encuentro. ¿Para dónde fue?",
               "next": "pa_ayuda"
             }
           ]
@@ -602,41 +602,18 @@
         "pa_ayuda": {
           "speaker": "npc_lewis",
           "portrait": "tenso",
-          "text": "Berwyn, vení. Salimos todos.",
+          "text": "Es por arriba, a la izquierda. Por ahí se fue el chico.",
+          "next": "pa_ayuda2"
+        },
+        "pa_ayuda2": {
+          "speaker": "npc_lewis",
+          "portrait": "neutral",
+          "text": "Seguí las huellas hasta el cañadón seco y bajá hasta el fondo. Yo me quedo acá, por si vuelve solo.",
           "effects": [
             {
               "setFlag": {
                 "n1_pide_ayuda": true
               }
-            }
-          ],
-          "end": true
-        }
-      }
-    },
-    {
-      "id": "d_n1_manantial_tardio",
-      "lang": "cym",
-      "start": "mt1",
-      "note": "Fracaso suave del J2: Berwyn encuentra a Dafydd y el agua (12 L en vez de 30). Cierra la tarde.",
-      "nodes": {
-        "mt1": {
-          "speaker": "narrator",
-          "text": "Salen todos a buscar. Ya es de noche cuando Berwyn vuelve con Dafydd de la mano.",
-          "next": "mt2"
-        },
-        "mt2": {
-          "speaker": "npc_berwyn",
-          "portrait": "neutral",
-          "text": "Estaba en el fondo del cañadón, sentado al lado de un hilo de agua. Poca, pero sale.",
-          "next": "mt3"
-        },
-        "mt3": {
-          "speaker": "narrator",
-          "text": "Doce litros. Nadie te dice nada, pero el agua la encontró otro.",
-          "effects": [
-            {
-              "morale": -4
             }
           ],
           "end": true
@@ -982,6 +959,13 @@
           "portrait": "neutral",
           "condition": "progress.day == 1",
           "text": "Esta noche paramos acá. Mañana vemos el agua y la leña. Por ahora, que no falte nada para la cena.",
+          "end": true
+        },
+        "lf_j2_dafydd_indicado": {
+          "speaker": "npc_lewis",
+          "portrait": "tenso",
+          "condition": "progress.day == 2 && progress.turn == 'tarde' && flags.n1_dafydd_perdido == true && flags.n1_encontro_manantial != true && flags.n1_pide_ayuda == true",
+          "text": "Por arriba, a la izquierda. Al fondo del cañadón.",
           "end": true
         },
         "lf_j2_dafydd_buscar": {

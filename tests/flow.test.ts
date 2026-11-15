@@ -279,7 +279,7 @@ describe('recorrido completo del Nivel 1', () => {
     expect(p.when).toBe('2-tarde');
   });
 
-  it('si no encuentra el manantial, pedir ayuda a Lewis cierra la tarde (fracaso suave, sin trabarse)', () => {
+  it('si no encuentra a Dafydd, Lewis le dice para dónde ir; lo encuentra él, no otro (fracaso suave)', () => {
     const p = toJ2Morning('t_agua');
     p.stepOn('trig_vigia_mimosa');
     expect(p.when).toBe('2-tarde');
@@ -290,15 +290,22 @@ describe('recorrido completo del Nivel 1', () => {
     p.talkTo('npc_lewis', 'pa_seguir');
     expect(p.when).toBe('2-tarde');
     p.talkTo('npc_lewis', 'pa_ayuda');
-    expect(p.fired).toContain('trig_manantial_tardio');
-    expect(p.g.flags.is('n1_agua_tardia')).toBe(true);
+    // nadie sale a buscarlo: Lewis indica el camino y la tarde sigue
+    expect(p.g.flags.is('n1_pide_ayuda')).toBe(true);
+    expect(p.when).toBe('2-tarde');
+    expect(p.g.res.get('agua')).toBe(agua);
+    expect(level().triggers.some((t) => t.id === 'trig_manantial_tardio')).toBe(false);
+    // el manantial lo sigue encontrando el jugador, con el agua entera
+    p.stepOn('trig_manantial');
+    expect(p.g.flags.is('n1_encontro_manantial')).toBe(true);
     expect(p.g.res.get('agua')).toBeGreaterThan(agua);
-    // ya no se puede encontrar el manantial después
-    expect(p.g.flags.eval(registry.level('nivel-01').triggers.find((t) => t.id === 'trig_manantial')!.requires)).toBe(false);
     // la noche llega y el fogón del J2 dispara: el nivel sigue
     p.goTo('z2_barranca', [30, 60]);
     expect(p.fired).toContain('trig_fogon_j2');
     expect(p.g.state.progress.day).toBe(3);
+    // y el diario recuerda que hubo que preguntar
+    const j2 = p.g.journal.entries().find((e) => e.day === 2)!.lines.join(' ');
+    expect(j2).toContain('preguntarle a Lewis');
   });
 
   it('el vigía nombra a Mari solo si ella subió (no con la tarea de la cueva)', () => {

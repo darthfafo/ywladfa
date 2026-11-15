@@ -76,9 +76,7 @@
       "title": "Agua",
       "day": 2,
       "optional": false,
-      "journalLine": "Buscamos agua todo el día.",
-      "journalLineIfSuccess": "Encontramos agua en el cañadón. Treinta litros, y sigue saliendo.",
-      "journalLineIfFail": "No encontramos nada. Berwyn dio con un hilo de agua ya de noche. Doce litros.",
+      "journalLine": "Encontramos agua en el cañadón. Treinta litros, y sigue saliendo.",
       "steps": [
         {
           "id": "s1",
@@ -95,26 +93,6 @@
           "trigger": "trig_manantial"
         }
       ],
-      "failSoft": {
-        "condition": "progress.day == 2 && progress.turn == 'noche' && flags.n1_encontro_manantial != true",
-        "effects": [
-          {
-            "resource": {
-              "id": "agua",
-              "delta": 12,
-              "reason": "hallazgo de Berwyn"
-            }
-          },
-          {
-            "setFlag": {
-              "n1_agua_tardia": true
-            }
-          },
-          {
-            "morale": -4
-          }
-        ]
-      },
       "rewards": [
         {
           "codex": "cod_agua_patagonia"
@@ -125,10 +103,8 @@
           "q_n1_agua": "done"
         }
       },
-      "journalWhen": "flags.n1_encontro_manantial == true || flags.n1_agua_tardia == true",
-      "journalSuccessWhen": "flags.n1_encontro_manantial == true",
-      "journalThoughtIfSuccess": "Con agua cerca podemos pensar en otra cosa. Y cuando nos vayamos, los barriles van a salir llenos.",
-      "journalThoughtIfFail": "Con doce litros no se llega lejos. Cuando nos vayamos, la sed va a venir con nosotros."
+      "journalWhen": "flags.n1_encontro_manantial == true",
+      "journalThought": "Con agua cerca podemos pensar en otra cosa. Y cuando nos vayamos, los barriles van a salir llenos."
     },
     {
       "id": "q_n1_dafydd",
@@ -154,11 +130,12 @@
           "q_n1_dafydd": "done"
         }
       },
-      "journalWhen": "flags.n1_encontro_manantial == true || flags.n1_agua_tardia == true",
-      "journalSuccessWhen": "flags.n1_encontro_manantial == true",
+      "journalWhen": "flags.n1_encontro_manantial == true",
+      "journalSuccessWhen": "flags.n1_pide_ayuda != true",
       "journalLineIfSuccess": "Se perdió Dafydd. Lo encontramos en el cañadón, sentado en el agua, sin entender por qué estábamos todos gritando.",
-      "journalLineIfFail": "Se perdió Dafydd. No di con él: lo trajo Berwyn, ya de noche.",
-      "journalThoughtIfSuccess": "Dafydd encontró el agua antes que nadie. Su madre no lo va a soltar más."
+      "journalLineIfFail": "Se perdió Dafydd. Tuve que preguntarle a Lewis para dónde ir. Lo encontré en el cañadón, sentado en el agua.",
+      "journalThoughtIfSuccess": "Dafydd encontró el agua antes que nadie. Su madre no lo va a soltar más.",
+      "journalThoughtIfFail": "Las huellas estaban ahí. La próxima vez miro mejor el suelo."
     },
     {
       "id": "q_n1_lena",
