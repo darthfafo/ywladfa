@@ -17,6 +17,8 @@ export interface Interactable {
   look?: string;
   id: string;
   label: string;
+  /** a qué distancia se alcanza (px); sin el campo, el radio de su tipo (balance.json) */
+  radius?: number;
 }
 
 /** Lo que WorldScene le presta a un guion. */

@@ -226,7 +226,7 @@ export interface LevelDef {
     /** el barco anclado frente a la costa, hasta que zarpa */
     ship?: { prop: string; x: number; y: number; hideAfterFlag?: string; goneFrom?: { day: number; turn: TurnId } };
     /** paisaje: con `look` se puede mirar; `fallback` = tiene dibujo de código si falta el PNG */
-    decor?: Array<{ prop: string; x: number; y: number; id?: string; solid?: 'animal' | 'hull'; look?: string; depth?: number; fallback?: boolean }>;
+    decor?: Array<{ prop: string; x: number; y: number; id?: string; solid?: 'animal' | 'hull'; look?: string; /** casillas desde el centro a las que se alcanza a mirar (algo grande) */ lookRadius?: number; /** cuerpo sólido a medida: [ancho, alto, corrimiento hacia abajo] en casillas */ solidTiles?: [number, number, number?]; depth?: number; fallback?: boolean }>;
     /** pájaros que cruzan la pantalla */
     birds?: Array<{ prop: string; y: number; offsetPx: number; speedPxPerSec: number }>;
     cajones: Array<{ x: number; y: number }>;

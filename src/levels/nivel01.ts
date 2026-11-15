@@ -149,7 +149,7 @@ export class Nivel01Script implements LevelScript {
 
   refusal(npcId: string): string | undefined {
     // Dafydd caminando de vuelta ya dijo lo suyo: «Ahora no» no tiene sentido con él al lado
-    return npcId === 'npc_dafydd' && this.dafyddFollow ? '— Volvamos al fogón.' : undefined;
+    return npcId === 'npc_dafydd' && this.dafyddFollow ? 'Volvamos al fogón.' : undefined;
   }
 
   onTile(zoneId: string | undefined): boolean {

@@ -12,7 +12,7 @@ import { TriggerSystem } from '@/systems/TriggerSystem';
 import { TURNS } from '@/systems/TimeSystem';
 import { scriptFor, type Interactable, type LevelScript, type WorldHost } from '@/levels';
 import { addPropImage, hasPropArt, propTextureKey } from '@/util/assets';
-import { tileCenter, toTile } from '@/util/grid';
+import { tileCenter, toPx, toTile } from '@/util/grid';
 import { input } from '@/util/input';
 import { baseTerrain, buildTerrain, cellVariant, COLLIDES, TERRAIN, TERRAIN_SPEED, tileIndex, zoneAt } from '@/util/mapgen';
 import { FACING_FRAME, makeProps, makeTileset, NPC_COLORS, PC_COLORS, resolveCharacterTexture } from '@/util/textures';
@@ -110,6 +110,8 @@ export class WorldScene extends Phaser.Scene {
   private npcsPlaced = false;
   /** cambió un flag: puede que alguien tenga que aparecer o irse (afterFlag, hiddenWhile) */
   private npcsDirty = false;
+  /** pasó un turno o cambió un flag con el control bloqueado: hay que volver a mirar los triggers */
+  private triggersDirty = false;
   private stepAcc = 0;
   private lastStepPos = { x: 0, y: 0 };
   /** zona del último chequeo de triggers: para saber cuándo se ENTRA a una */
@@ -282,7 +284,11 @@ export class WorldScene extends Phaser.Scene {
     this.triggers = new TriggerSystem(game, level.triggers as TriggerDef[]);
     busOn(this, 'inventory:added', (p) => this.fireEventTriggers('inventory:added', p as never));
     busOn(this, 'inventory:overloaded', (p) => this.fireEventTriggers('inventory:overloaded', p as never));
-    busOn(this, 'flag:set', () => (this.npcsDirty = true));
+    busOn(this, 'flag:set', () => {
+      this.npcsDirty = true;
+      this.triggersDirty = true;
+    });
+    busOn(this, 'time:turn-advanced', () => (this.triggersDirty = true));
     busOn(this, 'time:turn-advanced', () => {
       this.updateGates();
       this.updateNpcVisibility();
@@ -588,7 +594,22 @@ export class WorldScene extends Phaser.Scene {
       s.setDepth(dc.depth ?? 6);
       if (dc.solid === 'animal') this.solidAnimal(s);
       else if (dc.solid === 'hull') this.solidHull(s);
-      if (dc.look) this.interactables.push({ sprite: s, kind: 'mirar', id: dc.id ?? `${dc.prop}_${dc.x}_${dc.y}`, label: 'Mirar', look: dc.look });
+      else if (dc.solidTiles) {
+        // un bloque a medida (el fuerte): ancho y alto en casillas, centrado en x y corrido `dy` casillas
+        // desde el pie del dibujo (el modelo 3D puede ser mucho más grande que el placeholder 2D)
+        const [w, h, dy = 0] = dc.solidTiles;
+        this.solid(s, toPx(w), toPx(h), toPx(dy));
+      }
+      if (dc.look)
+        this.interactables.push({
+          sprite: s,
+          kind: 'mirar',
+          id: dc.id ?? `${dc.prop}_${dc.x}_${dc.y}`,
+          label: 'Mirar',
+          look: dc.look,
+          // algo grande (el fuerte) se mira desde su borde, no solo desde el centro
+          radius: dc.lookRadius !== undefined ? toPx(dc.lookRadius) : undefined,
+        });
     }
 
     // pájaros (data: spawns.birds), planeando de izquierda a derecha. No van con un
@@ -766,8 +787,15 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
     this.lockedIdleMs = 0;
-    // el jugador recuperó el control: la escena que retenía el autoguardado terminó
-    if (!(this.scene.get('Ui') as UiScene).isBusy()) game.releaseSaves();
+    // el jugador recuperó el control: la escena que retenía el autoguardado terminó, y lo
+    // que cambió mientras tanto (un turno que pasó, un flag) puede tener algo que disparar
+    if (!(this.scene.get('Ui') as UiScene).isBusy()) {
+      game.releaseSaves();
+      if (this.triggersDirty) {
+        this.triggersDirty = false;
+        this.checkTriggers();
+      }
+    }
 
     // teclado suma al vector táctil
     const kb = this.input.keyboard;
@@ -856,9 +884,13 @@ export class WorldScene extends Phaser.Scene {
     const propRadius = registry.balance.global.propInteractRadiusPx as number;
     for (const it of this.interactables) {
       if (!it.sprite.active) continue;
-      const radius = it.kind === 'npc' ? npcRadius : propRadius;
-      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y + 6, it.sprite.x, it.sprite.y);
-      if (d < radius && d < bestD) {
+      const radius = it.radius ?? (it.kind === 'npc' ? npcRadius : propRadius);
+      const raw = Phaser.Math.Distance.Between(this.player.x, this.player.y + 6, it.sprite.x, it.sprite.y);
+      if (raw >= radius) continue;
+      // lo que solo se mira (el fuerte, una marca) cede ante cualquier otra cosa al alcance: si hay alguien
+      // cerca, el botón es «Hablar» y habla esa persona, no tu personaje mirando el paisaje
+      const d = it.kind === 'mirar' ? raw + 10000 : raw;
+      if (d < bestD) {
         bestD = d;
         best = it;
       }

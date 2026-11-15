@@ -494,14 +494,15 @@ export function compuerta(): THREE.Group {
  * cascotes, y la zanja que lo rodeaba con la tierra amontonada del lado de afuera.
  * `ground(x, z)` da el alto del suelo, para asentarlo en el terreno.
  */
-export function mudFort(ground: (x: number, z: number) => number, cx: number, cz: number): THREE.Group {
+export function mudFort(ground: (x: number, z: number) => number, cx: number, cz: number, size: { w: number; d: number } = { w: 7, d: 5 }): THREE.Group {
   const g = new THREE.Group();
   const adobe = lambert(PAL.clayLight);
   const adobeDark = lambert(PAL.clay);
   const ditch = lambert(PAL.soil);
   const berm = lambert(PAL.soil2);
-  const W = 7;
-  const Dp = 5;
+  const wood = lambert(PAL.soil);
+  const W = size.w;
+  const Dp = size.d;
   // cada lado del cuadrado: [x0, z0, x1, z1], recorrido en tramos de terrón
   const sides: Array<[number, number, number, number]> = [
     [-W / 2, 0, W / 2, 0],
@@ -520,7 +521,7 @@ export function mudFort(ground: (x: number, z: number) => number, cx: number, cz
       // la altura cambia de a poco a lo largo de la pared (no son almenas): lo
       // que la lluvia y el viento comieron en once años
       const wave = 0.5 + 0.5 * Math.sin(t * 4.2 + si * 1.7) * Math.sin(t * 1.9 + si);
-      const h = fallen < 0.15 ? 0.18 : (0.35 + 0.7 * wave) * (si === 2 ? 1.2 : 1);
+      const h = fallen < 0.15 ? 0.25 : (0.6 + 0.95 * wave) * (si === 2 ? 1.2 : 1);
       const x = cx + x0 + (x1 - x0) * t;
       const z = cz + z0 + (z1 - z0) * t;
       const chunk = new THREE.Mesh(new THREE.BoxGeometry(len / n + 0.04, h, 0.5), fallen < 0.7 ? adobe : adobeDark);
@@ -566,6 +567,59 @@ export function mudFort(ground: (x: number, z: number) => number, cx: number, cz
       g.add(d, b);
     }
   });
+  // torreones en las esquinas: más altos que las paredes, con la parte de arriba comida
+  [[-W / 2, 0], [W / 2, 0], [W / 2, -Dp], [-W / 2, -Dp]].forEach(([x0, z0], i) => {
+    const x = cx + x0!;
+    const z = cz + z0!;
+    const h = 1.5 + hash(i, 41) * 0.7;
+    const base = new THREE.Mesh(new THREE.BoxGeometry(1.25, h, 1.25), i % 2 ? adobe : adobeDark);
+    base.position.set(x, ground(x, z) + h / 2 - 0.08, z);
+    base.rotation.y = (hash(i, 42) - 0.5) * 0.1;
+    g.add(base);
+    // lo que queda de arriba: un pedazo corrido, y cascotes al pie
+    const top = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.45, 0.55), adobe);
+    top.position.set(x + (hash(i, 43) - 0.5) * 0.4, ground(x, z) + h + 0.15, z + (hash(i, 44) - 0.5) * 0.4);
+    g.add(top);
+    for (let k = 0; k < 3; k++) {
+      const rub = new THREE.Mesh(new THREE.IcosahedronGeometry(0.22, 0), adobeDark);
+      rub.scale.set(1.2, 0.5, 1);
+      const rx = x + (hash(i * 3 + k, 45) - 0.5) * 2;
+      const rz = z + (hash(i * 3 + k, 46) - 0.5) * 2;
+      rub.position.set(rx, ground(rx, rz) + 0.05, rz);
+      g.add(rub);
+    }
+  });
+  // la entrada: los dos postes del portón, y el dintel caído atravesado en el suelo
+  for (const ex of [-0.12, 0.12]) {
+    const px = cx - W / 2 + W * (ex < 0 ? 0.42 : 0.62);
+    g.add(limb(new THREE.Vector3(px, ground(px, cz), cz), new THREE.Vector3(px + ex * 0.4, ground(px, cz) + 1.9, cz), 0.09, 0.07, wood, 5));
+  }
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(W * 0.24, 0.14, 0.16), wood);
+  lintel.position.set(cx - W / 2 + W * 0.52, ground(cx, cz + 0.6) + 0.08, cz + 0.6);
+  lintel.rotation.y = 0.35;
+  g.add(lintel);
+  // adentro, contra el fondo: lo que fue la cuadra, sin techo, con las vigas caídas
+  const bx = cx - W / 4;
+  const bz = cz - Dp + 1.2;
+  const bw = W * 0.38;
+  const bd = 1.6;
+  const walls: Array<[number, number, number, number]> = [
+    [bx - bw / 2, bz + bd / 2, bw, 0.3],
+    [bx - bw / 2, bz, 0.3, bd],
+    [bx + bw / 2, bz, 0.3, bd],
+  ];
+  walls.forEach(([x, z, w, d], i) => {
+    const h = 0.55 + hash(i, 47) * 0.4;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), i ? adobeDark : adobe);
+    m.position.set(x + (i ? 0 : w / 2), ground(x, z) + h / 2 - 0.05, z);
+    g.add(m);
+  });
+  for (let k = 0; k < 3; k++) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.9, 0.1, 0.12), wood);
+    beam.position.set(bx + (k - 1) * 0.2, ground(bx, bz) + 0.12 + k * 0.18, bz - 0.3 + k * 0.35);
+    beam.rotation.set(0, (hash(k, 48) - 0.5) * 0.7, (k - 1) * 0.18);
+    g.add(beam);
+  }
   // un palo de lo que fue el mástil, todavía parado
   const pole = limb(new THREE.Vector3(cx + 1.6, ground(cx + 1.6, cz - 2.6), cz - 2.6), new THREE.Vector3(cx + 1.7, ground(cx + 1.6, cz - 2.6) + 2.6, cz - 2.6), 0.06, 0.04, lambert(PAL.soil), 5);
   g.add(pole);

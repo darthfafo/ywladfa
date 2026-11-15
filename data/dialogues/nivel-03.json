@@ -938,6 +938,286 @@
           "end": true
         }
       }
+    },
+    {
+      "id": "d_n3_lewis_pista",
+      "npc": "npc_lewis",
+      "lang": "cym",
+      "start": "p_regada",
+      "note": "Lo que dice cuando no hay escena pendiente: una pista de qué hacer ahora (la primera etapa que se cumple, de la más avanzada a la primera).",
+      "nodes": {
+        "p_regada": {
+          "speaker": "npc_lewis",
+          "condition": "flags.n3_regada == true",
+          "text": "Ahora lo hace el agua. Descansá junto al fogón, que la cosecha no se apura.",
+          "end": true
+        },
+        "p_zanja": {
+          "speaker": "npc_lewis",
+          "condition": "flags.n3_zanja == true",
+          "text": "Desde el río hasta tu chacra, de a un tramo. Tu madre ya te está esperando allá.",
+          "end": true
+        },
+        "p_trato": {
+          "speaker": "npc_lewis",
+          "condition": "flags.n3_toldo == true && flags.n3_trato == null",
+          "text": "Andá al toldo, al lado del fuerte. Llevá algo para poner sobre la manta.",
+          "end": true
+        },
+        "p_corral": {
+          "speaker": "npc_lewis",
+          "condition": "flags.n3_rehacer == 'corral' && flags.n3_tiene_corral != true && flags.n3_acto1 != true",
+          "text": "El corral, más arriba que la marca del río. Barro y junco, como el rancho.",
+          "end": true
+        },
+        "p_techo": {
+          "speaker": "npc_lewis",
+          "condition": "flags.n3_crecida == true && flags.n3_tiene_rancho != true && flags.n3_acto1 != true",
+          "text": "Hay que volver a levantarlo, pero más arriba. Mirá hasta dónde llegó el agua.",
+          "end": true
+        },
+        "p_espera": {
+          "speaker": "npc_lewis",
+          "condition": "flags.n3_tiene_rancho == true && flags.n3_crecida != true",
+          "text": "El rancho está. Si no hay más que hacer, descansá junto al fogón: mañana se verá.",
+          "end": true
+        },
+        "p_rancho": {
+          "speaker": "npc_lewis",
+          "condition": "flags.n3_bandera == true && flags.n3_tiene_rancho != true && flags.n3_crecida != true",
+          "text": "Barro y junco hay en la orilla, abajo. Juntá y levantá el rancho donde te parezca.",
+          "end": true
+        },
+        "p_resto": {
+          "speaker": "npc_lewis",
+          "text": "Este valle nos va a costar caro.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_mari_pista",
+      "npc": "npc_mari",
+      "lang": "cym",
+      "start": "p_regada",
+      "note": "Lo que dice cuando no hay escena pendiente: una pista de qué hacer ahora (la primera etapa que se cumple, de la más avanzada a la primera).",
+      "nodes": {
+        "p_regada": {
+          "speaker": "npc_mari",
+          "condition": "flags.n3_regada == true",
+          "text": "Ahora sí. Sentate un rato conmigo junto al fuego.",
+          "end": true
+        },
+        "p_zanja": {
+          "speaker": "npc_mari",
+          "condition": "flags.n3_zanja == true",
+          "text": "Acá es lo nuestro. Traé el agua desde el río, y al final, la compuerta.",
+          "end": true
+        },
+        "p_trato": {
+          "speaker": "npc_mari",
+          "condition": "flags.n3_toldo == true && flags.n3_trato == null",
+          "text": "Ellos también tienen hambre. Andá al toldo, pero con las manos vacías no.",
+          "end": true
+        },
+        "p_corral": {
+          "speaker": "npc_mari",
+          "condition": "flags.n3_rehacer == 'corral' && flags.n3_tiene_corral != true && flags.n3_acto1 != true",
+          "text": "Esta vez, más arriba. El río ya nos avisó una vez.",
+          "end": true
+        },
+        "p_techo": {
+          "speaker": "npc_mari",
+          "condition": "flags.n3_crecida == true && flags.n3_tiene_rancho != true && flags.n3_acto1 != true",
+          "text": "Esta vez, más arriba. El río ya nos avisó una vez.",
+          "end": true
+        },
+        "p_espera": {
+          "speaker": "npc_mari",
+          "condition": "flags.n3_tiene_rancho == true && flags.n3_crecida != true",
+          "text": "Ya tenemos techo. Descansá junto al fuego, que te lo ganaste.",
+          "end": true
+        },
+        "p_rancho": {
+          "speaker": "npc_mari",
+          "condition": "flags.n3_bandera == true && flags.n3_tiene_rancho != true && flags.n3_crecida != true",
+          "text": "Antes de elegir dónde, mirá las paredes del fuerte. Algo dicen.",
+          "end": true
+        },
+        "p_resto": {
+          "speaker": "npc_mari",
+          "text": "Estoy bien. Andá.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_edwyn_pista",
+      "npc": "npc_edwyn",
+      "lang": "cym",
+      "start": "p_regada",
+      "note": "Lo que dice cuando no hay escena pendiente: una pista de qué hacer ahora (la primera etapa que se cumple, de la más avanzada a la primera).",
+      "nodes": {
+        "p_regada": {
+          "speaker": "npc_edwyn",
+          "condition": "flags.n3_regada == true",
+          "text": "El depósito va a necesitar lugar para el trigo.",
+          "end": true
+        },
+        "p_zanja": {
+          "speaker": "npc_edwyn",
+          "condition": "flags.n3_zanja == true",
+          "text": "Ojo con la chacra de los vecinos: está en un bajo. El agua que pasa al lado, entra.",
+          "end": true
+        },
+        "p_trato": {
+          "speaker": "npc_edwyn",
+          "condition": "flags.n3_toldo == true && flags.n3_trato == null",
+          "text": "Al toldo, no vayas con las manos vacías. Y volvé antes de que oscurezca.",
+          "end": true
+        },
+        "p_corral": {
+          "speaker": "npc_edwyn",
+          "condition": "flags.n3_rehacer == 'corral' && flags.n3_tiene_corral != true && flags.n3_acto1 != true",
+          "text": "Sin corral, los animales se dispersan. Más arriba, donde el agua no llegue.",
+          "end": true
+        },
+        "p_techo": {
+          "speaker": "npc_edwyn",
+          "condition": "flags.n3_crecida == true && flags.n3_tiene_rancho != true && flags.n3_acto1 != true",
+          "text": "Lo que se perdió, se perdió. Más arriba, y se rehace.",
+          "end": true
+        },
+        "p_espera": {
+          "speaker": "npc_edwyn",
+          "condition": "flags.n3_tiene_rancho == true && flags.n3_crecida != true",
+          "text": "Yo llevo la cuenta del depósito. Vos descansá junto al fogón: mañana hay más trabajo.",
+          "end": true
+        },
+        "p_rancho": {
+          "speaker": "npc_edwyn",
+          "condition": "flags.n3_bandera == true && flags.n3_tiene_rancho != true && flags.n3_crecida != true",
+          "text": "Cerca del río el barro está a mano. Lejos, hay que subirlo a lomo: más jornadas.",
+          "end": true
+        },
+        "p_resto": {
+          "speaker": "npc_edwyn",
+          "text": "Cuento lo que hay. Siempre es menos de lo que uno quiere.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_matthews_pista",
+      "npc": "npc_matthews",
+      "lang": "cym",
+      "start": "p_regada",
+      "note": "Lo que dice cuando no hay escena pendiente: una pista de qué hacer ahora (la primera etapa que se cumple, de la más avanzada a la primera).",
+      "nodes": {
+        "p_regada": {
+          "speaker": "npc_matthews",
+          "condition": "flags.n3_regada == true",
+          "text": "Hoy se agradece.",
+          "end": true
+        },
+        "p_zanja": {
+          "speaker": "npc_matthews",
+          "condition": "flags.n3_zanja == true",
+          "text": "El agua que pasa al lado de alguien también es de ese alguien. Una compuerta de su lado no cuesta tanto.",
+          "end": true
+        },
+        "p_trato": {
+          "speaker": "npc_matthews",
+          "condition": "flags.n3_toldo == true && flags.n3_trato == null",
+          "text": "Ellos estaban acá antes que nosotros. Andá al toldo con respeto, y con algo en las manos.",
+          "end": true
+        },
+        "p_corral": {
+          "speaker": "npc_matthews",
+          "condition": "flags.n3_rehacer == 'corral' && flags.n3_tiene_corral != true && flags.n3_acto1 != true",
+          "text": "Rehacer también es parte de esto. Más arriba.",
+          "end": true
+        },
+        "p_techo": {
+          "speaker": "npc_matthews",
+          "condition": "flags.n3_crecida == true && flags.n3_tiene_rancho != true && flags.n3_acto1 != true",
+          "text": "Rehacer también es parte de esto. Más arriba.",
+          "end": true
+        },
+        "p_espera": {
+          "speaker": "npc_matthews",
+          "condition": "flags.n3_tiene_rancho == true && flags.n3_crecida != true",
+          "text": "Descansá junto al fuego. Mañana el día va a traer lo suyo.",
+          "end": true
+        },
+        "p_rancho": {
+          "speaker": "npc_matthews",
+          "condition": "flags.n3_bandera == true && flags.n3_tiene_rancho != true && flags.n3_crecida != true",
+          "text": "Arriba, en la barda, no llega nadie más que el viento.",
+          "end": true
+        },
+        "p_resto": {
+          "speaker": "npc_matthews",
+          "text": "Nadie nos prometió que iba a ser fácil.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_berwyn_pista",
+      "npc": "npc_berwyn",
+      "lang": "cym",
+      "start": "p_regada",
+      "note": "Lo que dice cuando no hay escena pendiente: una pista de qué hacer ahora (la primera etapa que se cumple, de la más avanzada a la primera).",
+      "nodes": {
+        "p_regada": {
+          "speaker": "npc_berwyn",
+          "condition": "flags.n3_regada == true",
+          "text": "Esto va en la libreta: el día que el agua entró a las chacras.",
+          "end": true
+        },
+        "p_zanja": {
+          "speaker": "npc_berwyn",
+          "condition": "flags.n3_zanja == true",
+          "text": "Rachel Jenkins sabe leer el suelo. Si tenés dudas, preguntale: su chacra es la del oeste, río arriba.",
+          "end": true
+        },
+        "p_trato": {
+          "speaker": "npc_berwyn",
+          "condition": "flags.n3_toldo == true && flags.n3_trato == null",
+          "text": "Llevo el diccionario. Hablale vos al del toldo; yo busco las palabras.",
+          "end": true
+        },
+        "p_corral": {
+          "speaker": "npc_berwyn",
+          "condition": "flags.n3_rehacer == 'corral' && flags.n3_tiene_corral != true && flags.n3_acto1 != true",
+          "text": "La raya de barro en las paredes del fuerte: hasta ahí llega el río. Más arriba, no.",
+          "end": true
+        },
+        "p_techo": {
+          "speaker": "npc_berwyn",
+          "condition": "flags.n3_crecida == true && flags.n3_tiene_rancho != true && flags.n3_acto1 != true",
+          "text": "La raya de barro en las paredes del fuerte: hasta ahí llega el río. Más arriba, no.",
+          "end": true
+        },
+        "p_espera": {
+          "speaker": "npc_berwyn",
+          "condition": "flags.n3_tiene_rancho == true && flags.n3_crecida != true",
+          "text": "Ya está escrito: rancho en pie. Ahora, a descansar junto al fogón.",
+          "end": true
+        },
+        "p_rancho": {
+          "speaker": "npc_berwyn",
+          "condition": "flags.n3_bandera == true && flags.n3_tiene_rancho != true && flags.n3_crecida != true",
+          "text": "El que construye abajo ahorra jornadas. El que construye arriba duerme tranquilo.",
+          "end": true
+        },
+        "p_resto": {
+          "speaker": "npc_berwyn",
+          "text": "Todo esto alguien lo va a querer leer algún día.",
+          "end": true
+        }
+      }
     }
   ],
   "choices": [

@@ -150,13 +150,13 @@ export class DialogueBox {
     this.show(this.sys.start(dialogueId));
   }
 
-  /** Línea corta de un NPC sin diálogo definido en /data (ej. "— Ahora no."). Va en
+  /** Línea corta de un NPC sin diálogo definido en /data (ej. "Ahora no."). Va en
    * la misma bandeja que cualquier línea real, no como toast flotante — es lo que
    * dice el personaje, tiene que leerse en el mismo lugar que el resto de lo que
    * dice. No pasa por DialogueSystem (no hay nodos ni elecciones que resolver): se
    * cierra con el mismo toque/tecla de siempre porque sys.next() sin diálogo activo
    * ya devuelve null de por sí. */
-  refuse(npcId: string, onClose?: () => void, text = '— Ahora no.'): void {
+  refuse(npcId: string, onClose?: () => void, text = 'Ahora no.'): void {
     this.onClose = onClose ?? null;
     input.locked = true;
     this.opening = true;

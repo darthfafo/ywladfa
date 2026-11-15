@@ -9,7 +9,8 @@ import { toTile } from '@/util/grid';
 import { chacraRects, valleyGrid } from '@/util/mapgen';
 import { makeRect } from '@/util/textures';
 import { PAL } from '@/config';
-import type { LevelScript, WorldHost } from './LevelScript';
+import { TURNS } from '@/systems/TimeSystem';
+import type { Interactable, LevelScript, WorldHost } from './LevelScript';
 
 /** el cuerpo sólido de cada obra (px de mundo): la planta, sin los aleros */
 const SOLID: Partial<Record<PieceKind, { w: number; h: number }>> = {
@@ -154,6 +155,24 @@ export class Nivel03Script implements LevelScript {
     game.flags.set('n3_regada_lista', true);
     for (let d = 0; d < extra; d++) game.spendTurns(perDay);
     this.host.checkTriggers();
+  }
+
+  /** El fogón del campamento: descansar hasta la mañana siguiente. */
+  label(it: Interactable): string | undefined {
+    return it.kind === 'fogon' ? 'Descansar' : undefined;
+  }
+
+  /**
+   * Descansar junto al fuego: pasa el tiempo hasta el amanecer (corre la noche, que
+   * guarda). Sin esto, con el rancho hecho y nada más que hacer, la jornada no
+   * avanzaba y lo que espera a otro día (la crecida) no llegaba nunca.
+   */
+  interact(it: Interactable): boolean {
+    if (it.kind !== 'fogon') return false;
+    const left = game.level.schedule.turnsPerDay - TURNS.indexOf(game.state.progress.turn);
+    game.spendTurns(left);
+    this.host.checkTriggers();
+    return true;
   }
 
   refusal(npcId: string): string | undefined {

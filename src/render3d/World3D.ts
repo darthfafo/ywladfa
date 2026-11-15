@@ -716,7 +716,8 @@ export class World3D {
     if (key === 'prop_rancho') return { kind: 'model', obj: adobeHut() };
     if (key === 'prop_rancho_ok') return { kind: 'model', obj: adobeHut('ok') };
     if (key === 'prop_rancho_mal') return { kind: 'model', obj: adobeHut('mal') };
-    if (key === 'prop_fuerte') return { kind: 'model', obj: mudFort(() => 0, 0, 2.5) };
+    // las ruinas del fuerte viejo, a la medida que marca el valle (mapgen.valleyGrid: ahí no se construye)
+    if (key === 'prop_fuerte') return { kind: 'model', obj: mudFort(() => 0, 0, 2.5, { w: 9, d: 7 }) };
     if (key === 'prop_corral') return { kind: 'model', obj: corral() };
     if (key === 'prop_corral_ok') return { kind: 'model', obj: corral('ok') };
     if (key === 'prop_corral_mal') return { kind: 'model', obj: corral('mal') };

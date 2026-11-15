@@ -131,27 +131,27 @@
   "spawns": {
     "player": {
       "x": 52,
-      "y": 31,
+      "y": 34,
       "facing": "north"
     },
     "npcs": [
       {
         "id": "npc_murga",
         "x": 53,
-        "y": 23,
+        "y": 31,
         "day": 1,
         "hiddenAfterFlag": "n3_bandera"
       },
       {
         "id": "npc_lewis",
-        "x": 51,
-        "y": 27,
+        "x": 50,
+        "y": 32,
         "day": "*"
       },
       {
         "id": "npc_mari",
-        "x": 56,
-        "y": 28,
+        "x": 57,
+        "y": 33,
         "day": "*",
         "movesTo": {
           "day": 1,
@@ -164,20 +164,20 @@
       },
       {
         "id": "npc_edwyn",
-        "x": 49,
-        "y": 29,
+        "x": 51,
+        "y": 35,
         "day": "*"
       },
       {
         "id": "npc_matthews",
-        "x": 57,
-        "y": 25,
+        "x": 58,
+        "y": 31,
         "day": "*"
       },
       {
         "id": "npc_berwyn",
-        "x": 54,
-        "y": 22,
+        "x": 55,
+        "y": 35,
         "day": "*"
       },
       {
@@ -274,12 +274,12 @@
     "cajones": [],
     "cuevas": [],
     "fogon": {
-      "x": 55,
-      "y": 26
+      "x": 54,
+      "y": 32
     },
     "campamento": {
       "x": 53,
-      "y": 29
+      "y": 34
     },
     "pasajes": [],
     "decor": [
@@ -290,7 +290,13 @@
         "y": 26,
         "fallback": true,
         "depth": 5,
-        "look": "Hay una raya de barro seco en las paredes, a la altura de la rodilla. Hasta acá llegó el río alguna vez."
+        "look": "Ruinas de barro: torreones caídos, la cuadra sin techo. Hay una raya de barro seco en las paredes, a la altura de la rodilla. Hasta acá llegó el río alguna vez.",
+        "solidTiles": [
+          10,
+          8,
+          1.8
+        ],
+        "lookRadius": 5
       }
     ]
   },
@@ -652,6 +658,61 @@
       "turnCost": 0,
       "action": {
         "dialogue": "d_n3_aaron_charla"
+      }
+    },
+    {
+      "id": "trig_n3_lewis_pista",
+      "type": "dialogue",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "note": "resguardo: si no hay escena pendiente con este personaje, una pista de cómo seguir (en vez de «Ahora no.»). Va al final: las escenas de la historia ganan.",
+      "action": {
+        "dialogue": "d_n3_lewis_pista"
+      }
+    },
+    {
+      "id": "trig_n3_mari_pista",
+      "type": "dialogue",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "note": "resguardo: si no hay escena pendiente con este personaje, una pista de cómo seguir (en vez de «Ahora no.»). Va al final: las escenas de la historia ganan.",
+      "action": {
+        "dialogue": "d_n3_mari_pista"
+      }
+    },
+    {
+      "id": "trig_n3_edwyn_pista",
+      "type": "dialogue",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "note": "resguardo: si no hay escena pendiente con este personaje, una pista de cómo seguir (en vez de «Ahora no.»). Va al final: las escenas de la historia ganan.",
+      "action": {
+        "dialogue": "d_n3_edwyn_pista"
+      }
+    },
+    {
+      "id": "trig_n3_matthews_pista",
+      "type": "dialogue",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "note": "resguardo: si no hay escena pendiente con este personaje, una pista de cómo seguir (en vez de «Ahora no.»). Va al final: las escenas de la historia ganan.",
+      "action": {
+        "dialogue": "d_n3_matthews_pista"
+      }
+    },
+    {
+      "id": "trig_n3_berwyn_pista",
+      "type": "dialogue",
+      "manual": true,
+      "once": false,
+      "turnCost": 0,
+      "note": "resguardo: si no hay escena pendiente con este personaje, una pista de cómo seguir (en vez de «Ahora no.»). Va al final: las escenas de la historia ganan.",
+      "action": {
+        "dialogue": "d_n3_berwyn_pista"
       }
     }
   ],
