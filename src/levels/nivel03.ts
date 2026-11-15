@@ -77,6 +77,8 @@ export class Nivel03Script implements LevelScript {
   /** la casilla delante del jugador (la zanja se cava de a una) */
   private ztarget = { x: 0, y: 0 };
   private dichoCompuerta = false;
+  /** los ranchos de las otras familias ("rancho:x:y"): están en la grilla (ocupan lugar, los lleva la crecida) pero no son tuyos */
+  private readonly others = new Set<string>();
   /** cada chacra: seca y regada (dos dibujos, se prende uno) */
   private readonly chacras = new Map<string, Record<'seca' | 'regada' | 'inundada', Phaser.GameObjects.Image>>();
   /** lo que pesa de lo que quedó atrás */
@@ -106,6 +108,7 @@ export class Nivel03Script implements LevelScript {
       const [kind, x, y] = o.split(':');
       if (this.cons.place(kind as PieceKind, Number(x), Number(y)).ok) this.addSprite(kind as PieceKind, Number(x), Number(y));
     }
+    for (const flag of ['n3_ranchos_colonia', 'n3_ranchos_vecinos']) for (const k of (game.flags.get(flag) as string[] | undefined) ?? []) this.addOther(k);
     this.drawChacras();
     this.zghost = {
       ok: scene.add.image(0, 0, 'prop_zanja_ok').setDepth(4).setVisible(false),
@@ -251,6 +254,11 @@ export class Nivel03Script implements LevelScript {
   update(delta = 0): void {
     // la bandera en el mástil, desde la escena de Murga
     if (!this.flag && game.flags.is('n3_bandera')) this.raiseFlag();
+    // las otras familias levantan sus ranchos abajo, junto al río (la crecida se los va a llevar)
+    if (game.flags.is('n3_bandera') && game.flags.get('n3_ranchos_colonia') == null && !game.flags.is('n3_crecida')) {
+      for (const [x, y] of game.level.map.ranchosColonia ?? []) if (this.cons.canPlace('rancho', x, y).ok) this.addOther(`rancho:${x}:${y}`);
+      game.flags.set('n3_ranchos_colonia', [...this.others]);
+    }
     // el toldo, desde que llegaron (abril de 1866); se levanta si el trato no fue justo
     if (!this.toldo && game.flags.is('n3_toldo')) this.pitchToldo();
     this.syncToldo();
@@ -435,9 +443,50 @@ export class Nivel03Script implements LevelScript {
         : { n3_tiene_corral: true, n3_dia_corral: game.state.progress.day, n3_obras: this.obras() },
     );
     bus.emit('ui:toast', { text: `${kind === 'rancho' ? 'Rancho' : 'Corral'} levantado: ${cost.turnos} turnos de trabajo.` });
+    if (kind === 'rancho') this.settleNeighbors(x, y);
     // el trabajo lleva su tiempo (puede caer la noche)
     game.spendTurns(cost.turnos);
     this.host.checkTriggers();
+  }
+
+  /** Un rancho de otra familia: a la grilla (ocupa lugar, la crecida lo alcanza) y al mapa. */
+  private addOther(key: string): void {
+    const [, x, y] = key.split(':');
+    if (!this.cons.place('rancho', Number(x), Number(y)).ok) return;
+    this.others.add(key);
+    this.addSprite('rancho', Number(x), Number(y));
+  }
+
+  /**
+   * Cuando levantás tu rancho, otras familias levantan el suyo cerca (hasta
+   * `vecinos.cuantos` en pie), sin pisar las chacras ni el lugar de la zanja.
+   */
+  private settleNeighbors(x: number, y: number): void {
+    const cfg = registry.levelBalance('nivel-03').vecinos as { cuantos: number; separacion: number; margenRiego: number };
+    const standing = ((game.flags.get('n3_ranchos_vecinos') as string[] | undefined) ?? []).filter((k) => this.others.has(k));
+    let need = cfg.cuantos - standing.length;
+    if (need <= 0) return;
+    // el lugar del riego: las chacras y lo que las rodea (por ahí va la zanja)
+    const rects = chacraRects(game.level);
+    const m = cfg.margenRiego;
+    const nearRiego = (cx: number, cy: number): boolean =>
+      rects.some((r) => cx + 3 > r.x - m && cx < r.x + r.w + m && cy + 3 > r.y - m && cy < r.y + r.h + m);
+    const d = cfg.separacion;
+    const ring: Array<[number, number]> = [[-d, 0], [d, 0], [0, -d], [0, d], [-d, -d], [d, -d], [-d, d], [d, d], [-2 * d, 0], [2 * d, 0]];
+    const added: string[] = [];
+    for (const [dx, dy] of ring) {
+      if (need <= 0) break;
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nearRiego(nx, ny) || !this.cons.canPlace('rancho', nx, ny).ok) continue;
+      this.addOther(`rancho:${nx}:${ny}`);
+      added.push(`rancho:${nx}:${ny}`);
+      need -= 1;
+    }
+    if (added.length) {
+      game.flags.set('n3_ranchos_vecinos', [...standing, ...added]);
+      bus.emit('ui:toast', { text: added.length === 1 ? 'Otra familia levanta su rancho cerca del tuyo.' : 'Otras familias levantan sus ranchos cerca del tuyo.' });
+    }
   }
 
   private addSprite(kind: PieceKind, x: number, y: number): void {
@@ -455,26 +504,39 @@ export class Nivel03Script implements LevelScript {
     return (registry.levelBalance('nivel-03').construccion as ConstructionConfig).pieces[kind].size;
   }
 
+  /** Lo tuyo (no lo de las otras familias), para la partida. */
   private obras(): string[] {
-    return this.cons.placed.map((p) => `${p.kind}:${p.x}:${p.y}`);
+    return this.cons.placed.map((p) => `${p.kind}:${p.x}:${p.y}`).filter((k) => !this.others.has(k));
+  }
+
+  private mine(p: { kind: PieceKind; x: number; y: number }): boolean {
+    return !this.others.has(`${p.kind}:${p.x}:${p.y}`);
   }
 
   /** La crecida de 1865: se lleva lo que quedó bajo. */
   private flood(): void {
     const level = (registry.levelBalance('nivel-03').crecida as { level: number }).level;
     const lost = this.cons.flood(level);
+    const lostMine = lost.filter((p) => this.mine(p));
     for (const p of lost) {
       const key = `${p.kind}:${p.x}:${p.y}`;
       this.sprites.get(key)?.destroy();
       this.sprites.delete(key);
     }
+    const standing = (flag: string): string[] =>
+      ((game.flags.get(flag) as string[] | undefined) ?? []).filter((k) => !lost.some((p) => `${p.kind}:${p.x}:${p.y}` === k));
+    const colonia = standing('n3_ranchos_colonia');
+    const vecinos = standing('n3_ranchos_vecinos');
+    for (const p of lost) this.others.delete(`${p.kind}:${p.x}:${p.y}`);
     game.flags.setMany({
       n3_crecida: true,
       n3_dia_crecida: game.state.progress.day,
-      n3_rancho_perdido: lost.some((p) => p.kind === 'rancho'),
-      n3_tiene_rancho: this.cons.placed.some((p) => p.kind === 'rancho'),
-      n3_tiene_corral: this.cons.placed.some((p) => p.kind === 'corral'),
+      n3_rancho_perdido: lostMine.some((p) => p.kind === 'rancho'),
+      n3_tiene_rancho: this.cons.placed.some((p) => p.kind === 'rancho' && this.mine(p)),
+      n3_tiene_corral: this.cons.placed.some((p) => p.kind === 'corral' && this.mine(p)),
       n3_obras: this.obras(),
+      n3_ranchos_colonia: colonia,
+      n3_ranchos_vecinos: vecinos,
     });
     if (lost.length) sfx.thunder();
   }

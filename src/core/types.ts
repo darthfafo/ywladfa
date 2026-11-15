@@ -186,6 +186,8 @@ export interface LevelDef {
     generator?: string;
     /** valle (Nivel 3): las chacras, ubicadas respecto del río (mapgen.chacraRects) */
     chacras?: Array<{ id: string; owner: string; x: number; w: number; dy: number; h: number; /** cuánto más baja que el llano (un bajo: se inunda fácil) */ bajo?: number }>;
+    /** valle (Nivel 3): dónde levantan su rancho las otras familias, abajo junto al río, al llegar (casillas) */
+    ranchosColonia?: Array<[number, number]>;
   };
   schedule: { days: number; turnsPerDay: number };
   zones: ZoneDef[];

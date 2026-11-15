@@ -482,6 +482,8 @@ export class BootScene extends Phaser.Scene {
     // con varios niveles, la jornada sola no decía dónde se retoma
     if (save) options.push({ label: `Continuar · N${Number(save.level.slice(-2))} · jornada ${save.day}`, onPick: () => this.continueGame() });
     options.push({ label: 'Nueva partida', onPick: () => this.renderCharacter() });
+    // las jornadas ya jugadas: retomar cualquiera sin empezar de vuelta
+    if (saveSystem.checkpoints().length) options.push({ label: 'Elegir jornada', onPick: () => this.renderJornadas() });
     options.push({ label: 'Importar partida', onPick: () => this.triggerImportFile() });
     if (save) options.push({ label: 'Exportar partida', onPick: () => this.exportCurrentSave() });
     const rowH = 25;
@@ -515,6 +517,57 @@ export class BootScene extends Phaser.Scene {
     // input de archivo invisible, siempre presente: el botón "Importar partida" de
     // arriba solo lo dispara (inputEl.click()).
     this.renderFileInput();
+  }
+
+  /**
+   * El selector de jornadas: los niveles que ya se jugaron y, en cada uno, el
+   * comienzo de cada jornada (SaveSystem anota uno por noche). Elegir una deja la
+   * partida en ese punto y sigue desde ahí.
+   */
+  private renderJornadas(): void {
+    this.clearStep();
+    const cx = VIEW.width / 2;
+    this.renderShade(0, VIEW.height, 'top', 0.85);
+    this.track(this.stepTitle(18, 'Elegir jornada'));
+    const byLevel = new Map<string, number[]>();
+    for (const c of saveSystem.checkpoints()) byLevel.set(c.level, [...(byLevel.get(c.level) ?? []), c.day]);
+    const perRow = 3;
+    const bw = 78;
+    const gap = 6;
+    let y = 50;
+    for (const [level, days] of byLevel) {
+      const title = registry.levelExists(level) ? registry.level(level).title : level;
+      this.track(this.renderDomText(cx, y, `Nivel ${Number(level.slice(-2))} · ${title}`, { size: 7, color: '#BFD3D8', align: 'center', retro: true }));
+      y += 24;
+      days.forEach((day, i) => {
+        const col = i % perRow;
+        const row = Math.floor(i / perRow);
+        const n = Math.min(perRow, days.length - row * perRow);
+        const x0 = cx - ((n - 1) * (bw + gap)) / 2;
+        const el = this.renderDomButton(x0 + col * (bw + gap), y + row * 24, `Jornada ${day}`, () => this.loadJornada(level, day), bw, 20);
+        this.glassButton(el);
+        this.track(el);
+      });
+      y += Math.ceil(days.length / perRow) * 24 + 10;
+    }
+    this.track(
+      this.renderDomText(cx, Math.min(y, VIEW.height - 64), 'La partida sigue desde el comienzo de esa jornada.', { size: 6, color: '#7FB0B8', align: 'center', width: 230, retro: true }),
+    );
+    const back = this.renderDomButton(cx, VIEW.height - 30, 'Volver', () => this.renderTitle(), 120, 21);
+    this.glassButton(back);
+    this.track(back);
+  }
+
+  private loadJornada(level: string, day: number): void {
+    const s = saveSystem.loadCheckpoint(level, day);
+    if (!s) {
+      this.importOk = false;
+      this.importNotice = 'Esa jornada ya no se puede abrir.';
+      this.renderTitle();
+      return;
+    }
+    saveSystem.save(s);
+    this.continueGame();
   }
 
   /** lo que pasó al importar, para mostrarlo en la portada */
@@ -717,7 +770,10 @@ export class BootScene extends Phaser.Scene {
     // juego se queda trabado en esta pantalla para siempre, sin ningún control
     // para salir. Mejor una cinemática con algún detalle roto que un dead end.
     const goToWorld = (): void => {
-      if (this.scene.isActive()) this.scene.start('World');
+      if (!this.scene.isActive()) return;
+      // la jornada 1 del Nivel 1 también queda anotada (selector de jornadas): se guarda al arrancar
+      saveSystem.save(game.state);
+      this.scene.start('World');
     };
     // 3 s, no 6: lo justo para leer la línea — el arranque tiene que llevar rápido a jugar
     this.time.delayedCall(3000, goToWorld);

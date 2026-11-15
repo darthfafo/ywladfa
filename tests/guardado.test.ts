@@ -146,3 +146,47 @@ describe('el autoguardado de la noche no traba la partida', () => {
     expect(s.flags.n3_1867).toBe(true);
   });
 });
+
+describe('el selector de jornadas', () => {
+  it('anota el comienzo de cada jornada de cada nivel, y se puede volver a cualquiera', () => {
+    mem.clear();
+    const days: Array<[string, number]> = [['nivel-01', 1], ['nivel-01', 2], ['nivel-01', 3], ['nivel-02', 1], ['nivel-02', 2], ['nivel-03', 1]];
+    for (const [level, day] of days) {
+      const s = createInitialState(level, 'Elin', 'f');
+      s.progress.day = day;
+      s.flags.marca = `${level}-${day}`;
+      saveSystem.save(s);
+    }
+    expect(saveSystem.checkpoints()).toEqual(days.map(([level, day]) => ({ level, day })));
+    const back = saveSystem.loadCheckpoint('nivel-01', 2)!;
+    expect(back.progress).toMatchObject({ level: 'nivel-01', day: 2 });
+    expect(back.flags.marca).toBe('nivel-01-2');
+    expect(saveSystem.loadCheckpoint('nivel-03', 9)).toBeNull();
+  });
+
+  it('el cierre de un nivel y la llegada de la marcha no son jornadas', () => {
+    mem.clear();
+    const fin = createInitialState('nivel-01', 'Elin', 'f');
+    fin.progress.day = 3;
+    fin.progress.finished = true;
+    saveSystem.save(fin);
+    const llegada = createInitialState('nivel-02', 'Elin', 'f');
+    llegada.progress.day = 4;
+    llegada.flags.n2_llegada = true;
+    saveSystem.save(llegada);
+    expect(saveSystem.checkpoints()).toEqual([]);
+  });
+
+  it('la misma jornada vuelta a jugar se pisa con la más reciente', () => {
+    mem.clear();
+    const a = createInitialState('nivel-03', 'Elin', 'f');
+    a.progress.day = 5;
+    a.flags.version = 'vieja';
+    saveSystem.save(a);
+    a.flags.version = 'nueva';
+    saveSystem.save(a);
+    expect(saveSystem.checkpoints()).toHaveLength(1);
+    expect(saveSystem.loadCheckpoint('nivel-03', 5)!.flags.version).toBe('nueva');
+  });
+});
+
