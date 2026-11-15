@@ -283,7 +283,7 @@
         },
         "t4": {
           "speaker": "npc_berwyn",
-          "text": "Tengo un diccionario con unas pocas palabras de su lengua. Algo es algo.",
+          "text": "Tengo un diccionario con unas pocas palabras de su lengua. Si vas, voy con vos.",
           "next": "t5"
         },
         "t5": {
@@ -728,7 +728,7 @@
     },
     {
       "id": "d_n3_inundo",
-      "npc": "npc_edwyn",
+      "npc": "npc_mari",
       "lang": "cym",
       "start": "u0",
       "nodes": {
@@ -749,7 +749,7 @@
           "next": "u3"
         },
         "u3": {
-          "speaker": "npc_edwyn",
+          "speaker": "npc_mari",
           "text": "Una compuerta de su lado, y el agua es riego en vez de ruina. O la zanja, más lejos.",
           "portrait": "tenso",
           "effects": [
@@ -1185,7 +1185,7 @@
         "p_trato": {
           "speaker": "npc_berwyn",
           "condition": "flags.n3_toldo == true && flags.n3_trato == null",
-          "text": "Llevo el diccionario. El toldo está hacia la barda, donde sube el humo: hablale vos, yo busco las palabras.",
+          "text": "Acá estoy, con el diccionario. Hablale vos al del toldo; yo busco las palabras.",
           "end": true
         },
         "p_corral": {

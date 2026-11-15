@@ -188,7 +188,15 @@
         "id": "npc_berwyn",
         "x": 55,
         "y": 35,
-        "day": "*"
+        "day": "*",
+        "movesTo": {
+          "day": 1,
+          "turn": "amanecer",
+          "x": 32,
+          "y": 18,
+          "requires": "flags.n3_toldo_visto == true && flags.n3_trato == null",
+          "note": "Berwyn tiene el diccionario: te acompaña al toldo y espera ahí hasta el trato (habla en d_n3_manta)"
+        }
       },
       {
         "id": "npc_gwilym",
