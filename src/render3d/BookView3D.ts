@@ -98,11 +98,24 @@ export function paginate(blocks: BookBlock[], measure: (font: string, text: stri
     if (b.kind === 'chapter' && !cur.length) y = MARGIN.top + 110;
     if (b.kind === 'title' && !cur.length && bi === 0) y = TH * 0.3;
     let before = cur.length ? st.before : 0;
-    // un título no queda solo al pie: necesita lugar para un par de renglones de lo que sigue
-    const need = before + rows.length * st.lh + (st.keep ? 2 * STYLE.line.lh + STYLE.line.before : 0);
-    if (cur.length && y + need > bottom && rows.length * st.lh < bottom - MARGIN.top) {
-      flush();
-      before = 0;
+    const room = (): number => Math.floor((bottom - (y + before)) / st.lh);
+    // un encabezado (día, título y rótulo de ficha) necesita lugar para sí y un par de renglones de lo que sigue
+    const headingNeeds = st.keep ? rows.length * st.lh + 2 * STYLE.line.lh + STYLE.line.before : 0;
+    // un texto se corta entre hojas si al pie entran al menos dos renglones; si no, empieza en la hoja siguiente
+    const moves = cur.length && (st.keep ? y + before + headingNeeds > bottom : room() < Math.min(2, rows.length));
+    if (moves) {
+      // los encabezados que quedaban al pie se van con su texto: un título nunca queda solo al final de la hoja
+      const carried: Row[] = [];
+      if (!st.keep) while (cur.length && STYLE[cur[cur.length - 1]!.kind].keep && cur[cur.length - 1]!.kind !== 'chapter') carried.unshift(cur.pop()!);
+      if (cur.length) flush();
+      else y = MARGIN.top;
+      if (carried.length) {
+        const shift = carried[0]!.y - MARGIN.top;
+        for (const r of carried) cur.push({ ...r, y: r.y - shift });
+        const last = cur[cur.length - 1]!;
+        y = last.y + STYLE[last.kind].lh;
+        before = st.before;
+      } else before = 0;
     }
     y += before;
     for (const r of rows) {

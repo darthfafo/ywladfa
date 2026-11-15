@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Game } from '@/core/Game';
 import { createInitialState, stateForNextLevel } from '@/core/GameState';
 import { paginate } from '@/render3d/BookView3D';
+import { registry } from '@/core/Registry';
 
 /**
  * La libreta como bitácora: cada decisión con lo que el personaje cree que va a
@@ -105,5 +106,25 @@ describe('la libreta: bitácora del viaje', () => {
       const full = p.rows.length && p.rows[p.rows.length - 1]!.y > 928 * 0.6;
       if (p.rows.some((r) => r.kind === 'chapter') || full) expect(p.scale ?? 1, p.rows[0]?.text).toBe(1);
     }
+  });
+
+  it('un título nunca queda solo al pie de una hoja: se va con su texto', () => {
+    const sized = (font: string, t: string): number => t.length * Number(/(\d+)px/.exec(font)![1]) * 0.5;
+    // la libreta del Nivel 1 con el Códice entero (muchas fichas: muchos cortes de hoja posibles)
+    const g = level1Done();
+    for (const d of [1, 2, 3]) g.journal.write(d);
+    g.state.codex = registry.codex.map((c) => c.id);
+    const blocks = g.journal.bookBlocks();
+    const { pages } = paginate(blocks, sized);
+    const headings = ['day', 'codex-title', 'codex-label'];
+    pages.forEach((p, i) => {
+      if (i === pages.length - 1 || !p.rows.length) return;
+      const last = p.rows[p.rows.length - 1]!;
+      expect(headings, `hoja ${i + 1} termina en «${last.text}»`).not.toContain(last.kind);
+    });
+    // y no se pierde nada al mover encabezados de hoja
+    const words = (t: string) => t.split(/\s+/).filter(Boolean).length;
+    const upper = (b: { kind: string; text: string }) => (b.kind === 'codex-label' ? b.text.toUpperCase() : b.text);
+    expect(pages.reduce((n, p) => n + p.rows.reduce((m, r) => m + words(r.text), 0), 0)).toBe(blocks.reduce((n, b) => n + words(upper(b)), 0));
   });
 });
