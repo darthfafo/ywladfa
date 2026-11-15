@@ -79,4 +79,31 @@ describe('la libreta: bitácora del viaje', () => {
     const inPages = pages.reduce((n, p) => n + p.rows.reduce((m, r) => m + words(r.text), 0), 0);
     expect(inPages).toBe(inBlocks);
   });
+
+  it('una hoja con poco texto agranda la letra, sin pasarse del pie; las llenas quedan igual', () => {
+    // un ancho que depende del tamaño de la letra (como el canvas de verdad)
+    const sized = (font: string, t: string): number => t.length * Number(/(\d+)px/.exec(font)![1]) * 0.5;
+    const line = 'El viento no paró en todo el día y el agua de los barriles ya sabe a madera vieja.';
+    const blocks = [
+      { kind: 'chapter' as const, text: 'La travesía', pageBreak: true },
+      { kind: 'day' as const, text: 'Jornada 1' },
+      ...Array.from({ length: 14 }, () => ({ kind: 'line' as const, text: line })),
+      { kind: 'thought' as const, text: 'Lo que quedó en la playa nos va a faltar en algún momento. No sé cuándo.', pageBreak: true },
+      { kind: 'chapter' as const, text: 'El valle', pageBreak: true },
+      { kind: 'day' as const, text: 'Jornada 1' },
+    ];
+    const { pages } = paginate(blocks, sized);
+    const sola = pages.find((p) => p.rows.length && p.rows.every((r) => r.kind === 'thought'));
+    expect(sola, 'el pensamiento quedó solo en una hoja').toBeTruthy();
+    expect(sola!.scale).toBeGreaterThan(1);
+    // no se sale de la hoja y no se pierde ni una palabra
+    const last = sola!.rows[sola!.rows.length - 1]!;
+    expect(last.y + 36 * sola!.scale!).toBeLessThan(928 - 96);
+    expect(sola!.rows.map((r) => r.text).join(' ')).toBe(blocks.find((b) => b.kind === 'thought')!.text);
+    // las hojas de capítulo y las llenas, con la letra de siempre
+    for (const p of pages) {
+      const full = p.rows.length && p.rows[p.rows.length - 1]!.y > 928 * 0.6;
+      if (p.rows.some((r) => r.kind === 'chapter') || full) expect(p.scale ?? 1, p.rows[0]?.text).toBe(1);
+    }
+  });
 });

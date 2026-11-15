@@ -57,11 +57,23 @@ interface Row {
   kind: BookBlock['kind'];
   text: string;
   y: number;
+  /** de qué bloque sale (para volver a armar la hoja con otra letra) */
+  block: number;
 }
 
 export interface BookPage {
   rows: Row[];
+  /** tamaño de la letra de esta hoja (1 = normal): una hoja con poco texto lo agranda */
+  scale?: number;
 }
+
+/** Una hoja con menos de esto ocupado agranda la letra, hasta `max`, sin pasar de `fill`. */
+const SPARSE = { below: 0.45, max: 1.5, step: 0.05, fill: 0.72 };
+/** Lo que no se agranda: la portada y las hojas de capítulo tienen su propia composición. */
+const FIXED_KINDS: ReadonlyArray<BookBlock['kind']> = ['title', 'chapter'];
+
+/** La letra de un estilo a otro tamaño. */
+const fontAt = (st: Style, scale = 1): string => (scale === 1 ? st.font : st.font.replace(/(\d+)px/, (_, n: string) => `${Math.round(Number(n) * scale)}px`));
 
 /** Arma las hojas: corta el texto en renglones con las medidas reales de la letra. */
 export function paginate(blocks: BookBlock[], measure: (font: string, text: string) => number): { pages: BookPage[]; anchors: Record<string, number> } {
@@ -95,12 +107,59 @@ export function paginate(blocks: BookBlock[], measure: (font: string, text: stri
     y += before;
     for (const r of rows) {
       if (y + st.lh > bottom && cur.length) flush();
-      cur.push({ kind: b.kind, text: r, y });
+      cur.push({ kind: b.kind, text: r, y, block: bi });
       y += st.lh;
     }
   });
   if (cur.length || !pages.length) flush();
+  for (const p of pages) enlargeIfSparse(p, measure);
   return { pages, anchors };
+}
+
+/** Lo ocupado de una hoja (0..1), de la primera línea al pie. */
+function fillOf(rows: Row[], scale: number): number {
+  const last = rows[rows.length - 1];
+  if (!last) return 0;
+  return (last.y + STYLE[last.kind].lh * scale - MARGIN.top) / (TH - MARGIN.bottom - MARGIN.top);
+}
+
+/**
+ * Una hoja con poco texto (el último pensamiento de una jornada, antes de un
+ * capítulo nuevo) quedaba casi vacía con la letra chica: se vuelve a armar con
+ * la letra más grande, la mayor que entra sin llenar la hoja.
+ */
+function enlargeIfSparse(page: BookPage, measure: (font: string, text: string) => number): void {
+  const rows = page.rows;
+  if (!rows.length || rows.some((r) => FIXED_KINDS.includes(r.kind)) || fillOf(rows, 1) >= SPARSE.below) return;
+  // el texto de cada bloque que cae en esta hoja (un bloque puede venir cortado de la anterior)
+  const parts: Array<{ kind: BookBlock['kind']; text: string; block: number }> = [];
+  for (const r of rows) {
+    const last = parts[parts.length - 1];
+    if (last?.block === r.block) last.text += ` ${r.text}`;
+    else parts.push({ kind: r.kind, text: r.text, block: r.block });
+  }
+  const layout = (scale: number): Row[] => {
+    const out: Row[] = [];
+    let y = MARGIN.top;
+    for (const part of parts) {
+      const st = STYLE[part.kind];
+      if (out.length) y += st.before * scale;
+      const maxW = TW - MARGIN.left - MARGIN.right - (st.indent ?? 0);
+      for (const t of wrap(part.text, (x) => measure(fontAt(st, scale), x), maxW)) {
+        out.push({ kind: part.kind, text: t, y, block: part.block });
+        y += st.lh * scale;
+      }
+    }
+    return out;
+  };
+  for (let scale = SPARSE.max; scale > 1; scale = Math.round((scale - SPARSE.step) * 100) / 100) {
+    const out = layout(scale);
+    if (fillOf(out, scale) <= SPARSE.fill) {
+      page.rows = out;
+      page.scale = scale;
+      return;
+    }
+  }
 }
 
 /** Corta un texto en renglones que entran en `maxW`. */
@@ -475,11 +534,13 @@ function paperTexture(page: BookPage | null, index: number, _title: string): THR
     c.lineTo(MARGIN.left - 18, TH - 30);
     c.stroke();
     c.textBaseline = 'alphabetic';
+    const k = page.scale ?? 1;
     for (const r of page.rows) {
       const st = STYLE[r.kind];
-      c.font = st.font;
+      const lh = st.lh * k;
+      c.font = fontAt(st, k);
       c.fillStyle = st.color;
-      const baseline = r.y + st.lh * 0.78;
+      const baseline = r.y + lh * 0.78;
       const x0 = MARGIN.left + (st.indent ?? 0);
       if (st.align === 'center') {
         c.textAlign = 'center';
@@ -489,11 +550,11 @@ function paperTexture(page: BookPage | null, index: number, _title: string): THR
       if (r.kind === 'thought') {
         // lo que el personaje cree: con otra tinta y una raya al costado
         c.fillStyle = 'rgba(138,74,46,0.45)';
-        c.fillRect(MARGIN.left + 6, r.y + 6, 3, st.lh - 6);
+        c.fillRect(MARGIN.left + 6, r.y + 6, 3, lh - 6);
       }
       if (r.kind === 'day') {
         c.fillStyle = 'rgba(122,59,34,0.35)';
-        c.fillRect(MARGIN.left, r.y + st.lh - 4, TW - MARGIN.left - MARGIN.right, 2);
+        c.fillRect(MARGIN.left, r.y + lh - 4, TW - MARGIN.left - MARGIN.right, 2);
       }
       if (r.kind === 'chapter') {
         // filete con rombo, como la portada del juego
