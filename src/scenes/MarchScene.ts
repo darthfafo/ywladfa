@@ -56,7 +56,16 @@ export class MarchScene extends Phaser.Scene {
   private trayEl!: HTMLDivElement;
   private captionEl!: HTMLDivElement;
   private cardEl!: HTMLDivElement;
-  private captionTimer: Phaser.Time.TimerEvent | null = null;
+  /**
+   * Lo que se cuenta en el camino (líneas de la columna, ilustraciones, la noche,
+   * los rodeos): nada se cierra solo. Cada mensaje frena la columna y queda hasta
+   * que el jugador toca (o aprieta espacio/enter); si llegan varios juntos, salen
+   * de a uno y en orden, y las decisiones esperan a que se hayan leído.
+   */
+  private msgs: Msg[] = [];
+  private msgOpen = false;
+  /** cierra el mensaje abierto (lo usa el toque, el espacio y el enter) */
+  private advanceMsg: (() => void) | null = null;
   private font = RETRO_FONT.replace(/"/g, "'");
   /** ¿Es el nivel de la partida (true) o el prototipo suelto (?marcha)? */
   private integrated = false;
@@ -100,7 +109,14 @@ export class MarchScene extends Phaser.Scene {
     const draw = () =>
       this.view?.render(this.game.loop.delta, this.march.state.pos, this.columnXs(), { inland: this.march.inland(), storm: this.march.stormHere() ? 1 : 0 });
     this.game.events.on(Phaser.Core.Events.POST_RENDER, draw);
+    // la escena se reutiliza: la cola de mensajes arranca vacía cada vez
+    this.msgs = [];
+    this.msgOpen = false;
+    this.advanceMsg = null;
+    this.mariSaidDay = 0;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.offTap?.();
+      this.offTap = null;
       this.game.events.off(Phaser.Core.Events.POST_RENDER, draw);
       this.view?.destroy();
       this.view = null;
@@ -131,7 +147,8 @@ export class MarchScene extends Phaser.Scene {
     kb?.on('keydown-ONE', () => this.setPace('aflojar'));
     kb?.on('keydown-TWO', () => this.setPace('normal'));
     kb?.on('keydown-THREE', () => this.setPace('apurar'));
-    kb?.on('keydown-SPACE', () => this.toggleWait());
+    kb?.on('keydown-SPACE', () => (this.msgOpen ? this.advanceMsg?.() : this.toggleWait()));
+    kb?.on('keydown-ENTER', () => this.advanceMsg?.());
     kb?.on('keydown-J', () => this.openJournal());
     // la libreta se dibuja encima: el HUD, la bandeja y los textos de la marcha se esconden mientras está abierta
     busOn(this, 'ui:hud-visible', ({ visible }) => {
@@ -158,37 +175,79 @@ export class MarchScene extends Phaser.Scene {
       [{ label: 'Salir de Punta Cuevas', onPick: () => this.hideCard() }],
     );
     this.paused = true;
-    if (!this.illustrate('marcha_partida', 'Agosto de 1865. Se sale de Punta Cuevas en grupos de quince o veinte, con un par de caballos de carga. A pie, todos.', intro)) intro();
+    this.say({ text: 'Agosto de 1865. Se sale de Punta Cuevas en grupos de quince o veinte, con un par de caballos de carga. A pie, todos.', art: 'marcha_partida', then: intro, ownResume: true });
   }
 
   /**
-   * Una ilustración del nivel (src/assets/scenes/<id>.png, prompts en
-   * docs/09-arte-nivel-02.txt) sobre el mundo, con su texto abajo y la marcha en
-   * pausa; se cierra sola o con un toque. Si el PNG todavía no existe devuelve
-   * false y no hace nada: el que llama sigue como si no hubiera ilustración.
+   * Un mensaje del camino a la cola: texto (y quién lo dice) y, si existe el PNG,
+   * su ilustración (src/assets/scenes/<art>.png, docs/09-arte-nivel-02.txt) sobre
+   * el mundo. `then`: lo que pasa al cerrarlo. `ownResume`: `then` se ocupa de
+   * volver a caminar (ej. la noche, que antes aclara el fundido).
    */
-  private illustrate(id: string, text: string, then: () => void, ms = 5200): boolean {
-    if (!hasSceneArt(id)) return false;
-    this.paused = true;
-    const cine = playCinematic(this, id, { x: 0, y: VIEW.world.y, w: VIEW.width, h: VIEW.world.h }, 55);
-    this.caption('', text, ms);
-    let done = false;
-    const finish = (): void => {
-      if (done) return;
-      done = true;
-      cine.close();
-      this.captionTimer?.remove();
-      this.captionEl.innerHTML = '';
-      then();
-    };
-    this.time.delayedCall(ms, finish);
-    this.time.delayedCall(INPUT_GUARD.choiceMs, () => this.input.once('pointerdown', finish));
-    return true;
+  private say(m: Msg): void {
+    this.msgs.push(m);
+    if (!this.msgOpen) this.nextMsg();
   }
+
+  /** Algo que tiene que esperar a que se lean los mensajes (una decisión, la noche, la llegada). */
+  private later(fn: () => void): void {
+    if (this.msgOpen) this.msgs.push({ text: '', then: fn, ownResume: true });
+    else fn();
+  }
+
+  private nextMsg(): void {
+    const m = this.msgs.shift();
+    if (!m) {
+      this.msgOpen = false;
+      this.advanceMsg = null;
+      return;
+    }
+    this.msgOpen = true;
+    // sin texto: es algo que esperaba su turno (later)
+    if (!m.text) {
+      m.then?.();
+      this.nextMsg();
+      return;
+    }
+    this.paused = true;
+    const cine = m.art && hasSceneArt(m.art) ? playCinematic(this, m.art, { x: 0, y: VIEW.world.y, w: VIEW.width, h: VIEW.world.h }, 55) : null;
+    this.caption(m.who ?? '', m.text);
+    const shownAt = performance.now();
+    let done = false;
+    const close = (): void => {
+      // un toque de más (o el mismo que cerró lo anterior) no saltea un mensaje sin leer
+      if (done || performance.now() - shownAt < (cine ? INPUT_GUARD.choiceMs : INPUT_GUARD.dialogueStartMs)) return;
+      done = true;
+      this.offTap?.();
+      this.offTap = null;
+      cine?.close();
+      this.captionEl.innerHTML = '';
+      this.msgOpen = false;
+      this.advanceMsg = null;
+      // lo que sigue puede sumar mensajes (ej. después de un extravío, quién salió a buscarte)
+      m.then?.();
+      if (this.msgOpen) return;
+      if (this.msgs.length) this.nextMsg();
+      else if (!m.ownResume) this.resume();
+    };
+    this.advanceMsg = close;
+    // un toque en cualquier lado, salvo en un botón (cambiar el paso no cierra el mensaje); en la ventana y no
+    // en el canvas: encima del mundo hay capas HTML (la ilustración, la tarjeta) que se quedan con el toque
+    const onTap = (ev: PointerEvent): void => {
+      if ((ev.target as HTMLElement | null)?.closest?.('button')) return;
+      // con la libreta abierta encima, los toques son de la libreta
+      if (this.scene.isActive('Journal')) return;
+      close();
+    };
+    window.addEventListener('pointerdown', onTap);
+    this.offTap = () => window.removeEventListener('pointerdown', onTap);
+  }
+
+  private offTap: (() => void) | null = null;
 
   /** Vuelve a caminar, salvo que haya una decisión abierta. */
   private resume(): void {
-    if (!this.cardEl.innerHTML) this.paused = false;
+    if (!this.cardEl.innerHTML && !this.msgOpen) this.paused = false;
   }
 
   /** Lo que la marcha hereda del Nivel 1 (en el juego; suelto, nada). */
@@ -245,36 +304,39 @@ export class MarchScene extends Phaser.Scene {
   private onEvent(e: MarchEvent): void {
     switch (e.type) {
       case 'line':
-        this.caption(registry.speakerName(e.speaker, this.playerName), e.text);
+        this.say({ who: registry.speakerName(e.speaker, this.playerName), text: e.text });
         break;
       case 'turn':
         this.view?.setTurn(e.turn);
         break;
       case 'obstacle':
-        this.obstacle(e.obstacle);
+        this.later(() => this.obstacle(e.obstacle));
         break;
       case 'night':
-        this.night(e.day, e.option);
+        this.later(() => this.night(e.day, e.option));
         break;
       case 'lowMorale':
         // sin ánimo: el grupo camina más lento y se nota
-        this.caption('Richard Jones Berwyn', '¿Cuánto falta? Nadie dijo que iba a ser así.', 4200);
+        this.say({ who: 'Richard Jones Berwyn', text: '¿Cuánto falta? Nadie dijo que iba a ser así.' });
         if (this.integrated) game.marchDecision('moral_baja', 'si', this.march.state.day);
         break;
       case 'scene':
-        this.illustrate(e.id, e.text, () => this.resume());
+        this.say({ text: e.text, art: e.id });
         break;
       case 'mariBehind':
         // la primera vez, con ilustración si existe
-        if (this.mariShown || !this.illustrate('marcha_mari', 'Tu madre se sienta en un bulto. No da un paso más. La columna para a esperarla.', () => this.resume()))
-          this.caption('', 'Tu madre se quedó atrás. La columna para a esperarla.');
+        // frena la columna hasta que se lea: una vez por jornada (las demás, lo dice la bandeja en rojo)
+        if (this.mariSaidDay === this.march.state.day) break;
+        if (this.mariShown) this.say({ text: 'Tu madre se quedó atrás. La columna para a esperarla.' });
+        else this.say({ text: 'Tu madre se sienta en un bulto. No da un paso más. La columna para a esperarla.', art: 'marcha_mari' });
         this.mariShown = true;
+        this.mariSaidDay = this.march.state.day;
         break;
       case 'thirst':
-        this.caption('Lewis Jones', 'Se terminó el agua. Despacio, y nadie se separa.');
+        this.say({ who: 'Lewis Jones', text: 'Se terminó el agua. Despacio, y nadie se separa.' });
         break;
       case 'arrived':
-        this.arrived();
+        this.later(() => this.arrived());
         break;
       case 'skip':
         break;
@@ -357,8 +419,8 @@ export class MarchScene extends Phaser.Scene {
       rest.forEach((x) => this.onEvent(x));
       if (skip?.kind !== 'lost') return;
       // con vínculo, alguien salió a buscarte (Nivel 1: los fogones)
-      if (skip.helper) this.caption(registry.speakerName(skip.helper, this.playerName), 'Te vi dar vueltas y salí a buscarte. Por acá: allá está el sur.', 4500);
-      else this.caption('Lewis Jones', o.lostLine ?? 'Íbamos para cualquier lado.', 4500);
+      if (skip.helper) this.say({ who: registry.speakerName(skip.helper, this.playerName), text: 'Te vi dar vueltas y salí a buscarte. Por acá: allá está el sur.' });
+      else this.say({ who: 'Lewis Jones', text: o.lostLine ?? 'Íbamos para cualquier lado.' });
     };
     if (skip) this.fadeThrough(this.skipText(o, skip.kind), after, skip.kind === 'lost' ? 'marcha_perdidos' : undefined);
     else after();
@@ -366,6 +428,8 @@ export class MarchScene extends Phaser.Scene {
 
   private hungerTonight = false;
   private mariShown = false;
+  /** la jornada en que se avisó que tu madre se quedó atrás */
+  private mariSaidDay = 0;
 
   private night(day: number, option: { id: string }): void {
     this.paused = true;
@@ -394,12 +458,10 @@ export class MarchScene extends Phaser.Scene {
         const back = (): void => {
           this.paused = true;
           this.view?.setTurn(this.march.state.turn);
-          this.tweens.add({ targets: this.fade, fillAlpha: 0, duration: 1100, onComplete: () => (this.paused = false) });
+          this.tweens.add({ targets: this.fade, fillAlpha: 0, duration: 1100, onComplete: () => this.resume() });
         };
         // el fogón a cielo abierto, si ya está la ilustración (no si caminaron); si no, en negro con el texto
-        if (option.id !== 'luna' && this.illustrate('marcha_noche', text, back, 6000)) return;
-        this.caption('', text, 4200);
-        this.time.delayedCall(3600, back);
+        this.say({ text, art: option.id !== 'luna' ? 'marcha_noche' : undefined, then: back, ownResume: true });
       },
     });
   }
@@ -413,11 +475,9 @@ export class MarchScene extends Phaser.Scene {
       onComplete: () => {
         const back = (): void => {
           after();
-          this.tweens.add({ targets: this.fade, fillAlpha: 0, duration: 700, onComplete: () => (this.paused = false) });
+          this.tweens.add({ targets: this.fade, fillAlpha: 0, duration: 700, onComplete: () => this.resume() });
         };
-        if (art && this.illustrate(art, text, back)) return;
-        this.caption('', text, 2600);
-        this.time.delayedCall(1800, back);
+        this.say({ text, art, then: back, ownResume: true });
       },
     });
   }
@@ -555,25 +615,23 @@ export class MarchScene extends Phaser.Scene {
 
   // ---------------------------------------------------------------- texto
 
-  /** Línea de alguien de la columna (o del narrador), abajo del mundo, sin frenar la marcha. */
-  private caption(who: string, text: string, ms = 3800): void {
-    this.captionTimer?.remove();
+  /** El texto del mensaje abierto, abajo del mundo: queda hasta que se toque (nextMsg). */
+  private caption(who: string, text: string): void {
     this.captionEl.innerHTML =
       `<div style="box-sizing:border-box; margin:0 10px; padding:7px 9px; font-family:${this.font}; font-size:7px; line-height:1.7; ` +
-      `color:#EAE8E0; background:rgba(14,20,22,0.72); border:1px solid rgba(217,168,69,0.35); pointer-events:none; ` +
+      `color:#EAE8E0; background:rgba(14,20,22,0.78); border:1px solid rgba(217,168,69,0.35); pointer-events:none; ` +
       `opacity:0; transition:opacity .4s;">` +
+      `<style>@keyframes msg-tap { 0%,100% { opacity:.35 } 50% { opacity:1 } }</style>` +
       (who ? `<div style="color:#D9A845; margin-bottom:3px;">${who}</div>` : '') +
-      `${text}</div>`;
+      `${text}` +
+      `<div style="text-align:right; margin-top:4px; font-size:6px; color:#D9A845; animation: msg-tap 1.6s ease-in-out infinite;">Tocá para seguir ›</div></div>`;
     const box = this.captionEl.firstElementChild as HTMLElement;
     requestAnimationFrame(() => (box.style.opacity = '1'));
-    this.captionTimer = this.time.delayedCall(ms, () => (box.style.opacity = '0'));
   }
 
   /** Tarjeta en el medio del mundo (inicio, obstáculos, llegada). Mientras está, la marcha se detiene. */
   private showCard(title: string, body: string, options: Array<{ label: string; detail?: string; disabled?: boolean; onPick: () => void }>): void {
     this.paused = true;
-    this.captionTimer?.remove();
-    this.captionEl.innerHTML = '';
     const f = this.font;
     // con muchas opciones (qué dejar en la estepa) todo más apretado: tiene que entrar
     // en la franja del mundo, y en el celular no hay scroll (main.ts bloquea el touchmove)
@@ -618,11 +676,14 @@ export class MarchScene extends Phaser.Scene {
 
   private hideCard(): void {
     this.cardEl.innerHTML = '';
-    this.paused = false;
+    this.resume();
   }
 
   private dom(x: number, y: number, w: number, h: number, depth: number): HTMLDivElement {
     const el = this.add.dom(x, y, 'div', `width:${w}px; height:${h}px; pointer-events:none;`).setOrigin(0, 0).setDepth(depth);
+    // Phaser reescribe `pointer-events` en cada cuadro con esta propiedad (por defecto 'auto'): con 'auto', la
+    // tarjeta vacía (270×352, encima del mundo) se comía todos los toques y nada de abajo los recibía
+    el.pointerEvents = 'none';
     const node = el.node as HTMLDivElement;
     // los hijos con botones sí reciben toques
     node.style.pointerEvents = 'none';
@@ -630,6 +691,15 @@ export class MarchScene extends Phaser.Scene {
     observer.observe(node, { childList: true, subtree: true });
     return node;
   }
+}
+
+/** Un mensaje del camino (ver MarchScene.say). */
+interface Msg {
+  who?: string;
+  text: string;
+  art?: string;
+  then?: () => void;
+  ownResume?: boolean;
 }
 
 /** Botón de vidrio con filete dorado (el estilo de todo el juego). */
