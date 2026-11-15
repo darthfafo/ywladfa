@@ -205,6 +205,43 @@ class SfxEngine {
     this.noiseBurst({ dur: 0.12, freq: 1400, q: 1, type: 'bandpass', gain: 0.08 * AUDIO.ui, attack: 0.01, at: 0.16 });
   }
 
+  /**
+   * Un caballo que relincha a lo lejos: un tono que sube y baja temblando, con un
+   * soplido de ruido. `level` 0..1: qué tan cerca (el toldo, Nivel 3).
+   */
+  neigh(level = 1): void {
+    const c = this.ctx;
+    if (!c || !this.master || level <= 0) return;
+    const t = c.currentTime;
+    const osc = c.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(520, t);
+    osc.frequency.linearRampToValueAtTime(880, t + 0.18);
+    osc.frequency.linearRampToValueAtTime(700, t + 0.5);
+    osc.frequency.linearRampToValueAtTime(380, t + 1.1);
+    const vib = c.createOscillator();
+    vib.frequency.value = 18;
+    const vibAmt = c.createGain();
+    vibAmt.gain.value = 40;
+    vib.connect(vibAmt).connect(osc.frequency);
+    const f = c.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 1100;
+    f.Q.value = 1.2;
+    const g = c.createGain();
+    const peak = 0.12 * level * AUDIO.ambience;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(peak, t + 0.08);
+    g.gain.setValueAtTime(peak, t + 0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+    osc.connect(f).connect(g).connect(this.master);
+    osc.start(t);
+    vib.start(t);
+    osc.stop(t + 1.25);
+    vib.stop(t + 1.25);
+    this.noiseBurst({ dur: 0.35, freq: 600, q: 0.8, gain: 0.25 * level * AUDIO.ambience, attack: 0.05, at: 1.1 });
+  }
+
   /** trueno lejano (relámpago de la portada) */
   thunder(): void {
     this.noiseBurst({ dur: 2.2, freq: 120, type: 'lowpass', gain: 0.6 * AUDIO.ambience, attack: 0.25, at: 0.3 });

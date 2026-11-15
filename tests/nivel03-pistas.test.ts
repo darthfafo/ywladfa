@@ -43,7 +43,7 @@ describe('Nivel 3: lo que dice cada uno es una pista', () => {
     ['el rancho', { n3_bandera: true }, /rancho|barro|barda|fuerte|jornadas/i],
     ['esperar el río', { n3_bandera: true, n3_tiene_rancho: true }, /descans|fuego|fogón/i],
     ['rehacer', { n3_bandera: true, n3_crecida: true, n3_rehacer: 'techo' }, /arriba|río|marca/i],
-    ['el toldo', { n3_acto1: true, n3_invierno: true, n3_toldo: true }, /toldo|manta|manos|diccionario/i],
+    ['el toldo', { n3_acto1: true, n3_invierno: true, n3_toldo: true }, /humo|barda/i],
     ['la zanja', { n3_acto1: true, n3_acto2: true, n3_zanja: true }, /agua|río|chacra|compuerta|suelo|tramo/i],
   ];
   for (const [name, flags, re] of stages) {

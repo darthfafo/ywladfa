@@ -248,11 +248,13 @@ export class Nivel03Script implements LevelScript {
     };
   }
 
-  update(): void {
+  update(delta = 0): void {
     // la bandera en el mástil, desde la escena de Murga
     if (!this.flag && game.flags.is('n3_bandera')) this.raiseFlag();
-    // el toldo, desde que llegaron (abril de 1866)
+    // el toldo, desde que llegaron (abril de 1866); se levanta si el trato no fue justo
     if (!this.toldo && game.flags.is('n3_toldo')) this.pitchToldo();
+    this.syncToldo();
+    this.hearHorses(delta);
     this.updateZanjaGhost();
     const kind = this.job;
     for (const [k, g] of Object.entries(this.ghosts)) {
@@ -379,7 +381,28 @@ export class Nivel03Script implements LevelScript {
     this.flag = this.host.scene.add.image((fort.x + 0.5 + 1.7) * 16, (fort.y + 0.5) * 16, 'prop_bandera').setDepth(8);
   }
 
-  /** El toldo de cuero de los cuatro que llegan, al oeste del fuerte, con sus caballos (render3d: marchModels.toldoCamp). */
+  /** Al cerrar el invierno, si el trato no fue justo, el toldo ya no está (y el del toldo tampoco: hiddenWhile). */
+  private syncToldo(): void {
+    if (!this.toldo) return;
+    const gone = game.flags.is('n3_acto2') && !game.flags.is('n3_vuelven');
+    if (this.toldo.visible === !gone) return;
+    this.toldo.setVisible(!gone);
+    this.host.syncSolid(this.toldo, !gone);
+  }
+
+  private horseMs = 0;
+  /** Hasta el trato, los caballos del toldo se oyen relinchar: más fuerte cuanto más cerca (así se lo encuentra). */
+  private hearHorses(delta: number): void {
+    if (!this.toldo?.visible || game.flags.get('n3_trato') != null) return;
+    const cfg = registry.levelBalance('nivel-03').toldo as { oirseHasta: number; cadaSeg: number };
+    this.horseMs += delta;
+    if (this.horseMs < cfg.cadaSeg * 1000) return;
+    this.horseMs = 0;
+    const d = Math.hypot(this.toldo.x - this.host.player.x, this.toldo.y - this.host.player.y) / 16;
+    if (d < cfg.oirseHasta) sfx.neigh(1 - d / cfg.oirseHasta);
+  }
+
+  /** El toldo de cuero de los cuatro que llegan, al pie de la barda (lejos: se lo encuentra por el humo y los caballos) (render3d: marchModels.toldoCamp). */
   private pitchToldo(): void {
     const at = game.level.spawns.npcs.find((n) => n.id === 'npc_toldo');
     if (!at) return;

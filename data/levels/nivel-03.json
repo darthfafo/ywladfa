@@ -189,10 +189,11 @@
       },
       {
         "id": "npc_toldo",
-        "x": 49,
-        "y": 33,
+        "x": 30,
+        "y": 17,
         "day": "*",
-        "afterFlag": "n3_toldo"
+        "afterFlag": "n3_toldo",
+        "hiddenWhile": "flags.n3_acto2 == true && flags.n3_vuelven != true"
       },
       {
         "id": "npc_aaron",
@@ -324,7 +325,7 @@
     },
     {
       "requires": "flags.n3_toldo == true && flags.n3_trato == null",
-      "text": "Ir al toldo, junto al fuerte. Llevar algo para la manta."
+      "text": "Seguir el humo hacia la barda: alguien armó un toldo. Llevar algo para la manta."
     },
     {
       "requires": "flags.n3_gwilym_enfermo == true && flags.n3_gwilym == null",
@@ -473,7 +474,7 @@
       "requires": "flags.n3_invierno == true",
       "once": true,
       "turnCost": 0,
-      "note": "abril de 1866: cuatro personas arman un toldo junto al fuerte (docs/04 §1.3). El guion pone el toldo en el mapa con n3_toldo.",
+      "note": "abril de 1866: cuatro personas arman un toldo (docs/04 §1.3: «junto al fuerte»; en el juego, a un rato de caminata, al pie de la barda, para que haya que buscarlo: el humo y los caballos guían). El guion pone el toldo en el mapa con n3_toldo.",
       "action": {
         "dialogue": "d_n3_toldo"
       }

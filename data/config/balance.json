@@ -368,6 +368,11 @@
       "comment": "la crecida de 1865 (docs/04 §1.3): el río sube hasta este nivel y se lleva los ranchos y corrales más bajos",
       "level": 2.3
     },
+    "toldo": {
+      "comment": "el toldo lejos del campamento se encuentra por el humo y los caballos: se oyen relinchar cada `cadaSeg` segundos si el jugador está a menos de `oirseHasta` casillas (más fuerte cuanto más cerca), hasta el trato",
+      "oirseHasta": 40,
+      "cadaSeg": 7
+    },
     "invierno": {
       "comment": "el invierno de 1866 (acto II): la cosecha se perdió y se arranca con esto de comida, más lo que haya quedado en el depósito de Edwyn (n3_reserva_comida).",
       "comida": 6

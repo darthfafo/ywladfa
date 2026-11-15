@@ -338,6 +338,31 @@ export function toldo(seed: number, cuero?: { hide: number; seam: number }): THR
  */
 export function toldoCamp(): THREE.Group {
   const g = new THREE.Group();
+  // el fuego del toldo y su humo, alto, para que se vea desde lejos (así se lo encuentra)
+  const fuego = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.35, 5), new THREE.MeshBasicMaterial({ color: 0xe0903a }));
+  fuego.position.set(2.3, 0.18, -1.0);
+  g.add(fuego);
+  const humo = new THREE.Group();
+  humo.position.set(2.3, 0.3, -1.0);
+  for (let k = 0; k < 16; k++) {
+    const m = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(0.3, 0),
+      new THREE.MeshBasicMaterial({ color: PAL.bone, transparent: true, opacity: 0.35, depthWrite: false }),
+    );
+    m.userData.t = k / 16;
+    humo.add(m);
+  }
+  humo.name = 'humo';
+  g.add(humo);
+  g.userData.update = (time: number): void => {
+    // cada bocanada sube, se abre y se la lleva el viento del oeste
+    for (const m of humo.children as THREE.Mesh[]) {
+      const u = (time * 0.1 + (m.userData.t as number)) % 1;
+      m.position.set(u * u * 14, u * 9, -u * 1.5);
+      m.scale.setScalar(0.7 + u * 3.2);
+      (m.material as THREE.MeshBasicMaterial).opacity = 0.45 * (1 - u);
+    }
+  };
   // de cerca, el cuero claro de la marcha se leía como tablas: acá, cuero de guanaco más oscuro
   const t = toldo(1, { hide: PAL.clay, seam: PAL.clayDark });
   t.rotation.y = Math.PI; // la boca hacia el este, hacia el fuerte

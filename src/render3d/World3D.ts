@@ -721,7 +721,10 @@ export class World3D {
     if (key === 'prop_corral') return { kind: 'model', obj: corral() };
     if (key === 'prop_corral_ok') return { kind: 'model', obj: corral('ok') };
     if (key === 'prop_corral_mal') return { kind: 'model', obj: corral('mal') };
-    if (key === 'prop_toldo') return { kind: 'model', obj: toldoCamp() };
+    if (key === 'prop_toldo') {
+      const t = toldoCamp();
+      return { kind: 'model', obj: t, update: t.userData.update as (time: number) => void };
+    }
     if (key === 'prop_zanja_seca') return { kind: 'model', obj: zanjaTramo('seca') };
     if (key === 'prop_zanja_agua') return { kind: 'model', obj: zanjaTramo('agua') };
     if (key === 'prop_zanja_ok') return { kind: 'model', obj: zanjaTramo('ok') };

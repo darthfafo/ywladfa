@@ -216,4 +216,17 @@ describe('Nivel 3, acto II: el invierno de 1866', () => {
     expect(nada.comidaTras.trig_n3_manta).toBeLessThan(justo.comidaTras.trig_n3_manta!);
     expect(new Set([justo, ventaja, nada].map((w) => w.lines.find((l) => l.startsWith('El del toldo') || l.startsWith('Una mañana'))))).toHaveProperty('size', 3);
   });
+
+  it('al cerrar el invierno, el del toldo se va si el trato no fue justo; si fue justo, se queda (volvió con los suyos)', () => {
+    const toldo = level().spawns.npcs.find((n) => n.id === 'npc_toldo')!;
+    for (const [trato, seVa] of [['c_justo', false], ['c_ventaja', true], ['c_nada', true]] as const) {
+      const w = new Winter({ picks: { d_n3_manta: trato } }).play();
+      expect(w.g.flags.is('n3_acto2'), trato).toBe(true);
+      expect(w.g.flags.eval(toldo.hiddenWhile), trato).toBe(seVa);
+    }
+    // y lejos del campamento: hay que ir a buscarlo
+    const camp = level().spawns.campamento!;
+    expect(Math.hypot(toldo.x - camp.x, toldo.y - camp.y)).toBeGreaterThan(20);
+  });
 });
+

@@ -255,7 +255,7 @@
       "nodes": {
         "t0": {
           "speaker": "narrator",
-          "text": "Ese mismo día, junto al fuerte, cuatro personas arman un toldo de cuero. Atan los caballos y prenden un fuego.",
+          "text": "Ese mismo día sube humo del lado de la barda, al noroeste. A la tarde se oyen caballos: alguien armó un toldo de cuero.",
           "effects": [
             {
               "setFlag": {
@@ -267,7 +267,7 @@
         },
         "t1": {
           "speaker": "narrator",
-          "text": "Nadie sale de los ranchos. Desde las puertas, la colonia mira el toldo. Desde el toldo, los miran a ellos.",
+          "text": "Nadie se mueve del campamento. Desde acá, la colonia mira el humo. Desde allá, seguro que los miran a ellos.",
           "next": "t2"
         },
         "t2": {
@@ -278,7 +278,7 @@
         },
         "t3": {
           "speaker": "npc_lewis",
-          "text": "Si vinieran a hacernos daño, no armarían el toldo a la vista de todos. Vienen a tratar.",
+          "text": "Si vinieran a hacernos daño, no prenderían fuego a la vista de todos. Vienen a tratar.",
           "next": "t4"
         },
         "t4": {
@@ -961,7 +961,7 @@
         "p_trato": {
           "speaker": "npc_lewis",
           "condition": "flags.n3_toldo == true && flags.n3_trato == null",
-          "text": "Andá al toldo, al lado del fuerte. Llevá algo para poner sobre la manta.",
+          "text": "El humo sale del lado de la barda, al noroeste. Andá a ver, y llevá algo para poner sobre la manta.",
           "end": true
         },
         "p_corral": {
@@ -1017,7 +1017,7 @@
         "p_trato": {
           "speaker": "npc_mari",
           "condition": "flags.n3_toldo == true && flags.n3_trato == null",
-          "text": "Ellos también tienen hambre. Andá al toldo, pero con las manos vacías no.",
+          "text": "Ellos también tienen hambre. Seguí el humo, para el lado de la barda, pero con las manos vacías no.",
           "end": true
         },
         "p_corral": {
@@ -1073,7 +1073,7 @@
         "p_trato": {
           "speaker": "npc_edwyn",
           "condition": "flags.n3_toldo == true && flags.n3_trato == null",
-          "text": "Al toldo, no vayas con las manos vacías. Y volvé antes de que oscurezca.",
+          "text": "Si vas para la barda, donde sube el humo, no vayas con las manos vacías. Y volvé antes de que oscurezca.",
           "end": true
         },
         "p_corral": {
@@ -1129,7 +1129,7 @@
         "p_trato": {
           "speaker": "npc_matthews",
           "condition": "flags.n3_toldo == true && flags.n3_trato == null",
-          "text": "Ellos estaban acá antes que nosotros. Andá al toldo con respeto, y con algo en las manos.",
+          "text": "Ellos estaban acá antes que nosotros. El humo está hacia la barda: andá con respeto, y con algo en las manos.",
           "end": true
         },
         "p_corral": {
@@ -1185,7 +1185,7 @@
         "p_trato": {
           "speaker": "npc_berwyn",
           "condition": "flags.n3_toldo == true && flags.n3_trato == null",
-          "text": "Llevo el diccionario. Hablale vos al del toldo; yo busco las palabras.",
+          "text": "Llevo el diccionario. El toldo está hacia la barda, donde sube el humo: hablale vos, yo busco las palabras.",
           "end": true
         },
         "p_corral": {
