@@ -133,6 +133,7 @@ export class BootScene extends Phaser.Scene {
     const jump = import.meta.env.DEV ? new URLSearchParams(location.search).get('nivel') : null;
     if (jump) {
       makeProps(this);
+      makePortraits(this); // los que no tienen retrato real (Murga, Gwilym, el del toldo)
       game.replaceState(createInitialState(jump));
       this.scene.start(registry.level(jump).kind === 'march' ? 'March' : 'World');
       return;

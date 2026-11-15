@@ -124,6 +124,37 @@
       ]
     },
     {
+      "id": "npc_gwilym",
+      "name": "Gwilym",
+      "historical": false,
+      "age": 8,
+      "role": "Hijo de los vecinos",
+      "sprite": "npc_gwilym",
+      "portrait": "gwilym",
+      "languages": { "cym": 3, "spa": 0, "aon": 0 },
+      "trade": "ninguno",
+      "bond": 0,
+      "stats": { "health": 70, "morale": 80, "stamina": 80 },
+      "note": "Personaje ficticio (docs/10-plan-nivel-03.md, D5). Si en la playa o en la estepa quedó la harina, es el que corre riesgo en el invierno de 1866: dos jornadas de aviso, evitable con comida del trato. No representa a ningún chico real de la colonia.",
+      "voiceNote": "Pregunta todo. Cuenta los días que faltan para lo que sea.",
+      "level": ["nivel-03"]
+    },
+    {
+      "id": "npc_toldo",
+      "name": "El del toldo",
+      "historical": false,
+      "role": "Uno de los cuatro del toldo (abril de 1866)",
+      "sprite": "npc_toldo",
+      "portrait": "toldo",
+      "languages": { "cym": 0, "spa": 1, "aon": 3 },
+      "trade": "trueque",
+      "bond": 0,
+      "stats": { "health": 85, "morale": 70, "stamina": 85 },
+      "note": "Documentado: en abril de 1866 cuatro personas armaron un toldo junto al fuerte y se entendieron con los colonos por señas, un diccionario y lenguas mezcladas (docs/04 §1.3). Quiénes eran no lo dicen las fuentes: TODO(historia) — por eso no tiene nombre. Sus palabras y el trato son dramatizados.",
+      "voiceNote": "Habla aonikenk: para el jugador, bloques. Lo demás lo dicen las manos y lo que pone sobre la manta.",
+      "level": ["nivel-03"]
+    },
+    {
       "id": "npc_dafydd",
       "name": "Dafydd",
       "historical": false,

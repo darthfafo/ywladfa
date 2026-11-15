@@ -60,7 +60,7 @@ for (const [path, lvl] of loaded) {
     if (a.choice && !choiceIds.has(a.choice)) errs.push(`${id}/${t.id} → choice inexistente ${a.choice}`);
     if (a.tutorial && !tutorialIds.has(a.tutorial)) errs.push(`${id}/${t.id} → tutorial inexistente ${a.tutorial}`);
     if (a.giveItem && !items.has(a.giveItem)) errs.push(`${id}/${t.id} → ítem inexistente ${a.giveItem}`);
-    if (typeof t.turnCost !== 'number' || t.turnCost < 0 || t.turnCost > 4) errs.push(`${id}/${t.id} → turnCost fuera de rango`);
+    if (typeof t.turnCost !== 'number' || t.turnCost < 0 || t.turnCost > 8) errs.push(`${id}/${t.id} → turnCost fuera de rango (0 a 8: hasta dos jornadas)`);
   }
 
   for (const q of qst?.quests ?? [])

@@ -76,7 +76,7 @@ export class JournalSystem {
       const lv = e.level ?? s.progress.level;
       if (lv !== level) {
         level = lv;
-        const def = registry.hasLevel(lv) ? registry.level(lv) : null;
+        const def = registry.levelExists(lv) ? registry.level(lv) : null;
         out.push({ kind: 'chapter', text: def?.title ?? lv, pageBreak: true });
         if (def?.date) out.push({ kind: 'subtitle', text: def.date });
       }

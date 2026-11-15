@@ -1,0 +1,58 @@
+# Arte del Nivel 3 — «El valle» (actos I y II)
+
+Lo que hoy se dibuja por código y conviene reemplazar. Mismo sistema que los niveles
+anteriores:
+  - retratos: `src/assets/portraits/<id>_<neutral|tenso|calido>.png` (prefijo de estilo
+    de `docs/05-prompts-arte2.txt` §0);
+  - sprites: hoja de 4 direcciones como en `docs/06-prompts-sprites.txt` (24×32 px,
+    fondo transparente; el oeste se espeja del este);
+  - ilustraciones: PNG 3:4 vertical en `src/assets/scenes/<id>.png`, con el sufijo de
+    cinemáticas de `docs/05-prompts-arte2.txt` §2.
+
+Regla de representación (docs/04 §1.2, R2): el hombre del toldo es una persona, no un
+emblema. Sin rasgos de caricatura, sin penacho de plumas, sin armas en primer plano,
+sin gesto hostil. Ropa aonikenk del siglo XIX: quillango de guanaco (pelo hacia
+adentro, cara de cuero pintada con guardas geométricas rojas y negras), vincha, pelo
+largo, botas de potro. Mismo peso y dignidad que los colonos.
+
+---
+
+## Personajes (hoy son placeholders de código)
+
+### murga — Julián Murga (histórico, solo la bandera y el nombre)
+Retrato y sprite. Comandante del gobierno argentino, 1865: uniforme oscuro de militar
+de la época, gorra o kepí, bigote. Serio, formal, sin heroísmo.
+
+### gwilym — Gwilym (ficticio, 8 años)
+Retrato y sprite (lienzo chico, como Dafydd: 20×26 px). Chico galés de ocho años,
+flaco, gorra de lana, saco heredado que le queda grande, pantalón con remiendos.
+Expresión `calido`: curioso, preguntón. `tenso`: pálido, ojeras (el hambre del invierno).
+
+### toldo — «El del toldo» (ficticio, sin nombre: TODO(historia))
+Retrato y sprite. Hombre aonikenk adulto, pelo largo y negro suelto, vincha roja,
+quillango de guanaco sobre los hombros con la cara pintada hacia afuera en el borde.
+`neutral`: atento, mide al otro. `calido`: media sonrisa (el pan). `tenso`: cauteloso,
+no agresivo.
+
+---
+
+## Ilustraciones (todavía no conectadas: se conectan cuando existan)
+
+### cutscene_n3_toldo — El toldo junto al fuerte (abril de 1866)
+A small low tent of sewn guanaco hides pitched beside crumbling mud walls of an old
+fort on a river bank in Patagonia, late autumn light. Four people by a small fire,
+horses grazing. In the foreground, Welsh colonists in dark 1860s clothes watch from
+the doorways of mud huts. Mutual caution on both sides, nobody aggressive. Wide,
+quiet, cold.
+
+### cutscene_n3_manta — El trato sobre la manta
+Close view of a woven red blanket on dry ground: guanaco meat, two hides, a few rhea
+feathers on one side; a small sack of yerba, folded cloth and bread loaves on the
+other. Hands from both sides, one Welsh, one Aonikenk with a guanaco-hide cloak
+sleeve. A worn dictionary open on a knee. No faces needed. Respectful, transactional.
+
+### cutscene_n3_entierro — El entierro en la barda (solo si muere Gwilym)
+Winter dawn on a bare clay ridge above a river valley. A small group of Welsh
+colonists around a fresh grave marked by a simple wooden cross, heads bowed, some
+singing, breath visible in the cold. The river and the sea far below. Restrained,
+no melodrama, no visible body.

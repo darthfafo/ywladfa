@@ -146,7 +146,7 @@ barro, corral, zanja, compuerta, trigo.
 - **D4 → (a)**: el trato en el toldo es una escena guionada sobre la manta, con señas y el `▓` en aonikenk; dos o tres decisiones que mueven confianza y vínculos.
 - **D5 → (b)**: si quedó la harina, el que corre riesgo es **un personaje ficticio del grupo, con nombre** (a definir), con dos jornadas de aviso y evitable con comida del trato. Tu madre no muere en el Nivel 3.
 - **D2, D6, D7, D8 → confirmadas**: mapa recorrible; el `▓` en castellano (Murga) y en aonikenk (el toldo); 60-75 min; la retirada a Madryn como decisión de la colonia, con la decisión personal de empacar o ayudar a los Jenkins.
-- **Pendiente**: el nombre del personaje ficticio de D5.
+- **D5, el nombre**: **Gwilym**, ocho años, hijo de los vecinos. Ficticio.
 
 ---
 
@@ -159,7 +159,7 @@ barro, corral, zanja, compuerta, trigo.
 | 2 | ~~Generador `valle_chubut` con alturas~~ (hecho: `mapgen.ts` → `valleKind`, `valleHeight`, `valleyGrid`; `data/levels/nivel-03.json` en `draft`; `?nivel=nivel-03` en `npm run dev`) | Se camina el valle |
 | 3 | ~~`ConstructionSystem` + tests~~ (hecho: `src/systems/ConstructionSystem.ts`, `tests/construction.test.ts`, balance `nivel03.construccion`) | Pendiente, flujo e inundación probados sin navegador |
 | 4 | Acto I: llegada, bandera, rancho, crecida — **en buena parte hecho** (abajo) | Se construye y la crecida castiga lo que corresponde |
-| 5 | Acto II: invierno, el toldo, la manta, la enfermedad | Las promesas del N1 (harina, abrigo) se cumplen |
+| 5 | Acto II: invierno, el toldo, la manta, la enfermedad — **hecho** (abajo) | Las promesas del N1 (harina, abrigo) se cumplen |
 | 6 | Acto III: la zanja y la cosecha | La zanja se traza, se cava y llega el agua (o inunda) |
 | 7 | Cierre, diario, Códice, balance; encadenar con el N2 | Partida N1 → N2 → N3 de punta a punta |
 | 8 | Arte, sonido, pasada en celular | En un teléfono |
@@ -179,7 +179,20 @@ Hecho, en `src/levels/nivel03.ts` y `data/*/nivel-03.json`:
 - **La bandera** queda en el mástil del fuerte, flameando, desde la escena de Murga.
 - **El corral** se construye si se eligió rehacerlo; en las ruinas del fuerte no se construye.
 
-Pendiente: el acto II (el invierno de 1866) y el nombre del personaje ficticio de D5.
+## Estado del acto II (noviembre 2026)
+
+Hecho (`tests/nivel03-invierno.test.ts` recorre todos los caminos):
+- **El invierno** (salto de tiempo): pasa el verano, la cosecha se pierde (documentado). Abril de 1866 arranca con `nivel03.invierno.comida` más lo guardado en septiembre: guardar los víveres en el acto I se cobra acá.
+- **Gwilym** (si quedó la harina, en la playa o en la estepa): no se levanta; Matthews avisa que en dos días no pasa el invierno. Mientras está en cama no aparece en el mapa (`hiddenWhile`).
+- **El toldo** junto al fuerte (documentado: cuatro personas, abril de 1866): toldo de cuero, un caballo y la manta en 3D. Miedo de los dos lados; Edwyn pide las escopetas a mano, Lewis dice que vienen a tratar, Berwyn tiene un diccionario.
+- **El pan**: llevarles pan antes de pedir nada (menos comida hoy; sobre la manta se recuerda y hay una pierna de regalo) o esperar.
+- **La manta** (D4): «el del toldo» habla aonikenk (`▓`). Trato justo (vuelve con los suyos), con ventaja (más comida; documentado: «un caballo por unos pocos panes»; no vuelve) o nada. Ficha `cod_toldo_1866`.
+- **Lo que se le da a Gwilym**: caldo de la carne del trato, lo del depósito (tu madre come menos), guardarlo para tu madre, o —si no hay nada— nada. Dos días después se levanta o muere; en el entierro, el **coro** (`Sfx.choir`, una de las tres veces de la campaña, GDD §9).
+- **Tu madre** (si quedó el abrigo): recae con las escarchas; abrigarla con los cueros del trato (solo si hubo trato), quedarse con ella o seguir trabajando.
+- **Agosto de 1866**: el del toldo vuelve o no según el trato; del otro lado del río se instala el campamento grande (documentado).
+- Diario de cada paso con lo que piensa el personaje.
+
+Pendiente: el acto III (1867: la sequía, la decisión de irse a Madryn, la zanja de los Jenkins, la cosecha de marzo de 1868) y la viñeta de 1875. Arte de los personajes nuevos: `docs/11-arte-nivel-03.txt`.
 
 ## Fuentes de esta propuesta
 - MercoPress, «Welsh community mark 140 years in Patagonia» (30-VII-2005): Caer Antur; abril de 1866; los 80-90 tehuelches en la otra orilla; Aaron Jenkins en noviembre de 1867 y la cosecha de marzo.

@@ -14,7 +14,7 @@ import { CAM_3D, CAM_TALK, PAL, RENDER_3D_FX, TERRAIN_HEIGHT_3D,
 import { game } from '@/core/Game';
 import { baseTerrain, TERRAIN } from '@/util/mapgen';
 import { buildShip } from './ship';
-import { adobeHut, corral, flagPole, mudFort } from './marchModels';
+import { adobeHut, corral, flagPole, mudFort, toldoCamp } from './marchModels';
 import { TEX_TILES, terrainTexture } from './terrainTextures';
 
 /**
@@ -709,6 +709,7 @@ export class World3D {
     if (key === 'prop_corral') return { kind: 'model', obj: corral() };
     if (key === 'prop_corral_ok') return { kind: 'model', obj: corral('ok') };
     if (key === 'prop_corral_mal') return { kind: 'model', obj: corral('mal') };
+    if (key === 'prop_toldo') return { kind: 'model', obj: toldoCamp() };
     if (key === 'prop_bandera') {
       const f = flagPole();
       return { kind: 'model', obj: f.obj, update: f.update };

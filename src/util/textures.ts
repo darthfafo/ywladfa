@@ -114,7 +114,8 @@ export function makeTileset(scene: Phaser.Scene, key = 'tiles'): void {
   tex!.refresh();
 }
 
-export type HatStyle = 'copa' | 'boina';
+/** copa (galera), boina, o vincha: pelo largo con una banda en la frente, sin sombrero de colono */
+export type HatStyle = 'copa' | 'boina' | 'vincha';
 
 /** Arte real (hoja de 4 direcciones, docs/06-prompts-sprites.txt) si ya existe
  * para este personaje; si no, genera y devuelve el placeholder de siempre —
@@ -169,6 +170,14 @@ export function makeCharacter(
       // galera: ala fina + copa alta y angosta
       ctx.fillRect(ox + 4, 4, 8, 1);
       ctx.fillRect(ox + 6, 0, 4, 4);
+    } else if (hatStyle === 'vincha') {
+      // pelo largo y oscuro hasta los hombros, la vincha cruzando la frente
+      ctx.fillStyle = hex(PAL.ink);
+      ctx.fillRect(ox + 5, 3, 6, 2);
+      ctx.fillRect(ox + 4, 4, 1, 7);
+      ctx.fillRect(ox + 11, 4, 1, 7);
+      ctx.fillStyle = hex(hat);
+      ctx.fillRect(ox + 4, 5, 8, 1);
     } else {
       // boina: más achatada y ancha, con el copete corrido a un lado
       ctx.fillRect(ox + 4, 3, 8, 2);
@@ -204,6 +213,9 @@ export const NPC_COLORS: Record<string, [number, number, HatStyle]> = {
   npc_mari: [PAL.clayDark, PAL.clayPale, 'boina'],
   npc_dafydd: [PAL.soil2, PAL.coiron, 'boina'],
   npc_murga: [PAL.ink2, PAL.slate, 'boina'],
+  npc_gwilym: [PAL.moss, PAL.soil, 'boina'],
+  // quillango de guanaco (cuero claro con guarda), vincha
+  npc_toldo: [PAL.clayLight, PAL.blood, 'vincha'],
 };
 
 export const PC_COLORS: Record<string, [number, number, HatStyle]> = {
@@ -255,6 +267,13 @@ function makePortrait(
   if (hatStyle === 'copa') {
     ctx.fillRect(12, 7, 24, 3);
     ctx.fillRect(20, 0, 8, 7);
+  } else if (hatStyle === 'vincha') {
+    ctx.fillStyle = hex(PAL.ink);
+    ctx.fillRect(14, 4, 20, 7);
+    ctx.fillRect(11, 8, 4, 26);
+    ctx.fillRect(33, 8, 4, 26);
+    ctx.fillStyle = hex(hat);
+    ctx.fillRect(13, 12, 22, 3);
   } else {
     ctx.fillRect(10, 5, 28, 6);
     ctx.fillRect(32, 2, 6, 6);
@@ -295,6 +314,8 @@ export function makeProps(scene: Phaser.Scene): void {
   makeRect(scene, 'prop_corral_ok', 40, 30, PAL.moss, PAL.moss);
   makeRect(scene, 'prop_corral_mal', 40, 30, PAL.barranca, PAL.barranca);
   makeRect(scene, 'prop_bandera', 12, 16, PAL.seaPale, PAL.bone);
+  // Nivel 3, acto II: el toldo de cuero de los que llegan (en 3D, marchModels.toldoCamp)
+  makeRect(scene, 'prop_toldo', 44, 24, PAL.clayLight, PAL.clay);
   makeShip(scene);
 }
 

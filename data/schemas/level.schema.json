@@ -182,7 +182,8 @@
           "turnCost": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 4
+            "maximum": 8,
+            "description": "turnos que pasan al disparar: hasta dos jornadas (ej. los dos días de aviso de una enfermedad)"
           },
           "action": {
             "type": "object"

@@ -297,10 +297,10 @@ export function willow(seed: number): THREE.Group {
  * Toldo tehuelche: cueros de guanaco cosidos sobre palos, alto adelante y casi a
  * ras del suelo atrás. Visto de costado se lee la caída del techo.
  */
-export function toldo(seed: number): THREE.Group {
+export function toldo(seed: number, cuero?: { hide: number; seam: number }): THREE.Group {
   const g = new THREE.Group();
-  const hide = lambert(seed % 2 ? PAL.clayLight : PAL.clayPale);
-  const seam = lambert(PAL.clay);
+  const hide = lambert(cuero?.hide ?? (seed % 2 ? PAL.clayLight : PAL.clayPale));
+  const seam = lambert(cuero?.seam ?? PAL.clay);
   const pole = lambert(PAL.soil);
   const prof = new THREE.Shape();
   prof.moveTo(0, 0);
@@ -327,6 +327,47 @@ export function toldo(seed: number): THREE.Group {
   rack.position.set(-2.1, 0.45, 0.4 + hash(seed, 3) * 0.4);
   rack.rotation.y = 0.4;
   g.add(rack);
+  shadows(g);
+  return g;
+}
+
+/**
+ * Nivel 3, abril de 1866: el toldo que arman los cuatro que llegan junto al fuerte
+ * (docs/04 §1.3). El toldo de cuero, un caballo suelto pastando y, delante, la
+ * manta del trato con la carne y los cueros encima.
+ */
+export function toldoCamp(): THREE.Group {
+  const g = new THREE.Group();
+  // de cerca, el cuero claro de la marcha se leía como tablas: acá, cuero de guanaco más oscuro
+  const t = toldo(1, { hide: PAL.clay, seam: PAL.clayDark });
+  t.rotation.y = Math.PI; // la boca hacia el este, hacia el fuerte
+  t.scale.setScalar(1.2);
+  g.add(t);
+  // la boca del toldo: la cara alta queda abierta, oscura por dentro
+  const boca = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.05, 1.3), lambert(PAL.void));
+  boca.position.set(1.4 * 1.2 + 0.02, 0.53, 0);
+  g.add(boca);
+  const h = horse('suelto', 3);
+  h.obj.position.set(-0.9, 0, 2.3);
+  h.obj.rotation.y = 0.35;
+  h.neck.rotation.z = -1.1; // la cabeza abajo, pastando
+  h.obj.scale.setScalar(1.25);
+  g.add(h.obj);
+  // la manta: un rectángulo bajo con guarda, y encima la carne y un cuero doblado
+  const manta = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.03, 0.8), lambert(PAL.blood));
+  manta.position.set(2.5, 0.02, 0.3);
+  g.add(manta);
+  const guarda = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.035, 0.6), lambert(PAL.wheat));
+  guarda.position.set(2.5, 0.025, 0.3);
+  g.add(guarda);
+  const carne = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 0), lambert(PAL.barranca));
+  carne.scale.set(1.4, 0.6, 1);
+  carne.position.set(2.35, 0.1, 0.2);
+  g.add(carne);
+  const cuero = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 0.3), lambert(PAL.clayPale));
+  cuero.position.set(2.7, 0.07, 0.42);
+  cuero.rotation.y = 0.3;
+  g.add(cuero);
   shadows(g);
   return g;
 }

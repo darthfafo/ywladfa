@@ -6,7 +6,7 @@
   "subtitle": "Trerawson, a orillas del Chubut",
   "date": "Septiembre de 1865 – marzo de 1868",
   "next": "nivel-04",
-  "comment": "En armado (docs/10-plan-nivel-03.md): el acto I — la bandera y el barro (IX-1865). Guion en src/levels/nivel03.ts. draft: no se entra desde el Nivel 2 hasta que esté jugable.",
+  "comment": "En armado (docs/10-plan-nivel-03.md): el acto I — la bandera y el barro (IX-1865) — y el acto II — el invierno de 1866. Guion en src/levels/nivel03.ts. draft: no se entra desde el Nivel 2 hasta que esté jugable.",
   "map": {
     "file": "generado",
     "widthTiles": 64,
@@ -42,7 +42,7 @@
     ]
   },
   "schedule": {
-    "days": 5,
+    "days": 14,
     "turnsPerDay": 4
   },
   "zones": [
@@ -171,6 +171,20 @@
         "x": 54,
         "y": 22,
         "day": "*"
+      },
+      {
+        "id": "npc_gwilym",
+        "x": 33,
+        "y": 31,
+        "day": "*",
+        "hiddenWhile": "flags.n3_gwilym_murio == true || (flags.n3_gwilym_enfermo == true && flags.n3_gwilym_fin != true)"
+      },
+      {
+        "id": "npc_toldo",
+        "x": 49,
+        "y": 33,
+        "day": "*",
+        "afterFlag": "n3_toldo"
       }
     ],
     "gatherNodes": [
@@ -260,6 +274,26 @@
   },
   "objectives": [],
   "goals": [
+    {
+      "requires": "flags.n3_acto2 == true",
+      "text": "Lo que sigue —1867, la zanja— está en armado."
+    },
+    {
+      "requires": "flags.n3_acto1 == true && flags.n3_toldo != true",
+      "text": "Aguantar el invierno."
+    },
+    {
+      "requires": "flags.n3_toldo == true && flags.n3_trato == null",
+      "text": "Ir al toldo, junto al fuerte. Llevar algo para la manta."
+    },
+    {
+      "requires": "flags.n3_gwilym_enfermo == true && flags.n3_gwilym == null",
+      "text": "Gwilym, el de los vecinos, necesita comer."
+    },
+    {
+      "requires": "flags.n3_acto2 != true && flags.n3_acto1 == true",
+      "text": "Cuidar a los tuyos hasta que pase el frío."
+    },
     {
       "requires": "flags.n3_bandera != true",
       "text": "Ir al fuerte viejo: el comandante junta a todos."
@@ -369,6 +403,124 @@
       "turnCost": 0,
       "action": {
         "dialogue": "d_n3_acto1_fin"
+      }
+    },
+    {
+      "id": "trig_n3_invierno",
+      "type": "cutscene",
+      "requires": "flags.n3_acto1 == true",
+      "once": true,
+      "turnCost": 4,
+      "note": "salto de tiempo: el verano de 1865-66 y la cosecha perdida (docs/04 §1.3). El guion pone la comida del invierno al cerrarse el diálogo (balance nivel03.invierno + el depósito).",
+      "action": {
+        "dialogue": "d_n3_invierno"
+      }
+    },
+    {
+      "id": "trig_n3_gwilym_aviso",
+      "type": "cutscene",
+      "requires": "flags.n3_invierno == true && flags.n3_sin_harina == true",
+      "once": true,
+      "turnCost": 0,
+      "note": "la promesa de la harina (items.json): primera muerte posible, con dos jornadas de aviso (GDD §5.4) y evitable. Gwilym es ficticio (D5).",
+      "action": {
+        "dialogue": "d_n3_gwilym_aviso"
+      }
+    },
+    {
+      "id": "trig_n3_toldo",
+      "type": "cutscene",
+      "requires": "flags.n3_invierno == true",
+      "once": true,
+      "turnCost": 0,
+      "note": "abril de 1866: cuatro personas arman un toldo junto al fuerte (docs/04 §1.3). El guion pone el toldo en el mapa con n3_toldo.",
+      "action": {
+        "dialogue": "d_n3_toldo"
+      }
+    },
+    {
+      "id": "trig_n3_pan",
+      "type": "choice",
+      "requires": "flags.n3_toldo_visto == true",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "choice": "ch_n3_pan"
+      }
+    },
+    {
+      "id": "trig_n3_manta",
+      "type": "dialogue",
+      "manual": true,
+      "requires": "flags.n3_pan != null",
+      "once": true,
+      "turnCost": 1,
+      "note": "D4: el trato es una escena guionada sobre la manta; el trueque como sistema es del Nivel 7",
+      "action": {
+        "dialogue": "d_n3_manta"
+      }
+    },
+    {
+      "id": "trig_n3_gwilym_comida",
+      "type": "choice",
+      "requires": "flags.n3_gwilym_enfermo == true && flags.n3_trato != null",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "choice": "ch_n3_gwilym"
+      }
+    },
+    {
+      "id": "trig_n3_recaida",
+      "type": "cutscene",
+      "requires": "flags.n3_trato != null && flags.n3_sin_abrigo == true && (flags.n3_sin_harina != true || flags.n3_gwilym != null)",
+      "once": true,
+      "turnCost": 0,
+      "note": "la promesa del abrigo (items.json): enfermedad recurrente desde el Nivel 2",
+      "action": {
+        "dialogue": "d_n3_recaida"
+      }
+    },
+    {
+      "id": "trig_n3_cuidar",
+      "type": "choice",
+      "requires": "flags.n3_recaida_vista == true",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "choice": "ch_n3_cuidar"
+      }
+    },
+    {
+      "id": "trig_n3_gwilym_fin",
+      "type": "cutscene",
+      "requires": "flags.n3_gwilym != null && (flags.n3_sin_abrigo != true || flags.n3_cuidado != null)",
+      "once": true,
+      "turnCost": 8,
+      "note": "dos jornadas después del aviso (turnCost 8 = dos días)",
+      "action": {
+        "dialogue": "d_n3_gwilym_fin"
+      }
+    },
+    {
+      "id": "trig_n3_acto2_fin",
+      "type": "cutscene",
+      "requires": "flags.n3_trato != null && (flags.n3_sin_abrigo != true || flags.n3_cuidado != null) && (flags.n3_sin_harina != true || flags.n3_gwilym_fin == true)",
+      "once": true,
+      "turnCost": 4,
+      "action": {
+        "dialogue": "d_n3_acto2_fin"
+      }
+    },
+    {
+      "id": "trig_gwilym_charla",
+      "type": "dialogue",
+      "manual": true,
+      "requires": "flags.n3_gwilym_murio != true",
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n3_gwilym_charla"
       }
     }
   ],

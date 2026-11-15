@@ -204,6 +204,8 @@ export interface LevelDef {
       movesTo?: NpcMove | NpcMove[];
       /** Una vez que este flag está, el NPC deja de mostrarse en el mapa (ya se despidió y se fue). */
       hiddenAfterFlag?: string;
+      /** Condición (FlagSystem.eval): mientras se cumple, no está en el mapa (ej. Gwilym, en cama). */
+      hiddenWhile?: string;
     }>;
     /** `window`: solo existe en ese turno (ej. los mejillones, con la marea baja de la mañana del J2) */
     gatherNodes: Array<{

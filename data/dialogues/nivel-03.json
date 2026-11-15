@@ -1,7 +1,7 @@
 {
   "$schema": "../schemas/dialogue.schema.json",
   "level": "nivel-03",
-  "note": "Nivel 3, acto I (IX-1865). De Murga solo están documentados la bandera y el nombre Trerawson (docs/04 §1.3): sus palabras y las de Lewis son dramatizadas.",
+  "note": "Nivel 3, actos I (IX-1865) y II (invierno de 1866). De Murga solo están documentados la bandera y el nombre Trerawson (docs/04 §1.3); del toldo, que en abril de 1866 cuatro personas lo armaron junto al fuerte y se entendieron por señas, un diccionario y lenguas mezcladas. Las palabras de todos, el trato de la manta y Gwilym son dramatizados. Las líneas en aonikenk se escriben con su sentido en castellano: el jugador las ve en bloques (LanguageSystem).",
   "dialogues": [
     {
       "id": "d_n3_bandera",
@@ -163,7 +163,7 @@
         },
         "f1": {
           "speaker": "narrator",
-          "text": "Lo que sigue —el invierno de 1866— está en armado.",
+          "text": "Llega el verano. Ahora, a esperar lo que dé la tierra.",
           "effects": [
             {
               "setFlag": {
@@ -171,6 +171,465 @@
               }
             }
           ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_invierno",
+      "lang": "cym",
+      "start": "i0",
+      "nodes": {
+        "i0": {
+          "speaker": "narrator",
+          "text": "Pasa el verano. Llueve mucho menos de lo que les prometieron en Gales, y lo sembrado se seca antes de dar nada.",
+          "next": "i1"
+        },
+        "i1": {
+          "speaker": "narrator",
+          "text": "Abril de 1866. El viento ya es de invierno y el depósito está casi vacío.",
+          "next": "i2"
+        },
+        "i2": {
+          "speaker": "npc_edwyn",
+          "text": "Lo que guardamos en septiembre sigue acá. No es mucho, pero con eso empezamos el invierno.",
+          "condition": "flags.n3_viveres == 'guardar'",
+          "next": "i4"
+        },
+        "i3": {
+          "speaker": "npc_edwyn",
+          "text": "Se comió todo en el verano. Lo que queda es esto.",
+          "portrait": "tenso",
+          "next": "i4"
+        },
+        "i4": {
+          "speaker": "npc_lewis",
+          "text": "Los barcos no vienen. Hasta que vengan, hay que aguantar.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_invierno": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_gwilym_aviso",
+      "npc": "npc_matthews",
+      "lang": "cym",
+      "start": "g0",
+      "nodes": {
+        "g0": {
+          "speaker": "narrator",
+          "text": "En el rancho de los vecinos, Gwilym no se levanta. Tiene ocho años y hace días que casi no come.",
+          "next": "g1"
+        },
+        "g1": {
+          "speaker": "npc_matthews",
+          "text": "Es el hambre, nada más. La harina quedó atrás, y los chicos son los primeros en sentirlo.",
+          "portrait": "tenso",
+          "next": "g2"
+        },
+        "g2": {
+          "speaker": "npc_matthews",
+          "text": "Si en dos días no come algo de verdad, no sé si pasa el invierno.",
+          "portrait": "tenso",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_gwilym_enfermo": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_toldo",
+      "lang": "cym",
+      "start": "t0",
+      "nodes": {
+        "t0": {
+          "speaker": "narrator",
+          "text": "Ese mismo día, junto al fuerte, cuatro personas arman un toldo de cuero. Atan los caballos y prenden un fuego.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_toldo": true
+              }
+            }
+          ],
+          "next": "t1"
+        },
+        "t1": {
+          "speaker": "narrator",
+          "text": "Nadie sale de los ranchos. Desde las puertas, la colonia mira el toldo. Desde el toldo, los miran a ellos.",
+          "next": "t2"
+        },
+        "t2": {
+          "speaker": "npc_edwyn",
+          "text": "Que nadie se acerque solo. Y las escopetas, a mano.",
+          "portrait": "tenso",
+          "next": "t3"
+        },
+        "t3": {
+          "speaker": "npc_lewis",
+          "text": "Si vinieran a hacernos daño, no armarían el toldo a la vista de todos. Vienen a tratar.",
+          "next": "t4"
+        },
+        "t4": {
+          "speaker": "npc_berwyn",
+          "text": "Tengo un diccionario con unas pocas palabras de su lengua. Algo es algo.",
+          "next": "t5"
+        },
+        "t5": {
+          "speaker": "npc_mari",
+          "text": "Ellos también tienen miedo. Mirá cómo miran.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_toldo_visto": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_manta",
+      "npc": "npc_toldo",
+      "lang": "cym",
+      "start": "m0",
+      "nodes": {
+        "m0": {
+          "speaker": "narrator",
+          "text": "El hombre extiende una manta en el suelo. Pone encima carne de guanaco, dos cueros y unas plumas de choique.",
+          "next": "m1"
+        },
+        "m1": {
+          "speaker": "npc_toldo",
+          "text": "Esto es lo que traemos. ¿Ustedes qué tienen para dar?",
+          "lang": "aon",
+          "next": "m2"
+        },
+        "m2": {
+          "speaker": "npc_berwyn",
+          "text": "No encuentro ni la mitad en el diccionario. Pero señala la carne y después nuestros bultos.",
+          "next": "m3"
+        },
+        "m3": {
+          "speaker": "narrator",
+          "text": "Te reconoce por el pan de la otra vez. Se ríe, les dice algo a los suyos y pone otra pierna de guanaco sobre la manta.",
+          "condition": "flags.n3_pan == true",
+          "next": "m5"
+        },
+        "m4": {
+          "speaker": "narrator",
+          "text": "Mira los ranchos, después a vos. Espera.",
+          "next": "m5"
+        },
+        "m5": {
+          "speaker": "narrator",
+          "text": "Sobre la manta, ¿qué ponés vos?",
+          "choices": [
+            {
+              "id": "c_justo",
+              "text": "Yerba, tela y pan: lo que vale.",
+              "next": "r_j",
+              "effects": [
+                {
+                  "setFlag": {
+                    "n3_trato": "justo",
+                    "n3_carne": true,
+                    "n3_cueros": true
+                  }
+                },
+                {
+                  "resource": {
+                    "id": "comida",
+                    "delta": 6,
+                    "reason": "carne del trato"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "c_ventaja",
+              "text": "Unos pocos panes por todo.",
+              "next": "r_v",
+              "effects": [
+                {
+                  "setFlag": {
+                    "n3_trato": "ventaja",
+                    "n3_carne": true,
+                    "n3_cueros": true
+                  }
+                },
+                {
+                  "resource": {
+                    "id": "comida",
+                    "delta": 10,
+                    "reason": "carne del trato"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "c_nada",
+              "text": "Nada. No hay qué dar.",
+              "next": "r_n",
+              "effects": [
+                {
+                  "setFlag": {
+                    "n3_trato": "nada"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "r_j": {
+          "speaker": "narrator",
+          "text": "Cuenta con los dedos lo que le das, asiente y empuja la manta hacia vos.",
+          "next": "r_j2"
+        },
+        "r_j2": {
+          "speaker": "npc_toldo",
+          "text": "Cuando apriete el frío, volvemos.",
+          "lang": "aon",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_vuelven": true
+              }
+            }
+          ],
+          "next": "r_pan"
+        },
+        "r_v": {
+          "speaker": "narrator",
+          "text": "Mira los panes, después la carne. Acepta. Carne para una semana por unos pocos panes: así se trata en este invierno.",
+          "next": "r_v2"
+        },
+        "r_v2": {
+          "speaker": "narrator",
+          "text": "Dobla la manta despacio, sin mirarte.",
+          "next": "r_pan"
+        },
+        "r_pan": {
+          "speaker": "narrator",
+          "text": "La pierna de guanaco que puso por el pan también es para vos.",
+          "condition": "flags.n3_pan == true",
+          "effects": [
+            {
+              "resource": {
+                "id": "comida",
+                "delta": 5,
+                "reason": "regalo del toldo"
+              }
+            }
+          ],
+          "end": true
+        },
+        "r_fin": {
+          "speaker": "pc",
+          "text": "Hay carne para unos días.",
+          "end": true
+        },
+        "r_n": {
+          "speaker": "narrator",
+          "text": "Dobla la manta. Los del toldo no se van, pero no vuelven a acercarse.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_recaida",
+      "npc": "npc_mari",
+      "lang": "cym",
+      "start": "r0",
+      "nodes": {
+        "r0": {
+          "speaker": "narrator",
+          "text": "Las noches de julio son de escarcha. La ropa de abrigo quedó atrás, y tu madre vuelve a toser como en la estepa.",
+          "next": "r1"
+        },
+        "r1": {
+          "speaker": "npc_mari",
+          "text": "No es nada. Andá, que hay trabajo.",
+          "next": "r2"
+        },
+        "r2": {
+          "speaker": "pc",
+          "text": "Mamá.",
+          "portrait": "tenso",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_recaida_vista": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_gwilym_fin",
+      "npc": "npc_gwilym",
+      "lang": "cym",
+      "start": "w0",
+      "nodes": {
+        "w0": {
+          "speaker": "narrator",
+          "text": "Dos días después.",
+          "next": "w1"
+        },
+        "w1": {
+          "speaker": "narrator",
+          "text": "Gwilym se sienta en la cama y pide más. Su madre se ríe y llora a la vez.",
+          "condition": "flags.n3_gwilym == 'carne' || flags.n3_gwilym == 'comida'",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_gwilym_fin": true
+              }
+            },
+            {
+              "morale": 4
+            }
+          ],
+          "next": "w2"
+        },
+        "w2": {
+          "speaker": "npc_gwilym",
+          "text": "¿Mañana también hay caldo?",
+          "condition": "flags.n3_gwilym == 'carne' || flags.n3_gwilym == 'comida'",
+          "end": true
+        },
+        "w3": {
+          "speaker": "narrator",
+          "text": "Gwilym murió a la madrugada. Tenía ocho años.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_gwilym_fin": true,
+                "n3_gwilym_murio": true
+              }
+            },
+            {
+              "morale": -10
+            }
+          ],
+          "next": "w4"
+        },
+        "w4": {
+          "speaker": "narrator",
+          "text": "Lo enterraron en la barda, donde no llega el río. Subió toda la colonia.",
+          "next": "w5"
+        },
+        "w5": {
+          "speaker": "npc_matthews",
+          "text": "Para esto no hay palabras. Cantemos.",
+          "next": "w6"
+        },
+        "w6": {
+          "speaker": "narrator",
+          "text": "Empieza un himno y lo siguen todos, a cuatro voces. El viento se lleva el canto hacia el mar.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_coro": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_acto2_fin",
+      "lang": "cym",
+      "start": "a0",
+      "nodes": {
+        "a0": {
+          "speaker": "narrator",
+          "text": "Agosto de 1866. El invierno se va despacio.",
+          "next": "a1"
+        },
+        "a1": {
+          "speaker": "narrator",
+          "text": "El del toldo volvió con el frío, como había dicho. Trajo carne, y esta vez vino con los suyos.",
+          "condition": "flags.n3_vuelven == true",
+          "next": "a4"
+        },
+        "a2": {
+          "speaker": "narrator",
+          "text": "El del toldo no volvió. Otros vinieron a tratar, y antes de poner nada en la manta miraban lo que ponías vos.",
+          "condition": "flags.n3_trato == 'ventaja'",
+          "next": "a4"
+        },
+        "a3": {
+          "speaker": "narrator",
+          "text": "Una mañana el toldo ya no estaba. No volvieron.",
+          "next": "a4"
+        },
+        "a4": {
+          "speaker": "narrator",
+          "text": "Más tarde, del otro lado del río, se instala un campamento grande: ochenta o noventa personas, con sus toldos y sus caballos.",
+          "next": "a5"
+        },
+        "a5": {
+          "speaker": "npc_lewis",
+          "text": "Sin ellos, este invierno no lo pasábamos.",
+          "next": "a6"
+        },
+        "a6": {
+          "speaker": "narrator",
+          "text": "Lo que sigue —1867, la sequía y la zanja— está en armado.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_acto2": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_gwilym_charla",
+      "npc": "npc_gwilym",
+      "lang": "cym",
+      "start": "k0",
+      "nodes": {
+        "k0": {
+          "speaker": "npc_gwilym",
+          "text": "Ya puedo correr hasta el río. ¡Mirá!",
+          "condition": "flags.n3_gwilym_fin == true",
+          "end": true
+        },
+        "k1": {
+          "speaker": "npc_gwilym",
+          "text": "¿Viste los caballos del toldo? Tienen las crines más largas que los nuestros.",
+          "condition": "flags.n3_toldo == true",
+          "end": true
+        },
+        "k2": {
+          "speaker": "npc_gwilym",
+          "text": "El agua llegó hasta la puerta de casa. Yo vi un pescado adentro.",
+          "condition": "flags.n3_crecida == true",
+          "end": true
+        },
+        "k3": {
+          "speaker": "npc_gwilym",
+          "text": "Mi papá dice que acá el trigo va a crecer más alto que yo. ¿Falta mucho?",
           "end": true
         }
       }
@@ -306,6 +765,218 @@
             }
           ],
           "condition": "flags.n3_rancho_perdido != true"
+        }
+      ]
+    },
+    {
+      "id": "ch_n3_pan",
+      "prompt": "Queda poco pan. ¿Se lleva algo al toldo?",
+      "turnCost": 0,
+      "hint": "Lo que se da antes de pedir nada se recuerda sobre la manta.",
+      "options": [
+        {
+          "id": "llevar",
+          "text": "Llevarles pan, antes de pedir nada.",
+          "detail": "Es comida de ustedes, en pleno invierno.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_pan": true
+              }
+            },
+            {
+              "resource": {
+                "id": "comida",
+                "delta": -3,
+                "reason": "pan para el toldo"
+              }
+            },
+            {
+              "bond": {
+                "npc": "npc_lewis",
+                "delta": 1
+              }
+            }
+          ]
+        },
+        {
+          "id": "esperar",
+          "text": "Esperar a ver qué traen.",
+          "detail": "El pan se queda en casa. El miedo, también.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_pan": false
+              }
+            },
+            {
+              "bond": {
+                "npc": "npc_edwyn",
+                "delta": 1
+              }
+            },
+            {
+              "morale": -2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ch_n3_gwilym",
+      "prompt": "Gwilym sigue en cama. ¿Qué le das?",
+      "turnCost": 0,
+      "hint": "Lo que come él no lo comen los tuyos.",
+      "options": [
+        {
+          "id": "carne",
+          "text": "Caldo de la carne del trato.",
+          "detail": "Carne fresca: lo que más le falta.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_gwilym": "carne"
+              }
+            },
+            {
+              "resource": {
+                "id": "comida",
+                "delta": -3,
+                "reason": "caldo para Gwilym"
+              }
+            }
+          ],
+          "condition": "flags.n3_carne == true"
+        },
+        {
+          "id": "deposito",
+          "text": "Lo que queda en el depósito.",
+          "detail": "Tu madre va a comer menos.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_gwilym": "comida"
+              }
+            },
+            {
+              "resource": {
+                "id": "comida",
+                "delta": -4,
+                "reason": "comida para Gwilym"
+              }
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": -4
+              }
+            }
+          ],
+          "condition": "flags.n3_carne != true && resources.comida >= 4"
+        },
+        {
+          "id": "guardar",
+          "text": "Guardarlo para tu madre.",
+          "detail": "Ella también está débil.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_gwilym": "nada"
+              }
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": 4
+              }
+            },
+            {
+              "morale": -6
+            }
+          ],
+          "condition": "flags.n3_carne == true || resources.comida >= 4"
+        },
+        {
+          "id": "nada",
+          "text": "No hay nada para darle.",
+          "detail": "Matthews se queda con él.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_gwilym": "nada"
+              }
+            }
+          ],
+          "condition": "flags.n3_carne != true && resources.comida < 4"
+        }
+      ]
+    },
+    {
+      "id": "ch_n3_cuidar",
+      "prompt": "Tu madre tose de noche. ¿Qué hacés?",
+      "turnCost": 0,
+      "hint": "El trabajo que no hacés vos lo hacen otros.",
+      "options": [
+        {
+          "id": "cueros",
+          "text": "Abrigarla con los cueros del trato.",
+          "detail": "Cuero de guanaco: abriga más que lo que trajeron.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_cuidado": "cueros"
+              }
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": 12
+              }
+            }
+          ],
+          "condition": "flags.n3_cueros == true"
+        },
+        {
+          "id": "quedarse",
+          "text": "Quedarte con ella.",
+          "detail": "Los demás cargan con tu parte.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_cuidado": "quedarse"
+              }
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": 8
+              }
+            },
+            {
+              "morale": -4
+            }
+          ]
+        },
+        {
+          "id": "trabajar",
+          "text": "Seguir con el trabajo.",
+          "detail": "Ella pasa las noches sola.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_cuidado": "trabajar"
+              }
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": -10
+              }
+            },
+            {
+              "morale": 3
+            }
+          ]
         }
       ]
     }

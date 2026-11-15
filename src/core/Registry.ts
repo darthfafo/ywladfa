@@ -56,6 +56,11 @@ class GameRegistry {
     return !!l && !l.draft;
   }
 
+  /** ¿existe en los datos, aunque esté en armado? (el diario de un nivel en armado igual lleva su título) */
+  levelExists(id: string): boolean {
+    return this.levels.has(id);
+  }
+
 
   /** Quests de un nivel (data/quests/<id>.json); vacío si no tiene. */
   questsFor(levelId: string): Array<any> {

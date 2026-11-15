@@ -122,6 +122,180 @@
       "journalLine": "Levantamos el corral de todos, con barro, junco y palos.",
       "journalThought": "Sin los animales no hay invierno. Lewis tenía razón.",
       "steps": []
+    },
+    {
+      "id": "q_n3_invierno_reserva",
+      "title": "El invierno",
+      "day": 0,
+      "dayFlag": "n3_dia_invierno",
+      "optional": true,
+      "journalWhen": "flags.n3_invierno == true && flags.n3_viveres == 'guardar'",
+      "journalLine": "Pasó el verano y la cosecha se perdió. Abril de 1866: empezamos el invierno con lo que guardó Edwyn en septiembre.",
+      "journalThought": "Menos mal que guardamos. No sé cuánto dura.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_invierno_vacio",
+      "title": "El invierno",
+      "day": 0,
+      "dayFlag": "n3_dia_invierno",
+      "optional": true,
+      "journalWhen": "flags.n3_invierno == true && flags.n3_viveres != 'guardar'",
+      "journalLine": "Pasó el verano y la cosecha se perdió. Abril de 1866: el depósito está casi vacío.",
+      "journalThought": "En septiembre comimos todo. Ahora hay que aguantar con lo que queda.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_gwilym_aviso",
+      "title": "Gwilym",
+      "day": 0,
+      "dayFlag": "n3_dia_invierno",
+      "optional": true,
+      "journalWhen": "flags.n3_gwilym_enfermo == true",
+      "journalLine": "Gwilym, el de los vecinos, no se levanta. Matthews dice que es el hambre.",
+      "journalThought": "La harina quedó atrás. Si en dos días no come, no pasa el invierno.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_pan_llevar",
+      "title": "El toldo",
+      "day": 0,
+      "dayFlag": "n3_dia_invierno",
+      "optional": true,
+      "journalWhen": "flags.n3_pan == true",
+      "journalLine": "Cuatro personas armaron un toldo junto al fuerte. Les llevamos pan antes de pedirles nada.",
+      "journalThought": "Es pan nuestro, en pleno invierno. Pero con las manos vacías no se saluda a nadie.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_pan_esperar",
+      "title": "El toldo",
+      "day": 0,
+      "dayFlag": "n3_dia_invierno",
+      "optional": true,
+      "journalWhen": "flags.n3_pan == false",
+      "journalLine": "Cuatro personas armaron un toldo junto al fuerte. Esperamos a ver qué traían.",
+      "journalThought": "Edwyn tiene razón: no los conocemos. Ellos a nosotros tampoco.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_trato_justo",
+      "title": "La manta",
+      "day": 0,
+      "dayFlag": "n3_dia_trato",
+      "optional": true,
+      "journalWhen": "flags.n3_trato == 'justo'",
+      "journalLine": "Sobre una manta pusieron carne y cueros. Les dimos yerba, tela y pan, lo que vale.",
+      "journalThought": "Dijo que vuelve cuando apriete el frío. Le creo.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_trato_ventaja",
+      "title": "La manta",
+      "day": 0,
+      "dayFlag": "n3_dia_trato",
+      "optional": true,
+      "journalWhen": "flags.n3_trato == 'ventaja'",
+      "journalLine": "Sobre una manta pusieron carne y cueros. Los cambiamos por unos pocos panes.",
+      "journalThought": "Hoy hay carne para una semana. No sé si vuelve.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_trato_nada",
+      "title": "La manta",
+      "day": 0,
+      "dayFlag": "n3_dia_trato",
+      "optional": true,
+      "journalWhen": "flags.n3_trato == 'nada'",
+      "journalLine": "Sobre una manta pusieron carne y cueros. No teníamos nada para dar.",
+      "journalThought": "Doblaron la manta. Seguimos con hambre.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_gwilym_salvado",
+      "title": "Gwilym",
+      "day": 0,
+      "dayFlag": "n3_dia_gwilym",
+      "optional": true,
+      "journalWhen": "flags.n3_gwilym == 'carne' || flags.n3_gwilym == 'comida'",
+      "journalLine": "Le dimos de comer a Gwilym.",
+      "journalThought": "Si come, en dos días se levanta. Lo que come él no lo comemos nosotros.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_gwilym_nada",
+      "title": "Gwilym",
+      "day": 0,
+      "dayFlag": "n3_dia_gwilym",
+      "optional": true,
+      "journalWhen": "flags.n3_gwilym == 'nada'",
+      "journalLine": "No le dimos nada a Gwilym.",
+      "journalThought": "Que aguante. Que aguante dos días.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_gwilym_vive",
+      "title": "Gwilym",
+      "day": 0,
+      "dayFlag": "n3_dia_gwilym_fin",
+      "optional": true,
+      "journalWhen": "flags.n3_gwilym_fin == true && flags.n3_gwilym_murio != true",
+      "journalLine": "Gwilym se levantó y pidió más.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_gwilym_murio",
+      "title": "Gwilym",
+      "day": 0,
+      "dayFlag": "n3_dia_gwilym_fin",
+      "optional": true,
+      "journalWhen": "flags.n3_gwilym_murio == true",
+      "journalLine": "Gwilym murió a la madrugada. Tenía ocho años. Lo enterramos en la barda y cantamos.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_cuidar_cueros",
+      "title": "Mamá",
+      "day": 0,
+      "dayFlag": "n3_dia_cuidado",
+      "optional": true,
+      "journalWhen": "flags.n3_cuidado == 'cueros'",
+      "journalLine": "Mamá volvió a toser con las escarchas. La abrigamos con los cueros del trato.",
+      "journalThought": "El cuero de guanaco abriga más que todo lo que trajimos de Gales.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_cuidar_quedarse",
+      "title": "Mamá",
+      "day": 0,
+      "dayFlag": "n3_dia_cuidado",
+      "optional": true,
+      "journalWhen": "flags.n3_cuidado == 'quedarse'",
+      "journalLine": "Mamá volvió a toser con las escarchas. Me quedé con ella.",
+      "journalThought": "Mi parte del trabajo la hicieron otros. Se lo voy a tener que devolver.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_cuidar_trabajar",
+      "title": "Mamá",
+      "day": 0,
+      "dayFlag": "n3_dia_cuidado",
+      "optional": true,
+      "journalWhen": "flags.n3_cuidado == 'trabajar'",
+      "journalLine": "Mamá volvió a toser con las escarchas. Seguí con el trabajo.",
+      "journalThought": "Dice que está bien. Dice eso siempre.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_acto2",
+      "title": "Agosto",
+      "day": 0,
+      "dayFlag": "n3_dia_acto2",
+      "optional": true,
+      "journalWhen": "flags.n3_acto2 == true",
+      "journalLine": "Agosto de 1866. Pasó el invierno. Del otro lado del río se instaló un campamento grande.",
+      "journalThought": "Sin ellos no lo pasábamos.",
+      "steps": []
     }
   ]
 }

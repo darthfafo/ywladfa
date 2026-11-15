@@ -193,6 +193,8 @@ export const AUDIO = {
   actions: 0.7,
   ui: 0.8,
   ambience: 0.6,
+  /** el coro (Sfx.choir): suena tres veces en toda la campaña (GDD §9) */
+  choir: 0.5,
   /** cada cuántos px de mundo caminados suena un paso */
   stepPx: 20,
 } as const;

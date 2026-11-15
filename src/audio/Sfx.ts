@@ -210,6 +210,71 @@ class SfxEngine {
     this.noiseBurst({ dur: 2.2, freq: 120, type: 'lowpass', gain: 0.6 * AUDIO.ambience, attack: 0.25, at: 0.3 });
   }
 
+  /**
+   * El coro: cuatro voces que cantan un himno lento, cuatro acordes (I–IV–V–I).
+   * GDD §9: el canto coral suena solo tres veces en toda la campaña (un entierro,
+   * el eisteddfod, el epílogo). Cada voz es una sierra por dos formantes de «a»,
+   * con un vibrato chico y dos copias desafinadas, para que suene a gente y no a órgano.
+   */
+  choir(): void {
+    const c = this.ctx;
+    if (!c || !this.master) return;
+    // Sol mayor, en Hz: bajo, tenor, contralto, soprano por acorde
+    const chords = [
+      [98.0, 146.8, 246.9, 392.0], // Sol
+      [130.8, 164.8, 261.6, 392.0], // Do
+      [146.8, 185.0, 220.0, 370.0], // Re
+      [98.0, 146.8, 246.9, 392.0], // Sol
+    ];
+    const len = 2.4;
+    const t0 = c.currentTime + 0.2;
+    const out = c.createGain();
+    out.gain.value = AUDIO.choir;
+    out.connect(this.master);
+    const vowel = (into: AudioNode): AudioNode => {
+      const mix = c.createGain();
+      for (const [f, q, g] of [[700, 5, 1], [1150, 7, 0.5], [2600, 9, 0.15]] as const) {
+        const bp = c.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.value = f;
+        bp.Q.value = q;
+        const lv = c.createGain();
+        lv.gain.value = g;
+        mix.connect(bp).connect(lv).connect(into);
+      }
+      return mix;
+    };
+    chords.forEach((chord, k) => {
+      const t = t0 + k * len;
+      const last = k === chords.length - 1;
+      const end = t + len * (last ? 1.8 : 1.05);
+      chord.forEach((freq, v) => {
+        for (const detune of [-7, 6]) {
+          const osc = c.createOscillator();
+          osc.type = 'sawtooth';
+          osc.frequency.value = freq;
+          osc.detune.value = detune;
+          const vib = c.createOscillator();
+          vib.frequency.value = 4.6 + v * 0.3;
+          const vibAmt = c.createGain();
+          vibAmt.gain.value = freq * 0.006;
+          vib.connect(vibAmt).connect(osc.frequency);
+          const g = c.createGain();
+          const peak = 0.05 / (1 + v * 0.15);
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(peak, t + 0.5);
+          g.gain.setValueAtTime(peak, end - (last ? 2.2 : 0.4));
+          g.gain.linearRampToValueAtTime(0, end);
+          osc.connect(g).connect(vowel(out));
+          osc.start(t);
+          vib.start(t);
+          osc.stop(end + 0.05);
+          vib.stop(end + 0.05);
+        }
+      });
+    });
+  }
+
   // ------------------------------------------------------------ ambiente
 
   private buildAmbience(): void {

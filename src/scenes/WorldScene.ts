@@ -108,6 +108,8 @@ export class WorldScene extends Phaser.Scene {
   private holdTriggersUntil = 0;
   /** false hasta la primera ubicación de NPCs (spawn): esa va de golpe */
   private npcsPlaced = false;
+  /** cambió un flag: puede que alguien tenga que aparecer o irse (afterFlag, hiddenWhile) */
+  private npcsDirty = false;
   private stepAcc = 0;
   private lastStepPos = { x: 0, y: 0 };
   /** zona del último chequeo de triggers: para saber cuándo se ENTRA a una */
@@ -280,6 +282,7 @@ export class WorldScene extends Phaser.Scene {
     this.triggers = new TriggerSystem(game, level.triggers as TriggerDef[]);
     busOn(this, 'inventory:added', (p) => this.fireEventTriggers('inventory:added', p as never));
     busOn(this, 'inventory:overloaded', (p) => this.fireEventTriggers('inventory:overloaded', p as never));
+    busOn(this, 'flag:set', () => (this.npcsDirty = true));
     busOn(this, 'time:turn-advanced', () => {
       this.updateGates();
       this.updateNpcVisibility();
@@ -644,7 +647,7 @@ export class WorldScene extends Phaser.Scene {
 
       const dayOk = n.day === '*' || (Array.isArray(n.day) ? n.day.includes(day) : n.day === day);
       const flagOk = !n.afterFlag || game.flags.is(n.afterFlag);
-      const hidden = !!n.hiddenAfterFlag && game.flags.is(n.hiddenAfterFlag);
+      const hidden = (!!n.hiddenAfterFlag && game.flags.is(n.hiddenAfterFlag)) || (!!n.hiddenWhile && game.flags.eval(n.hiddenWhile));
       const visible = dayOk && flagOk && !hidden;
       const wasVisible = it.sprite.visible;
       // nunca aparecer ni desaparecer de un cuadro al otro: el que entra o sale
@@ -751,6 +754,10 @@ export class WorldScene extends Phaser.Scene {
 
   override update(_time: number, delta: number): void {
     this.updateGaviotas(delta);
+    if (this.npcsDirty && this.npcsPlaced) {
+      this.npcsDirty = false;
+      this.updateNpcVisibility();
+    }
 
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     if (input.locked) {
