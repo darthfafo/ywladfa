@@ -219,21 +219,20 @@ export class ConstructionSystem {
     return this.placed.some((p) => p.kind === 'compuerta' && p.x === x && p.y === y);
   }
 
+  /** ¿Es una toma? (zanja o casilla pegada al río) */
+  private touchesRiver(x: number, y: number): boolean {
+    return this.neighbors(x, y).some(([a, b]) => this.cell(a, b)?.kind === 'rio');
+  }
+
   /**
-   * Por dónde corre el agua: desde cada toma (zanja pegada al río), recorriendo la
-   * zanja mientras el fondo quede por debajo del nivel del agua, que baja un poco
-   * por casilla. Devuelve lo mojado, lo seco, y qué chacras se riegan o se inundan.
+   * El mejor nivel de agua que llega a cada casilla de zanja, desde las tomas,
+   * recorriendo la zanja mientras el fondo quede por debajo del agua (como un camino
+   * más corto). null si no hay ninguna toma.
    */
-  water(): WaterResult {
-    const res: WaterResult = { wet: new Set(), dry: new Set(), noToma: false, irrigated: new Set(), flooded: new Set() };
+  private heads(): Map<number, number> | null {
     const zanjas = this.placed.filter((p) => p.kind === 'zanja');
-    if (!zanjas.length) return res;
-    const tomas = zanjas.filter((p) => this.neighbors(p.x, p.y).some(([a, b]) => this.cell(a, b)?.kind === 'rio'));
-    if (!tomas.length) {
-      res.noToma = true;
-      return res;
-    }
-    // el mejor nivel de agua que llega a cada casilla (como un camino más corto)
+    const tomas = zanjas.filter((p) => this.touchesRiver(p.x, p.y));
+    if (!tomas.length) return null;
     const head = new Map<number, number>();
     const queue: Array<[number, number, number]> = [];
     for (const t of tomas) {
@@ -258,6 +257,40 @@ export class ConstructionSystem {
         head.set(k, nh);
         queue.push([a, b, nh]);
       }
+    }
+    return head;
+  }
+
+  /**
+   * Si se cavara un tramo en (x, y), ¿le llegaría agua? (la vista previa de quien
+   * sabe leer el terreno). Sale del río si es toma, o de un tramo vecino ya mojado.
+   */
+  wouldFlow(x: number, y: number): boolean {
+    const c = this.cell(x, y);
+    if (!c) return false;
+    const bed = c.h - this.cfg.zanjaDepth;
+    if (this.touchesRiver(x, y) && bed < this.grid.riverLevel) return true;
+    const head = this.heads();
+    if (!head) return false;
+    return this.neighbors(x, y).some(([a, b]) => {
+      const h = head.get(this.idx(a, b));
+      return h !== undefined && bed < h - this.cfg.headLossPerCell;
+    });
+  }
+
+  /**
+   * Por dónde corre el agua: desde cada toma (zanja pegada al río), recorriendo la
+   * zanja mientras el fondo quede por debajo del nivel del agua, que baja un poco
+   * por casilla. Devuelve lo mojado, lo seco, y qué chacras se riegan o se inundan.
+   */
+  water(): WaterResult {
+    const res: WaterResult = { wet: new Set(), dry: new Set(), noToma: false, irrigated: new Set(), flooded: new Set() };
+    const zanjas = this.placed.filter((p) => p.kind === 'zanja');
+    if (!zanjas.length) return res;
+    const head = this.heads();
+    if (!head) {
+      res.noToma = true;
+      return res;
     }
     for (const z of zanjas) {
       const k = this.idx(z.x, z.y);

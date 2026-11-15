@@ -6,7 +6,7 @@
   "subtitle": "Trerawson, a orillas del Chubut",
   "date": "Septiembre de 1865 – marzo de 1868",
   "next": "nivel-04",
-  "comment": "En armado (docs/10-plan-nivel-03.md): el acto I — la bandera y el barro (IX-1865) — y el acto II — el invierno de 1866. Guion en src/levels/nivel03.ts. draft: no se entra desde el Nivel 2 hasta que esté jugable.",
+  "comment": "En armado (docs/10-plan-nivel-03.md): acto I — la bandera y el barro (IX-1865) —, acto II — el invierno de 1866 — y acto III — la zanja (1867 → III-1868). Guion en src/levels/nivel03.ts. draft: no se entra desde el Nivel 2 hasta que esté jugable.",
   "map": {
     "file": "generado",
     "widthTiles": 64,
@@ -26,10 +26,11 @@
       {
         "id": "chacra_vecinos",
         "owner": "vecinos",
-        "x": 27,
+        "x": 20,
         "w": 5,
-        "dy": 2,
-        "h": 3
+        "dy": 1,
+        "h": 3,
+        "bajo": 0.3
       },
       {
         "id": "chacra_jenkins",
@@ -42,7 +43,7 @@
     ]
   },
   "schedule": {
-    "days": 14,
+    "days": 22,
     "turnsPerDay": 4
   },
   "zones": [
@@ -152,7 +153,15 @@
         "id": "npc_mari",
         "x": 56,
         "y": 28,
-        "day": "*"
+        "day": "*",
+        "movesTo": {
+          "day": 1,
+          "turn": "amanecer",
+          "x": 22,
+          "y": 33,
+          "requires": "flags.n3_zanja == true && flags.n3_cosecha != true",
+          "note": "en la zanja, tu madre espera en la chacra de la familia: así se sabe cuál es (sin marcadores, GDD §8)"
+        }
       },
       {
         "id": "npc_edwyn",
@@ -174,8 +183,8 @@
       },
       {
         "id": "npc_gwilym",
-        "x": 33,
-        "y": 31,
+        "x": 26,
+        "y": 40,
         "day": "*",
         "hiddenWhile": "flags.n3_gwilym_murio == true || (flags.n3_gwilym_enfermo == true && flags.n3_gwilym_fin != true)"
       },
@@ -185,6 +194,20 @@
         "y": 33,
         "day": "*",
         "afterFlag": "n3_toldo"
+      },
+      {
+        "id": "npc_aaron",
+        "x": 12,
+        "y": 41,
+        "day": "*",
+        "afterFlag": "n3_1867"
+      },
+      {
+        "id": "npc_rachel",
+        "x": 11,
+        "y": 38,
+        "day": "*",
+        "afterFlag": "n3_1867"
       }
     ],
     "gatherNodes": [
@@ -275,8 +298,20 @@
   "objectives": [],
   "goals": [
     {
-      "requires": "flags.n3_acto2 == true",
-      "text": "Lo que sigue —1867, la zanja— está en armado."
+      "requires": "flags.n3_cosecha == true",
+      "text": "Lo que sigue —diez años después, Gaiman— está en armado."
+    },
+    {
+      "requires": "flags.n3_zanja == true && flags.n3_regada != true",
+      "text": "Cavar la zanja desde el río hasta tu chacra: tu madre te espera ahí. Al llegar, la compuerta."
+    },
+    {
+      "requires": "flags.n3_regada == true && flags.n3_cosecha != true",
+      "text": "El agua entró a la chacra. Esperar la cosecha."
+    },
+    {
+      "requires": "flags.n3_acto2 == true && flags.n3_zanja != true",
+      "text": "1867. La colonia se va a Madryn."
     },
     {
       "requires": "flags.n3_acto1 == true && flags.n3_toldo != true",
@@ -521,6 +556,103 @@
       "turnCost": 0,
       "action": {
         "dialogue": "d_n3_gwilym_charla"
+      }
+    },
+    {
+      "id": "trig_n3_1867",
+      "type": "cutscene",
+      "requires": "flags.n3_acto2 == true",
+      "once": true,
+      "turnCost": 4,
+      "note": "1867: la cosecha vuelve a fallar y la colonia decide irse a Madryn; los tehuelches se enojan porque pierden el comercio (docs/04 §1.3, una fuente secundaria). TODO(historia): cuántos, cuánto duró y por qué se volvió — el juego no lo dice.",
+      "action": {
+        "dialogue": "d_n3_1867"
+      }
+    },
+    {
+      "id": "trig_n3_madryn",
+      "type": "choice",
+      "requires": "flags.n3_1867 == true",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "choice": "ch_n3_madryn"
+      }
+    },
+    {
+      "id": "trig_n3_rachel",
+      "type": "cutscene",
+      "requires": "flags.n3_madryn != null",
+      "once": true,
+      "turnCost": 4,
+      "note": "noviembre de 1867: Aaron Jenkins riega trigo abriendo la orilla; la idea del riego se atribuye a Rachel Jenkins (docs/04 §1.3). Sus palabras, dramatizadas.",
+      "action": {
+        "dialogue": "d_n3_rachel"
+      }
+    },
+    {
+      "id": "trig_n3_tut_zanja",
+      "type": "tutorial",
+      "requires": "flags.n3_zanja == true",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "tutorial": "tut_n3_zanja"
+      }
+    },
+    {
+      "id": "trig_n3_inundo",
+      "type": "cutscene",
+      "requires": "flags.n3_inundo_vecinos == true",
+      "once": true,
+      "turnCost": 0,
+      "note": "GDD §5.10: un canal mal trazado no falla, inunda al vecino",
+      "action": {
+        "dialogue": "d_n3_inundo"
+      }
+    },
+    {
+      "id": "trig_n3_regada",
+      "type": "cutscene",
+      "requires": "flags.n3_regada == true",
+      "once": true,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n3_regada"
+      }
+    },
+    {
+      "id": "trig_n3_cosecha",
+      "type": "cutscene",
+      "requires": "flags.n3_zanja == true && (flags.n3_regada_lista == true || progress.day >= 20)",
+      "once": true,
+      "turnCost": 4,
+      "note": "marzo de 1868: «una cosecha espléndida» (documentado). Red de contención (R7): si al día 20 la zanja no llegó, la cosecha igual llega, con el agua de los Jenkins.",
+      "action": {
+        "dialogue": "d_n3_cosecha",
+        "next": "nivel-04"
+      }
+    },
+    {
+      "id": "trig_rachel_charla",
+      "type": "dialogue",
+      "manual": true,
+      "requires": "flags.n3_zanja == true",
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n3_rachel_charla"
+      }
+    },
+    {
+      "id": "trig_aaron_charla",
+      "type": "dialogue",
+      "manual": true,
+      "requires": "flags.n3_1867 == true",
+      "once": false,
+      "turnCost": 0,
+      "action": {
+        "dialogue": "d_n3_aaron_charla"
       }
     }
   ],

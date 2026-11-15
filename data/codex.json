@@ -126,7 +126,7 @@
     {
       "id": "cod_riego",
       "title": "Los canales de riego",
-      "unlockedBy": "nivel-03",
+      "unlockedBy": "trig_n3_rachel",
       "level": "nivel-03",
       "documented": "Hacia 1867, en plena sequía, los colonos abrieron zanjas desde el río Chubut hasta las chacras. Se atribuye el hallazgo al matrimonio de Aaron y Rachel Jenkins. El sistema de canales del valle inferior fue el primero de su tipo en la Patagonia y transformó una franja de desierto en tierra productiva: hacia 1885 la colonia producía miles de toneladas de trigo.",
       "dramatized": "El diálogo del descubrimiento.",

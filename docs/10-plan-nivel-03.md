@@ -160,7 +160,7 @@ barro, corral, zanja, compuerta, trigo.
 | 3 | ~~`ConstructionSystem` + tests~~ (hecho: `src/systems/ConstructionSystem.ts`, `tests/construction.test.ts`, balance `nivel03.construccion`) | Pendiente, flujo e inundación probados sin navegador |
 | 4 | Acto I: llegada, bandera, rancho, crecida — **en buena parte hecho** (abajo) | Se construye y la crecida castiga lo que corresponde |
 | 5 | Acto II: invierno, el toldo, la manta, la enfermedad — **hecho** (abajo) | Las promesas del N1 (harina, abrigo) se cumplen |
-| 6 | Acto III: la zanja y la cosecha | La zanja se traza, se cava y llega el agua (o inunda) |
+| 6 | Acto III: la zanja y la cosecha — **hecho** (abajo) | La zanja se traza, se cava y llega el agua (o inunda) |
 | 7 | Cierre, diario, Códice, balance; encadenar con el N2 | Partida N1 → N2 → N3 de punta a punta |
 | 8 | Arte, sonido, pasada en celular | En un teléfono |
 
@@ -192,7 +192,23 @@ Hecho (`tests/nivel03-invierno.test.ts` recorre todos los caminos):
 - **Agosto de 1866**: el del toldo vuelve o no según el trato; del otro lado del río se instala el campamento grande (documentado).
 - Diario de cada paso con lo que piensa el personaje.
 
-Pendiente: el acto III (1867: la sequía, la decisión de irse a Madryn, la zanja de los Jenkins, la cosecha de marzo de 1868) y la viñeta de 1875. Arte de los personajes nuevos: `docs/11-arte-nivel-03.txt`.
+## Estado del acto III (noviembre 2026)
+
+Hecho (`tests/nivel03-zanja.test.ts`):
+- **1867** (documentado): la cosecha vuelve a fallar y la colonia decide volver a Madryn; Lewis cuenta que los del otro lado del río se enojaron porque se termina el comercio. Si el del toldo volvió, viene a preguntar si es cierto. Cuántos se fueron, cuánto duró y por qué se volvió: `TODO(historia)`, el juego no lo dice.
+- **Empacar o ayudar a los Jenkins**: empacar (tu madre descansa) o ir con los Jenkins (Rachel te enseña a leer el terreno: la vista previa de la zanja sale azul donde el agua va a llegar, `ConstructionSystem.wouldFlow`). La confianza da información, no objetos (GDD §5.6).
+- **Noviembre de 1867** (documentado): Aaron Jenkins abrió la orilla y el agua corrió sola hasta su trigo; la idea, de Rachel. «Desempaquen». Ficha `cod_riego`.
+- **La zanja**: «Cavar acá» de a un tramo (un turno), desde una toma pegada al río; el agua corre por donde el terreno la deja y se ve en 3D; al llegar, la compuerta (barro y junco). Las chacras se ven (tierra arada con estacas) y se ponen verdes al regarse; tu madre espera en la tuya (así se sabe cuál es, sin marcadores).
+- **Los vecinos** (la familia de Gwilym) tienen la chacra en un bajo (`map.chacras[].bajo`), entre el río y la tuya: el camino corto pasa pegado y la inunda (se ve el agua encima; escena, moral, la semilla podrida en la cosecha); el largo cuesta un tramo más; una compuerta de su lado los riega (comparten la primera harina).
+- **Sin herramientas de labranza**: cuatro jornadas más, con palas de madera y las manos (la promesa de `items.json`).
+- **Marzo de 1868**: «una cosecha espléndida» (documentado). Red de contención (R7): si al día 20 la zanja no llegó, los Jenkins comparten su agua y algo se cosecha. Gwilym, si vive, ve el trigo «más alto que yo»; si no, una espiga en su cruz. Cierre del nivel con balance de salida («Continuará…»).
+
+Pendiente:
+- La viñeta de 1875 (Gaiman, el primer eisteddfod, el coro), con lo que pagan la imprenta y el órgano.
+- **La semilla**: si quedó atrás, el plan dice «hay que comprarla al precio de otros dos bultos» (primera compra del juego). No está hecho: hace falta diseñar la compra.
+- *Y Brut* (enero de 1868): `TODO(historia)` — antes de atarlo a la imprenta, confirmar si fue impreso o manuscrito.
+- Que el Nivel 2 entre al 3 (sacar `draft`) después de una pasada completa N1 → N2 → N3 en celular.
+- Arte de los personajes nuevos e ilustraciones: `docs/11-arte-nivel-03.txt`.
 
 ## Fuentes de esta propuesta
 - MercoPress, «Welsh community mark 140 years in Patagonia» (30-VII-2005): Caer Antur; abril de 1866; los 80-90 tehuelches en la otra orilla; Aaron Jenkins en noviembre de 1867 y la cosecha de marzo.

@@ -1,7 +1,7 @@
 {
   "$schema": "../schemas/dialogue.schema.json",
   "level": "nivel-03",
-  "note": "Nivel 3, actos I (IX-1865) y II (invierno de 1866). De Murga solo están documentados la bandera y el nombre Trerawson (docs/04 §1.3); del toldo, que en abril de 1866 cuatro personas lo armaron junto al fuerte y se entendieron por señas, un diccionario y lenguas mezcladas. Las palabras de todos, el trato de la manta y Gwilym son dramatizados. Las líneas en aonikenk se escriben con su sentido en castellano: el jugador las ve en bloques (LanguageSystem).",
+  "note": "Nivel 3, actos I (IX-1865), II (invierno de 1866) y III (1867 → III-1868). De Murga solo están documentados la bandera y el nombre Trerawson (docs/04 §1.3); del toldo, que en abril de 1866 cuatro personas lo armaron junto al fuerte y se entendieron por señas, un diccionario y lenguas mezcladas. Las palabras de todos, el trato de la manta y Gwilym son dramatizados. Las líneas en aonikenk se escriben con su sentido en castellano: el jugador las ve en bloques (LanguageSystem). Del acto III está documentado: la cosecha que vuelve a fallar en 1867, la decisión de irse a Madryn y el enojo de los tehuelches por perder el comercio, el riego de Aaron Jenkins (XI-1867) con la idea atribuida a Rachel Jenkins y la cosecha espléndida de marzo de 1868; las palabras de todos, la zanja de la familia y los vecinos son del juego.",
   "dialogues": [
     {
       "id": "d_n3_bandera",
@@ -591,7 +591,7 @@
         },
         "a6": {
           "speaker": "narrator",
-          "text": "Lo que sigue —1867, la sequía y la zanja— está en armado.",
+          "text": "Pasa el invierno. Se vuelve a sembrar.",
           "effects": [
             {
               "setFlag": {
@@ -630,6 +630,311 @@
         "k3": {
           "speaker": "npc_gwilym",
           "text": "Mi papá dice que acá el trigo va a crecer más alto que yo. ¿Falta mucho?",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_1867",
+      "lang": "cym",
+      "start": "y0",
+      "nodes": {
+        "y0": {
+          "speaker": "narrator",
+          "text": "Pasa otro año. 1867: la cosecha vuelve a fallar.",
+          "next": "y1"
+        },
+        "y1": {
+          "speaker": "narrator",
+          "text": "La colonia decide irse: volver a Madryn, por donde llegaron.",
+          "next": "y2"
+        },
+        "y2": {
+          "speaker": "npc_lewis",
+          "text": "Los del otro lado del río se enojaron. Si nos vamos, se termina el comercio, y ellos también lo necesitan.",
+          "next": "y3"
+        },
+        "y3": {
+          "speaker": "narrator",
+          "text": "El del toldo vino a preguntar si era cierto. Nadie supo qué contestarle.",
+          "condition": "flags.n3_vuelven == true",
+          "next": "y4"
+        },
+        "y4": {
+          "speaker": "npc_edwyn",
+          "text": "Empacamos lo que hay. Otra vez.",
+          "portrait": "tenso",
+          "next": "y5"
+        },
+        "y5": {
+          "speaker": "npc_mari",
+          "text": "Los Jenkins no empacan. Aaron sigue en su chacra, con la pala.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_1867": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_rachel",
+      "npc": "npc_rachel",
+      "lang": "cym",
+      "start": "r0",
+      "nodes": {
+        "r0": {
+          "speaker": "narrator",
+          "text": "Noviembre de 1867. En la chacra de los Jenkins hay trigo verde. El resto del valle está seco.",
+          "next": "r1"
+        },
+        "r1": {
+          "speaker": "narrator",
+          "text": "Aaron abrió un hueco en la orilla del río. El agua entra sola y corre hasta el trigo.",
+          "next": "r2"
+        },
+        "r2": {
+          "speaker": "npc_rachel",
+          "text": "El río corre más alto que el campo. No hay que subir el agua: hay que dejarla bajar.",
+          "next": "r3"
+        },
+        "r3": {
+          "speaker": "npc_rachel",
+          "text": "Vos cavaste conmigo. Antes de clavar la pala, mirá el suelo: por donde el agua quiere ir, va.",
+          "condition": "flags.n3_madryn == 'jenkins'",
+          "next": "r4"
+        },
+        "r4": {
+          "speaker": "npc_lewis",
+          "text": "Si el agua llega a una chacra, llega a todas. Que cada familia cave la suya.",
+          "next": "r5"
+        },
+        "r5": {
+          "speaker": "npc_edwyn",
+          "text": "Desempaquen.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_zanja": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_inundo",
+      "npc": "npc_edwyn",
+      "lang": "cym",
+      "start": "u0",
+      "nodes": {
+        "u0": {
+          "speaker": "narrator",
+          "text": "El agua de tu zanja se desborda sobre la chacra de los vecinos, que está en un bajo.",
+          "next": "u1"
+        },
+        "u1": {
+          "speaker": "npc_gwilym",
+          "text": "¡Se está ahogando lo que sembró papá!",
+          "condition": "flags.n3_gwilym_murio != true",
+          "next": "u3"
+        },
+        "u2": {
+          "speaker": "narrator",
+          "text": "La madre de Gwilym mira entrar el agua en lo que sembraron. No dice nada.",
+          "next": "u3"
+        },
+        "u3": {
+          "speaker": "npc_edwyn",
+          "text": "Una compuerta de su lado, y el agua es riego en vez de ruina. O la zanja, más lejos.",
+          "portrait": "tenso",
+          "effects": [
+            {
+              "morale": -5
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_regada",
+      "lang": "cym",
+      "start": "a0",
+      "nodes": {
+        "a0": {
+          "speaker": "narrator",
+          "text": "El agua entra a tu chacra por la compuerta. La tierra seca se oscurece, de a poco.",
+          "next": "a1"
+        },
+        "a1": {
+          "speaker": "narrator",
+          "text": "Y por la otra compuerta, a la de los vecinos.",
+          "condition": "flags.n3_riega_vecinos == true",
+          "next": "a2"
+        },
+        "a2": {
+          "speaker": "narrator",
+          "text": "Las herramientas de labranza quedaron atrás: emparejar los surcos con palas de madera y las manos lleva cuatro jornadas más.",
+          "condition": "flags.n3_sin_labranza == true",
+          "next": "a3"
+        },
+        "a3": {
+          "speaker": "npc_mari",
+          "text": "Ahora sí. Ahora, a esperar.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_cosecha",
+      "lang": "cym",
+      "start": "c0",
+      "nodes": {
+        "c0": {
+          "speaker": "narrator",
+          "text": "Marzo de 1868.",
+          "next": "c1"
+        },
+        "c1": {
+          "speaker": "narrator",
+          "text": "En tu chacra hay trigo hasta la cintura. Es una cosecha espléndida, la primera del valle.",
+          "condition": "flags.n3_regada == true",
+          "effects": [
+            {
+              "resource": {
+                "id": "comida",
+                "delta": 30,
+                "reason": "la cosecha"
+              }
+            },
+            {
+              "morale": 10
+            }
+          ],
+          "next": "c3"
+        },
+        "c2": {
+          "speaker": "narrator",
+          "text": "Tu zanja no llegó a tiempo. Los Jenkins comparten el agua de la suya, y algo se cosecha.",
+          "effects": [
+            {
+              "resource": {
+                "id": "comida",
+                "delta": 10,
+                "reason": "la cosecha"
+              }
+            },
+            {
+              "morale": 4
+            }
+          ],
+          "next": "c3"
+        },
+        "c3": {
+          "speaker": "narrator",
+          "text": "Los vecinos también cosechan, y comparten con ustedes la primera harina.",
+          "condition": "flags.n3_riega_vecinos == true",
+          "effects": [
+            {
+              "resource": {
+                "id": "comida",
+                "delta": 5,
+                "reason": "harina de los vecinos"
+              }
+            },
+            {
+              "morale": 4
+            }
+          ],
+          "next": "c5"
+        },
+        "c4": {
+          "speaker": "narrator",
+          "text": "En el bajo de los vecinos el agua pudrió la semilla. Este año, cosechan poco.",
+          "condition": "flags.n3_inundo_vecinos == true",
+          "effects": [
+            {
+              "morale": -3
+            }
+          ],
+          "next": "c5"
+        },
+        "c5": {
+          "speaker": "npc_lewis",
+          "text": "Nos quedamos.",
+          "next": "c6"
+        },
+        "c6": {
+          "speaker": "npc_gwilym",
+          "text": "¿Viste? Más alto que yo.",
+          "condition": "flags.n3_gwilym_fin == true && flags.n3_gwilym_murio != true",
+          "next": "c8"
+        },
+        "c7": {
+          "speaker": "narrator",
+          "text": "En la barda, junto a la cruz de Gwilym, alguien dejó una espiga.",
+          "condition": "flags.n3_gwilym_murio == true",
+          "next": "c8"
+        },
+        "c8": {
+          "speaker": "narrator",
+          "text": "Lo que sigue —diez años después, Gaiman— está en armado.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_cosecha": true
+              }
+            }
+          ],
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_rachel_charla",
+      "npc": "npc_rachel",
+      "lang": "cym",
+      "start": "k0",
+      "nodes": {
+        "k0": {
+          "speaker": "npc_rachel",
+          "text": "Ahora cada familia sabe por dónde baja el agua.",
+          "condition": "flags.n3_regada == true",
+          "end": true
+        },
+        "k1": {
+          "speaker": "npc_rachel",
+          "text": "Cavá de a un tramo y mirá. El agua te va diciendo.",
+          "end": true
+        }
+      }
+    },
+    {
+      "id": "d_n3_aaron_charla",
+      "npc": "npc_aaron",
+      "lang": "cym",
+      "start": "k0",
+      "nodes": {
+        "k0": {
+          "speaker": "npc_aaron",
+          "text": "Ustedes empaquen. Yo tengo trigo que regar.",
+          "condition": "flags.n3_zanja != true",
+          "end": true
+        },
+        "k1": {
+          "speaker": "npc_aaron",
+          "text": "Más trigo del que vamos a poder moler.",
+          "condition": "flags.n3_regada == true",
+          "end": true
+        },
+        "k2": {
+          "speaker": "npc_aaron",
+          "text": "En la toma, la pala más honda. Lo demás, que lo haga el agua.",
           "end": true
         }
       }
@@ -979,6 +1284,60 @@
           ]
         }
       ]
+    },
+    {
+      "id": "ch_n3_madryn",
+      "prompt": "Todos empacan. ¿Y vos?",
+      "turnCost": 0,
+      "hint": "La colonia decide por todos. Vos decidís qué hacés mientras tanto.",
+      "options": [
+        {
+          "id": "empacar",
+          "text": "Empacar lo de tu familia.",
+          "detail": "Tu madre descansa. Los Jenkins cavan solos.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_madryn": "empacar"
+              }
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": 6
+              }
+            },
+            {
+              "morale": -3
+            }
+          ]
+        },
+        {
+          "id": "jenkins",
+          "text": "Ir a ayudar a los Jenkins.",
+          "detail": "Rachel tiene una idea. Tu madre empaca sola.",
+          "effects": [
+            {
+              "setFlag": {
+                "n3_madryn": "jenkins",
+                "n3_lee_terreno": true
+              }
+            },
+            {
+              "bond": {
+                "npc": "npc_rachel",
+                "delta": 1
+              }
+            },
+            {
+              "partyStat": {
+                "npc": "npc_mari",
+                "health": -4
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "tutorials": [
@@ -987,6 +1346,12 @@
       "title": "El rancho",
       "text": "Juntá barro y junco en la orilla. Con material, caminá hasta donde quieras levantar el rancho y tocá «Rancho acá». Cerca del río el barro está a mano; en la barda, lejos del agua, acarrearlo lleva más turnos.",
       "hint": "Las paredes del fuerte guardan una marca. Miralas."
+    },
+    {
+      "id": "tut_n3_zanja",
+      "title": "La zanja",
+      "text": "Pegado al río, tocá «Cavar acá»: ahí va la toma. Seguí de a un tramo, cada uno pegado al anterior, hasta tu chacra. El agua baja, no sube: si el terreno se levanta, no pasa. Al llegar, poné una compuerta: sin compuerta el agua no entra, y si pasa al lado de una chacra baja, la inunda.",
+      "hint": "Cada tramo es un turno de trabajo. La compuerta lleva barro y junco."
     }
   ]
 }

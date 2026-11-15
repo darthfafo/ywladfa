@@ -1,4 +1,4 @@
-# Arte del Nivel 3 — «El valle» (actos I y II)
+# Arte del Nivel 3 — «El valle» (actos I, II y III)
 
 Lo que hoy se dibuja por código y conviene reemplazar. Mismo sistema que los niveles
 anteriores:
@@ -35,6 +35,15 @@ quillango de guanaco sobre los hombros con la cara pintada hacia afuera en el bo
 `neutral`: atento, mide al otro. `calido`: media sonrisa (el pan). `tenso`: cauteloso,
 no agresivo.
 
+### rachel — Rachel Jenkins (histórica: la idea del riego)
+Retrato y sprite. Colona galesa de unos treinta años, 1867: vestido oscuro de trabajo,
+delantal embarrado, pañuelo en la cabeza, manos curtidas. Mira el suelo, piensa.
+Apariencia no documentada: sobria, sin idealizar.
+
+### aaron — Aaron Jenkins (histórico: regó el primer trigo)
+Retrato y sprite. Colono galés, chaleco y camisa arremangada, sombrero gastado, pala al
+hombro, botas con barro. Terco, trabajador. Apariencia no documentada.
+
 ---
 
 ## Ilustraciones (todavía no conectadas: se conectan cuando existan)
@@ -57,3 +66,15 @@ Winter dawn on a bare clay ridge above a river valley. A small group of Welsh
 colonists around a fresh grave marked by a simple wooden cross, heads bowed, some
 singing, breath visible in the cold. The river and the sea far below. Restrained,
 no melodrama, no visible body.
+
+### n3_orilla_abierta — El agua entra sola (noviembre de 1867)
+A Welsh settler couple at a cut in the high bank of a muddy Patagonian river: the man
+with a shovel, the woman pointing along a shallow channel where brown water runs by
+itself toward a small field of green wheat, in the middle of a dry, pale valley. Early
+summer light, hopeful but understated.
+
+### n3_cosecha — La cosecha (marzo de 1868)
+A small family field of ripe golden wheat, waist-high, in a dry river valley with
+clay cliffs behind; a narrow irrigation ditch with a wooden sluice gate along its
+edge. Welsh settlers cutting wheat by hand with sickles, a mother resting on a sheaf.
+Warm late-summer light. Quiet relief, not triumph.

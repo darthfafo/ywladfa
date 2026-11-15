@@ -185,7 +185,7 @@ export interface LevelDef {
     /** generador de src/util/mapgen.ts */
     generator?: string;
     /** valle (Nivel 3): las chacras, ubicadas respecto del río (mapgen.chacraRects) */
-    chacras?: Array<{ id: string; owner: string; x: number; w: number; dy: number; h: number }>;
+    chacras?: Array<{ id: string; owner: string; x: number; w: number; dy: number; h: number; /** cuánto más baja que el llano (un bajo: se inunda fácil) */ bajo?: number }>;
   };
   schedule: { days: number; turnsPerDay: number };
   zones: ZoneDef[];

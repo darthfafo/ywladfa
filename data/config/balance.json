@@ -347,7 +347,7 @@
       },
       "zanjaDepth": 1.0,
       "headLossPerCell": 0.03,
-      "floodMargin": 0.4,
+      "floodMargin": 0.15,
       "mods": {
         "sinHierroFactor": 2,
         "sinLabranzaZanjaJornadas": 4

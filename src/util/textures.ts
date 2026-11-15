@@ -216,6 +216,8 @@ export const NPC_COLORS: Record<string, [number, number, HatStyle]> = {
   npc_gwilym: [PAL.moss, PAL.soil, 'boina'],
   // quillango de guanaco (cuero claro con guarda), vincha
   npc_toldo: [PAL.clayLight, PAL.blood, 'vincha'],
+  npc_rachel: [PAL.slate, PAL.bone, 'boina'],
+  npc_aaron: [PAL.soil, PAL.ink2, 'copa'],
 };
 
 export const PC_COLORS: Record<string, [number, number, HatStyle]> = {
@@ -316,6 +318,13 @@ export function makeProps(scene: Phaser.Scene): void {
   makeRect(scene, 'prop_bandera', 12, 16, PAL.seaPale, PAL.bone);
   // Nivel 3, acto II: el toldo de cuero de los que llegan (en 3D, marchModels.toldoCamp)
   makeRect(scene, 'prop_toldo', 44, 24, PAL.clayLight, PAL.clay);
+  // Nivel 3, acto III: la zanja (seca, con agua), la vista previa y la compuerta (en 3D, marchModels)
+  makeRect(scene, 'prop_zanja_seca', 16, 16, PAL.soil, PAL.clay);
+  makeRect(scene, 'prop_zanja_agua', 16, 16, PAL.sea, PAL.seaPale);
+  makeRect(scene, 'prop_zanja_ok', 16, 16, PAL.moss, PAL.moss);
+  makeRect(scene, 'prop_zanja_mal', 16, 16, PAL.barranca, PAL.barranca);
+  makeRect(scene, 'prop_zanja_lee', 16, 16, PAL.seaPale, PAL.seaPale);
+  makeRect(scene, 'prop_compuerta', 16, 12, PAL.soil2, PAL.wheat);
   makeShip(scene);
 }
 
@@ -409,7 +418,7 @@ export function makeShipLarge(scene: Phaser.Scene, key = 'prop_mimosa_grande'): 
   tex!.refresh();
 }
 
-function makeRect(scene: Phaser.Scene, key: string, w: number, h: number, fill: number, edge: number): void {
+export function makeRect(scene: Phaser.Scene, key: string, w: number, h: number, fill: number, edge: number): void {
   if (scene.textures.exists(key)) return;
   const tex = scene.textures.createCanvas(key, w, h);
   const ctx = tex!.getContext();

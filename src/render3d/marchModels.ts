@@ -372,6 +372,93 @@ export function toldoCamp(): THREE.Group {
   return g;
 }
 
+/**
+ * Nivel 3, acto III: un tramo de zanja de una casilla. Un surco de tierra oscura
+ * con los bordes de la tierra sacada; con agua, el fondo es agua. Tramo a tramo se
+ * tocan y se lee una zanja seguida. La vista previa: un cuadro translúcido.
+ */
+export function zanjaTramo(state: 'seca' | 'agua' | 'ok' | 'mal' | 'lee'): THREE.Group {
+  const g = new THREE.Group();
+  if (state === 'ok' || state === 'mal' || state === 'lee') {
+    const color = state === 'ok' ? PAL.moss : state === 'mal' ? PAL.barranca : PAL.seaPale;
+    const m = new THREE.Mesh(
+      new THREE.BoxGeometry(0.96, 0.04, 0.96),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5, depthWrite: false }),
+    );
+    m.position.y = 0.03;
+    g.add(m);
+    return g;
+  }
+  const fondo = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.03, 1.0), lambert(state === 'agua' ? PAL.sea : PAL.soil));
+  fondo.position.y = 0.015;
+  g.add(fondo);
+  if (state === 'agua') {
+    const brillo = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.01, 0.08), lambert(PAL.seaPale));
+    brillo.position.set(0.1, 0.035, -0.15);
+    g.add(brillo);
+  }
+  // la tierra sacada, amontonada en las cuatro esquinas (así los tramos se unen en cualquier dirección)
+  const tierra = lambert(PAL.clay);
+  for (const [x, z] of [[-0.42, -0.42], [0.42, -0.42], [-0.42, 0.42], [0.42, 0.42]] as const) {
+    const t = new THREE.Mesh(new THREE.IcosahedronGeometry(0.14, 0), tierra);
+    t.scale.set(1, 0.55, 1);
+    t.position.set(x, 0.06, z);
+    g.add(t);
+  }
+  return g;
+}
+
+/**
+ * Una chacra de `w`×`h` casillas: tierra arada con surcos y una estaca en cada
+ * esquina. `regada`: la tierra oscura y húmeda, con el trigo que asoma.
+ * `inundada`: el agua desbordada encima, quieta y marrón.
+ */
+export function chacraField(w: number, h: number, estado: 'seca' | 'regada' | 'inundada'): THREE.Group {
+  const regada = estado === 'regada';
+  const g = new THREE.Group();
+  const tierra = new THREE.Mesh(new THREE.BoxGeometry(w - 0.1, 0.04, h - 0.1), lambert(regada ? PAL.soil : PAL.clay));
+  tierra.position.y = 0.02;
+  g.add(tierra);
+  const surco = lambert(regada ? PAL.moss : PAL.clayLight);
+  for (let k = 0; k < h * 2; k++) {
+    const s = new THREE.Mesh(new THREE.BoxGeometry(w - 0.4, regada ? 0.12 : 0.05, 0.12), surco);
+    s.position.set(0, regada ? 0.08 : 0.05, -h / 2 + 0.25 + k * 0.5);
+    g.add(s);
+  }
+  if (estado === 'inundada') {
+    const agua = new THREE.Mesh(
+      new THREE.BoxGeometry(w - 0.2, 0.02, h - 0.2),
+      new THREE.MeshLambertMaterial({ color: PAL.seaLight, transparent: true, opacity: 0.8 }),
+    );
+    agua.position.y = 0.1;
+    g.add(agua);
+  }
+  const madera = lambert(PAL.soil2);
+  for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
+    const estaca = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5, 0.08), madera);
+    estaca.position.set((x * (w - 0.2)) / 2, 0.25, (z * (h - 0.2)) / 2);
+    g.add(estaca);
+  }
+  shadows(g);
+  return g;
+}
+
+/** La compuerta: dos postes y una tabla que se levanta para dejar pasar el agua. */
+export function compuerta(): THREE.Group {
+  const g = new THREE.Group();
+  const madera = lambert(PAL.soil2);
+  for (const x of [-0.42, 0.42]) {
+    const poste = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.55, 0.1), madera);
+    poste.position.set(x, 0.27, 0);
+    g.add(poste);
+  }
+  const tabla = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.22, 0.06), madera);
+  tabla.position.set(0, 0.38, 0);
+  g.add(tabla);
+  shadows(g);
+  return g;
+}
+
 // ---------------------------------------------------------------- fuerte
 
 /**

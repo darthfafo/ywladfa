@@ -410,11 +410,11 @@ export function valleHeight(x: number, y: number): number {
 }
 
 /** Las chacras del nivel (data: map.chacras) en casillas: a `dy` filas al norte (o al sur, negativo) de la orilla. */
-export function chacraRects(level: LevelDef): Array<{ id: string; owner: string; x: number; y: number; w: number; h: number }> {
+export function chacraRects(level: LevelDef): Array<{ id: string; owner: string; x: number; y: number; w: number; h: number; bajo?: number }> {
   return (level.map.chacras ?? []).map((c) => {
     const edge = c.dy >= 0 ? Math.floor(riverCenter(c.x + c.w / 2) - VALLE.riverHalf) - 1 : Math.ceil(riverCenter(c.x + c.w / 2) + VALLE.riverHalf) + 1;
     const y = c.dy >= 0 ? edge - c.dy - c.h + 1 : edge - c.dy;
-    return { id: c.id, owner: c.owner, x: c.x, y, w: c.w, h: c.h };
+    return { id: c.id, owner: c.owner, x: c.x, y, w: c.w, h: c.h, bajo: c.bajo };
   });
 }
 
@@ -461,7 +461,13 @@ export function valleyGrid(level: LevelDef): ValleyGrid {
   const cells: Cell[] = [];
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) cells.push({ h: valleHeight(x, y), kind: kindOf[valleKind(x, y)] });
   for (const c of chacraRects(level))
-    for (let y = c.y; y < c.y + c.h; y++) for (let x = c.x; x < c.x + c.w; x++) cells[y * W + x]!.chacra = c.id;
+    for (let y = c.y; y < c.y + c.h; y++)
+      for (let x = c.x; x < c.x + c.w; x++) {
+        const cell = cells[y * W + x]!;
+        cell.chacra = c.id;
+        // una chacra en un bajo (data: map.chacras[].bajo): una zanja sin compuerta al lado la inunda
+        cell.h -= c.bajo ?? 0;
+      }
   // las ruinas del fuerte viejo (decor «fuerte», render3d/marchModels.mudFort: 7×5 más la zanja): ahí no se construye
   const fort = level.spawns.decor?.find((d) => d.id === 'fuerte');
   if (fort)

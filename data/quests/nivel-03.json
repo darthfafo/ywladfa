@@ -296,6 +296,92 @@
       "journalLine": "Agosto de 1866. Pasó el invierno. Del otro lado del río se instaló un campamento grande.",
       "journalThought": "Sin ellos no lo pasábamos.",
       "steps": []
+    },
+    {
+      "id": "q_n3_1867_empacar",
+      "title": "Madryn",
+      "day": 0,
+      "dayFlag": "n3_dia_1867",
+      "optional": true,
+      "journalWhen": "flags.n3_madryn == 'empacar'",
+      "journalLine": "1867. La cosecha volvió a fallar y la colonia decidió volver a Madryn. Empacamos lo nuestro.",
+      "steps": [],
+      "journalThought": "Otra vez todo en bultos. Mamá dice que esta vez es la última."
+    },
+    {
+      "id": "q_n3_1867_jenkins",
+      "title": "Madryn",
+      "day": 0,
+      "dayFlag": "n3_dia_1867",
+      "optional": true,
+      "journalWhen": "flags.n3_madryn == 'jenkins'",
+      "journalLine": "1867. La cosecha volvió a fallar y la colonia decidió volver a Madryn. Me fui a ayudar a los Jenkins, que no empacan.",
+      "steps": [],
+      "journalThought": "Rachel mira el suelo como si lo leyera."
+    },
+    {
+      "id": "q_n3_rachel",
+      "title": "La zanja",
+      "day": 0,
+      "dayFlag": "n3_dia_zanja",
+      "optional": true,
+      "journalWhen": "flags.n3_zanja == true",
+      "journalLine": "Noviembre. Aaron Jenkins abrió la orilla del río y el agua corrió sola hasta su trigo. Desempacamos.",
+      "steps": [],
+      "journalThought": "El río corre más alto que el campo. Hay que dejar bajar el agua."
+    },
+    {
+      "id": "q_n3_inundo",
+      "title": "La zanja",
+      "day": 0,
+      "dayFlag": "n3_dia_inundo",
+      "optional": true,
+      "journalWhen": "flags.n3_inundo_vecinos == true",
+      "journalLine": "Mi zanja inundó la chacra de los vecinos.",
+      "steps": [],
+      "journalThought": "Era el camino más corto."
+    },
+    {
+      "id": "q_n3_regada",
+      "title": "La zanja",
+      "day": 0,
+      "dayFlag": "n3_dia_regada",
+      "optional": true,
+      "journalWhen": "flags.n3_regada == true",
+      "journalLine": "El agua entró a nuestra chacra por la compuerta.",
+      "steps": [],
+      "journalThought": "Ahora hay que esperar."
+    },
+    {
+      "id": "q_n3_riega_vecinos",
+      "title": "La zanja",
+      "day": 0,
+      "dayFlag": "n3_dia_regada",
+      "optional": true,
+      "journalWhen": "flags.n3_riega_vecinos == true",
+      "journalLine": "Pusimos otra compuerta, para los vecinos.",
+      "steps": [],
+      "journalThought": "El agua que pasa por su lado también es de ellos."
+    },
+    {
+      "id": "q_n3_cosecha",
+      "title": "La cosecha",
+      "day": 0,
+      "dayFlag": "n3_dia_cosecha",
+      "optional": true,
+      "journalWhen": "flags.n3_cosecha == true && flags.n3_regada == true",
+      "journalLine": "Marzo de 1868: trigo hasta la cintura. Nos quedamos.",
+      "steps": []
+    },
+    {
+      "id": "q_n3_cosecha_sin",
+      "title": "La cosecha",
+      "day": 0,
+      "dayFlag": "n3_dia_cosecha",
+      "optional": true,
+      "journalWhen": "flags.n3_cosecha == true && flags.n3_regada != true",
+      "journalLine": "Marzo de 1868: con el agua de los Jenkins se cosechó algo. Nos quedamos.",
+      "steps": []
     }
   ]
 }

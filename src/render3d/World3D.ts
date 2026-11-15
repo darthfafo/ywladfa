@@ -14,7 +14,7 @@ import { CAM_3D, CAM_TALK, PAL, RENDER_3D_FX, TERRAIN_HEIGHT_3D,
 import { game } from '@/core/Game';
 import { baseTerrain, TERRAIN } from '@/util/mapgen';
 import { buildShip } from './ship';
-import { adobeHut, corral, flagPole, mudFort, toldoCamp } from './marchModels';
+import { adobeHut, chacraField, compuerta, corral, flagPole, mudFort, toldoCamp, zanjaTramo } from './marchModels';
 import { TEX_TILES, terrainTexture } from './terrainTextures';
 
 /**
@@ -710,6 +710,15 @@ export class World3D {
     if (key === 'prop_corral_ok') return { kind: 'model', obj: corral('ok') };
     if (key === 'prop_corral_mal') return { kind: 'model', obj: corral('mal') };
     if (key === 'prop_toldo') return { kind: 'model', obj: toldoCamp() };
+    if (key === 'prop_zanja_seca') return { kind: 'model', obj: zanjaTramo('seca') };
+    if (key === 'prop_zanja_agua') return { kind: 'model', obj: zanjaTramo('agua') };
+    if (key === 'prop_zanja_ok') return { kind: 'model', obj: zanjaTramo('ok') };
+    if (key === 'prop_zanja_mal') return { kind: 'model', obj: zanjaTramo('mal') };
+    if (key === 'prop_zanja_lee') return { kind: 'model', obj: zanjaTramo('lee') };
+    if (key === 'prop_compuerta') return { kind: 'model', obj: compuerta() };
+    // las chacras del valle: prop_chacra_<w>x<h>[_regada|_inundada] (src/levels/nivel03.ts)
+    const ch = /^prop_chacra_(\d+)x(\d+)(?:_(regada|inundada))?$/.exec(key);
+    if (ch) return { kind: 'model', obj: chacraField(Number(ch[1]), Number(ch[2]), (ch[3] as 'regada' | 'inundada' | undefined) ?? 'seca') };
     if (key === 'prop_bandera') {
       const f = flagPole();
       return { kind: 'model', obj: f.obj, update: f.update };

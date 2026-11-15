@@ -155,6 +155,38 @@
       "level": ["nivel-03"]
     },
     {
+      "id": "npc_rachel",
+      "name": "Rachel Jenkins",
+      "historical": true,
+      "years": "—",
+      "role": "Colona; la idea del riego",
+      "sprite": "npc_rachel",
+      "portrait": "rachel",
+      "languages": { "cym": 3, "spa": 0, "aon": 0 },
+      "trade": "chacra",
+      "bond": 0,
+      "stats": { "health": 75, "morale": 60, "stamina": 70 },
+      "note": "Documentado: a ella se le atribuye la idea del riego sistemático, y su marido Aaron regó trigo abriendo la orilla del río en noviembre de 1867 (docs/04 §1.3). Sus palabras y lo que le enseña al personaje son dramatizados.",
+      "voiceNote": "Habla poco y mira el suelo. Explica con las manos, dibujando en el barro.",
+      "level": ["nivel-03"]
+    },
+    {
+      "id": "npc_aaron",
+      "name": "Aaron Jenkins",
+      "historical": true,
+      "years": "—",
+      "role": "Colono; regó el primer trigo",
+      "sprite": "npc_aaron",
+      "portrait": "aaron",
+      "languages": { "cym": 3, "spa": 0, "aon": 0 },
+      "trade": "chacra",
+      "bond": 0,
+      "stats": { "health": 80, "morale": 55, "stamina": 80 },
+      "note": "Documentado: en noviembre de 1867 regó un campo de trigo abriendo un hueco en la orilla del río (docs/04 §1.3). Sus palabras son dramatizadas.",
+      "voiceNote": "Terco. Lo que dice, lo hace con la pala.",
+      "level": ["nivel-03"]
+    },
+    {
       "id": "npc_dafydd",
       "name": "Dafydd",
       "historical": false,
