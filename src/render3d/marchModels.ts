@@ -414,16 +414,31 @@ export function zanjaTramo(state: 'seca' | 'agua' | 'ok' | 'mal' | 'lee'): THREE
  * `inundada`: el agua desbordada encima, quieta y marrón.
  */
 export function chacraField(w: number, h: number, estado: 'seca' | 'regada' | 'inundada'): THREE.Group {
-  const regada = estado === 'regada';
   const g = new THREE.Group();
-  const tierra = new THREE.Mesh(new THREE.BoxGeometry(w - 0.1, 0.04, h - 0.1), lambert(regada ? PAL.soil : PAL.clay));
-  tierra.position.y = 0.02;
+  const regada = estado === 'regada';
+  // tierra removida, más oscura que el llano; los surcos, lomos bajos y parejos (no tablas)
+  const tierra = new THREE.Mesh(new THREE.BoxGeometry(w - 0.1, 0.03, h - 0.1), lambert(regada ? PAL.soil : PAL.soil2));
+  tierra.position.y = 0.015;
+  tierra.receiveShadow = true;
   g.add(tierra);
-  const surco = lambert(regada ? PAL.moss : PAL.clayLight);
-  for (let k = 0; k < h * 2; k++) {
-    const s = new THREE.Mesh(new THREE.BoxGeometry(w - 0.4, regada ? 0.12 : 0.05, 0.12), surco);
-    s.position.set(0, regada ? 0.08 : 0.05, -h / 2 + 0.25 + k * 0.5);
+  const lomo = lambert(regada ? PAL.soil2 : PAL.clay);
+  const rows = Math.max(2, Math.round(h * 2));
+  for (let k = 0; k < rows; k++) {
+    const z = -h / 2 + (k + 0.5) * (h / rows);
+    const s = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, w - 0.35, 5, 1), lomo);
+    s.rotation.z = Math.PI / 2;
+    s.scale.set(1, 1, 0.45);
+    s.position.set(0, 0.035, z);
     g.add(s);
+    // regada: el trigo que asoma, en hilera sobre cada surco
+    if (regada) {
+      const brote = lambert(k % 2 ? PAL.moss : PAL.scrub);
+      for (let i = 0; i < Math.round(w * 2.5); i++) {
+        const b = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 4), brote);
+        b.position.set(-w / 2 + 0.3 + i * ((w - 0.6) / Math.max(1, Math.round(w * 2.5) - 1)), 0.15, z + (i % 2 ? 0.04 : -0.04));
+        g.add(b);
+      }
+    }
   }
   if (estado === 'inundada') {
     const agua = new THREE.Mesh(
@@ -433,12 +448,25 @@ export function chacraField(w: number, h: number, estado: 'seca' | 'regada' | 'i
     agua.position.y = 0.1;
     g.add(agua);
   }
+  // estacas en las esquinas y un hilo bajo que marca el lindero
   const madera = lambert(PAL.soil2);
-  for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
-    const estaca = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5, 0.08), madera);
-    estaca.position.set((x * (w - 0.2)) / 2, 0.25, (z * (h - 0.2)) / 2);
+  const hilo = lambert(PAL.bone);
+  const corners: Array<[number, number]> = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+  corners.forEach(([x, z], i) => {
+    const px = (x * (w - 0.1)) / 2;
+    const pz = (z * (h - 0.1)) / 2;
+    const estaca = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.45, 0.07), madera);
+    estaca.position.set(px, 0.22, pz);
     g.add(estaca);
-  }
+    const [nx, nz] = corners[(i + 1) % 4]!;
+    const qx = (nx * (w - 0.1)) / 2;
+    const qz = (nz * (h - 0.1)) / 2;
+    const len = Math.hypot(qx - px, qz - pz);
+    const linea = new THREE.Mesh(new THREE.BoxGeometry(len, 0.012, 0.012), hilo);
+    linea.position.set((px + qx) / 2, 0.36, (pz + qz) / 2);
+    linea.rotation.y = -Math.atan2(qz - pz, qx - px);
+    g.add(linea);
+  });
   shadows(g);
   return g;
 }

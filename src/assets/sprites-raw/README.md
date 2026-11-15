@@ -28,8 +28,13 @@ Ejemplos: `pc_m_sur.png`, `npc_lewis_este.png`, `npc_dafydd_norte.png`.
 | `npc_pepperell` | Cap. George Pepperell | 24×32 |
 | `npc_mari` | Mari Vaughan | 24×32 |
 | `npc_dafydd` | Dafydd (9 años) | **20×26** — más chico que el resto |
+| `npc_murga` | Julián Murga (Nivel 3) | 24×32 |
+| `npc_gwilym` | Gwilym (8 años, Nivel 3) | **20×26** |
+| `npc_toldo` | El del toldo (Nivel 3) | 24×32 |
+| `npc_rachel` | Rachel Jenkins (Nivel 3) | 24×32 |
+| `npc_aaron` | Aaron Jenkins (Nivel 3) | 24×32 |
 
-Los prompts exactos para cada uno están en `docs/06-prompts-sprites.txt`.
+Los prompts exactos para cada uno están en `docs/06-prompts-sprites.txt` (los del Nivel 3, en `docs/12-prompts-personajes-nivel-03.txt`).
 
 Podés soltar solo 1 o 2 personajes primero (empezando por `pc_m` o
 `npc_lewis`, son P0) — no hace falta esperar a tener los 9.

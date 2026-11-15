@@ -72,6 +72,7 @@ const PROP_SPRITESHEETS: Record<string, { frames: number; frameSize: number }> =
  * default. Si se regenera algún PNG a otro tamaño, actualizar acá también. */
 const SPRITE_FRAME_SIZE: Record<string, { w: number; h: number }> = {
   npc_dafydd: { w: 42, h: 56 },
+  npc_gwilym: { w: 42, h: 56 },
 };
 const DEFAULT_SPRITE_FRAME = { w: 50, h: 67 };
 

@@ -80,6 +80,9 @@ export interface MarchStart {
   bondHelper?: string | null;
   /** fija las variantes de la partida (la aguada con agua o seca): mismas en toda la partida, nunca una tirada al elegir */
   seed?: number;
+  /** cuánto ocupa la columna (tiles) adelante y atrás de la cabeza: frente al cañadón nadie queda adentro,
+   * y al rodearlo la columna entera sale del otro lado (la escena lo saca de su formación) */
+  column?: { lead: number; tail: number };
 }
 
 /** Una opción frente a un obstáculo. Todos los campos son opcionales y se suman. */
@@ -261,6 +264,8 @@ export function profileHeight(track: MarchTrack, x: number): number {
 
 export class MarchSystem {
   readonly state: MarchState;
+  /** cuánto ocupa la columna adelante y atrás de la cabeza (MarchStart.column) */
+  private readonly column: { lead: number; tail: number };
   private nightObstacle: MarchObstacle;
 
   /**
@@ -273,6 +278,7 @@ export class MarchSystem {
     start: MarchStart = {},
     resume?: MarchState,
   ) {
+    this.column = start.column ?? { lead: 0, tail: 0 };
     const mariHealth = start.mariHealth ?? cfg.start.mariHealth;
     this.state = resume ? structuredClone(resume) : {
       day: 1,
@@ -432,8 +438,10 @@ export class MarchSystem {
     // la columna se acerca al próximo obstáculo sin pasarse
     let step = v * dt;
     const next = this.nextObstacle();
-    if (next && next.at !== undefined && s.pos + step >= next.at - 1) {
-      step = Math.max(0, next.at - 1 - s.pos);
+    // frente a un cañadón, la columna frena con el primero todavía en el borde (no adentro)
+    const stopAt = next?.at === undefined ? 0 : next.at - 1 - (next.type === 'canadon' ? this.column.lead : 0);
+    if (next && next.at !== undefined && s.pos + step >= stopAt) {
+      step = Math.max(0, stopAt - s.pos);
       s.blocked = this.resolve(next);
       ev.push({ type: 'obstacle', obstacle: s.blocked });
     }
@@ -528,7 +536,11 @@ export class MarchSystem {
       if (cost) s.comida = Math.max(0, s.comida + cost);
     }
     if (opt.route) s.route = opt.route;
-    if (o.type === 'canadon' && opt.extraTiles && o.at !== undefined) s.pos = o.at + (o.width ?? 10) + 1;
+    // rodear el cañadón: la columna entera aparece del otro lado, ya reagrupada (nadie cruza por el fondo)
+    if (o.type === 'canadon' && opt.extraTiles && o.at !== undefined) {
+      s.pos = o.at + (o.width ?? 10) + 1 + this.column.tail;
+      s.mariLag = 0;
+    }
 
     const pace = this.cfg.paces[s.pace];
     const walk = (tiles: number, kind: 'detour' | 'lost'): void => {

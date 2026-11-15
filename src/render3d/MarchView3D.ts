@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import * as THREE from 'three';
-import { CAM_MARCH, PAL, TURN_LIGHT, VIEW } from '@/config';
+import { CAM_MARCH, PAL, TURN_LIGHT, TURN_LIGHT_MS, VIEW } from '@/config';
 import { profileHeight, type MarchTrack } from '@/systems/MarchSystem';
 import { contactShadow, setFrameToFeet } from './spriteFeet';
 import { bushGeometry, hash, horse, mudFort, rockGeometry, toldo, tuftGeometry, willow } from './marchModels';
@@ -109,7 +109,7 @@ export class MarchView3D {
     this.buildFort();
     this.buildWisps();
     for (const a of actors) this.addActor(a);
-    this.setTurn('manana');
+    this.setTurn('manana', true);
   }
 
   // ---------------------------------------------------------------- escenario
@@ -471,11 +471,13 @@ export class MarchView3D {
     this.scene3.add(mudFort((x, z) => this.groundHeight(x, z), L - 4, -9));
   }
 
-  /** Luz del turno (TURN_LIGHT, config.ts): la misma que el mundo de arriba. */
-  setTurn(turn: string): void {
+  /**
+   * Luz del turno (TURN_LIGHT, config.ts): la misma que el mundo de arriba. Nunca de
+   * un cuadro al otro: pasa de la luz de ahora a la del turno nuevo en TURN_LIGHT_MS
+   * (render la va mezclando). `instant`: de golpe (al armar la escena).
+   */
+  setTurn(turn: string, instant = false): void {
     const c = TURN_LIGHT[turn] ?? TURN_LIGHT.manana!;
-    this.sun.color.set(c.sun);
-    this.sun.intensity = c.sunI * 0.9;
     // el sol de verdad para quien mira al este con el sur a la derecha, en el invierno
     // del sur: sale del mar (fondo) corrido al norte (izquierda), pasa alto por el
     // norte y se pone detrás de la cámara (oeste). +x = sur, -z = este.
@@ -485,20 +487,62 @@ export class MarchView3D {
       tarde: [-9, 9, 15],
       noche: [-6, 14, 4],
     };
-    this.sunDir.set(...(SUN[turn] ?? SUN.manana!));
-    this.hemi.color.set(c.sky);
-    this.hemi.groundColor.set(c.ground);
-    this.hemi.intensity = c.hemiI;
     const fog = new THREE.Color(c.fog);
-    this.baseFog.copy(fog);
-    this.scene3.background = fog.clone();
-    this.scene3.fog = new THREE.Fog(fog.clone(), 60, 190);
     // arriba, un celeste patagónico lavado (de día) o casi negro (de noche)
     const top = new THREE.Color(c.sky).lerp(new THREE.Color(turn === 'noche' ? PAL.void : 0x6d93ad), turn === 'noche' ? 0.85 : 0.75);
-    this.paintSky(top, fog);
+    const target: Light = {
+      sun: new THREE.Color(c.sun),
+      sunI: c.sunI * 0.9,
+      dir: new THREE.Vector3(...(SUN[turn] ?? SUN.manana!)),
+      sky: new THREE.Color(c.sky),
+      ground: new THREE.Color(c.ground),
+      hemiI: c.hemiI,
+      fog,
+      top,
+      glow: c.glow,
+    };
+    if (instant || !this.light) {
+      this.light = target;
+      this.lightFrom = null;
+      this.applyLight(target);
+      return;
+    }
+    this.lightFrom = cloneLight(this.light);
+    this.lightTo = target;
+    this.lightT0 = performance.now();
+  }
+
+  private light: Light | null = null;
+  private lightFrom: Light | null = null;
+  private lightTo: Light | null = null;
+  private lightT0 = 0;
+
+  /** El paso de una luz a otra, un poco por cuadro. */
+  private stepLight(): void {
+    if (!this.lightFrom || !this.lightTo) return;
+    const k = Math.min(1, (performance.now() - this.lightT0) / TURN_LIGHT_MS);
+    const e = k * k * (3 - 2 * k);
+    this.light = mixLight(this.lightFrom, this.lightTo, e);
+    this.applyLight(this.light);
+    if (k >= 1) this.lightFrom = this.lightTo = null;
+  }
+
+  private applyLight(l: Light): void {
+    this.sun.color.copy(l.sun);
+    this.sun.intensity = l.sunI;
+    this.sunDir.copy(l.dir);
+    this.hemi.color.copy(l.sky);
+    this.hemi.groundColor.copy(l.ground);
+    this.hemi.intensity = l.hemiI;
+    this.baseFog.copy(l.fog);
+    if (!this.scene3.fog) {
+      this.scene3.background = l.fog.clone();
+      this.scene3.fog = new THREE.Fog(l.fog.clone(), 60, 190);
+    }
+    this.paintSky(l.top, l.fog);
     for (const a of this.actors.values()) {
       const m = a.sprite?.material as THREE.MeshLambertMaterial | undefined;
-      if (m) m.emissiveIntensity = 0.45 * c.glow;
+      if (m) m.emissiveIntensity = 0.45 * l.glow;
     }
   }
   private readonly sunDir = new THREE.Vector3();
@@ -516,6 +560,7 @@ export class MarchView3D {
    */
   render(dtMs: number, focusX: number, xs: Record<string, number>, env: { inland: number; storm: number } = { inland: 0, storm: 0 }): void {
     const dt = Math.min(dtMs / 1000, 0.05);
+    this.stepLight();
     this.time += dt;
     this.fitToCanvas();
     const L = this.track.lengthTiles;
@@ -637,4 +682,36 @@ export class MarchView3D {
 /** Ruido suave determinista en el plano (0..1). */
 function noise(x: number, z: number): number {
   return 0.5 + 0.25 * Math.sin(x * 0.23 + z * 0.31) + 0.15 * Math.sin(x * 0.61 - z * 0.47) + 0.1 * Math.sin(x * 1.37 + z * 1.11);
+}
+
+/** Una luz del día: lo que cambia de un turno a otro. */
+interface Light {
+  sun: THREE.Color;
+  sunI: number;
+  dir: THREE.Vector3;
+  sky: THREE.Color;
+  ground: THREE.Color;
+  hemiI: number;
+  fog: THREE.Color;
+  top: THREE.Color;
+  glow: number;
+}
+
+function cloneLight(l: Light): Light {
+  return { ...l, sun: l.sun.clone(), dir: l.dir.clone(), sky: l.sky.clone(), ground: l.ground.clone(), fog: l.fog.clone(), top: l.top.clone() };
+}
+
+function mixLight(a: Light, b: Light, k: number): Light {
+  const n = (x: number, y: number): number => x + (y - x) * k;
+  return {
+    sun: a.sun.clone().lerp(b.sun, k),
+    sunI: n(a.sunI, b.sunI),
+    dir: a.dir.clone().lerp(b.dir, k),
+    sky: a.sky.clone().lerp(b.sky, k),
+    ground: a.ground.clone().lerp(b.ground, k),
+    hemiI: n(a.hemiI, b.hemiI),
+    fog: a.fog.clone().lerp(b.fog, k),
+    top: a.top.clone().lerp(b.top, k),
+    glow: n(a.glow, b.glow),
+  };
 }

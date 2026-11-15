@@ -1,0 +1,276 @@
+PROMPTS PARA LOS PERSONAJES QUE FALTAN (Nivel 3 — «El valle»)
+================================================================================
+
+Cinco personajes que hoy el juego dibuja por código (muñequitos de color):
+  6. Julián Murga ........ npc_murga    (histórico — acto I, la bandera)
+  7. Gwilym .............. npc_gwilym   (ficticio, 8 años — acto II)
+  8. El del toldo ........ npc_toldo    (ficticio, sin nombre — acto II)
+  9. Rachel Jenkins ...... npc_rachel   (histórica — acto III)
+ 10. Aaron Jenkins ....... npc_aaron    (histórico — acto III)
+
+Mismo sistema que los nueve que ya están (docs/05-prompts-arte2.txt §1 y
+docs/06-prompts-sprites.txt). Este archivo copia esos prompts palabra por palabra
+y cambia solo la descripción de cada personaje: es lo que mantiene la
+continuidad de estilo.
+
+
+CÓMO HACERLO (en este orden)
+--------------------------------------------------------------------------------
+1. PRIMERO EL RETRATO NEUTRAL de cada personaje. Adjuntá como imagen de
+   referencia de ESTILO dos retratos que ya están en el juego:
+     - src/assets/portraits/lewis_neutral.png
+     - src/assets/portraits/mari_neutral.png   (o dafydd_neutral.png para Gwilym)
+   y pegá el prompt del retrato (abajo) con la frase de estilo incluida. Lo que
+   tiene que salir igual que esos dos: pixel art pintado de busto, fondo liso
+   azul petróleo oscuro (#18262A), luz suave de costado, paleta apagada de
+   tierra, ropa gastada, cara digna y realista (no caricatura).
+2. Con el neutral aprobado, pedí el TENSO y el CÁLIDO adjuntando ese neutral
+   como referencia del personaje ("same character, same clothes, same framing").
+3. RECIÉN AHÍ LOS SPRITES: adjuntá el retrato neutral del personaje (para que
+   la ropa y los colores sean los mismos) y un sprite que ya está en el juego
+   como referencia de estilo (src/assets/sprites/npc_berwyn.png, o
+   npc_dafydd.png para Gwilym). Tres vistas: sur, norte, este. El oeste no se
+   genera: se espeja el este.
+
+Dónde van:
+  Retratos  → src/assets/portraits/<id>_<neutral|tenso|calido>.png
+              (murga_neutral.png, gwilym_tenso.png, toldo_calido.png, rachel_…, aaron_…)
+              Se bajan a 48×48 con vecino más cercano (nearest-neighbor), nunca
+              bicúbico (docs/05-prompts-arte2.txt §1, nota de exportación).
+  Sprites   → src/assets/sprites-raw/<clave>_<sur|norte|este>.png
+              (npc_murga_sur.png, npc_gwilym_este.png, …). Yo armo la hoja final.
+El juego los toma solos apenas están: no hace falta tenerlos todos juntos.
+
+
+FRASE DE ESTILO DE LOS RETRATOS (va al principio de cada retrato)
+--------------------------------------------------------------------------------
+Pixel art, 1865 Welsh emigrant colony in Patagonia (Chubut, Argentina).
+Muted desaturated earth-tone palette only: dark blues (#18262A #24363B),
+browns and sand (#45412F #5E5741 #7A7157 #A09472), clay and barranca reds
+(#5C3022 #7A4A2E #9C3A24 #B07A52), off-white bone (#EAE8E0), grey (#6B6A5E).
+No saturated greens, no bright colors, no modern elements. Flat shading, thick
+dark 1px outlines, limited color count per asset (8-16 colors max), dignified
+and realistic — not cartoonish, not caricature. Overcast coastal Patagonian
+light, windswept and sparse, austere mood.
+Match exactly the rendering style of the attached reference portraits: painted
+pixel-art bust, soft side light, plain dark teal background (#18262A), worn
+period clothing, same level of detail and same framing.
+
+Y al final de cada retrato:
+48x48 pixel art portrait, square format, solid plain dark background, bust
+framing, [EXPRESIÓN], three expression set needed: neutral / tense / warm.
+
+
+================================================================================
+6. JULIÁN MURGA — npc_murga (histórico) — el comandante de la bandera
+================================================================================
+Nota: de Murga solo están documentados la bandera y el nombre Trerawson
+(15-IX-1865). Su aspecto no lo está: el uniforme es el genérico de un oficial
+del ejército argentino de la década de 1860, sin galones inventados de más.
+
+--- Retrato ---
+[FRASE DE ESTILO]
+Argentine army officer of the 1860s, around 40 years old, dark blue military
+frock coat with a single row of brass buttons and a high collar, dark blue kepi
+with a short visor, thick dark moustache, short sideburns, sun-weathered olive
+skin, upright formal bearing, serious and reserved — an official doing an
+official duty, neither heroic nor villainous.
+Neutral: formal, distant. Tense: jaw set, impatient. Warm: a brief polite
+half-smile.
+[FINAL DE RETRATO]
+
+--- Sprite: Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing the
+viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: quepí azul oscuro de visera
+corta, levita militar azul oscura con botones de bronce, bigote oscuro, piel
+curtida. Mismos colores exactos que el retrato, no los reinventes.
+
+--- Sprite: Vista NORTE (de espaldas) ---
+(igual que la vista SUR, cambiando la última oración técnica por:)
+View: facing away from the viewer, back of the head/hat visible (north/back).
+
+--- Sprite: Vista ESTE (perfil) ---
+(igual que la vista SUR, cambiando la última oración técnica por:)
+View: side profile facing right (east).
+
+
+================================================================================
+7. GWILYM — npc_gwilym (ficticio, 8 años) — OJO: lienzo 20x26, como Dafydd
+================================================================================
+Hijo de los vecinos. Es el que corre riesgo en el invierno de 1866 si quedó la
+harina: el retrato TENSO es el de la enfermedad (hambre), sin dramatizar de más.
+
+--- Retrato ---
+[FRASE DE ESTILO]
+8-year-old Welsh boy, thin face, short sandy-brown hair under a small knitted
+dark wool cap, oversized patched brown wool jacket handed down from an older
+brother, a frayed grey scarf, freckles, big curious eyes — a boy who asks about
+everything and counts the days until things happen.
+Neutral: curious, attentive. Tense: pale and hollow-cheeked, dark circles under
+the eyes, wrapped in a blanket (the hunger of the winter) — tired, not
+grotesque. Warm: wide gap-toothed grin.
+[FINAL DE RETRATO]
+
+--- Sprite: Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. This is an 8-year-old child, noticeably smaller and slighter than an
+adult character. Classic 16-bit top-down RPG style (Pokémon overworld / old
+Zelda), flat colors, hard pixel edges, minimal shading (2-3 flat tones per
+surface), no gradients, no anti-aliasing, no outline glow. Viewed from a 3/4
+top-down angle (as seen from slightly above, like a character walking on a
+map) — NOT a front portrait close-up. Transparent background. Canvas 20x26 px
+(exact pixel size, no padding). Static standing pose, no walk cycle needed.
+View: facing the viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: gorrito de lana oscuro, pelo
+castaño claro, saco marrón remendado que le queda grande, bufanda gris. Mismos
+colores exactos que el retrato, no los reinventes. Tiene que distinguirse de
+Dafydd de un vistazo: Dafydd usa boina grande y pañuelo óxido; Gwilym, gorrito
+tejido y bufanda gris.
+
+--- Sprite: Vista NORTE (de espaldas) ---
+(igual que la vista SUR, cambiando la última oración técnica por:)
+View: facing away from the viewer, back of the head/hat visible (north/back).
+
+--- Sprite: Vista ESTE (perfil) ---
+(igual que la vista SUR, cambiando la última oración técnica por:)
+View: side profile facing right (east).
+
+
+================================================================================
+8. EL DEL TOLDO — npc_toldo (ficticio, sin nombre) — el trato sobre la manta
+================================================================================
+Regla de representación (docs/04 §1.2): una persona, no un emblema. Mismo peso,
+misma dignidad y mismo nivel de detalle que los colonos. Sin rasgos de
+caricatura, sin penacho de plumas, sin pintura de guerra, sin armas, sin gesto
+hostil. Ropa aonikenk del siglo XIX: quillango de guanaco (el pelo hacia
+adentro, la cara de cuero pintada con guardas geométricas rojas y negras),
+vincha, pelo largo y negro suelto. Quiénes eran los cuatro de abril de 1866 no
+lo dicen las fuentes: por eso no tiene nombre.
+
+--- Retrato ---
+[FRASE DE ESTILO]
+Aonikenk (Tehuelche) man, about 35 years old, 1860s Patagonia, broad strong
+face with high cheekbones, long straight black hair worn loose to the
+shoulders, a simple red woven headband across the forehead, wearing a
+guanaco-hide cloak (quillango) wrapped over the shoulders with the leather side
+out, painted with small red and black geometric bands along the edge. Calm,
+attentive, measuring the other person — a trader, dignified and self-assured.
+No feathers, no face paint, no weapons, no stereotype.
+Neutral: attentive, measuring. Tense: wary, reserved — never aggressive.
+Warm: a quiet half-smile (he recognizes the one who brought bread).
+[FINAL DE RETRATO]
+
+--- Sprite: Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing the
+viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: pelo largo negro suelto, vincha
+roja, quillango de guanaco color cuero con guardas rojas y negras en el borde,
+botas de potro claras. Mismos colores exactos que el retrato, no los
+reinventes. Misma escala y misma dignidad que los colonos.
+
+--- Sprite: Vista NORTE (de espaldas) ---
+(igual que la vista SUR, cambiando la última oración técnica por:)
+View: facing away from the viewer, back of the head/hat visible (north/back).
+(De espaldas se ve el quillango entero: el cuero pintado con las guardas.)
+
+--- Sprite: Vista ESTE (perfil) ---
+(igual que la vista SUR, cambiando la última oración técnica por:)
+View: side profile facing right (east).
+
+
+================================================================================
+9. RACHEL JENKINS — npc_rachel (histórica) — la idea del riego
+================================================================================
+Documentado: a ella se le atribuye la idea del riego sistemático (1867). Su
+aspecto no está documentado: sobria, de trabajo, sin idealizar.
+
+--- Retrato ---
+[FRASE DE ESTILO]
+Welsh colonist woman, about 30 years old, 1867, dark brown hair pinned back
+under a plain grey-blue wool headscarf, dark working dress with a mud-stained
+apron, sleeves rolled up, a faded red-brown shawl crossed over the chest,
+weathered hands, thoughtful focused eyes — someone who reads the ground before
+digging.
+Neutral: thoughtful, looking slightly down. Tense: frowning in concentration.
+Warm: a quiet confident smile.
+[FINAL DE RETRATO]
+
+--- Sprite: Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing the
+viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: pañuelo gris azulado en la
+cabeza, vestido oscuro de trabajo, delantal con barro, chal rojizo cruzado.
+Mismos colores exactos que el retrato, no los reinventes. Tiene que
+distinguirse de Mari (pañuelo oscuro y chal rojo) y de Elin: el delantal claro
+embarrado es su seña.
+
+--- Sprite: Vista NORTE (de espaldas) ---
+(igual que la vista SUR, cambiando la última oración técnica por:)
+View: facing away from the viewer, back of the head/hat visible (north/back).
+
+--- Sprite: Vista ESTE (perfil) ---
+(igual que la vista SUR, cambiando la última oración técnica por:)
+View: side profile facing right (east).
+
+
+================================================================================
+10. AARON JENKINS — npc_aaron (histórico) — el que abrió la orilla
+================================================================================
+Documentado: en noviembre de 1867 regó trigo abriendo un hueco en la orilla del
+río. Aspecto no documentado.
+
+--- Retrato ---
+[FRASE DE ESTILO]
+Welsh colonist farmer, about 35 years old, 1867, short dark beard, sunburnt
+face, worn brown felt hat with a wide flat brim, collarless shirt with sleeves
+rolled up, dark wool waistcoat, a spade handle resting on his shoulder, muddy
+hands — stubborn and practical, a man who answers with the shovel.
+Neutral: stubborn, steady. Tense: tired, sweat on the brow. Warm: a broad
+satisfied grin (the water reached the wheat).
+[FINAL DE RETRATO]
+
+--- Sprite: Vista SUR (de frente) ---
+Pixel art character sprite for a top-down 2D RPG, chibi/funko-pop proportions:
+oversized head (~45-50% of total height), small simplified body, short stubby
+limbs. Classic 16-bit top-down RPG style (Pokémon overworld / old Zelda), flat
+colors, hard pixel edges, minimal shading (2-3 flat tones per surface), no
+gradients, no anti-aliasing, no outline glow. Viewed from a 3/4 top-down angle
+(as seen from slightly above, like a character walking on a map) — NOT a front
+portrait close-up. Transparent background. Canvas 24x32 px (exact pixel size,
+no padding). Static standing pose, no walk cycle needed. View: facing the
+viewer (south/front).
+Mantené fiel a la imagen de referencia adjunta: sombrero de fieltro marrón de
+ala ancha y plana (no galera: se tiene que distinguir de Lewis y Berwyn),
+barba corta oscura, camisa arremangada, chaleco oscuro, pala al hombro, botas
+con barro. Mismos colores exactos que el retrato, no los reinventes.
+
+--- Sprite: Vista NORTE (de espaldas) ---
+(igual que la vista SUR, cambiando la última oración técnica por:)
+View: facing away from the viewer, back of the head/hat visible (north/back).
+
+--- Sprite: Vista ESTE (perfil) ---
+(igual que la vista SUR, cambiando la última oración técnica por:)
+View: side profile facing right (east).

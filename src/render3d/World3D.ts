@@ -695,6 +695,17 @@ export class World3D {
     if (key === 'prop_cajon') return { kind: 'model', obj: crate() };
     if (key === 'prop_jarilla') return { kind: 'model', obj: bush() };
     if (key === 'prop_molle') return { kind: 'model', obj: molle() };
+    // Nivel 3: de dónde sale el material (el barro y el junco de la orilla)
+    if (key === 'prop_barro') {
+      const m = mudPit();
+      m.scale.setScalar(1.3);
+      return { kind: 'model', obj: m };
+    }
+    if (key === 'prop_junco') {
+      const m = reedClump();
+      m.scale.setScalar(1.3);
+      return { kind: 'model', obj: m };
+    }
     if (key === 'prop_mejillones') return { kind: 'model', obj: mussels() };
     if (key === 'prop_fogon') {
       const f = fire();
@@ -1104,6 +1115,92 @@ function bush(): THREE.Group {
     m.castShadow = true;
     g.add(m);
   });
+  return g;
+}
+
+/**
+ * Nivel 3, el barro de la orilla: un pozo de barro húmedo y brillante, terrones
+ * sacados al costado, tres adobes ya cortados y la pala clavada. Se lee como
+ * «de acá se saca material», no como una mancha.
+ */
+function mudPit(): THREE.Group {
+  const g = new THREE.Group();
+  const flat = (c: number, extra: Partial<THREE.MeshLambertMaterialParameters> = {}): THREE.MeshLambertMaterial =>
+    new THREE.MeshLambertMaterial({ color: c, flatShading: true, ...extra });
+  const pozo = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.6, 0.06, 9), flat(PAL.clayDark, { emissive: PAL.seaPale, emissiveIntensity: 0.08 }));
+  pozo.scale.set(1, 1, 0.75);
+  pozo.position.y = 0.03;
+  pozo.receiveShadow = true;
+  g.add(pozo);
+  const terron = flat(PAL.clay);
+  for (const [x, z, r] of [[-0.55, 0.25, 0.18], [-0.45, -0.25, 0.14], [0.5, 0.3, 0.16]] as const) {
+    const t = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), terron);
+    t.scale.set(1.2, 0.6, 1);
+    t.position.set(x, r * 0.5, z);
+    t.castShadow = true;
+    g.add(t);
+  }
+  // adobes ya cortados, apilados
+  const adobe = flat(PAL.clayLight);
+  [[0.55, 0.06, -0.2, 0.2], [0.55, 0.06, -0.48, -0.15], [0.55, 0.18, -0.34, 0.05]].forEach(([x, y, z, r]) => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.12, 0.2), adobe);
+    b.position.set(x, y, z);
+    b.rotation.y = r;
+    b.castShadow = true;
+    g.add(b);
+  });
+  // la pala, clavada en el barro
+  const mango = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.9, 5), flat(PAL.soil2));
+  mango.position.set(-0.1, 0.45, 0.05);
+  mango.rotation.z = 0.35;
+  mango.castShadow = true;
+  g.add(mango);
+  const hoja = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.03), flat(PAL.grey));
+  hoja.position.set(0.04, 0.06, 0.05);
+  hoja.rotation.z = 0.35;
+  g.add(hoja);
+  return g;
+}
+
+/**
+ * Nivel 3, el junco de la orilla: una mata de tallos altos y finos con la espiga
+ * marrón, y al lado un atado ya cortado, listo para el techo.
+ */
+function reedClump(): THREE.Group {
+  const g = new THREE.Group();
+  const tallos = [PAL.moss, PAL.coiron, PAL.scrub].map((c) => new THREE.MeshLambertMaterial({ color: c, flatShading: true }));
+  const espiga = new THREE.MeshLambertMaterial({ color: PAL.soil, flatShading: true });
+  for (let i = 0; i < 16; i++) {
+    const a = i * 2.39;
+    const r = 0.08 + (i % 5) * 0.06;
+    const h = 0.75 + ((i * 37) % 10) * 0.05;
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.022, h, 4), tallos[i % tallos.length]!);
+    t.position.set(Math.cos(a) * r - 0.15, h / 2, Math.sin(a) * r * 0.8);
+    t.rotation.set(Math.sin(a) * 0.12, 0, Math.cos(a) * 0.12);
+    t.castShadow = true;
+    g.add(t);
+    if (i % 3 === 0) {
+      const e = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.14, 5), espiga);
+      e.position.set(t.position.x + Math.cos(a) * 0.05, h + 0.02, t.position.z);
+      g.add(e);
+    }
+  }
+  // el atado cortado, acostado y atado al medio
+  const atado = new THREE.Group();
+  const paja = new THREE.MeshLambertMaterial({ color: PAL.wheat, flatShading: true });
+  for (let i = 0; i < 7; i++) {
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.9, 4), paja);
+    c.rotation.z = Math.PI / 2;
+    c.position.set(0, 0.05 + (i % 2) * 0.035, -0.06 + i * 0.02);
+    atado.add(c);
+  }
+  const cuerda = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.012, 4, 8), new THREE.MeshLambertMaterial({ color: PAL.soil2 }));
+  cuerda.rotation.y = Math.PI / 2;
+  cuerda.position.set(0, 0.07, 0);
+  atado.add(cuerda);
+  atado.position.set(0.35, 0, 0.3);
+  atado.rotation.y = 0.5;
+  g.add(atado);
   return g;
 }
 

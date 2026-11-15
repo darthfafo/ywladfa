@@ -36,6 +36,9 @@ const TURN_LABEL: Record<string, string> = { amanecer: 'AMANECER', manana: 'MAÑ
 const TURN_INDEX: Record<string, number> = { amanecer: 0, manana: 1, tarde: 2, noche: 3 };
 
 /** La columna: quién va, en qué orden (tiles respecto de la cabeza) y algo de profundidad. */
+/** Las ilustraciones con cielo arriba: ahí va el texto, sin tapar a nadie (docs/09-arte-nivel-02.txt). */
+const CAPTION_TOP = new Set(['marcha_noche', 'marcha_partida', 'marcha_toldos', 'marcha_caballo', 'marcha_tormenta', 'marcha_perdidos']);
+
 const COLUMN: Array<{ id: string; dx: number; z: number; mari?: boolean }> = [
   { id: 'npc_lewis', dx: 2.2, z: 0.1 },
   { id: 'pc', dx: 0, z: 0.7 },
@@ -94,7 +97,9 @@ export class MarchScene extends Phaser.Scene {
     const level = registry.level(this.levelId);
     const cfg = registry.levelBalance(this.levelId).marcha as MarchConfig;
     const resume = this.integrated ? game.state.march : undefined;
-    this.march = new MarchSystem(cfg, level.march!, this.integrated ? this.inherited() : {}, resume);
+    // lo que ocupa la columna, de su formación: el primero adelante, el último (y tu madre, que va rezagada) atrás
+    const column = { lead: Math.max(...COLUMN.map((c) => c.dx)), tail: -Math.min(...COLUMN.map((c) => c.dx)) };
+    this.march = new MarchSystem(cfg, level.march!, { ...(this.integrated ? this.inherited() : {}), column }, resume);
     this.playerName = this.integrated ? game.state.player.name : 'Elin';
     const pcTex = this.integrated && game.state.player.gender === 'm' ? 'pc_m' : 'pc_f';
 
@@ -129,7 +134,9 @@ export class MarchScene extends Phaser.Scene {
 
     this.hudEl = this.dom(0, 0, VIEW.width, VIEW.hud.h, 61);
     this.trayEl = this.dom(0, VIEW.tray.y, VIEW.width, VIEW.tray.h, 61);
-    this.captionEl = this.dom(0, VIEW.world.y + VIEW.world.h - 70, VIEW.width, 60, 62);
+    // toda la franja del mundo: el texto se apoya abajo (crece hacia arriba) o arriba (crece hacia abajo),
+    // nunca encima de la bandeja ni del HUD
+    this.captionEl = this.dom(0, VIEW.world.y, VIEW.width, VIEW.world.h, 62);
     this.cardEl = this.dom(0, VIEW.world.y, VIEW.width, VIEW.world.h, 63);
     // la libreta (Diario y Códice), arriba a la derecha como en el Nivel 1; solo en el juego
     if (this.integrated && game.flags.is('unlocked_sistema_diario')) {
@@ -156,7 +163,7 @@ export class MarchScene extends Phaser.Scene {
       this.journalBtn?.style.setProperty('visibility', visible ? '' : 'hidden');
     });
 
-    this.view.setTurn(this.march.state.turn);
+    this.view.setTurn(this.march.state.turn, true);
     if (resume) {
       this.showCard(
         `Jornada ${resume.day}`,
@@ -211,7 +218,7 @@ export class MarchScene extends Phaser.Scene {
     }
     this.paused = true;
     const cine = m.art && hasSceneArt(m.art) ? playCinematic(this, m.art, { x: 0, y: VIEW.world.y, w: VIEW.width, h: VIEW.world.h }, 55) : null;
-    this.caption(m.who ?? '', m.text);
+    this.caption(m.who ?? '', m.text, cine && m.art && CAPTION_TOP.has(m.art) ? 'top' : 'bottom');
     const shownAt = performance.now();
     let done = false;
     const close = (): void => {
@@ -616,9 +623,15 @@ export class MarchScene extends Phaser.Scene {
   // ---------------------------------------------------------------- texto
 
   /** El texto del mensaje abierto, abajo del mundo: queda hasta que se toque (nextMsg). */
-  private caption(who: string, text: string): void {
+  private caption(who: string, text: string, at: 'top' | 'bottom' = 'bottom'): void {
+    const wrap = this.captionEl.style;
+    wrap.display = 'flex';
+    wrap.flexDirection = 'column';
+    wrap.justifyContent = at === 'top' ? 'flex-start' : 'flex-end';
+    wrap.boxSizing = 'border-box';
+    wrap.padding = '8px 0';
     this.captionEl.innerHTML =
-      `<div style="box-sizing:border-box; margin:0 10px; padding:7px 9px; font-family:${this.font}; font-size:7px; line-height:1.7; ` +
+      `<div style="box-sizing:border-box; margin:0 10px; padding:7px 9px; max-height:${VIEW.world.h - 16}px; overflow:hidden; font-family:${this.font}; font-size:7px; line-height:1.7; ` +
       `color:#EAE8E0; background:rgba(14,20,22,0.78); border:1px solid rgba(217,168,69,0.35); pointer-events:none; ` +
       `opacity:0; transition:opacity .4s;">` +
       `<style>@keyframes msg-tap { 0%,100% { opacity:.35 } 50% { opacity:1 } }</style>` +

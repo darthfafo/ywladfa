@@ -221,6 +221,23 @@ describe('marcha (prototipo del Nivel 2)', () => {
     expect(m.state.agua).toBeLessThan(agua);
   });
 
+  it('con la columna entera: nadie queda adentro del cañadón al frenar, y al rodearlo salen todos del otro lado', () => {
+    const column = { lead: 2.2, tail: 12.4 };
+    const m = new MarchSystem(cfg, T, { column });
+    m.state.mariLag = 3;
+    for (let i = 0; i < 5000 && m.state.blocked?.id !== 'canadon'; i++) {
+      m.update(0.1);
+      if (m.state.blocked && m.state.blocked.id !== 'canadon') m.choose(SAFE[m.state.blocked.id]!);
+    }
+    const c = T.obstacles.find((o) => o.id === 'canadon')!;
+    // frente a la decisión, el primero de la columna todavía en el borde
+    expect(m.state.pos + column.lead).toBeLessThan(c.at!);
+    m.choose('rodear');
+    // del otro lado, el último de la columna (y tu madre, reagrupada) ya afuera
+    expect(m.state.pos - column.tail).toBeGreaterThan(c.at! + c.width!);
+    expect(m.state.mariLag).toBe(0);
+  });
+
   it('Mari cansada se queda atrás y la columna la espera sola', () => {
     const m = new MarchSystem(cfg, T);
     m.setPace('apurar');
