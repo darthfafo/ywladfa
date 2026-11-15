@@ -36,7 +36,7 @@ export interface JournalEntry {
 export interface GameState {
   meta: { version: string; seed: number; createdAt: number; playtimeMs: number };
   player: { name: string; gender: 'f' | 'm'; capacityKg: number; carriedKg: number };
-  progress: { level: string; day: number; turn: TurnId; zone: string };
+  progress: { level: string; day: number; turn: TurnId; zone: string; /** el nivel terminó: «Continuar» lleva a su pantalla de cierre */ finished?: boolean };
   resources: Record<ResourceId, number>;
   inventory: InventoryEntry[];
   party: PartyMember[];

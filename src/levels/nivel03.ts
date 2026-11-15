@@ -150,8 +150,9 @@ export class Nivel03Script implements LevelScript {
   private finishRiego(): void {
     const extra = this.cons.extraJornadasZanja;
     const perDay = game.level.schedule.turnsPerDay;
-    for (let d = 0; d < extra; d++) game.spendTurns(perDay);
+    // primero el flag: las noches de abajo guardan, y sin él la cosecha no llegaba nunca
     game.flags.set('n3_regada_lista', true);
+    for (let d = 0; d < extra; d++) game.spendTurns(perDay);
     this.host.checkTriggers();
   }
 

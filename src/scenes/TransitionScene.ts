@@ -29,6 +29,11 @@ export class TransitionScene extends Phaser.Scene {
     this.scene.stop('World');
     this.scene.stop('Ui');
     this.scene.stop('March');
+    // el nivel terminó: se guarda así, para que «Continuar» vuelva a esta pantalla
+    // en vez de a la última noche (rejugando el final)
+    game.state.progress.finished = true;
+    game.releaseSaves();
+    saveSystem.save(game.state);
     // el cierre de cada nivel: rótulo, título del balance e ilustración (level.exit.closing)
     const closing = game.level.exit?.closing ?? { kicker: 'Fin de esta parte', gradeTitle: 'Así siguen' };
     // si hay nivel siguiente, su título; si no, «Continuará…»

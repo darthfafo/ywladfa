@@ -766,6 +766,8 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
     this.lockedIdleMs = 0;
+    // el jugador recuperó el control: la escena que retenía el autoguardado terminó
+    if (!(this.scene.get('Ui') as UiScene).isBusy()) game.releaseSaves();
 
     // teclado suma al vector táctil
     const kb = this.input.keyboard;

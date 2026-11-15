@@ -4,7 +4,7 @@ Este repo es **Chubut 1865 — La Huella de los Rifleros** (antes "Y Wladfa": es
 sobre la colonización galesa del Chubut (1865–1902), en Phaser 3 + TypeScript.
 
 Pantalla **vertical 9:16 (270×480), mobile-first**. El repo ya tiene los documentos de diseño,
-los datos, el **Nivel 1 jugable de punta a punta** y el **Nivel 2 (la marcha) jugable** encadenado al 1.
+los datos y **tres niveles jugables encadenados**: el desembarco (1), la marcha (2) y el valle (3).
 
 ---
 
@@ -15,7 +15,7 @@ los datos, el **Nivel 1 jugable de punta a punta** y el **Nivel 2 (la marcha) ju
 3. `docs/02-arquitectura.md` — stack, carpetas, sistemas, contratos y el **plan de 12 commits** de §10.
 4. `docs/03-assets.md` — qué arte hace falta y qué se puede reemplazar por placeholder.
 5. `docs/04-guia-historica.md` — el marco histórico y las reglas de representación. **No es opcional.**
-6. `docs/08-plan-nivel-02.md` — el plan del nivel siguiente y la deuda técnica previa.
+6. `docs/08-plan-nivel-02.md` y `docs/10-plan-nivel-03.md` — el plan y el estado de los Niveles 2 y 3.
 
 Los datos de `/data/*.json` son la fuente de verdad del contenido. Si un número de balance
 está en `data/config/balance.json`, **no se hardcodea en `src/`**.
@@ -62,10 +62,10 @@ ni bloquea el avance. Ver `docs/01-nivel-01.md` §8.
 ## Estado actual
 
 ```
-✔ docs/           GDD, spec del Nivel 1, arquitectura, assets, guía histórica, plan del Nivel 2
-✔ data/           config, items, npcs, nivel-01 y nivel-02, diálogos, quests, códice, schemas
-✔ src/            core + 11 sistemas + 8 escenas + UI táctil + mundo HD-2D (render3d)
-✔ tests/          72 tests en verde: sistemas, recorrido del Nivel 1, caminos, encadenar niveles, marcha, decisiones, Nivel 2 y la libreta
+✔ docs/           GDD, spec del Nivel 1, arquitectura, assets, guía histórica, planes de los Niveles 2 y 3, arte
+✔ data/           config, items, npcs, niveles 01-03, diálogos, quests, códice, schemas
+✔ src/            core + 12 sistemas + 8 escenas + guiones por nivel (src/levels) + UI táctil + mundo HD-2D (render3d)
+✔ tests/          112 tests en verde: sistemas, recorridos, marcha, decisiones, libreta, los tres actos del valle, la zanja y el guardado
 ✔ scripts/        validate-data.mjs (integridad referencial)
 ◐ arte            ilustraciones, retratos y sprites reales donde existen; el resto, por código
 ✘ maps/           no hay .tmj de Tiled: el mapa se genera en src/util/mapgen.ts
@@ -98,15 +98,27 @@ curvan. Es la bitácora del viaje: un capítulo por nivel, cada jornada con lo q
 decisión, en otra tinta, lo que el personaje cree que va a traer (`journalThought` en las quests). Al
 final, el Códice. El contenido sale de `JournalSystem.bookBlocks()`; el paginado, de `paginate()`.
 
-**Lo que falta:** el Nivel 3 (hoy el cierre del 2 es «Continuará…»), arte del río y de la marcha
-(ilustraciones), ciclo de caminata dibujado y texto en bitmap font.
+**El Nivel 3 — «El valle»** (`WorldScene` + guion `src/levels/nivel03.ts` + `ConstructionSystem`, mapa
+generado `valle_chubut`): se entra al llegar a Caer Antur. Acto I (IX-1865): la bandera de Murga, el
+rancho de barro (dónde: río o barda), los víveres, la crecida y qué se rehace. Acto II (1866): el
+invierno, el toldo junto al fuerte, el trato sobre la manta (aonikenk en `▓`), Gwilym si quedó la
+harina (el coro, si muere), tu madre si quedó el abrigo. Acto III (1867-68): Madryn, la idea de Rachel
+Jenkins, la zanja cavada de a un tramo (el agua corre, la compuerta riega, la chacra baja de los
+vecinos se inunda) y la cosecha. El cierre es «Continuará…».
+
+**Guardado:** un slot en `localStorage` (`SaveSystem`), al cerrar cada jornada; nunca en medio de una
+escena (`Game.holdSaves`/`releaseSaves`). La pantalla de cierre de nivel también queda guardada. En la
+portada: exportar/importar la partida a un archivo (se valida en `migrateState`; versión `SAVE_VERSION`).
+
+**Lo que falta:** la viñeta de 1875 (Gaiman) y el Nivel 4; la compra de la semilla; arte de los
+personajes nuevos del Nivel 3 (`docs/11-arte-nivel-03.txt`); ciclo de caminata dibujado y texto en bitmap font.
 
 ## Cómo correrlo
 
 ```bash
 npm install
 npm run dev            # http://localhost:5173  (abrilo angosto o con el emulador de móvil)
-npm test               # 72 tests (sistemas, recorridos, caminos, niveles, marcha, libreta), sin navegador
+npm test               # 112 tests (sistemas, recorridos, niveles, marcha, libreta, valle, guardado), sin navegador
 npm run validate:data  # integridad referencial de todo /data
 npm run build:single   # dist/index.html autocontenido, se abre con doble clic
 ```
@@ -116,9 +128,9 @@ La pantalla es **270×480 (9:16) fija**; en desktop se centra con banda a los co
 
 ## Próximo objetivo
 
-Pulir el Nivel 2 (arte, sonido, pasada en celular; plan en `docs/08-plan-nivel-02.md`) y empezar
-el **Nivel 3 — «El valle»**: el 15-IX-1865 (Murga y la bandera) y el primer contacto con los
-tehuelches, que según la guía (§1.2) fue con la colonia ya instalada.
+Pasada completa N1 → N2 → N3 en celular; la viñeta de 1875 (Gaiman, el eisteddfod, el coro) que cierra
+el Nivel 3; la compra de la semilla. Pendientes históricos en `docs/10-plan-nivel-03.md` (`TODO(historia)`).
+`?nivel=nivel-03` (solo en `npm run dev`) arranca directo en un nivel.
 
 ---
 

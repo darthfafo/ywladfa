@@ -1,14 +1,41 @@
 import { registry } from './Registry';
 import type { GameState, LangId, LangLevel, PartyMember, ResourceId } from './types';
 
-export const SAVE_VERSION = '0.2.0';
+export const SAVE_VERSION = '0.3.0';
+
+/** Una partida que no se puede usar (archivo ajeno, roto o de un nivel que no existe). */
+export class InvalidSaveError extends Error {}
+
+/** Un miembro del grupo recién llegado, con los valores de npcs.json. */
+function newMember(id: string): PartyMember {
+  const n = registry.npc(id);
+  return { id: n.id, name: n.name, health: n.stats.health, morale: n.stats.morale, stamina: n.stats.stamina, bond: n.bond, trade: n.trade };
+}
 
 /**
  * Pone al día una partida guardada con una versión anterior del juego: completa
  * lo que el formato nuevo espera y no estaba. Nunca borra nada del jugador.
  *  0.1.0 → 0.2.0: las entradas del diario guardan de qué nivel son.
+ *  0.2.0 → 0.3.0: el grupo suma a la gente nueva de su nivel (ej. Gwilym, Rachel y
+ *  Aaron en el Nivel 3: sin estar en el grupo, sus vínculos no se guardaban).
+ * Antes, se fija que sea una partida: si no lo es, InvalidSaveError (y no se carga).
  */
 export function migrateState(s: GameState): GameState {
+  const ok =
+    !!s &&
+    typeof s === 'object' &&
+    typeof s.progress?.level === 'string' &&
+    typeof s.progress.day === 'number' &&
+    !!s.resources &&
+    typeof s.resources === 'object' &&
+    Array.isArray(s.party) &&
+    !!s.player &&
+    typeof s.player.name === 'string';
+  if (!ok) throw new InvalidSaveError('no es una partida del juego');
+  if (!registry.levelExists(s.progress.level)) throw new InvalidSaveError(`nivel desconocido: ${s.progress.level}`);
+  const level = registry.level(s.progress.level);
+  const ids = level.kind === 'march' ? (level.party ?? []) : level.spawns.npcs.map((n) => n.id);
+  for (const id of ids) if (!s.party.some((m) => m.id === id)) s.party.push(newMember(id));
   s.meta ??= { version: '0.1.0', seed: 0, createdAt: Date.now(), playtimeMs: 0 };
   s.journal ??= [];
   s.codex ??= ['cod_wladfa'];
@@ -58,17 +85,7 @@ export function createInitialState(levelId = 'nivel-01', name = 'Elin', gender: 
 
   // un nivel de marcha no tiene mapa: la columna sale de `party`
   const ids = level.kind === 'march' ? (level.party ?? []) : level.spawns.npcs.map((s) => s.id);
-  const party: PartyMember[] = ids
-    .map((id) => registry.npc(id))
-    .map((n) => ({
-      id: n.id,
-      name: n.name,
-      health: n.stats.health,
-      morale: n.stats.morale,
-      stamina: n.stats.stamina,
-      bond: n.bond,
-      trade: n.trade,
-    }));
+  const party: PartyMember[] = ids.map(newMember);
 
   return {
     meta: { version: SAVE_VERSION, seed: Date.now() % 2147483647, createdAt: Date.now(), playtimeMs: 0 },

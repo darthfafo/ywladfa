@@ -108,6 +108,9 @@ export class TriggerSystem {
     if (a.giveItem) this.game.inv.add(a.giveItem, 1);
     if (a.unlock) for (const u of a.unlock as string[]) this.game.flags.set(`unlocked_${u}`, true);
     this.game.journal.unlockCodexFor(t.id);
+    // lo que sigue (diálogo, decisión, escena) todavía no aplicó sus efectos: la
+    // noche que cae ahora guarda cuando termine (Game.holdSaves)
+    if (a.dialogue || a.choice || a.scene || a.tutorial) this.game.holdSaves();
     if (t.turnCost > 0) this.game.spendTurns(t.turnCost);
 
     return {

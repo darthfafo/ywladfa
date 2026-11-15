@@ -50,7 +50,8 @@ export class SaveSystem {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `wladfa-jornada${state.progress.day}.json`;
+    // el nivel y la jornada en el nombre: con varios niveles, «jornada3» no decía de cuál
+    a.download = `chubut1865-${state.progress.level}-jornada${state.progress.day}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }

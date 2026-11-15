@@ -1,12 +1,11 @@
 {
   "$schema": "../schemas/level.schema.json",
   "id": "nivel-03",
-  "draft": true,
   "title": "El valle",
   "subtitle": "Trerawson, a orillas del Chubut",
   "date": "Septiembre de 1865 – marzo de 1868",
   "next": "nivel-04",
-  "comment": "En armado (docs/10-plan-nivel-03.md): acto I — la bandera y el barro (IX-1865) —, acto II — el invierno de 1866 — y acto III — la zanja (1867 → III-1868). Guion en src/levels/nivel03.ts. draft: no se entra desde el Nivel 2 hasta que esté jugable.",
+  "comment": "El Nivel 3 (docs/10-plan-nivel-03.md): acto I — la bandera y el barro (IX-1865) —, acto II — el invierno de 1866 — y acto III — la zanja (1867 → III-1868). Guion en src/levels/nivel03.ts. Se entra desde el Nivel 2 al llegar a Caer Antur.",
   "map": {
     "file": "generado",
     "widthTiles": 64,

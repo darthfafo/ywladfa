@@ -13,9 +13,10 @@ const level = registry.level('nivel-03');
 const cfg = (balance as any).nivel03.construccion as ConstructionConfig;
 const { widthTiles: W, heightTiles: H } = level.map;
 
-describe('el valle (Nivel 3, en armado)', () => {
-  it('todavía no se entra desde el Nivel 2 (draft), pero sus datos cargan', () => {
-    expect(registry.hasLevel('nivel-03')).toBe(false);
+describe('el valle (Nivel 3)', () => {
+  it('se entra desde el Nivel 2 y sus datos cargan', () => {
+    expect(registry.hasLevel('nivel-03')).toBe(true);
+    expect(registry.level('nivel-02').next).toBe('nivel-03');
     expect(level.map.generator).toBe('valle_chubut');
   });
 

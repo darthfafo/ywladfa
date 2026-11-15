@@ -177,6 +177,34 @@ export class Game {
     bus.emit('save:written', { slot: 0 });
   }
 
+  /**
+   * El autoguardado de la noche no puede caer en medio de una escena: un trigger
+   * con costo en turnos (ej. «Dos días después») se marca disparado y pasa la
+   * noche ANTES de mostrar su diálogo, cuyos efectos todavía no se aplicaron. Si
+   * se guardaba ahí y se cerraba el juego, al continuar la escena figuraba vista
+   * pero sus flags nunca existían: la partida quedaba trabada. Mientras haya una
+   * escena en curso (TriggerSystem.consume → hold), la noche anota el guardado y
+   * se hace cuando el jugador recupera el control (WorldScene → releaseSaves).
+   */
+  private saveHold = false;
+  private savePending = false;
+
+  holdSaves(): void {
+    this.saveHold = true;
+  }
+
+  releaseSaves(): void {
+    this.saveHold = false;
+    if (!this.savePending) return;
+    this.savePending = false;
+    this.persist();
+  }
+
+  private persist(): void {
+    saveSystem.save(this.state);
+    bus.emit('save:written', { slot: 0 });
+  }
+
   /** Gasta turnos y, si se cerró una jornada, corre la noche. */
   spendTurns(cost: number): void {
     if (cost <= 0) return;
@@ -202,10 +230,11 @@ export class Game {
     this.party.applyNight(fire);
     // se lee a la mañana siguiente, con el fuego ya apagado: en pasado
     const fireText = fire === 'bigFire' ? 'Anoche el fuego fue grande.' : fire === 'smallFire' ? 'Anoche el fuego fue chico.' : 'Anoche no hubo fuego.';
-    // autoguardado al cerrar jornada, un solo slot (docs/01-nivel-01.md checklist)
-    saveSystem.save(this.state);
+    // autoguardado al cerrar jornada, un solo slot (docs/01-nivel-01.md checklist);
+    // con una escena en curso, al terminar (ver holdSaves)
+    if (this.saveHold) this.savePending = true;
+    else this.persist();
     bus.emit('ui:toast', { text: `${fireText} · Partida guardada.` });
-    bus.emit('save:written', { slot: 0 });
   }
 }
 

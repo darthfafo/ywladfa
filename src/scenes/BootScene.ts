@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { INPUT_GUARD, PAL, VIEW } from '@/config';
-import { bus } from '@/core/EventBus';
 import { game } from '@/core/Game';
 import { createInitialState } from '@/core/GameState';
 import { registry } from '@/core/Registry';
@@ -480,12 +479,20 @@ export class BootScene extends Phaser.Scene {
     // exportar/importar como parte de la misma lista, no como links sueltos aparte
     const options: Array<{ label: string; onPick: () => void }> = [];
     const save = saveSystem.peek();
-    if (save) options.push({ label: `Continuar · Jornada ${save.day}`, onPick: () => this.continueGame() });
+    // con varios niveles, la jornada sola no decía dónde se retoma
+    if (save) options.push({ label: `Continuar · N${Number(save.level.slice(-2))} · jornada ${save.day}`, onPick: () => this.continueGame() });
     options.push({ label: 'Nueva partida', onPick: () => this.renderCharacter() });
     options.push({ label: 'Importar partida', onPick: () => this.triggerImportFile() });
     if (save) options.push({ label: 'Exportar partida', onPick: () => this.exportCurrentSave() });
     const rowH = 25;
     const top = VIEW.height - 30 - options.length * rowH;
+    // el resultado de importar una partida (en la portada no hay HUD para un aviso)
+    if (this.importNotice) {
+      this.track(
+        this.renderDomText(cx, top - 14, this.importNotice, { size: 6, color: this.importOk ? '#D9A845' : '#DE7050', align: 'center', width: 230, retro: true }),
+      );
+      this.importNotice = '';
+    }
     options.forEach((o, i) => {
       const el = this.renderDomButton(cx, top + i * rowH + rowH / 2, o.label, o.onPick, 196, 21);
       const b = this.glassButton(el, i === 0);
@@ -509,6 +516,10 @@ export class BootScene extends Phaser.Scene {
     // arriba solo lo dispara (inputEl.click()).
     this.renderFileInput();
   }
+
+  /** lo que pasó al importar, para mostrarlo en la portada */
+  private importNotice = '';
+  private importOk = false;
 
   private exportCurrentSave(): void {
     const s = saveSystem.load();
@@ -540,11 +551,13 @@ export class BootScene extends Phaser.Scene {
       const file = inputEl.files?.[0];
       if (!file) return;
       saveSystem.importFromFile(file).then((s) => {
-        if (!s) {
-          bus.emit('ui:toast', { text: 'Archivo de partida inválido.' });
-          return;
-        }
-        saveSystem.save(s);
+        // se puede volver a elegir el mismo archivo (si no, `change` no se dispara)
+        inputEl.value = '';
+        this.importOk = !!s;
+        this.importNotice = s
+          ? `Partida importada: Nivel ${Number(s.progress.level.slice(-2))}, jornada ${s.progress.day}.`
+          : 'Ese archivo no es una partida del juego.';
+        if (s) saveSystem.save(s);
         this.renderTitle();
       });
     });
@@ -773,7 +786,7 @@ export class BootScene extends Phaser.Scene {
     if (saved) game.replaceState(saved);
     // la partida puede estar en un nivel de marcha (MarchScene) o de mapa (WorldScene)
     // una marcha ya terminada sigue en su cierre, no vuelve a empezar
-    if (game.marchDone) this.scene.start('Transition', { next: game.level.next });
+    if (game.marchDone || game.state.progress.finished) this.scene.start('Transition', { next: game.level.next });
     else this.scene.start(game.isMarch ? 'March' : 'World');
   }
 
