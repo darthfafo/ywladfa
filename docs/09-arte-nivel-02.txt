@@ -1,7 +1,9 @@
 # Arte del Nivel 2 — «La travesía: del golfo al río»
 
 Ilustraciones (escenas cinemáticas) que contextualizan la marcha. Mismo sistema que
-las del Nivel 1: PNG 3:4 vertical en `src/assets/scenes/<id>.png`.
+las del Nivel 1: PNG 3:4 vertical en `src/assets/scenes/<id>.png`, **540×720**, con el
+id del título como nombre (ej. `marcha_partida.png`, sin prefijo). Los originales en alta
+quedan en `arte-original/nivel-02/` (fuera de git).
 
 **Ya están conectadas en el juego.** Cada una aparece sola en su momento apenas el
 PNG existe (MarchScene.illustrate); mientras falte, la marcha sigue como hoy, sin
@@ -29,7 +31,7 @@ colonos son los que pasan.
 
 ## Imprescindibles (5) — arman el arco del nivel
 
-### cutscene_marcha_partida — La partida
+### marcha_partida — La partida
 Cuándo: al empezar el nivel, antes de la tarjeta «La marcha».
 Texto en el juego: «Agosto de 1865. Se sale de Punta Cuevas en grupos de quince o
 veinte, con un par de caballos de carga. A pie, todos.»
@@ -45,7 +47,7 @@ of the frame, the empty brown steppe stretching ahead to the south, cold winter
 morning light, long low shadows, a sense of leaving the only shelter they know.
 ```
 
-### cutscene_marcha_noche — Fogón a cielo abierto
+### marcha_noche — Fogón a cielo abierto
 Cuándo: cada noche de la marcha (reemplaza el fundido a negro).
 ```
 3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
@@ -58,7 +60,7 @@ cold starry sky above, wind bending the grass, very little light and very much
 dark, endurance rather than comfort.
 ```
 
-### cutscene_marcha_toldos — Toldos a lo lejos
+### marcha_toldos — Toldos a lo lejos
 Cuándo: en el camino, al ver el campamento tehuelche (antes de la línea «Humo, allá
 en el bajo. Y toldos.»).
 Texto en el juego: «En un bajo, lejos, sube humo.»
@@ -75,7 +77,7 @@ colonists in the foreground hesitant and still, respectful distance, no weapons,
 no confrontation, muted earth palette.
 ```
 
-### cutscene_marcha_rio — La primera vista del río
+### marcha_rio — La primera vista del río
 Cuándo: al llegar al borde de la meseta (antes de «¿Ven la línea oscura abajo? Es el
 valle. Es el río.»). Es el clímax del nivel.
 Texto en el juego: «Desde el borde de la meseta, abajo: una línea oscura de sauces.»
@@ -91,7 +93,7 @@ late afternoon light breaking through clouds onto the valley, relief and awe aft
 days of thirst.
 ```
 
-### cutscene_marcha_caer_antur — Caer Antur, el Fuerte Paz
+### marcha_caer_antur — Caer Antur, el Fuerte Paz
 Cuándo: al llegar, junto al río; y de fondo en el cierre «Fin de la segunda parte».
 Texto en el juego: «Junto al agua, paredes de barro y una zanja: lo que queda del
 Fuerte Paz.»
@@ -110,7 +112,7 @@ a refuge that is barely a refuge, the beginning of a settlement.
 
 ## Recomendadas (4) — momentos de decisión y de fracaso suave
 
-### cutscene_marcha_caballo — El caballo que se echa
+### marcha_caballo — El caballo que se echa
 Cuándo: antes de la decisión «Un caballo» (repartir la carga o dejar un bulto).
 Texto en el juego: «A media mañana, uno de los caballos de carga se echa en la huella.»
 ```
@@ -123,7 +125,7 @@ horse's head, others looking at the bundles, the rest of the column waiting ahea
 flat empty steppe, harsh midday winter light, the weight of what has to be left.
 ```
 
-### cutscene_marcha_tormenta — El viento del oeste
+### marcha_tormenta — El viento del oeste
 Cuándo: antes de la decisión «Viento del oeste» (seguir o refugiarse).
 Texto en el juego: «Por el oeste, el cielo se pone pardo.»
 ```
@@ -137,7 +139,7 @@ hats, pack horses lowering their heads, dry grass flattened by the wind, the gre
 sea barely visible on the far left, menace of weather, not of people.
 ```
 
-### cutscene_marcha_perdidos — Perdidos
+### marcha_perdidos — Perdidos
 Cuándo: si se toma mal el atajo del cerro (se pierden y terminan saliendo a la costa).
 ```
 3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
@@ -149,7 +151,7 @@ the wrong side of them, the sun low, one man pointing one way and another the
 other way, a mother sitting on a bundle, disorientation and wasted hours.
 ```
 
-### cutscene_marcha_mari — Tu madre no da más
+### marcha_mari — Tu madre no da más
 Cuándo: la primera vez que tu madre se queda atrás por cansancio.
 Texto en el juego: «Tu madre se sienta en un bulto. No da un paso más. La columna
 para a esperarla.»

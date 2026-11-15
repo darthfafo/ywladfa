@@ -3,3 +3,5 @@ dist/
 .DS_Store
 *.local
 .claude/
+# originales en alta del arte (se exportan a 540×720 en src/assets/scenes)
+arte-original/
