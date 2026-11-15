@@ -11,6 +11,7 @@ import { TransitionScene } from './scenes/TransitionScene';
 import { UiScene } from './scenes/UiScene';
 import { WorldScene } from './scenes/WorldScene';
 import { applyIntegerScale } from './util/scale';
+import { showLanding } from './landing';
 
 /**
  * Cartel de error visible en pantalla, ANTES de crear el juego (así agarra
@@ -40,6 +41,9 @@ window.addEventListener('unhandledrejection', (e) => {
   showFatalError(reason instanceof Error ? `${reason.message}\n${reason.stack ?? ''}` : String(reason));
 });
 
+// la portada web (qué es el juego, quiénes lo hicimos, fuentes): por encima del canvas, el juego carga detrás
+showLanding();
+
 const game = new Phaser.Game({
   ...GAME_CONFIG,
   // `?marcha`: el prototipo de la marcha del Nivel 2 (vista lateral), aparte del juego
@@ -60,4 +64,12 @@ if (import.meta.env.DEV) {
 
 // evita el zoom por doble tap y el pull-to-refresh en móviles
 document.addEventListener('gesturestart', (e) => e.preventDefault());
-document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+document.addEventListener(
+  'touchmove',
+  (e) => {
+    // la portada sí se desplaza (es una página para leer)
+    if ((e.target as Element | null)?.closest?.('#landing')) return;
+    e.preventDefault();
+  },
+  { passive: false },
+);
