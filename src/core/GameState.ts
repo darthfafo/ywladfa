@@ -124,3 +124,18 @@ export function conditionContext(s: GameState): Record<string, unknown> {
     codex: s.codex,
   };
 }
+
+/**
+ * El comienzo de un nivel sin haberlo jugado (selector de jornadas): se encadenan los
+ * niveles anteriores desde el Nivel 1, con lo que cada uno hereda por defecto (sin las
+ * decisiones de una partida: la carga entera, nadie quedó atrás).
+ */
+export function levelStartState(levelId: string, name = 'Elin', gender: 'f' | 'm' = 'f'): GameState {
+  let s = createInitialState('nivel-01', name, gender);
+  for (let guard = 0; s.progress.level !== levelId && guard < 20; guard++) {
+    const next = registry.level(s.progress.level).next;
+    if (!next || !registry.levelExists(next)) break;
+    s = stateForNextLevel(s, next);
+  }
+  return s;
+}

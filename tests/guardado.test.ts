@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Game } from '@/core/Game';
-import { createInitialState, InvalidSaveError, migrateState, SAVE_VERSION, stateForNextLevel } from '@/core/GameState';
+import { createInitialState, InvalidSaveError, levelStartState, migrateState, SAVE_VERSION, stateForNextLevel } from '@/core/GameState';
 import { registry } from '@/core/Registry';
 import type { GameState, TriggerDef } from '@/core/types';
 import { DialogueSystem } from '@/systems/DialogueSystem';
@@ -187,6 +187,14 @@ describe('el selector de jornadas', () => {
     saveSystem.save(a);
     expect(saveSystem.checkpoints()).toHaveLength(1);
     expect(saveSystem.loadCheckpoint('nivel-03', 5)!.flags.version).toBe('nueva');
+  });
+
+  it('el comienzo de un nivel sin jugarlo: se encadenan los anteriores con lo de siempre', () => {
+    const s = levelStartState('nivel-03', 'Idris', 'm');
+    expect(s.progress).toMatchObject({ level: 'nivel-03', day: 1, turn: 'amanecer' });
+    expect(s.player.name).toBe('Idris');
+    for (const n of registry.level('nivel-03').spawns.npcs) expect(s.party.some((p) => p.id === n.id), n.id).toBe(true);
+    expect(roundTrip(structuredClone(s)).progress.level).toBe('nivel-03');
   });
 });
 

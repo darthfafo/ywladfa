@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { INPUT_GUARD, PAL, VIEW } from '@/config';
 import { game } from '@/core/Game';
-import { createInitialState } from '@/core/GameState';
+import { createInitialState, levelStartState } from '@/core/GameState';
 import { registry } from '@/core/Registry';
 import { saveSystem } from '@/systems/SaveSystem';
 import { addSceneBackground, preloadArt, sceneTextureKey } from '@/util/assets';
@@ -483,7 +483,7 @@ export class BootScene extends Phaser.Scene {
     if (save) options.push({ label: `Continuar · N${Number(save.level.slice(-2))} · jornada ${save.day}`, onPick: () => this.continueGame() });
     options.push({ label: 'Nueva partida', onPick: () => this.renderCharacter() });
     // las jornadas ya jugadas: retomar cualquiera sin empezar de vuelta
-    if (saveSystem.checkpoints().length) options.push({ label: 'Elegir jornada', onPick: () => this.renderJornadas() });
+    if (save || saveSystem.checkpoints().length) options.push({ label: 'Elegir jornada', onPick: () => this.renderJornadas() });
     options.push({ label: 'Importar partida', onPick: () => this.triggerImportFile() });
     if (save) options.push({ label: 'Exportar partida', onPick: () => this.exportCurrentSave() });
     const rowH = 25;
@@ -529,8 +529,23 @@ export class BootScene extends Phaser.Scene {
     const cx = VIEW.width / 2;
     this.renderShade(0, VIEW.height, 'top', 0.85);
     this.track(this.stepTitle(18, 'Elegir jornada'));
+    // la partida guardada también cuenta como jornada (las de antes de esta versión no estaban anotadas)
+    const current = saveSystem.load();
+    if (current) saveSystem.save(current);
     const byLevel = new Map<string, number[]>();
     for (const c of saveSystem.checkpoints()) byLevel.set(c.level, [...(byLevel.get(c.level) ?? []), c.day]);
+    // cada nivel ya desbloqueado (hasta el más avanzado al que se llegó) se puede empezar desde el principio
+    const num = (l: string): number => Number(l.slice(-2));
+    const furthest = Math.max(0, ...[...byLevel.keys()].map(num));
+    for (let n = 1; n <= furthest; n++) {
+      const id = `nivel-${String(n).padStart(2, '0')}`;
+      if (!registry.levelExists(id)) continue;
+      const days = byLevel.get(id) ?? [];
+      if (!days.includes(1)) byLevel.set(id, [1, ...days]);
+    }
+    const ordered = [...byLevel.entries()].sort((a, b) => num(a[0]) - num(b[0]));
+    byLevel.clear();
+    for (const [k, v] of ordered) byLevel.set(k, v);
     const perRow = 3;
     const bw = 78;
     const gap = 6;
@@ -551,7 +566,7 @@ export class BootScene extends Phaser.Scene {
       y += Math.ceil(days.length / perRow) * 24 + 10;
     }
     this.track(
-      this.renderDomText(cx, Math.min(y, VIEW.height - 64), 'La partida sigue desde el comienzo de esa jornada.', { size: 6, color: '#7FB0B8', align: 'center', width: 230, retro: true }),
+      this.renderDomText(cx, Math.min(y, VIEW.height - 72), 'La partida sigue desde el comienzo de esa jornada. Un nivel que no empezaste desde esta versión arranca con lo de siempre.', { size: 6, color: '#7FB0B8', align: 'center', width: 236, retro: true }),
     );
     const back = this.renderDomButton(cx, VIEW.height - 30, 'Volver', () => this.renderTitle(), 120, 21);
     this.glassButton(back);
@@ -559,7 +574,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   private loadJornada(level: string, day: number): void {
-    const s = saveSystem.loadCheckpoint(level, day);
+    // sin la jornada anotada, el comienzo del nivel se arma con lo de siempre (con tu nombre)
+    const who = saveSystem.load()?.player;
+    const s = saveSystem.loadCheckpoint(level, day) ?? (day === 1 ? levelStartState(level, who?.name, who?.gender) : null);
     if (!s) {
       this.importOk = false;
       this.importNotice = 'Esa jornada ya no se puede abrir.';

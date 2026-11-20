@@ -14,6 +14,7 @@ import { crisp, FONT, levelLabel, RETRO_FONT } from '@/util/text';
 import { TURNS } from '@/systems/TimeSystem';
 import { addPanel } from '@/ui/panel';
 import { sfx } from '@/audio/Sfx';
+import { hasSceneArt } from '@/util/assets';
 
 /** Recursos que se muestran en el HUD del Nivel 1. El resto vive en el panel de jornada. */
 const HUD_RESOURCES: ResourceId[] = ['agua', 'comida', 'lena'];
@@ -41,6 +42,37 @@ const CUTSCENE_DIALOGUES: Record<string, string> = {
   d_n1_mimosa_zarpa: 'mimosa_zarpa',
   d_n1_final: 'punta_final',
 };
+
+/**
+ * Nivel 3: las escenas con ilustración (docs/11-arte-nivel-03.txt). A diferencia
+ * de las del Nivel 1, solo pasan a pantalla completa si el PNG ya existe: mientras
+ * falte, el diálogo sigue en el mundo como siempre. Algunas eligen la imagen según
+ * lo que pasó (el entierro, solo si Gwilym no comió).
+ */
+const CUTSCENE_IF_ART: Record<string, string | (() => string | null)> = {
+  d_n3_bandera: 'n3_bandera',
+  d_n3_viveres: 'n3_viveres',
+  d_n3_crecida: 'n3_crecida',
+  d_n3_invierno: 'n3_invierno',
+  d_n3_gwilym_aviso: 'n3_gwilym',
+  d_n3_toldo: 'n3_toldo',
+  d_n3_manta: 'n3_manta',
+  d_n3_recaida: 'n3_recaida',
+  d_n3_gwilym_fin: () => (game.flags.get('n3_gwilym') === 'nada' ? 'n3_entierro' : 'n3_gwilym_vive'),
+  d_n3_acto2_fin: 'n3_otra_orilla',
+  d_n3_1867: 'n3_madryn',
+  d_n3_rachel: 'n3_orilla_abierta',
+  d_n3_regada: 'n3_agua',
+  d_n3_cosecha: 'n3_cosecha',
+};
+
+/** La ilustración de un diálogo, si tiene y (para las del Nivel 3) si ya existe. */
+function cutsceneFor(id: string): string | undefined {
+  if (CUTSCENE_DIALOGUES[id]) return CUTSCENE_DIALOGUES[id];
+  const pick = CUTSCENE_IF_ART[id];
+  const art = typeof pick === 'function' ? pick() : pick;
+  return art && hasSceneArt(art) ? art : undefined;
+}
 
 /** Contexto geográfico para quien ve la escena por primera vez, en la misma
  * etiqueta que ya usa el juego para el nombre de zona (showZone) — solo donde
@@ -459,7 +491,7 @@ export class UiScene extends Phaser.Scene {
   /* ---------------- modales ---------------- */
 
   private openDialogue(id: string, next?: string): void {
-    const cutsceneId = CUTSCENE_DIALOGUES[id];
+    const cutsceneId = cutsceneFor(id);
     // el joystick/botón son HTML aparte del canvas: no se tapan solos detrás de una
     // cutscene ni de ningún diálogo, hay que ocultarlos a mano.
     this.touch.setVisible(false);
