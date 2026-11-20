@@ -1,80 +1,215 @@
-# Arte del Nivel 3 — «El valle» (actos I, II y III)
+# Arte del Nivel 3 — «El valle» (1865 – 1868)
 
-Lo que hoy se dibuja por código y conviene reemplazar. Mismo sistema que los niveles
-anteriores:
-  - retratos: `src/assets/portraits/<id>_<neutral|tenso|calido>.png` (prefijo de estilo
-    de `docs/05-prompts-arte2.txt` §0);
-  - sprites: hoja de 4 direcciones como en `docs/06-prompts-sprites.txt` (24×32 px,
-    fondo transparente; el oeste se espeja del este);
-  - ilustraciones: PNG 3:4 vertical, 540×720, en `src/assets/scenes/<id>.png` (el id del
-    título, sin prefijo), con el sufijo de
-    cinemáticas de `docs/05-prompts-arte2.txt` §2.
+Ilustraciones (escenas cinemáticas) del valle. Mismo sistema que las de los Niveles 1 y 2:
+PNG 3:4 vertical, **540×720**, en `src/assets/scenes/<id>.png`, con el id del título como
+nombre (ej. `n3_bandera.png`, sin prefijo). Los originales en alta, aparte (arte-original/).
 
-Regla de representación (docs/04 §1.2, R2): el hombre del toldo es una persona, no un
-emblema. Sin rasgos de caricatura, sin penacho de plumas, sin armas en primer plano,
-sin gesto hostil. Ropa aonikenk del siglo XIX: quillango de guanaco (pelo hacia
-adentro, cara de cuero pintada con guardas geométricas rojas y negras), vincha, pelo
-largo, botas de potro. Mismo peso y dignidad que los colonos.
+**Ya están conectadas en el juego.** Cada una aparece sola, a pantalla completa y con su
+diálogo encima, apenas el PNG existe (UiScene: CUTSCENE_IF_ART). Mientras falte, la escena
+se juega en el mapa como hoy, sin cartel de «falta imagen». Se pueden hacer de a una.
 
----
+Los personajes (retratos y sprites de Murga, Gwilym, el del toldo, Rachel y Aaron) están
+en `docs/12-prompts-personajes-nivel-03.txt`.
 
-## Personajes (hoy son placeholders de código)
+Para cada prompt: pegar primero el **prefijo de estilo compartido** de
+`docs/05-prompts-arte2.txt` §0 y, al final, el sufijo de cinemáticas de §2:
+`3:4 vertical aspect ratio, cinematic game cutscene illustration, important content
+centered with generous margin on all sides for safe cropping on different phone
+screens, no text, no UI elements.`
+Adjuntar como referencia de estilo dos ilustraciones que ya están en el juego (por ejemplo
+`marcha_caer_antur.png` y `marcha_noche.png`): mismo trazo, misma paleta, misma luz.
 
-### murga — Julián Murga (histórico, solo la bandera y el nombre)
-Retrato y sprite. Comandante del gobierno argentino, 1865: uniforme oscuro de militar
-de la época, gorra o kepí, bigote. Serio, formal, sin heroísmo.
+El lugar (vale para todas): el valle inferior del río Chubut, cerca de la desembocadura.
+Un río marrón y lento entre sauces y juncos; a los dos lados, un llano de tierra seca y
+coirón; al norte, la barda (acantilado bajo de arcilla en franjas ocres y rojizas); al
+fondo, el mar. Las ruinas del fuerte viejo (Fuerte Paz / Caer Antur): paredes de barro
+desmoronadas, torreones caídos, una zanja alrededor. Ranchos de barro con techo de junco.
+Nada de casas de piedra, alambrados, molinos ni carros: todavía no existen.
 
-### gwilym — Gwilym (ficticio, 8 años)
-Retrato y sprite (lienzo chico, como Dafydd: 20×26 px). Chico galés de ocho años,
-flaco, gorra de lana, saco heredado que le queda grande, pantalón con remiendos.
-Expresión `calido`: curioso, preguntón. `tenso`: pálido, ojeras (el hambre del invierno).
+Regla de representación (docs/04 §1.2 y R2): los tehuelches (aonikenk) son personas, no
+emblemas: sin rasgos de caricatura, sin penacho de plumas, sin pintura de guerra, sin armas
+en primer plano, sin gesto hostil. Quillango de guanaco (cuero pintado con guardas rojas y
+negras), vincha, pelo largo. Es su tierra; los colonos son los recién llegados.
 
-### toldo — «El del toldo» (ficticio, sin nombre: TODO(historia))
-Retrato y sprite. Hombre aonikenk adulto, pelo largo y negro suelto, vincha roja,
-quillango de guanaco sobre los hombros con la cara pintada hacia afuera en el borde.
-`neutral`: atento, mide al otro. `calido`: media sonrisa (el pan). `tenso`: cauteloso,
-no agresivo.
-
-### rachel — Rachel Jenkins (histórica: la idea del riego)
-Retrato y sprite. Colona galesa de unos treinta años, 1867: vestido oscuro de trabajo,
-delantal embarrado, pañuelo en la cabeza, manos curtidas. Mira el suelo, piensa.
-Apariencia no documentada: sobria, sin idealizar.
-
-### aaron — Aaron Jenkins (histórico: regó el primer trigo)
-Retrato y sprite. Colono galés, chaleco y camisa arremangada, sombrero gastado, pala al
-hombro, botas con barro. Terco, trabajador. Apariencia no documentada.
+Regla de los personajes: si aparece alguien del juego, que se parezca a su retrato
+(Lewis Jones de galera y barba, Mari con pañuelo oscuro y chal rojo, Matthews de clérigo,
+Berwyn de galera y anteojos). Adjuntar el retrato como referencia.
 
 ---
 
-## Ilustraciones (todavía no conectadas: se conectan cuando existan)
+## Imprescindibles (7) — arman el arco del nivel
 
-### n3_toldo — El toldo junto al fuerte (abril de 1866)
-A small low tent of sewn guanaco hides pitched beside crumbling mud walls of an old
-fort on a river bank in Patagonia, late autumn light. Four people by a small fire,
-horses grazing. In the foreground, Welsh colonists in dark 1860s clothes watch from
-the doorways of mud huts. Mutual caution on both sides, nobody aggressive. Wide,
-quiet, cold.
+### n3_bandera — La bandera (15 de septiembre de 1865)
+Cuándo: abre el nivel (d_n3_bandera).
+Texto en el juego: «15 de septiembre de 1865. Junto a las paredes del fuerte viejo, a la
+orilla del río.» · «Sube una bandera celeste y blanca. Casi nadie entendió lo que dijo el
+comandante.»
+Histórico: el comandante Julián Murga iza la bandera argentina y llama al pueblo
+Trerawson. De su aspecto no hay registro: uniforme genérico de oficial argentino de 1860.
+```
+A small crowd of Welsh colonists in dark, worn 1860s clothing, gathered in front of the
+crumbling mud walls of an old ruined fort on a river bank in Patagonia. An Argentine army
+officer in a dark blue frock coat and kepi, with two or three soldiers, raises a light
+blue and white flag on a tall wooden pole. The colonists watch, uncertain: they do not
+understand the language. Grey spring sky, wind making the flag snap, the brown river and
+reeds behind. Solemn, a little strange — a founding none of them asked for.
+```
+
+### n3_crecida — La crecida (1865)
+Cuándo: la mañana de la crecida (d_n3_crecida).
+Texto en el juego: «De noche, el río creció. Al amanecer, el llano es un espejo marrón.»
+```
+Dawn after a flood in a flat Patagonian river valley: the plain is a sheet of still brown
+water reflecting a pale sky. Half-dissolved mud huts with collapsed reed roofs, bundles
+of reeds floating. On a low ridge in the background, a few colonists stand in silence
+looking at what is left. No bodies, no drama — only loss and quiet.
+```
+
+### n3_toldo — Humo al pie de la barda (abril de 1866)
+Cuándo: llega el toldo (d_n3_toldo). En el juego está lejos del fuerte, al pie de la barda.
+Texto en el juego: «Ese mismo día sube humo del lado de la barda, al noroeste. A la tarde se
+oyen caballos: alguien armó un toldo de cuero.»
+```
+Seen from the colonists' camp next to the ruined mud fort: across a wide dry plain, at the
+foot of the low ochre-and-red clay cliffs, a small low tent of sewn guanaco hides with a
+thin column of smoke bent eastward by the wind, and a few horses grazing beside it. In the
+foreground, Welsh colonists in dark clothes stand and watch from a distance, cautious.
+Late autumn light, cold and clear. Mutual caution on both sides, nobody aggressive.
+```
 
 ### n3_manta — El trato sobre la manta
-Close view of a woven red blanket on dry ground: guanaco meat, two hides, a few rhea
-feathers on one side; a small sack of yerba, folded cloth and bread loaves on the
-other. Hands from both sides, one Welsh, one Aonikenk with a guanaco-hide cloak
-sleeve. A worn dictionary open on a knee. No faces needed. Respectful, transactional.
+Cuándo: el trato (d_n3_manta).
+Texto en el juego: «El hombre extiende una manta en el suelo. Pone encima carne de guanaco,
+dos cueros y unas plumas de choique.»
+```
+Close view of a woven red blanket spread on dry ground in front of a guanaco-hide tent:
+on one side guanaco meat, two folded hides and a few rhea feathers; on the other side a
+small sack of yerba, folded cloth and a few loaves of bread. An Aonikenk man in a painted
+guanaco-hide cloak (quillango) and red headband kneels on one side; on the other, a young
+Welsh colonist and an older man in a top hat and spectacles holding a small worn
+dictionary. Hands, not weapons. Respectful, attentive, a little tense.
+```
 
-### n3_entierro — El entierro en la barda (solo si muere Gwilym)
-Winter dawn on a bare clay ridge above a river valley. A small group of Welsh
-colonists around a fresh grave marked by a simple wooden cross, heads bowed, some
-singing, breath visible in the cold. The river and the sea far below. Restrained,
-no melodrama, no visible body.
+### n3_madryn — Empacar otra vez (1867)
+Cuándo: la cosecha vuelve a fallar y la colonia decide irse (d_n3_1867).
+Texto en el juego: «Pasa otro año. 1867: la cosecha vuelve a fallar.» · «La colonia decide
+irse: volver a Madryn, por donde llegaron.»
+```
+A dry, failed field of stunted wheat in a Patagonian river valley under a hard sky. In
+front of a mud hut, a Welsh family packs bundles and trunks again, tired and silent; a
+woman in a dark headscarf ties a bundle. In the background, far off, one man keeps digging
+alone at the river bank with a spade. Resignation, with one small stubborn figure.
+```
 
 ### n3_orilla_abierta — El agua entra sola (noviembre de 1867)
+Cuándo: la idea de Rachel Jenkins (d_n3_rachel).
+Texto en el juego: «Aaron abrió un hueco en la orilla del río. El agua entra sola y corre
+hasta el trigo.» · Rachel: «El río corre más alto que el campo. No hay que subir el agua:
+hay que dejarla bajar.»
+Histórico: se atribuye la idea del riego a Rachel Jenkins; Aaron Jenkins abrió la orilla.
+```
 A Welsh settler couple at a cut in the high bank of a muddy Patagonian river: the man
-with a shovel, the woman pointing along a shallow channel where brown water runs by
-itself toward a small field of green wheat, in the middle of a dry, pale valley. Early
-summer light, hopeful but understated.
+with a spade, sleeves rolled up, mud to the knees; the woman beside him pointing along a
+shallow channel where brown water runs by itself toward a small patch of green wheat, in
+the middle of a dry, pale valley. Early summer light. Quiet discovery, not triumph.
+```
 
 ### n3_cosecha — La cosecha (marzo de 1868)
-A small family field of ripe golden wheat, waist-high, in a dry river valley with
-clay cliffs behind; a narrow irrigation ditch with a wooden sluice gate along its
-edge. Welsh settlers cutting wheat by hand with sickles, a mother resting on a sheaf.
-Warm late-summer light. Quiet relief, not triumph.
+Cuándo: el cierre del nivel (d_n3_cosecha).
+Texto en el juego: «Marzo de 1868.» · «En tu chacra hay trigo hasta la cintura. Es una
+cosecha espléndida, la primera del valle.»
+```
+A small family field of ripe golden wheat, waist-high, in a dry river valley with clay
+cliffs behind; a narrow irrigation ditch with a small wooden sluice gate along its edge.
+Welsh settlers cutting wheat by hand with sickles; an older woman in a dark headscarf
+rests on a sheaf; a boy holds up an ear of wheat. Warm late-summer light. Quiet relief.
+```
+
+---
+
+## Recomendadas (7) — dan peso a las decisiones
+
+### n3_viveres — El bote de víveres (septiembre de 1865)
+Cuándo: llegan los víveres del gobierno (d_n3_viveres).
+Texto en el juego: «Un bote baja por la costa y entra al río. Trae víveres del gobierno:
+harina, galleta, algo de carne salada.»
+```
+A small sailing boat entering the muddy mouth of a Patagonian river from the sea, loaded
+with sacks and barrels. On the bank, a handful of Welsh colonists wade in to help pull it
+ashore. Overcast, windy. Hope, but not much of it: the cargo is small.
+```
+
+### n3_invierno — El primer invierno (abril de 1866)
+Cuándo: el salto al invierno (d_n3_invierno).
+Texto en el juego: «Pasa el verano. Llueve mucho menos de lo que les prometieron en Gales, y
+lo sembrado se seca antes de dar nada.» · «Abril de 1866. El viento ya es de invierno.»
+```
+A small cluster of mud huts with reed roofs on a frosty Patagonian plain at dusk; a dead,
+dry field in front. Thin smoke from one hut. A Welsh man counts a few sacks in an almost
+empty storehouse doorway. Cold blue light, long shadows. Scarcity, endurance.
+```
+
+### n3_gwilym — Gwilym no se levanta (solo si quedó la harina)
+Cuándo: el aviso (d_n3_gwilym_aviso). Tema sensible: sin dramatizar de más.
+Texto en el juego: «En el rancho de los vecinos, Gwilym no se levanta. Tiene ocho años y hace
+días que casi no come.»
+```
+Inside a dim mud hut lit by a small fire: an 8-year-old Welsh boy with a knitted wool cap
+lies under a blanket on a low bed, pale and thin; his mother sits beside him holding his
+hand; a clergyman in black stands at the doorway. Quiet, tender, worried. No grotesque
+detail, no visible suffering — just tiredness and care.
+```
+
+### n3_recaida — Las escarchas (solo si quedó la ropa de abrigo)
+Cuándo: tu madre recae (d_n3_recaida).
+Texto en el juego: «Las noches de julio son de escarcha. La ropa de abrigo quedó atrás, y tu
+madre vuelve a toser como en la estepa.»
+```
+Night inside a mud hut: a woman in her fifties with a dark headscarf and a red shawl sits
+wrapped in a thin blanket by a small fire, coughing into her hand; frost glitters on the
+doorway. A young person (seen from behind) kneels beside her. Intimate, cold, quiet.
+```
+
+### n3_entierro — El entierro en la barda (solo si Gwilym no comió)
+Cuándo: dos días después del aviso, si no se le dio de comer (d_n3_gwilym_fin). Es una de
+las tres veces que suena el coro en toda la campaña.
+Texto en el juego: «Lo enterraron en la barda, donde no llega el río. Subió toda la
+colonia.» · «Empieza un himno y lo siguen todos, a cuatro voces.»
+```
+Winter dawn on a bare clay ridge above a river valley. The whole small Welsh colony stands
+around a fresh grave marked by a simple wooden cross, heads bowed, some singing, breath
+visible in the cold. A clergyman in black leads. The river and the sea far below.
+Restrained, no melodrama, no visible body.
+```
+
+### n3_gwilym_vive — Gwilym se levanta (si comió)
+Cuándo: la otra salida de d_n3_gwilym_fin.
+Texto en el juego: «Gwilym se sienta en la cama y pide más. Su madre se ríe y llora a la
+vez.» · Gwilym: «¿Mañana también hay caldo?»
+```
+Inside a mud hut in morning light: an 8-year-old Welsh boy with a knitted cap sits up in
+bed holding a steaming bowl of broth with both hands, grinning; his mother laughs and
+wipes her eyes. Warm, small, hopeful.
+```
+
+### n3_otra_orilla — El campamento de la otra orilla (agosto de 1866)
+Cuándo: el cierre del invierno (d_n3_acto2_fin).
+Texto en el juego: «Más tarde, del otro lado del río, se instala un campamento grande:
+ochenta o noventa personas, con sus toldos y sus caballos.» (documentado)
+```
+Seen from the colonists' side of a wide brown river in Patagonia: on the far bank, a large
+Aonikenk camp of many guanaco-hide tents, smoke rising from several fires, a big herd of
+horses grazing, people moving among the tents. On the near bank, two Welsh colonists watch.
+Late winter light. Neighbours across the water: trade, need and caution on both sides.
+```
+
+### n3_agua — El agua entra a la chacra
+Cuándo: la compuerta abierta (d_n3_regada).
+Texto en el juego: «El agua entra a tu chacra por la compuerta. La tierra seca se oscurece,
+de a poco.»
+```
+Close view of a narrow hand-dug irrigation ditch reaching a small plowed field: a simple
+wooden sluice gate is lifted and brown water spills into the dry furrows, darkening the
+soil. A young Welsh colonist, muddy, holds the gate board; an older woman watches from the
+edge of the field. Bright morning light. The moment everything changes.
+```
